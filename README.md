@@ -65,7 +65,8 @@ The Pages site is served from `docs/` on `main`:
 - `docs/assets/models/manhattan_city.glb` — 93 MB (< GitHub Pages' 100 MB
   per-file limit), plus ground, night textures and the city shader
 - `docs/index.html` — loading screen + canvas host
-- URL options: `?view=street|mid|overview` and `?time=HH:MM`
+- URL options: `?view=street|mid|overview`, `?time=HH:MM`,
+  `?lines=1`, `?ticks=1`
 
 WebGL2 limitations handled in the build:
 
