@@ -1,0 +1,11237 @@
+{
+  "max_blocks": 1536,
+  "block_count": 1242,
+  "building_blocks": 1223,
+  "park_blocks": 19,
+  "bounds": {
+    "min_x": -2446.01171875,
+    "max_x": 4683.123046875,
+    "min_y": -2558.729736328125,
+    "max_y": 2621.252685546875
+  },
+  "ground_bounds": {
+    "min_x": -2446.01171875,
+    "max_x": 4554.634,
+    "min_y": -2373.2578125,
+    "max_y": 2518.712
+  },
+  "resolution": 2.0,
+  "blocks": [
+    {
+      "index": 0,
+      "type": "building",
+      "centroid": [
+        604.08,
+        -2356.48
+      ],
+      "area_px": 2369
+    },
+    {
+      "index": 1,
+      "type": "building",
+      "centroid": [
+        744.32,
+        -2368.24
+      ],
+      "area_px": 3903
+    },
+    {
+      "index": 2,
+      "type": "building",
+      "centroid": [
+        894.44,
+        -2383.68
+      ],
+      "area_px": 485
+    },
+    {
+      "index": 3,
+      "type": "building",
+      "centroid": [
+        1274.96,
+        -2413.06
+      ],
+      "area_px": 4512
+    },
+    {
+      "index": 4,
+      "type": "building",
+      "centroid": [
+        1509.02,
+        -2400.89
+      ],
+      "area_px": 765
+    },
+    {
+      "index": 5,
+      "type": "building",
+      "centroid": [
+        1569.05,
+        -2360.56
+      ],
+      "area_px": 295
+    },
+    {
+      "index": 6,
+      "type": "building",
+      "centroid": [
+        1671.84,
+        -2354.99
+      ],
+      "area_px": 1518
+    },
+    {
+      "index": 7,
+      "type": "building",
+      "centroid": [
+        1820.19,
+        -2361.99
+      ],
+      "area_px": 1299
+    },
+    {
+      "index": 8,
+      "type": "building",
+      "centroid": [
+        1918.5,
+        -2361.92
+      ],
+      "area_px": 965
+    },
+    {
+      "index": 9,
+      "type": "building",
+      "centroid": [
+        2021.87,
+        -2413.73
+      ],
+      "area_px": 2856
+    },
+    {
+      "index": 10,
+      "type": "building",
+      "centroid": [
+        2766.28,
+        -2427.14
+      ],
+      "area_px": 2885
+    },
+    {
+      "index": 11,
+      "type": "building",
+      "centroid": [
+        2995.84,
+        -2388.7
+      ],
+      "area_px": 721
+    },
+    {
+      "index": 12,
+      "type": "building",
+      "centroid": [
+        3047.86,
+        -2370.55
+      ],
+      "area_px": 139
+    },
+    {
+      "index": 13,
+      "type": "building",
+      "centroid": [
+        3412.33,
+        -2354.7
+      ],
+      "area_px": 1805
+    },
+    {
+      "index": 14,
+      "type": "building",
+      "centroid": [
+        3534.6,
+        -2360.08
+      ],
+      "area_px": 2031
+    },
+    {
+      "index": 15,
+      "type": "building",
+      "centroid": [
+        3643.64,
+        -2360.27
+      ],
+      "area_px": 1170
+    },
+    {
+      "index": 16,
+      "type": "building",
+      "centroid": [
+        3771.25,
+        -2435.71
+      ],
+      "area_px": 3577
+    },
+    {
+      "index": 17,
+      "type": "building",
+      "centroid": [
+        3861.18,
+        -2364.6
+      ],
+      "area_px": 1186
+    },
+    {
+      "index": 18,
+      "type": "building",
+      "centroid": [
+        3970.72,
+        -2365.4
+      ],
+      "area_px": 1571
+    },
+    {
+      "index": 19,
+      "type": "building",
+      "centroid": [
+        4071.32,
+        -2358.77
+      ],
+      "area_px": 2361
+    },
+    {
+      "index": 20,
+      "type": "building",
+      "centroid": [
+        4407.14,
+        -2366.35
+      ],
+      "area_px": 6100
+    },
+    {
+      "index": 21,
+      "type": "building",
+      "centroid": [
+        452.28,
+        -2290.12
+      ],
+      "area_px": 2118
+    },
+    {
+      "index": 22,
+      "type": "building",
+      "centroid": [
+        525.18,
+        -2312.62
+      ],
+      "area_px": 3524
+    },
+    {
+      "index": 23,
+      "type": "building",
+      "centroid": [
+        664.01,
+        -2304.19
+      ],
+      "area_px": 589
+    },
+    {
+      "index": 24,
+      "type": "building",
+      "centroid": [
+        801.81,
+        -2271.76
+      ],
+      "area_px": 4256
+    },
+    {
+      "index": 25,
+      "type": "building",
+      "centroid": [
+        1309.89,
+        -2308.99
+      ],
+      "area_px": 84
+    },
+    {
+      "index": 26,
+      "type": "building",
+      "centroid": [
+        1407.96,
+        -2329.84
+      ],
+      "area_px": 688
+    },
+    {
+      "index": 27,
+      "type": "building",
+      "centroid": [
+        1460.31,
+        -2261.06
+      ],
+      "area_px": 692
+    },
+    {
+      "index": 28,
+      "type": "building",
+      "centroid": [
+        1508.43,
+        -2323.25
+      ],
+      "area_px": 700
+    },
+    {
+      "index": 29,
+      "type": "building",
+      "centroid": [
+        1512.74,
+        -2254.8
+      ],
+      "area_px": 398
+    },
+    {
+      "index": 30,
+      "type": "building",
+      "centroid": [
+        1603.75,
+        -2262.18
+      ],
+      "area_px": 1745
+    },
+    {
+      "index": 31,
+      "type": "building",
+      "centroid": [
+        1827.1,
+        -2269.25
+      ],
+      "area_px": 2445
+    },
+    {
+      "index": 32,
+      "type": "building",
+      "centroid": [
+        1926.37,
+        -2279.4
+      ],
+      "area_px": 2195
+    },
+    {
+      "index": 33,
+      "type": "building",
+      "centroid": [
+        2007.45,
+        -2275.73
+      ],
+      "area_px": 124
+    },
+    {
+      "index": 34,
+      "type": "building",
+      "centroid": [
+        2119.78,
+        -2262.17
+      ],
+      "area_px": 1162
+    },
+    {
+      "index": 35,
+      "type": "building",
+      "centroid": [
+        2209.63,
+        -2292.52
+      ],
+      "area_px": 2122
+    },
+    {
+      "index": 36,
+      "type": "building",
+      "centroid": [
+        2407.11,
+        -2332.66
+      ],
+      "area_px": 174
+    },
+    {
+      "index": 37,
+      "type": "building",
+      "centroid": [
+        2568.39,
+        -2316.53
+      ],
+      "area_px": 738
+    },
+    {
+      "index": 38,
+      "type": "building",
+      "centroid": [
+        2645.17,
+        -2325.72
+      ],
+      "area_px": 1886
+    },
+    {
+      "index": 39,
+      "type": "building",
+      "centroid": [
+        2860.69,
+        -2343.41
+      ],
+      "area_px": 2565
+    },
+    {
+      "index": 40,
+      "type": "building",
+      "centroid": [
+        2951.51,
+        -2318.53
+      ],
+      "area_px": 1417
+    },
+    {
+      "index": 41,
+      "type": "building",
+      "centroid": [
+        3079.37,
+        -2328.56
+      ],
+      "area_px": 1821
+    },
+    {
+      "index": 42,
+      "type": "building",
+      "centroid": [
+        3185.21,
+        -2344.2
+      ],
+      "area_px": 2167
+    },
+    {
+      "index": 43,
+      "type": "building",
+      "centroid": [
+        3279.41,
+        -2330.19
+      ],
+      "area_px": 982
+    },
+    {
+      "index": 44,
+      "type": "building",
+      "centroid": [
+        3870.49,
+        -2253.12
+      ],
+      "area_px": 406
+    },
+    {
+      "index": 45,
+      "type": "building",
+      "centroid": [
+        3959.23,
+        -2303.65
+      ],
+      "area_px": 181
+    },
+    {
+      "index": 46,
+      "type": "building",
+      "centroid": [
+        4500.07,
+        -2344.93
+      ],
+      "area_px": 1641
+    },
+    {
+      "index": 47,
+      "type": "building",
+      "centroid": [
+        503.33,
+        -2155.21
+      ],
+      "area_px": 855
+    },
+    {
+      "index": 48,
+      "type": "building",
+      "centroid": [
+        582.47,
+        -2184.12
+      ],
+      "area_px": 1819
+    },
+    {
+      "index": 49,
+      "type": "building",
+      "centroid": [
+        667.21,
+        -2222.72
+      ],
+      "area_px": 2202
+    },
+    {
+      "index": 50,
+      "type": "building",
+      "centroid": [
+        836.52,
+        -2175.94
+      ],
+      "area_px": 4273
+    },
+    {
+      "index": 51,
+      "type": "building",
+      "centroid": [
+        979.96,
+        -2248.98
+      ],
+      "area_px": 6427
+    },
+    {
+      "index": 52,
+      "type": "building",
+      "centroid": [
+        1141.38,
+        -2205.78
+      ],
+      "area_px": 503
+    },
+    {
+      "index": 53,
+      "type": "building",
+      "centroid": [
+        1412.38,
+        -2185.97
+      ],
+      "area_px": 693
+    },
+    {
+      "index": 54,
+      "type": "building",
+      "centroid": [
+        2015.0,
+        -2165.89
+      ],
+      "area_px": 539
+    },
+    {
+      "index": 55,
+      "type": "building",
+      "centroid": [
+        2126.87,
+        -2160.11
+      ],
+      "area_px": 774
+    },
+    {
+      "index": 56,
+      "type": "building",
+      "centroid": [
+        2367.5,
+        -2202.82
+      ],
+      "area_px": 1313
+    },
+    {
+      "index": 57,
+      "type": "building",
+      "centroid": [
+        2512.75,
+        -2160.62
+      ],
+      "area_px": 5177
+    },
+    {
+      "index": 58,
+      "type": "building",
+      "centroid": [
+        2630.9,
+        -2158.73
+      ],
+      "area_px": 253
+    },
+    {
+      "index": 59,
+      "type": "building",
+      "centroid": [
+        2800.71,
+        -2188.81
+      ],
+      "area_px": 4481
+    },
+    {
+      "index": 60,
+      "type": "building",
+      "centroid": [
+        3092.35,
+        -2211.43
+      ],
+      "area_px": 6225
+    },
+    {
+      "index": 61,
+      "type": "building",
+      "centroid": [
+        3309.16,
+        -2187.53
+      ],
+      "area_px": 3365
+    },
+    {
+      "index": 62,
+      "type": "building",
+      "centroid": [
+        3404.09,
+        -2173.32
+      ],
+      "area_px": 1364
+    },
+    {
+      "index": 63,
+      "type": "building",
+      "centroid": [
+        3643.35,
+        -2197.71
+      ],
+      "area_px": 3304
+    },
+    {
+      "index": 64,
+      "type": "building",
+      "centroid": [
+        3730.53,
+        -2201.53
+      ],
+      "area_px": 2117
+    },
+    {
+      "index": 65,
+      "type": "building",
+      "centroid": [
+        3809.34,
+        -2205.77
+      ],
+      "area_px": 3594
+    },
+    {
+      "index": 66,
+      "type": "building",
+      "centroid": [
+        3927.49,
+        -2249.67
+      ],
+      "area_px": 328
+    },
+    {
+      "index": 67,
+      "type": "building",
+      "centroid": [
+        4000.54,
+        -2162.54
+      ],
+      "area_px": 1434
+    },
+    {
+      "index": 68,
+      "type": "building",
+      "centroid": [
+        4177.05,
+        -2205.38
+      ],
+      "area_px": 1842
+    },
+    {
+      "index": 69,
+      "type": "building",
+      "centroid": [
+        4446.83,
+        -2152.87
+      ],
+      "area_px": 2551
+    },
+    {
+      "index": 70,
+      "type": "building",
+      "centroid": [
+        4556.44,
+        -2246.99
+      ],
+      "area_px": 732
+    },
+    {
+      "index": 71,
+      "type": "building",
+      "centroid": [
+        535.53,
+        -2062.99
+      ],
+      "area_px": 1132
+    },
+    {
+      "index": 72,
+      "type": "building",
+      "centroid": [
+        608.46,
+        -2092.23
+      ],
+      "area_px": 2109
+    },
+    {
+      "index": 73,
+      "type": "building",
+      "centroid": [
+        703.57,
+        -2126.39
+      ],
+      "area_px": 2124
+    },
+    {
+      "index": 74,
+      "type": "building",
+      "centroid": [
+        878.53,
+        -2084.78
+      ],
+      "area_px": 3551
+    },
+    {
+      "index": 75,
+      "type": "building",
+      "centroid": [
+        1015.09,
+        -2051.13
+      ],
+      "area_px": 795
+    },
+    {
+      "index": 76,
+      "type": "building",
+      "centroid": [
+        1286.29,
+        -2115.37
+      ],
+      "area_px": 1243
+    },
+    {
+      "index": 77,
+      "type": "building",
+      "centroid": [
+        1495.11,
+        -2127.12
+      ],
+      "area_px": 1871
+    },
+    {
+      "index": 78,
+      "type": "building",
+      "centroid": [
+        2049.88,
+        -2071.76
+      ],
+      "area_px": 896
+    },
+    {
+      "index": 79,
+      "type": "building",
+      "centroid": [
+        2217.1,
+        -2081.38
+      ],
+      "area_px": 804
+    },
+    {
+      "index": 80,
+      "type": "building",
+      "centroid": [
+        2307.47,
+        -2077.83
+      ],
+      "area_px": 1600
+    },
+    {
+      "index": 81,
+      "type": "building",
+      "centroid": [
+        2580.56,
+        -2050.2
+      ],
+      "area_px": 2862
+    },
+    {
+      "index": 82,
+      "type": "building",
+      "centroid": [
+        2972.31,
+        -2070.8
+      ],
+      "area_px": 9966
+    },
+    {
+      "index": 83,
+      "type": "building",
+      "centroid": [
+        3168.93,
+        -2124.05
+      ],
+      "area_px": 2297
+    },
+    {
+      "index": 84,
+      "type": "building",
+      "centroid": [
+        3503.27,
+        -2085.95
+      ],
+      "area_px": 202
+    },
+    {
+      "index": 85,
+      "type": "building",
+      "centroid": [
+        3653.64,
+        -2082.4
+      ],
+      "area_px": 462
+    },
+    {
+      "index": 86,
+      "type": "building",
+      "centroid": [
+        3752.24,
+        -2098.73
+      ],
+      "area_px": 340
+    },
+    {
+      "index": 87,
+      "type": "building",
+      "centroid": [
+        3949.76,
+        -2082.36
+      ],
+      "area_px": 329
+    },
+    {
+      "index": 88,
+      "type": "building",
+      "centroid": [
+        4251.18,
+        -2065.73
+      ],
+      "area_px": 78
+    },
+    {
+      "index": 89,
+      "type": "building",
+      "centroid": [
+        4497.41,
+        -2052.92
+      ],
+      "area_px": 677
+    },
+    {
+      "index": 90,
+      "type": "building",
+      "centroid": [
+        4577.91,
+        -2141.41
+      ],
+      "area_px": 1818
+    },
+    {
+      "index": 91,
+      "type": "building",
+      "centroid": [
+        244.68,
+        -2046.0
+      ],
+      "area_px": 5440
+    },
+    {
+      "index": 92,
+      "type": "building",
+      "centroid": [
+        453.14,
+        -2038.05
+      ],
+      "area_px": 364
+    },
+    {
+      "index": 93,
+      "type": "building",
+      "centroid": [
+        641.45,
+        -1996.23
+      ],
+      "area_px": 2099
+    },
+    {
+      "index": 94,
+      "type": "building",
+      "centroid": [
+        736.6,
+        -2031.13
+      ],
+      "area_px": 2169
+    },
+    {
+      "index": 95,
+      "type": "building",
+      "centroid": [
+        907.63,
+        -1985.51
+      ],
+      "area_px": 4218
+    },
+    {
+      "index": 96,
+      "type": "building",
+      "centroid": [
+        1284.93,
+        -2016.24
+      ],
+      "area_px": 692
+    },
+    {
+      "index": 97,
+      "type": "building",
+      "centroid": [
+        1425.49,
+        -2044.61
+      ],
+      "area_px": 457
+    },
+    {
+      "index": 98,
+      "type": "building",
+      "centroid": [
+        1939.85,
+        -1952.67
+      ],
+      "area_px": 811
+    },
+    {
+      "index": 99,
+      "type": "building",
+      "centroid": [
+        2051.09,
+        -1957.92
+      ],
+      "area_px": 800
+    },
+    {
+      "index": 100,
+      "type": "building",
+      "centroid": [
+        2223.84,
+        -1965.1
+      ],
+      "area_px": 759
+    },
+    {
+      "index": 101,
+      "type": "building",
+      "centroid": [
+        2403.4,
+        -2021.73
+      ],
+      "area_px": 58
+    },
+    {
+      "index": 102,
+      "type": "building",
+      "centroid": [
+        2412.74,
+        -1974.69
+      ],
+      "area_px": 2619
+    },
+    {
+      "index": 103,
+      "type": "building",
+      "centroid": [
+        2691.61,
+        -2034.17
+      ],
+      "area_px": 6629
+    },
+    {
+      "index": 104,
+      "type": "building",
+      "centroid": [
+        2910.84,
+        -1984.46
+      ],
+      "area_px": 636
+    },
+    {
+      "index": 105,
+      "type": "building",
+      "centroid": [
+        3143.68,
+        -1979.42
+      ],
+      "area_px": 199
+    },
+    {
+      "index": 106,
+      "type": "building",
+      "centroid": [
+        3509.28,
+        -2029.87
+      ],
+      "area_px": 588
+    },
+    {
+      "index": 107,
+      "type": "building",
+      "centroid": [
+        3639.17,
+        -1989.24
+      ],
+      "area_px": 1356
+    },
+    {
+      "index": 108,
+      "type": "building",
+      "centroid": [
+        4230.51,
+        -2005.01
+      ],
+      "area_px": 233
+    },
+    {
+      "index": 109,
+      "type": "building",
+      "centroid": [
+        4470.26,
+        -1955.77
+      ],
+      "area_px": 3372
+    },
+    {
+      "index": 110,
+      "type": "building",
+      "centroid": [
+        4547.84,
+        -2016.88
+      ],
+      "area_px": 1445
+    },
+    {
+      "index": 111,
+      "type": "building",
+      "centroid": [
+        500.97,
+        -1906.26
+      ],
+      "area_px": 1688
+    },
+    {
+      "index": 112,
+      "type": "building",
+      "centroid": [
+        556.24,
+        -1912.58
+      ],
+      "area_px": 347
+    },
+    {
+      "index": 113,
+      "type": "building",
+      "centroid": [
+        681.99,
+        -1910.24
+      ],
+      "area_px": 1671
+    },
+    {
+      "index": 114,
+      "type": "building",
+      "centroid": [
+        771.87,
+        -1935.8
+      ],
+      "area_px": 2149
+    },
+    {
+      "index": 115,
+      "type": "building",
+      "centroid": [
+        950.34,
+        -1891.93
+      ],
+      "area_px": 3748
+    },
+    {
+      "index": 116,
+      "type": "building",
+      "centroid": [
+        1066.48,
+        -1927.73
+      ],
+      "area_px": 1419
+    },
+    {
+      "index": 117,
+      "type": "building",
+      "centroid": [
+        1461.41,
+        -1930.37
+      ],
+      "area_px": 6612
+    },
+    {
+      "index": 118,
+      "type": "building",
+      "centroid": [
+        1714.42,
+        -1864.54
+      ],
+      "area_px": 126
+    },
+    {
+      "index": 119,
+      "type": "building",
+      "centroid": [
+        1860.86,
+        -1863.56
+      ],
+      "area_px": 758
+    },
+    {
+      "index": 120,
+      "type": "building",
+      "centroid": [
+        1872.18,
+        -1949.01
+      ],
+      "area_px": 1115
+    },
+    {
+      "index": 121,
+      "type": "building",
+      "centroid": [
+        2138.35,
+        -1859.79
+      ],
+      "area_px": 1135
+    },
+    {
+      "index": 122,
+      "type": "building",
+      "centroid": [
+        2310.54,
+        -1917.64
+      ],
+      "area_px": 496
+    },
+    {
+      "index": 123,
+      "type": "building",
+      "centroid": [
+        2359.14,
+        -1910.35
+      ],
+      "area_px": 505
+    },
+    {
+      "index": 124,
+      "type": "building",
+      "centroid": [
+        2546.0,
+        -1887.07
+      ],
+      "area_px": 5332
+    },
+    {
+      "index": 125,
+      "type": "building",
+      "centroid": [
+        2723.72,
+        -1926.91
+      ],
+      "area_px": 1645
+    },
+    {
+      "index": 126,
+      "type": "building",
+      "centroid": [
+        2727.75,
+        -1854.76
+      ],
+      "area_px": 157
+    },
+    {
+      "index": 127,
+      "type": "building",
+      "centroid": [
+        2836.11,
+        -1910.8
+      ],
+      "area_px": 170
+    },
+    {
+      "index": 128,
+      "type": "building",
+      "centroid": [
+        2972.76,
+        -1911.31
+      ],
+      "area_px": 856
+    },
+    {
+      "index": 129,
+      "type": "building",
+      "centroid": [
+        3056.99,
+        -1901.84
+      ],
+      "area_px": 167
+    },
+    {
+      "index": 130,
+      "type": "building",
+      "centroid": [
+        3151.94,
+        -1855.67
+      ],
+      "area_px": 2904
+    },
+    {
+      "index": 131,
+      "type": "building",
+      "centroid": [
+        3484.6,
+        -1922.06
+      ],
+      "area_px": 116
+    },
+    {
+      "index": 132,
+      "type": "building",
+      "centroid": [
+        3533.37,
+        -1906.69
+      ],
+      "area_px": 1298
+    },
+    {
+      "index": 133,
+      "type": "building",
+      "centroid": [
+        3578.97,
+        -1927.03
+      ],
+      "area_px": 250
+    },
+    {
+      "index": 134,
+      "type": "building",
+      "centroid": [
+        3587.48,
+        -1866.44
+      ],
+      "area_px": 132
+    },
+    {
+      "index": 135,
+      "type": "building",
+      "centroid": [
+        3771.49,
+        -1864.47
+      ],
+      "area_px": 8231
+    },
+    {
+      "index": 136,
+      "type": "building",
+      "centroid": [
+        3867.2,
+        -1936.36
+      ],
+      "area_px": 6726
+    },
+    {
+      "index": 137,
+      "type": "building",
+      "centroid": [
+        4040.11,
+        -1931.74
+      ],
+      "area_px": 1685
+    },
+    {
+      "index": 138,
+      "type": "building",
+      "centroid": [
+        4551.89,
+        -1873.47
+      ],
+      "area_px": 1229
+    },
+    {
+      "index": 139,
+      "type": "building",
+      "centroid": [
+        -1542.72,
+        -1797.25
+      ],
+      "area_px": 1587
+    },
+    {
+      "index": 140,
+      "type": "building",
+      "centroid": [
+        -1361.43,
+        -1804.49
+      ],
+      "area_px": 6503
+    },
+    {
+      "index": 141,
+      "type": "building",
+      "centroid": [
+        -1205.19,
+        -1819.34
+      ],
+      "area_px": 3265
+    },
+    {
+      "index": 142,
+      "type": "building",
+      "centroid": [
+        -924.34,
+        -1755.22
+      ],
+      "area_px": 440
+    },
+    {
+      "index": 143,
+      "type": "building",
+      "centroid": [
+        611.34,
+        -1822.45
+      ],
+      "area_px": 108
+    },
+    {
+      "index": 144,
+      "type": "building",
+      "centroid": [
+        809.99,
+        -1847.98
+      ],
+      "area_px": 1909
+    },
+    {
+      "index": 145,
+      "type": "building",
+      "centroid": [
+        921.72,
+        -1801.66
+      ],
+      "area_px": 854
+    },
+    {
+      "index": 146,
+      "type": "building",
+      "centroid": [
+        1550.72,
+        -1777.41
+      ],
+      "area_px": 383
+    },
+    {
+      "index": 147,
+      "type": "building",
+      "centroid": [
+        1588.53,
+        -1778.99
+      ],
+      "area_px": 257
+    },
+    {
+      "index": 148,
+      "type": "building",
+      "centroid": [
+        1749.09,
+        -1795.68
+      ],
+      "area_px": 1217
+    },
+    {
+      "index": 149,
+      "type": "building",
+      "centroid": [
+        1947.82,
+        -1821.7
+      ],
+      "area_px": 761
+    },
+    {
+      "index": 150,
+      "type": "building",
+      "centroid": [
+        2057.39,
+        -1827.13
+      ],
+      "area_px": 754
+    },
+    {
+      "index": 151,
+      "type": "building",
+      "centroid": [
+        2532.34,
+        -1784.45
+      ],
+      "area_px": 143
+    },
+    {
+      "index": 152,
+      "type": "building",
+      "centroid": [
+        2628.42,
+        -1819.5
+      ],
+      "area_px": 1610
+    },
+    {
+      "index": 153,
+      "type": "building",
+      "centroid": [
+        2803.78,
+        -1842.89
+      ],
+      "area_px": 1943
+    },
+    {
+      "index": 154,
+      "type": "building",
+      "centroid": [
+        3229.4,
+        -1752.15
+      ],
+      "area_px": 343
+    },
+    {
+      "index": 155,
+      "type": "building",
+      "centroid": [
+        3273.64,
+        -1815.88
+      ],
+      "area_px": 876
+    },
+    {
+      "index": 156,
+      "type": "building",
+      "centroid": [
+        3450.12,
+        -1778.28
+      ],
+      "area_px": 2735
+    },
+    {
+      "index": 157,
+      "type": "building",
+      "centroid": [
+        4081.14,
+        -1813.49
+      ],
+      "area_px": 4152
+    },
+    {
+      "index": 158,
+      "type": "building",
+      "centroid": [
+        4300.51,
+        -1796.44
+      ],
+      "area_px": 3131
+    },
+    {
+      "index": 159,
+      "type": "building",
+      "centroid": [
+        4520.65,
+        -1767.43
+      ],
+      "area_px": 2487
+    },
+    {
+      "index": 160,
+      "type": "building",
+      "centroid": [
+        -1572.49,
+        -1660.52
+      ],
+      "area_px": 304
+    },
+    {
+      "index": 161,
+      "type": "building",
+      "centroid": [
+        -1538.23,
+        -1720.14
+      ],
+      "area_px": 183
+    },
+    {
+      "index": 162,
+      "type": "building",
+      "centroid": [
+        -1411.77,
+        -1725.04
+      ],
+      "area_px": 207
+    },
+    {
+      "index": 163,
+      "type": "building",
+      "centroid": [
+        -1242.83,
+        -1674.83
+      ],
+      "area_px": 3558
+    },
+    {
+      "index": 164,
+      "type": "building",
+      "centroid": [
+        567.07,
+        -1708.21
+      ],
+      "area_px": 3236
+    },
+    {
+      "index": 165,
+      "type": "building",
+      "centroid": [
+        716.07,
+        -1689.21
+      ],
+      "area_px": 6571
+    },
+    {
+      "index": 166,
+      "type": "building",
+      "centroid": [
+        1160.94,
+        -1660.68
+      ],
+      "area_px": 4926
+    },
+    {
+      "index": 167,
+      "type": "building",
+      "centroid": [
+        1308.76,
+        -1675.34
+      ],
+      "area_px": 3308
+    },
+    {
+      "index": 168,
+      "type": "building",
+      "centroid": [
+        1410.77,
+        -1711.28
+      ],
+      "area_px": 900
+    },
+    {
+      "index": 169,
+      "type": "building",
+      "centroid": [
+        1529.64,
+        -1680.78
+      ],
+      "area_px": 2328
+    },
+    {
+      "index": 170,
+      "type": "building",
+      "centroid": [
+        1898.63,
+        -1704.27
+      ],
+      "area_px": 5934
+    },
+    {
+      "index": 171,
+      "type": "building",
+      "centroid": [
+        2045.96,
+        -1708.71
+      ],
+      "area_px": 1709
+    },
+    {
+      "index": 172,
+      "type": "building",
+      "centroid": [
+        2139.33,
+        -1720.78
+      ],
+      "area_px": 2200
+    },
+    {
+      "index": 173,
+      "type": "building",
+      "centroid": [
+        2476.97,
+        -1729.61
+      ],
+      "area_px": 3466
+    },
+    {
+      "index": 174,
+      "type": "building",
+      "centroid": [
+        2674.35,
+        -1731.28
+      ],
+      "area_px": 1655
+    },
+    {
+      "index": 175,
+      "type": "building",
+      "centroid": [
+        2842.38,
+        -1709.68
+      ],
+      "area_px": 210
+    },
+    {
+      "index": 176,
+      "type": "building",
+      "centroid": [
+        4157.0,
+        -1651.13
+      ],
+      "area_px": 3485
+    },
+    {
+      "index": 177,
+      "type": "building",
+      "centroid": [
+        4237.14,
+        -1721.05
+      ],
+      "area_px": 4408
+    },
+    {
+      "index": 178,
+      "type": "building",
+      "centroid": [
+        -1511.23,
+        -1575.22
+      ],
+      "area_px": 166
+    },
+    {
+      "index": 179,
+      "type": "building",
+      "centroid": [
+        -1416.7,
+        -1566.25
+      ],
+      "area_px": 2600
+    },
+    {
+      "index": 180,
+      "type": "building",
+      "centroid": [
+        -1077.12,
+        -1600.91
+      ],
+      "area_px": 4260
+    },
+    {
+      "index": 181,
+      "type": "building",
+      "centroid": [
+        629.42,
+        -1555.24
+      ],
+      "area_px": 165
+    },
+    {
+      "index": 182,
+      "type": "building",
+      "centroid": [
+        749.93,
+        -1621.19
+      ],
+      "area_px": 276
+    },
+    {
+      "index": 183,
+      "type": "building",
+      "centroid": [
+        1430.85,
+        -1585.95
+      ],
+      "area_px": 1034
+    },
+    {
+      "index": 184,
+      "type": "building",
+      "centroid": [
+        2156.72,
+        -1587.15
+      ],
+      "area_px": 1887
+    },
+    {
+      "index": 185,
+      "type": "building",
+      "centroid": [
+        2234.72,
+        -1626.09
+      ],
+      "area_px": 2054
+    },
+    {
+      "index": 186,
+      "type": "building",
+      "centroid": [
+        2622.55,
+        -1628.11
+      ],
+      "area_px": 2990
+    },
+    {
+      "index": 187,
+      "type": "building",
+      "centroid": [
+        3281.42,
+        -1617.87
+      ],
+      "area_px": 282
+    },
+    {
+      "index": 188,
+      "type": "building",
+      "centroid": [
+        3477.64,
+        -1568.61
+      ],
+      "area_px": 5980
+    },
+    {
+      "index": 189,
+      "type": "building",
+      "centroid": [
+        4065.99,
+        -1593.35
+      ],
+      "area_px": 2271
+    },
+    {
+      "index": 190,
+      "type": "building",
+      "centroid": [
+        4345.97,
+        -1606.5
+      ],
+      "area_px": 2188
+    },
+    {
+      "index": 191,
+      "type": "building",
+      "centroid": [
+        4405.89,
+        -1560.37
+      ],
+      "area_px": 1103
+    },
+    {
+      "index": 192,
+      "type": "building",
+      "centroid": [
+        4561.27,
+        -1613.61
+      ],
+      "area_px": 1187
+    },
+    {
+      "index": 193,
+      "type": "building",
+      "centroid": [
+        -1833.81,
+        -1509.56
+      ],
+      "area_px": 732
+    },
+    {
+      "index": 194,
+      "type": "building",
+      "centroid": [
+        -1787.36,
+        -1460.01
+      ],
+      "area_px": 125
+    },
+    {
+      "index": 195,
+      "type": "building",
+      "centroid": [
+        -1774.48,
+        -1486.24
+      ],
+      "area_px": 127
+    },
+    {
+      "index": 196,
+      "type": "building",
+      "centroid": [
+        -1435.22,
+        -1481.14
+      ],
+      "area_px": 1442
+    },
+    {
+      "index": 197,
+      "type": "building",
+      "centroid": [
+        -1291.83,
+        -1537.42
+      ],
+      "area_px": 1369
+    },
+    {
+      "index": 198,
+      "type": "building",
+      "centroid": [
+        -1132.9,
+        -1483.41
+      ],
+      "area_px": 1492
+    },
+    {
+      "index": 199,
+      "type": "building",
+      "centroid": [
+        -911.69,
+        -1503.52
+      ],
+      "area_px": 6124
+    },
+    {
+      "index": 200,
+      "type": "building",
+      "centroid": [
+        -807.75,
+        -1464.95
+      ],
+      "area_px": 574
+    },
+    {
+      "index": 201,
+      "type": "building",
+      "centroid": [
+        -597.17,
+        -1494.2
+      ],
+      "area_px": 386
+    },
+    {
+      "index": 202,
+      "type": "building",
+      "centroid": [
+        686.82,
+        -1509.99
+      ],
+      "area_px": 217
+    },
+    {
+      "index": 203,
+      "type": "building",
+      "centroid": [
+        751.04,
+        -1465.73
+      ],
+      "area_px": 155
+    },
+    {
+      "index": 204,
+      "type": "building",
+      "centroid": [
+        947.53,
+        -1543.21
+      ],
+      "area_px": 8905
+    },
+    {
+      "index": 205,
+      "type": "building",
+      "centroid": [
+        1093.93,
+        -1477.47
+      ],
+      "area_px": 520
+    },
+    {
+      "index": 206,
+      "type": "building",
+      "centroid": [
+        1197.92,
+        -1506.01
+      ],
+      "area_px": 5219
+    },
+    {
+      "index": 207,
+      "type": "building",
+      "centroid": [
+        1309.09,
+        -1481.14
+      ],
+      "area_px": 5655
+    },
+    {
+      "index": 208,
+      "type": "building",
+      "centroid": [
+        1906.06,
+        -1501.33
+      ],
+      "area_px": 10404
+    },
+    {
+      "index": 209,
+      "type": "building",
+      "centroid": [
+        2044.44,
+        -1460.73
+      ],
+      "area_px": 100
+    },
+    {
+      "index": 210,
+      "type": "building",
+      "centroid": [
+        2089.07,
+        -1529.55
+      ],
+      "area_px": 4342
+    },
+    {
+      "index": 211,
+      "type": "building",
+      "centroid": [
+        2257.23,
+        -1490.61
+      ],
+      "area_px": 1687
+    },
+    {
+      "index": 212,
+      "type": "building",
+      "centroid": [
+        2277.04,
+        -1547.37
+      ],
+      "area_px": 144
+    },
+    {
+      "index": 213,
+      "type": "building",
+      "centroid": [
+        2345.81,
+        -1542.5
+      ],
+      "area_px": 489
+    },
+    {
+      "index": 214,
+      "type": "building",
+      "centroid": [
+        2429.38,
+        -1484.97
+      ],
+      "area_px": 2666
+    },
+    {
+      "index": 215,
+      "type": "building",
+      "centroid": [
+        3309.22,
+        -1451.92
+      ],
+      "area_px": 316
+    },
+    {
+      "index": 216,
+      "type": "building",
+      "centroid": [
+        3570.76,
+        -1517.11
+      ],
+      "area_px": 1619
+    },
+    {
+      "index": 217,
+      "type": "building",
+      "centroid": [
+        3979.13,
+        -1512.76
+      ],
+      "area_px": 1875
+    },
+    {
+      "index": 218,
+      "type": "building",
+      "centroid": [
+        4153.05,
+        -1510.64
+      ],
+      "area_px": 1071
+    },
+    {
+      "index": 219,
+      "type": "building",
+      "centroid": [
+        4284.17,
+        -1477.49
+      ],
+      "area_px": 2163
+    },
+    {
+      "index": 220,
+      "type": "building",
+      "centroid": [
+        4448.13,
+        -1491.33
+      ],
+      "area_px": 1196
+    },
+    {
+      "index": 221,
+      "type": "building",
+      "centroid": [
+        -1518.62,
+        -1375.47
+      ],
+      "area_px": 167
+    },
+    {
+      "index": 222,
+      "type": "building",
+      "centroid": [
+        -1283.73,
+        -1438.72
+      ],
+      "area_px": 4176
+    },
+    {
+      "index": 223,
+      "type": "building",
+      "centroid": [
+        -1142.23,
+        -1393.03
+      ],
+      "area_px": 1810
+    },
+    {
+      "index": 224,
+      "type": "building",
+      "centroid": [
+        -997.36,
+        -1399.81
+      ],
+      "area_px": 2734
+    },
+    {
+      "index": 225,
+      "type": "building",
+      "centroid": [
+        -820.18,
+        -1359.71
+      ],
+      "area_px": 1251
+    },
+    {
+      "index": 226,
+      "type": "building",
+      "centroid": [
+        -762.22,
+        -1420.58
+      ],
+      "area_px": 1875
+    },
+    {
+      "index": 227,
+      "type": "building",
+      "centroid": [
+        -681.78,
+        -1352.88
+      ],
+      "area_px": 2083
+    },
+    {
+      "index": 228,
+      "type": "building",
+      "centroid": [
+        724.29,
+        -1389.92
+      ],
+      "area_px": 861
+    },
+    {
+      "index": 229,
+      "type": "building",
+      "centroid": [
+        897.41,
+        -1440.94
+      ],
+      "area_px": 1274
+    },
+    {
+      "index": 230,
+      "type": "building",
+      "centroid": [
+        1594.61,
+        -1442.48
+      ],
+      "area_px": 25648
+    },
+    {
+      "index": 231,
+      "type": "building",
+      "centroid": [
+        2054.44,
+        -1434.73
+      ],
+      "area_px": 138
+    },
+    {
+      "index": 232,
+      "type": "building",
+      "centroid": [
+        2067.01,
+        -1392.05
+      ],
+      "area_px": 138
+    },
+    {
+      "index": 233,
+      "type": "building",
+      "centroid": [
+        2350.41,
+        -1442.38
+      ],
+      "area_px": 81
+    },
+    {
+      "index": 234,
+      "type": "building",
+      "centroid": [
+        2452.29,
+        -1377.96
+      ],
+      "area_px": 382
+    },
+    {
+      "index": 235,
+      "type": "building",
+      "centroid": [
+        2519.82,
+        -1372.22
+      ],
+      "area_px": 405
+    },
+    {
+      "index": 236,
+      "type": "building",
+      "centroid": [
+        3836.9,
+        -1351.23
+      ],
+      "area_px": 2185
+    },
+    {
+      "index": 237,
+      "type": "building",
+      "centroid": [
+        3906.6,
+        -1432.54
+      ],
+      "area_px": 2201
+    },
+    {
+      "index": 238,
+      "type": "building",
+      "centroid": [
+        4048.29,
+        -1439.74
+      ],
+      "area_px": 1459
+    },
+    {
+      "index": 239,
+      "type": "building",
+      "centroid": [
+        4342.38,
+        -1399.56
+      ],
+      "area_px": 4548
+    },
+    {
+      "index": 240,
+      "type": "building",
+      "centroid": [
+        4494.29,
+        -1360.27
+      ],
+      "area_px": 2277
+    },
+    {
+      "index": 241,
+      "type": "building",
+      "centroid": [
+        4515.56,
+        -1430.35
+      ],
+      "area_px": 169
+    },
+    {
+      "index": 242,
+      "type": "building",
+      "centroid": [
+        -1896.47,
+        -1330.95
+      ],
+      "area_px": 1213
+    },
+    {
+      "index": 243,
+      "type": "building",
+      "centroid": [
+        -1670.11,
+        -1329.73
+      ],
+      "area_px": 150
+    },
+    {
+      "index": 244,
+      "type": "building",
+      "centroid": [
+        -1409.43,
+        -1294.94
+      ],
+      "area_px": 144
+    },
+    {
+      "index": 245,
+      "type": "building",
+      "centroid": [
+        -1284.5,
+        -1313.5
+      ],
+      "area_px": 5860
+    },
+    {
+      "index": 246,
+      "type": "building",
+      "centroid": [
+        -1037.63,
+        -1323.15
+      ],
+      "area_px": 3026
+    },
+    {
+      "index": 247,
+      "type": "building",
+      "centroid": [
+        -874.59,
+        -1294.2
+      ],
+      "area_px": 1683
+    },
+    {
+      "index": 248,
+      "type": "building",
+      "centroid": [
+        -740.22,
+        -1286.16
+      ],
+      "area_px": 1501
+    },
+    {
+      "index": 249,
+      "type": "building",
+      "centroid": [
+        -284.44,
+        -1281.35
+      ],
+      "area_px": 1426
+    },
+    {
+      "index": 250,
+      "type": "building",
+      "centroid": [
+        947.73,
+        -1327.58
+      ],
+      "area_px": 470
+    },
+    {
+      "index": 251,
+      "type": "building",
+      "centroid": [
+        1729.68,
+        -1319.75
+      ],
+      "area_px": 318
+    },
+    {
+      "index": 252,
+      "type": "building",
+      "centroid": [
+        1747.48,
+        -1250.73
+      ],
+      "area_px": 168
+    },
+    {
+      "index": 253,
+      "type": "building",
+      "centroid": [
+        1824.3,
+        -1286.04
+      ],
+      "area_px": 326
+    },
+    {
+      "index": 254,
+      "type": "building",
+      "centroid": [
+        1939.1,
+        -1261.35
+      ],
+      "area_px": 593
+    },
+    {
+      "index": 255,
+      "type": "building",
+      "centroid": [
+        2120.0,
+        -1250.57
+      ],
+      "area_px": 166
+    },
+    {
+      "index": 256,
+      "type": "building",
+      "centroid": [
+        2140.0,
+        -1310.27
+      ],
+      "area_px": 4969
+    },
+    {
+      "index": 257,
+      "type": "building",
+      "centroid": [
+        2301.22,
+        -1274.0
+      ],
+      "area_px": 10734
+    },
+    {
+      "index": 258,
+      "type": "building",
+      "centroid": [
+        2448.81,
+        -1307.52
+      ],
+      "area_px": 817
+    },
+    {
+      "index": 259,
+      "type": "building",
+      "centroid": [
+        3190.98,
+        -1290.51
+      ],
+      "area_px": 281
+    },
+    {
+      "index": 260,
+      "type": "building",
+      "centroid": [
+        3261.81,
+        -1337.4
+      ],
+      "area_px": 166
+    },
+    {
+      "index": 261,
+      "type": "building",
+      "centroid": [
+        3925.72,
+        -1287.4
+      ],
+      "area_px": 1684
+    },
+    {
+      "index": 262,
+      "type": "building",
+      "centroid": [
+        4016.9,
+        -1339.22
+      ],
+      "area_px": 1087
+    },
+    {
+      "index": 263,
+      "type": "building",
+      "centroid": [
+        4079.17,
+        -1305.64
+      ],
+      "area_px": 457
+    },
+    {
+      "index": 264,
+      "type": "building",
+      "centroid": [
+        4208.74,
+        -1318.03
+      ],
+      "area_px": 5181
+    },
+    {
+      "index": 265,
+      "type": "building",
+      "centroid": [
+        4558.97,
+        -1276.9
+      ],
+      "area_px": 534
+    },
+    {
+      "index": 266,
+      "type": "building",
+      "centroid": [
+        -1937.39,
+        -1224.07
+      ],
+      "area_px": 550
+    },
+    {
+      "index": 267,
+      "type": "building",
+      "centroid": [
+        -1592.12,
+        -1217.89
+      ],
+      "area_px": 608
+    },
+    {
+      "index": 268,
+      "type": "building",
+      "centroid": [
+        -1024.32,
+        -1156.82
+      ],
+      "area_px": 19622
+    },
+    {
+      "index": 269,
+      "type": "building",
+      "centroid": [
+        -790.64,
+        -1222.01
+      ],
+      "area_px": 1114
+    },
+    {
+      "index": 270,
+      "type": "building",
+      "centroid": [
+        -659.63,
+        -1210.33
+      ],
+      "area_px": 973
+    },
+    {
+      "index": 271,
+      "type": "building",
+      "centroid": [
+        -552.01,
+        -1239.01
+      ],
+      "area_px": 4190
+    },
+    {
+      "index": 272,
+      "type": "building",
+      "centroid": [
+        -214.13,
+        -1167.62
+      ],
+      "area_px": 219
+    },
+    {
+      "index": 273,
+      "type": "building",
+      "centroid": [
+        -176.03,
+        -1216.13
+      ],
+      "area_px": 166
+    },
+    {
+      "index": 274,
+      "type": "building",
+      "centroid": [
+        1279.54,
+        -1226.65
+      ],
+      "area_px": 334
+    },
+    {
+      "index": 275,
+      "type": "building",
+      "centroid": [
+        1621.49,
+        -1188.73
+      ],
+      "area_px": 136
+    },
+    {
+      "index": 276,
+      "type": "building",
+      "centroid": [
+        1668.29,
+        -1247.2
+      ],
+      "area_px": 138
+    },
+    {
+      "index": 277,
+      "type": "building",
+      "centroid": [
+        1722.61,
+        -1195.09
+      ],
+      "area_px": 177
+    },
+    {
+      "index": 278,
+      "type": "building",
+      "centroid": [
+        1786.66,
+        -1181.06
+      ],
+      "area_px": 140
+    },
+    {
+      "index": 279,
+      "type": "building",
+      "centroid": [
+        1922.8,
+        -1174.25
+      ],
+      "area_px": 320
+    },
+    {
+      "index": 280,
+      "type": "building",
+      "centroid": [
+        2451.37,
+        -1241.1
+      ],
+      "area_px": 554
+    },
+    {
+      "index": 281,
+      "type": "building",
+      "centroid": [
+        3123.1,
+        -1234.88
+      ],
+      "area_px": 155
+    },
+    {
+      "index": 282,
+      "type": "building",
+      "centroid": [
+        3139.47,
+        -1154.05
+      ],
+      "area_px": 932
+    },
+    {
+      "index": 283,
+      "type": "building",
+      "centroid": [
+        3262.36,
+        -1224.63
+      ],
+      "area_px": 3425
+    },
+    {
+      "index": 284,
+      "type": "building",
+      "centroid": [
+        3734.15,
+        -1152.02
+      ],
+      "area_px": 2423
+    },
+    {
+      "index": 285,
+      "type": "building",
+      "centroid": [
+        3864.44,
+        -1156.37
+      ],
+      "area_px": 1103
+    },
+    {
+      "index": 286,
+      "type": "building",
+      "centroid": [
+        4005.79,
+        -1225.29
+      ],
+      "area_px": 464
+    },
+    {
+      "index": 287,
+      "type": "building",
+      "centroid": [
+        4031.91,
+        -1159.58
+      ],
+      "area_px": 104
+    },
+    {
+      "index": 288,
+      "type": "building",
+      "centroid": [
+        4168.23,
+        -1204.49
+      ],
+      "area_px": 2051
+    },
+    {
+      "index": 289,
+      "type": "building",
+      "centroid": [
+        4402.56,
+        -1150.33
+      ],
+      "area_px": 5020
+    },
+    {
+      "index": 290,
+      "type": "building",
+      "centroid": [
+        4474.66,
+        -1233.67
+      ],
+      "area_px": 5142
+    },
+    {
+      "index": 291,
+      "type": "building",
+      "centroid": [
+        -1979.64,
+        -1085.83
+      ],
+      "area_px": 2085
+    },
+    {
+      "index": 292,
+      "type": "building",
+      "centroid": [
+        -1852.74,
+        -1142.31
+      ],
+      "area_px": 1656
+    },
+    {
+      "index": 293,
+      "type": "building",
+      "centroid": [
+        -1657.15,
+        -1123.46
+      ],
+      "area_px": 4543
+    },
+    {
+      "index": 294,
+      "type": "building",
+      "centroid": [
+        -1407.59,
+        -1059.08
+      ],
+      "area_px": 11238
+    },
+    {
+      "index": 295,
+      "type": "building",
+      "centroid": [
+        -1311.2,
+        -1117.46
+      ],
+      "area_px": 5485
+    },
+    {
+      "index": 296,
+      "type": "building",
+      "centroid": [
+        -1202.09,
+        -1081.41
+      ],
+      "area_px": 7262
+    },
+    {
+      "index": 297,
+      "type": "building",
+      "centroid": [
+        -579.51,
+        -1142.0
+      ],
+      "area_px": 1117
+    },
+    {
+      "index": 298,
+      "type": "building",
+      "centroid": [
+        -491.9,
+        -1056.22
+      ],
+      "area_px": 1805
+    },
+    {
+      "index": 299,
+      "type": "building",
+      "centroid": [
+        -424.86,
+        -1130.52
+      ],
+      "area_px": 2688
+    },
+    {
+      "index": 300,
+      "type": "building",
+      "centroid": [
+        -247.21,
+        -1136.73
+      ],
+      "area_px": 139
+    },
+    {
+      "index": 301,
+      "type": "building",
+      "centroid": [
+        -100.74,
+        -1115.21
+      ],
+      "area_px": 8259
+    },
+    {
+      "index": 302,
+      "type": "building",
+      "centroid": [
+        2177.8,
+        -1138.73
+      ],
+      "area_px": 190
+    },
+    {
+      "index": 303,
+      "type": "building",
+      "centroid": [
+        3194.3,
+        -1093.73
+      ],
+      "area_px": 133
+    },
+    {
+      "index": 304,
+      "type": "building",
+      "centroid": [
+        3311.63,
+        -1129.33
+      ],
+      "area_px": 220
+    },
+    {
+      "index": 305,
+      "type": "building",
+      "centroid": [
+        3864.99,
+        -1066.57
+      ],
+      "area_px": 605
+    },
+    {
+      "index": 306,
+      "type": "building",
+      "centroid": [
+        3927.93,
+        -1133.24
+      ],
+      "area_px": 1038
+    },
+    {
+      "index": 307,
+      "type": "building",
+      "centroid": [
+        4066.84,
+        -1127.77
+      ],
+      "area_px": 464
+    },
+    {
+      "index": 308,
+      "type": "building",
+      "centroid": [
+        4148.0,
+        -1103.5
+      ],
+      "area_px": 460
+    },
+    {
+      "index": 309,
+      "type": "building",
+      "centroid": [
+        4286.87,
+        -1081.03
+      ],
+      "area_px": 100
+    },
+    {
+      "index": 310,
+      "type": "building",
+      "centroid": [
+        4319.5,
+        -1111.08
+      ],
+      "area_px": 1734
+    },
+    {
+      "index": 311,
+      "type": "building",
+      "centroid": [
+        -1919.58,
+        -998.67
+      ],
+      "area_px": 1547
+    },
+    {
+      "index": 312,
+      "type": "building",
+      "centroid": [
+        -1828.54,
+        -1049.81
+      ],
+      "area_px": 2242
+    },
+    {
+      "index": 313,
+      "type": "building",
+      "centroid": [
+        -1790.86,
+        -952.81
+      ],
+      "area_px": 1686
+    },
+    {
+      "index": 314,
+      "type": "building",
+      "centroid": [
+        -774.02,
+        -1034.18
+      ],
+      "area_px": 15818
+    },
+    {
+      "index": 315,
+      "type": "building",
+      "centroid": [
+        -563.06,
+        -980.19
+      ],
+      "area_px": 3498
+    },
+    {
+      "index": 316,
+      "type": "building",
+      "centroid": [
+        -388.53,
+        -969.53
+      ],
+      "area_px": 1844
+    },
+    {
+      "index": 317,
+      "type": "building",
+      "centroid": [
+        -322.23,
+        -1027.15
+      ],
+      "area_px": 1727
+    },
+    {
+      "index": 318,
+      "type": "building",
+      "centroid": [
+        -247.62,
+        -956.9
+      ],
+      "area_px": 4284
+    },
+    {
+      "index": 319,
+      "type": "building",
+      "centroid": [
+        3802.99,
+        -982.61
+      ],
+      "area_px": 1058
+    },
+    {
+      "index": 320,
+      "type": "building",
+      "centroid": [
+        3943.73,
+        -963.67
+      ],
+      "area_px": 3506
+    },
+    {
+      "index": 321,
+      "type": "building",
+      "centroid": [
+        4022.03,
+        -1045.19
+      ],
+      "area_px": 3719
+    },
+    {
+      "index": 322,
+      "type": "building",
+      "centroid": [
+        4272.05,
+        -979.46
+      ],
+      "area_px": 4955
+    },
+    {
+      "index": 323,
+      "type": "building",
+      "centroid": [
+        4541.69,
+        -1029.25
+      ],
+      "area_px": 2312
+    },
+    {
+      "index": 324,
+      "type": "building",
+      "centroid": [
+        -1868.89,
+        -905.69
+      ],
+      "area_px": 1542
+    },
+    {
+      "index": 325,
+      "type": "building",
+      "centroid": [
+        -1752.44,
+        -854.29
+      ],
+      "area_px": 1002
+    },
+    {
+      "index": 326,
+      "type": "building",
+      "centroid": [
+        -1214.97,
+        -928.17
+      ],
+      "area_px": 2111
+    },
+    {
+      "index": 327,
+      "type": "building",
+      "centroid": [
+        -997.62,
+        -940.54
+      ],
+      "area_px": 3886
+    },
+    {
+      "index": 328,
+      "type": "building",
+      "centroid": [
+        -650.17,
+        -914.56
+      ],
+      "area_px": 2514
+    },
+    {
+      "index": 329,
+      "type": "building",
+      "centroid": [
+        -559.4,
+        -877.12
+      ],
+      "area_px": 875
+    },
+    {
+      "index": 330,
+      "type": "building",
+      "centroid": [
+        -433.84,
+        -890.99
+      ],
+      "area_px": 1782
+    },
+    {
+      "index": 331,
+      "type": "building",
+      "centroid": [
+        -129.44,
+        -914.03
+      ],
+      "area_px": 2467
+    },
+    {
+      "index": 332,
+      "type": "building",
+      "centroid": [
+        282.51,
+        -906.47
+      ],
+      "area_px": 570
+    },
+    {
+      "index": 333,
+      "type": "building",
+      "centroid": [
+        3649.9,
+        -902.23
+      ],
+      "area_px": 1737
+    },
+    {
+      "index": 334,
+      "type": "building",
+      "centroid": [
+        3797.2,
+        -899.16
+      ],
+      "area_px": 1730
+    },
+    {
+      "index": 335,
+      "type": "building",
+      "centroid": [
+        3967.67,
+        -860.3
+      ],
+      "area_px": 2000
+    },
+    {
+      "index": 336,
+      "type": "building",
+      "centroid": [
+        4165.2,
+        -912.61
+      ],
+      "area_px": 5039
+    },
+    {
+      "index": 337,
+      "type": "building",
+      "centroid": [
+        4485.18,
+        -938.38
+      ],
+      "area_px": 3107
+    },
+    {
+      "index": 338,
+      "type": "building",
+      "centroid": [
+        4507.73,
+        -850.34
+      ],
+      "area_px": 654
+    },
+    {
+      "index": 339,
+      "type": "building",
+      "centroid": [
+        -1820.02,
+        -813.4
+      ],
+      "area_px": 1685
+    },
+    {
+      "index": 340,
+      "type": "building",
+      "centroid": [
+        -1700.45,
+        -837.08
+      ],
+      "area_px": 64
+    },
+    {
+      "index": 341,
+      "type": "building",
+      "centroid": [
+        -1509.25,
+        -831.27
+      ],
+      "area_px": 12221
+    },
+    {
+      "index": 342,
+      "type": "building",
+      "centroid": [
+        -1378.39,
+        -810.3
+      ],
+      "area_px": 1760
+    },
+    {
+      "index": 343,
+      "type": "building",
+      "centroid": [
+        -1261.68,
+        -798.83
+      ],
+      "area_px": 1456
+    },
+    {
+      "index": 344,
+      "type": "building",
+      "centroid": [
+        -1098.9,
+        -808.87
+      ],
+      "area_px": 5658
+    },
+    {
+      "index": 345,
+      "type": "building",
+      "centroid": [
+        -985.08,
+        -842.19
+      ],
+      "area_px": 1383
+    },
+    {
+      "index": 346,
+      "type": "building",
+      "centroid": [
+        -902.4,
+        -824.21
+      ],
+      "area_px": 1827
+    },
+    {
+      "index": 347,
+      "type": "building",
+      "centroid": [
+        -697.68,
+        -806.02
+      ],
+      "area_px": 5255
+    },
+    {
+      "index": 348,
+      "type": "building",
+      "centroid": [
+        -520.36,
+        -836.33
+      ],
+      "area_px": 1069
+    },
+    {
+      "index": 349,
+      "type": "building",
+      "centroid": [
+        -445.07,
+        -802.01
+      ],
+      "area_px": 1495
+    },
+    {
+      "index": 350,
+      "type": "building",
+      "centroid": [
+        -357.0,
+        -763.1
+      ],
+      "area_px": 1688
+    },
+    {
+      "index": 351,
+      "type": "building",
+      "centroid": [
+        -280.02,
+        -841.86
+      ],
+      "area_px": 500
+    },
+    {
+      "index": 352,
+      "type": "building",
+      "centroid": [
+        -168.58,
+        -844.24
+      ],
+      "area_px": 2440
+    },
+    {
+      "index": 353,
+      "type": "building",
+      "centroid": [
+        -31.13,
+        -752.75
+      ],
+      "area_px": 2331
+    },
+    {
+      "index": 354,
+      "type": "building",
+      "centroid": [
+        14.85,
+        -816.52
+      ],
+      "area_px": 2067
+    },
+    {
+      "index": 355,
+      "type": "building",
+      "centroid": [
+        3286.12,
+        -841.85
+      ],
+      "area_px": 1467
+    },
+    {
+      "index": 356,
+      "type": "building",
+      "centroid": [
+        3534.31,
+        -801.63
+      ],
+      "area_px": 5936
+    },
+    {
+      "index": 357,
+      "type": "building",
+      "centroid": [
+        3675.48,
+        -791.08
+      ],
+      "area_px": 2706
+    },
+    {
+      "index": 358,
+      "type": "building",
+      "centroid": [
+        3810.19,
+        -813.88
+      ],
+      "area_px": 2456
+    },
+    {
+      "index": 359,
+      "type": "building",
+      "centroid": [
+        3941.65,
+        -804.12
+      ],
+      "area_px": 719
+    },
+    {
+      "index": 360,
+      "type": "building",
+      "centroid": [
+        4092.92,
+        -788.46
+      ],
+      "area_px": 108
+    },
+    {
+      "index": 361,
+      "type": "building",
+      "centroid": [
+        4197.8,
+        -778.7
+      ],
+      "area_px": 3067
+    },
+    {
+      "index": 362,
+      "type": "building",
+      "centroid": [
+        4337.08,
+        -797.69
+      ],
+      "area_px": 4448
+    },
+    {
+      "index": 363,
+      "type": "building",
+      "centroid": [
+        4509.13,
+        -784.93
+      ],
+      "area_px": 1051
+    },
+    {
+      "index": 364,
+      "type": "building",
+      "centroid": [
+        -1880.4,
+        -656.29
+      ],
+      "area_px": 2327
+    },
+    {
+      "index": 365,
+      "type": "building",
+      "centroid": [
+        -1748.68,
+        -719.23
+      ],
+      "area_px": 2399
+    },
+    {
+      "index": 366,
+      "type": "building",
+      "centroid": [
+        -1519.17,
+        -655.8
+      ],
+      "area_px": 4082
+    },
+    {
+      "index": 367,
+      "type": "building",
+      "centroid": [
+        -1189.48,
+        -681.46
+      ],
+      "area_px": 2373
+    },
+    {
+      "index": 368,
+      "type": "building",
+      "centroid": [
+        -1017.77,
+        -712.01
+      ],
+      "area_px": 1325
+    },
+    {
+      "index": 369,
+      "type": "building",
+      "centroid": [
+        -868.12,
+        -745.98
+      ],
+      "area_px": 2716
+    },
+    {
+      "index": 370,
+      "type": "building",
+      "centroid": [
+        -91.64,
+        -682.76
+      ],
+      "area_px": 3110
+    },
+    {
+      "index": 371,
+      "type": "building",
+      "centroid": [
+        1050.79,
+        -679.13
+      ],
+      "area_px": 338
+    },
+    {
+      "index": 372,
+      "type": "building",
+      "centroid": [
+        3545.53,
+        -673.43
+      ],
+      "area_px": 1756
+    },
+    {
+      "index": 373,
+      "type": "building",
+      "centroid": [
+        3678.97,
+        -714.36
+      ],
+      "area_px": 1360
+    },
+    {
+      "index": 374,
+      "type": "building",
+      "centroid": [
+        3683.66,
+        -661.33
+      ],
+      "area_px": 1463
+    },
+    {
+      "index": 375,
+      "type": "building",
+      "centroid": [
+        3842.2,
+        -700.6
+      ],
+      "area_px": 1485
+    },
+    {
+      "index": 376,
+      "type": "building",
+      "centroid": [
+        4008.3,
+        -741.64
+      ],
+      "area_px": 2928
+    },
+    {
+      "index": 377,
+      "type": "building",
+      "centroid": [
+        4181.59,
+        -651.48
+      ],
+      "area_px": 4065
+    },
+    {
+      "index": 378,
+      "type": "building",
+      "centroid": [
+        4356.07,
+        -676.64
+      ],
+      "area_px": 4293
+    },
+    {
+      "index": 379,
+      "type": "building",
+      "centroid": [
+        4515.28,
+        -680.75
+      ],
+      "area_px": 2027
+    },
+    {
+      "index": 380,
+      "type": "building",
+      "centroid": [
+        -1685.12,
+        -573.28
+      ],
+      "area_px": 2095
+    },
+    {
+      "index": 381,
+      "type": "building",
+      "centroid": [
+        -1299.86,
+        -619.74
+      ],
+      "area_px": 5081
+    },
+    {
+      "index": 382,
+      "type": "building",
+      "centroid": [
+        -312.44,
+        -622.25
+      ],
+      "area_px": 9278
+    },
+    {
+      "index": 383,
+      "type": "building",
+      "centroid": [
+        203.7,
+        -639.14
+      ],
+      "area_px": 786
+    },
+    {
+      "index": 384,
+      "type": "building",
+      "centroid": [
+        268.34,
+        -555.81
+      ],
+      "area_px": 779
+    },
+    {
+      "index": 385,
+      "type": "building",
+      "centroid": [
+        466.71,
+        -584.92
+      ],
+      "area_px": 782
+    },
+    {
+      "index": 386,
+      "type": "building",
+      "centroid": [
+        630.71,
+        -567.48
+      ],
+      "area_px": 2879
+    },
+    {
+      "index": 387,
+      "type": "building",
+      "centroid": [
+        1620.43,
+        -558.12
+      ],
+      "area_px": 9503
+    },
+    {
+      "index": 388,
+      "type": "building",
+      "centroid": [
+        1866.15,
+        -552.33
+      ],
+      "area_px": 211
+    },
+    {
+      "index": 389,
+      "type": "building",
+      "centroid": [
+        3517.27,
+        -624.03
+      ],
+      "area_px": 621
+    },
+    {
+      "index": 390,
+      "type": "building",
+      "centroid": [
+        3840.16,
+        -597.26
+      ],
+      "area_px": 3221
+    },
+    {
+      "index": 391,
+      "type": "building",
+      "centroid": [
+        4003.12,
+        -624.67
+      ],
+      "area_px": 3971
+    },
+    {
+      "index": 392,
+      "type": "building",
+      "centroid": [
+        4353.81,
+        -582.38
+      ],
+      "area_px": 1690
+    },
+    {
+      "index": 393,
+      "type": "building",
+      "centroid": [
+        -1836.18,
+        -524.7
+      ],
+      "area_px": 3760
+    },
+    {
+      "index": 394,
+      "type": "building",
+      "centroid": [
+        -1478.66,
+        -517.52
+      ],
+      "area_px": 1754
+    },
+    {
+      "index": 395,
+      "type": "building",
+      "centroid": [
+        -1375.53,
+        -486.21
+      ],
+      "area_px": 445
+    },
+    {
+      "index": 396,
+      "type": "building",
+      "centroid": [
+        -1369.84,
+        -528.87
+      ],
+      "area_px": 202
+    },
+    {
+      "index": 397,
+      "type": "building",
+      "centroid": [
+        -264.82,
+        -485.2
+      ],
+      "area_px": 3417
+    },
+    {
+      "index": 398,
+      "type": "building",
+      "centroid": [
+        73.43,
+        -500.45
+      ],
+      "area_px": 775
+    },
+    {
+      "index": 399,
+      "type": "building",
+      "centroid": [
+        184.05,
+        -493.41
+      ],
+      "area_px": 1005
+    },
+    {
+      "index": 400,
+      "type": "building",
+      "centroid": [
+        366.37,
+        -508.1
+      ],
+      "area_px": 1559
+    },
+    {
+      "index": 401,
+      "type": "building",
+      "centroid": [
+        954.35,
+        -455.6
+      ],
+      "area_px": 559
+    },
+    {
+      "index": 402,
+      "type": "building",
+      "centroid": [
+        1295.33,
+        -501.31
+      ],
+      "area_px": 611
+    },
+    {
+      "index": 403,
+      "type": "building",
+      "centroid": [
+        1636.16,
+        -493.45
+      ],
+      "area_px": 559
+    },
+    {
+      "index": 404,
+      "type": "building",
+      "centroid": [
+        2280.41,
+        -461.74
+      ],
+      "area_px": 89
+    },
+    {
+      "index": 405,
+      "type": "building",
+      "centroid": [
+        3495.76,
+        -473.21
+      ],
+      "area_px": 282
+    },
+    {
+      "index": 406,
+      "type": "building",
+      "centroid": [
+        3694.37,
+        -461.9
+      ],
+      "area_px": 3875
+    },
+    {
+      "index": 407,
+      "type": "building",
+      "centroid": [
+        3859.31,
+        -484.65
+      ],
+      "area_px": 2837
+    },
+    {
+      "index": 408,
+      "type": "building",
+      "centroid": [
+        4019.8,
+        -511.64
+      ],
+      "area_px": 3997
+    },
+    {
+      "index": 409,
+      "type": "building",
+      "centroid": [
+        4194.89,
+        -540.39
+      ],
+      "area_px": 3880
+    },
+    {
+      "index": 410,
+      "type": "building",
+      "centroid": [
+        4274.39,
+        -468.82
+      ],
+      "area_px": 793
+    },
+    {
+      "index": 411,
+      "type": "building",
+      "centroid": [
+        4339.69,
+        -502.83
+      ],
+      "area_px": 813
+    },
+    {
+      "index": 412,
+      "type": "building",
+      "centroid": [
+        -1789.14,
+        -355.89
+      ],
+      "area_px": 7270
+    },
+    {
+      "index": 413,
+      "type": "building",
+      "centroid": [
+        -1487.07,
+        -417.56
+      ],
+      "area_px": 127
+    },
+    {
+      "index": 414,
+      "type": "building",
+      "centroid": [
+        -527.25,
+        -376.96
+      ],
+      "area_px": 1822
+    },
+    {
+      "index": 415,
+      "type": "building",
+      "centroid": [
+        74.23,
+        -403.78
+      ],
+      "area_px": 976
+    },
+    {
+      "index": 416,
+      "type": "building",
+      "centroid": [
+        246.35,
+        -398.95
+      ],
+      "area_px": 786
+    },
+    {
+      "index": 417,
+      "type": "building",
+      "centroid": [
+        330.78,
+        -399.04
+      ],
+      "area_px": 2124
+    },
+    {
+      "index": 418,
+      "type": "building",
+      "centroid": [
+        795.12,
+        -434.62
+      ],
+      "area_px": 428
+    },
+    {
+      "index": 419,
+      "type": "building",
+      "centroid": [
+        826.06,
+        -380.4
+      ],
+      "area_px": 106
+    },
+    {
+      "index": 420,
+      "type": "building",
+      "centroid": [
+        1106.44,
+        -431.21
+      ],
+      "area_px": 7321
+    },
+    {
+      "index": 421,
+      "type": "building",
+      "centroid": [
+        1291.91,
+        -379.19
+      ],
+      "area_px": 946
+    },
+    {
+      "index": 422,
+      "type": "building",
+      "centroid": [
+        1380.35,
+        -367.46
+      ],
+      "area_px": 951
+    },
+    {
+      "index": 423,
+      "type": "building",
+      "centroid": [
+        1482.32,
+        -351.69
+      ],
+      "area_px": 2966
+    },
+    {
+      "index": 424,
+      "type": "building",
+      "centroid": [
+        1564.5,
+        -419.74
+      ],
+      "area_px": 233
+    },
+    {
+      "index": 425,
+      "type": "building",
+      "centroid": [
+        1636.76,
+        -386.86
+      ],
+      "area_px": 1306
+    },
+    {
+      "index": 426,
+      "type": "building",
+      "centroid": [
+        1839.24,
+        -365.7
+      ],
+      "area_px": 532
+    },
+    {
+      "index": 427,
+      "type": "building",
+      "centroid": [
+        1924.36,
+        -350.62
+      ],
+      "area_px": 1012
+    },
+    {
+      "index": 428,
+      "type": "building",
+      "centroid": [
+        1999.13,
+        -360.59
+      ],
+      "area_px": 667
+    },
+    {
+      "index": 429,
+      "type": "building",
+      "centroid": [
+        3512.13,
+        -396.89
+      ],
+      "area_px": 594
+    },
+    {
+      "index": 430,
+      "type": "building",
+      "centroid": [
+        3747.49,
+        -358.1
+      ],
+      "area_px": 1221
+    },
+    {
+      "index": 431,
+      "type": "building",
+      "centroid": [
+        3868.98,
+        -375.83
+      ],
+      "area_px": 2150
+    },
+    {
+      "index": 432,
+      "type": "building",
+      "centroid": [
+        3930.79,
+        -373.2
+      ],
+      "area_px": 184
+    },
+    {
+      "index": 433,
+      "type": "building",
+      "centroid": [
+        3999.45,
+        -411.12
+      ],
+      "area_px": 1289
+    },
+    {
+      "index": 434,
+      "type": "building",
+      "centroid": [
+        4051.82,
+        -378.23
+      ],
+      "area_px": 1728
+    },
+    {
+      "index": 435,
+      "type": "building",
+      "centroid": [
+        4175.84,
+        -431.21
+      ],
+      "area_px": 952
+    },
+    {
+      "index": 436,
+      "type": "building",
+      "centroid": [
+        4417.41,
+        -373.78
+      ],
+      "area_px": 1754
+    },
+    {
+      "index": 437,
+      "type": "building",
+      "centroid": [
+        -1463.0,
+        -297.54
+      ],
+      "area_px": 270
+    },
+    {
+      "index": 438,
+      "type": "building",
+      "centroid": [
+        -1315.4,
+        -290.02
+      ],
+      "area_px": 1121
+    },
+    {
+      "index": 439,
+      "type": "building",
+      "centroid": [
+        -869.13,
+        -297.75
+      ],
+      "area_px": 113071
+    },
+    {
+      "index": 440,
+      "type": "building",
+      "centroid": [
+        -612.96,
+        -273.14
+      ],
+      "area_px": 1264
+    },
+    {
+      "index": 441,
+      "type": "building",
+      "centroid": [
+        -571.52,
+        -312.94
+      ],
+      "area_px": 1011
+    },
+    {
+      "index": 442,
+      "type": "building",
+      "centroid": [
+        -65.23,
+        -346.76
+      ],
+      "area_px": 4090
+    },
+    {
+      "index": 443,
+      "type": "building",
+      "centroid": [
+        142.49,
+        -316.02
+      ],
+      "area_px": 967
+    },
+    {
+      "index": 444,
+      "type": "building",
+      "centroid": [
+        234.85,
+        -291.7
+      ],
+      "area_px": 797
+    },
+    {
+      "index": 445,
+      "type": "building",
+      "centroid": [
+        323.96,
+        -280.04
+      ],
+      "area_px": 949
+    },
+    {
+      "index": 446,
+      "type": "building",
+      "centroid": [
+        397.49,
+        -271.6
+      ],
+      "area_px": 870
+    },
+    {
+      "index": 447,
+      "type": "building",
+      "centroid": [
+        1007.21,
+        -303.2
+      ],
+      "area_px": 628
+    },
+    {
+      "index": 448,
+      "type": "building",
+      "centroid": [
+        1125.78,
+        -310.23
+      ],
+      "area_px": 1110
+    },
+    {
+      "index": 449,
+      "type": "building",
+      "centroid": [
+        1193.75,
+        -279.77
+      ],
+      "area_px": 693
+    },
+    {
+      "index": 450,
+      "type": "building",
+      "centroid": [
+        1288.15,
+        -267.89
+      ],
+      "area_px": 623
+    },
+    {
+      "index": 451,
+      "type": "building",
+      "centroid": [
+        1363.73,
+        -252.34
+      ],
+      "area_px": 591
+    },
+    {
+      "index": 452,
+      "type": "building",
+      "centroid": [
+        1709.96,
+        -308.88
+      ],
+      "area_px": 1758
+    },
+    {
+      "index": 453,
+      "type": "building",
+      "centroid": [
+        1828.92,
+        -291.82
+      ],
+      "area_px": 533
+    },
+    {
+      "index": 454,
+      "type": "building",
+      "centroid": [
+        2075.21,
+        -343.46
+      ],
+      "area_px": 582
+    },
+    {
+      "index": 455,
+      "type": "building",
+      "centroid": [
+        2075.37,
+        -254.06
+      ],
+      "area_px": 714
+    },
+    {
+      "index": 456,
+      "type": "building",
+      "centroid": [
+        2165.95,
+        -335.66
+      ],
+      "area_px": 531
+    },
+    {
+      "index": 457,
+      "type": "building",
+      "centroid": [
+        2229.07,
+        -324.9
+      ],
+      "area_px": 791
+    },
+    {
+      "index": 458,
+      "type": "building",
+      "centroid": [
+        2347.41,
+        -252.85
+      ],
+      "area_px": 232
+    },
+    {
+      "index": 459,
+      "type": "building",
+      "centroid": [
+        2543.67,
+        -315.36
+      ],
+      "area_px": 834
+    },
+    {
+      "index": 460,
+      "type": "building",
+      "centroid": [
+        2570.98,
+        -344.1
+      ],
+      "area_px": 257
+    },
+    {
+      "index": 461,
+      "type": "building",
+      "centroid": [
+        3592.82,
+        -298.72
+      ],
+      "area_px": 2426
+    },
+    {
+      "index": 462,
+      "type": "building",
+      "centroid": [
+        3673.62,
+        -327.36
+      ],
+      "area_px": 2267
+    },
+    {
+      "index": 463,
+      "type": "building",
+      "centroid": [
+        3795.63,
+        -316.73
+      ],
+      "area_px": 542
+    },
+    {
+      "index": 464,
+      "type": "building",
+      "centroid": [
+        3796.59,
+        -268.92
+      ],
+      "area_px": 557
+    },
+    {
+      "index": 465,
+      "type": "building",
+      "centroid": [
+        3902.37,
+        -314.06
+      ],
+      "area_px": 911
+    },
+    {
+      "index": 466,
+      "type": "building",
+      "centroid": [
+        4284.79,
+        -313.97
+      ],
+      "area_px": 3897
+    },
+    {
+      "index": 467,
+      "type": "building",
+      "centroid": [
+        4488.13,
+        -303.7
+      ],
+      "area_px": 3321
+    },
+    {
+      "index": 468,
+      "type": "building",
+      "centroid": [
+        -1453.21,
+        -241.74
+      ],
+      "area_px": 437
+    },
+    {
+      "index": 469,
+      "type": "building",
+      "centroid": [
+        -101.51,
+        -187.88
+      ],
+      "area_px": 4864
+    },
+    {
+      "index": 470,
+      "type": "building",
+      "centroid": [
+        263.51,
+        -165.49
+      ],
+      "area_px": 4014
+    },
+    {
+      "index": 471,
+      "type": "building",
+      "centroid": [
+        590.05,
+        -237.96
+      ],
+      "area_px": 6427
+    },
+    {
+      "index": 472,
+      "type": "building",
+      "centroid": [
+        782.62,
+        -222.82
+      ],
+      "area_px": 1522
+    },
+    {
+      "index": 473,
+      "type": "building",
+      "centroid": [
+        899.75,
+        -198.88
+      ],
+      "area_px": 1157
+    },
+    {
+      "index": 474,
+      "type": "building",
+      "centroid": [
+        992.81,
+        -196.86
+      ],
+      "area_px": 576
+    },
+    {
+      "index": 475,
+      "type": "building",
+      "centroid": [
+        1108.77,
+        -170.52
+      ],
+      "area_px": 1131
+    },
+    {
+      "index": 476,
+      "type": "building",
+      "centroid": [
+        1187.2,
+        -175.99
+      ],
+      "area_px": 578
+    },
+    {
+      "index": 477,
+      "type": "building",
+      "centroid": [
+        1277.9,
+        -164.31
+      ],
+      "area_px": 622
+    },
+    {
+      "index": 478,
+      "type": "building",
+      "centroid": [
+        1430.12,
+        -161.39
+      ],
+      "area_px": 515
+    },
+    {
+      "index": 479,
+      "type": "building",
+      "centroid": [
+        1447.57,
+        -246.05
+      ],
+      "area_px": 683
+    },
+    {
+      "index": 480,
+      "type": "building",
+      "centroid": [
+        1523.08,
+        -233.18
+      ],
+      "area_px": 768
+    },
+    {
+      "index": 481,
+      "type": "building",
+      "centroid": [
+        1621.9,
+        -224.62
+      ],
+      "area_px": 615
+    },
+    {
+      "index": 482,
+      "type": "building",
+      "centroid": [
+        1718.23,
+        -212.1
+      ],
+      "area_px": 620
+    },
+    {
+      "index": 483,
+      "type": "building",
+      "centroid": [
+        1869.9,
+        -174.04
+      ],
+      "area_px": 886
+    },
+    {
+      "index": 484,
+      "type": "building",
+      "centroid": [
+        1934.34,
+        -174.98
+      ],
+      "area_px": 2109
+    },
+    {
+      "index": 485,
+      "type": "building",
+      "centroid": [
+        1984.7,
+        -237.2
+      ],
+      "area_px": 1044
+    },
+    {
+      "index": 486,
+      "type": "building",
+      "centroid": [
+        2028.43,
+        -233.42
+      ],
+      "area_px": 1045
+    },
+    {
+      "index": 487,
+      "type": "building",
+      "centroid": [
+        2066.5,
+        -158.5
+      ],
+      "area_px": 704
+    },
+    {
+      "index": 488,
+      "type": "building",
+      "centroid": [
+        2123.76,
+        -153.36
+      ],
+      "area_px": 722
+    },
+    {
+      "index": 489,
+      "type": "building",
+      "centroid": [
+        2132.4,
+        -248.78
+      ],
+      "area_px": 697
+    },
+    {
+      "index": 490,
+      "type": "building",
+      "centroid": [
+        2174.86,
+        -220.51
+      ],
+      "area_px": 1060
+    },
+    {
+      "index": 491,
+      "type": "building",
+      "centroid": [
+        2220.98,
+        -235.68
+      ],
+      "area_px": 737
+    },
+    {
+      "index": 492,
+      "type": "building",
+      "centroid": [
+        3619.45,
+        -189.77
+      ],
+      "area_px": 568
+    },
+    {
+      "index": 493,
+      "type": "building",
+      "centroid": [
+        3718.94,
+        -194.11
+      ],
+      "area_px": 1978
+    },
+    {
+      "index": 494,
+      "type": "building",
+      "centroid": [
+        3917.06,
+        -181.12
+      ],
+      "area_px": 545
+    },
+    {
+      "index": 495,
+      "type": "building",
+      "centroid": [
+        3977.72,
+        -167.18
+      ],
+      "area_px": 2252
+    },
+    {
+      "index": 496,
+      "type": "building",
+      "centroid": [
+        4116.39,
+        -237.25
+      ],
+      "area_px": 4217
+    },
+    {
+      "index": 497,
+      "type": "building",
+      "centroid": [
+        4329.49,
+        -224.15
+      ],
+      "area_px": 3912
+    },
+    {
+      "index": 498,
+      "type": "building",
+      "centroid": [
+        4540.04,
+        -205.99
+      ],
+      "area_px": 3288
+    },
+    {
+      "index": 499,
+      "type": "building",
+      "centroid": [
+        -1737.1,
+        -97.74
+      ],
+      "area_px": 49
+    },
+    {
+      "index": 500,
+      "type": "building",
+      "centroid": [
+        -1621.29,
+        -120.54
+      ],
+      "area_px": 19196
+    },
+    {
+      "index": 501,
+      "type": "building",
+      "centroid": [
+        -1363.35,
+        -74.49
+      ],
+      "area_px": 2956
+    },
+    {
+      "index": 502,
+      "type": "building",
+      "centroid": [
+        -1262.02,
+        -124.53
+      ],
+      "area_px": 1238
+    },
+    {
+      "index": 503,
+      "type": "building",
+      "centroid": [
+        -569.72,
+        -105.16
+      ],
+      "area_px": 1424
+    },
+    {
+      "index": 504,
+      "type": "building",
+      "centroid": [
+        -449.91,
+        -73.08
+      ],
+      "area_px": 64
+    },
+    {
+      "index": 505,
+      "type": "building",
+      "centroid": [
+        -311.17,
+        -72.45
+      ],
+      "area_px": 3196
+    },
+    {
+      "index": 506,
+      "type": "building",
+      "centroid": [
+        132.23,
+        -141.98
+      ],
+      "area_px": 3401
+    },
+    {
+      "index": 507,
+      "type": "building",
+      "centroid": [
+        451.47,
+        -140.01
+      ],
+      "area_px": 3636
+    },
+    {
+      "index": 508,
+      "type": "building",
+      "centroid": [
+        631.67,
+        -131.65
+      ],
+      "area_px": 3002
+    },
+    {
+      "index": 509,
+      "type": "building",
+      "centroid": [
+        778.31,
+        -111.18
+      ],
+      "area_px": 2341
+    },
+    {
+      "index": 510,
+      "type": "building",
+      "centroid": [
+        885.23,
+        -99.04
+      ],
+      "area_px": 1404
+    },
+    {
+      "index": 511,
+      "type": "building",
+      "centroid": [
+        1087.58,
+        -69.36
+      ],
+      "area_px": 4293
+    },
+    {
+      "index": 512,
+      "type": "building",
+      "centroid": [
+        1287.89,
+        -54.76
+      ],
+      "area_px": 3910
+    },
+    {
+      "index": 513,
+      "type": "building",
+      "centroid": [
+        1369.53,
+        -130.74
+      ],
+      "area_px": 112
+    },
+    {
+      "index": 514,
+      "type": "building",
+      "centroid": [
+        1507.83,
+        -138.92
+      ],
+      "area_px": 614
+    },
+    {
+      "index": 515,
+      "type": "building",
+      "centroid": [
+        1610.61,
+        -127.52
+      ],
+      "area_px": 616
+    },
+    {
+      "index": 516,
+      "type": "building",
+      "centroid": [
+        1693.43,
+        -119.07
+      ],
+      "area_px": 617
+    },
+    {
+      "index": 517,
+      "type": "building",
+      "centroid": [
+        1804.66,
+        -91.94
+      ],
+      "area_px": 538
+    },
+    {
+      "index": 518,
+      "type": "building",
+      "centroid": [
+        1971.21,
+        -100.8
+      ],
+      "area_px": 1049
+    },
+    {
+      "index": 519,
+      "type": "building",
+      "centroid": [
+        2014.81,
+        -94.15
+      ],
+      "area_px": 1051
+    },
+    {
+      "index": 520,
+      "type": "building",
+      "centroid": [
+        2057.28,
+        -63.92
+      ],
+      "area_px": 715
+    },
+    {
+      "index": 521,
+      "type": "building",
+      "centroid": [
+        2114.73,
+        -58.42
+      ],
+      "area_px": 714
+    },
+    {
+      "index": 522,
+      "type": "building",
+      "centroid": [
+        2161.39,
+        -72.37
+      ],
+      "area_px": 1067
+    },
+    {
+      "index": 523,
+      "type": "building",
+      "centroid": [
+        2213.23,
+        -140.8
+      ],
+      "area_px": 709
+    },
+    {
+      "index": 524,
+      "type": "building",
+      "centroid": [
+        2266.14,
+        -135.3
+      ],
+      "area_px": 715
+    },
+    {
+      "index": 525,
+      "type": "building",
+      "centroid": [
+        2308.94,
+        -131.68
+      ],
+      "area_px": 722
+    },
+    {
+      "index": 526,
+      "type": "building",
+      "centroid": [
+        2510.54,
+        -85.18
+      ],
+      "area_px": 1853
+    },
+    {
+      "index": 527,
+      "type": "building",
+      "centroid": [
+        2753.73,
+        -96.94
+      ],
+      "area_px": 242
+    },
+    {
+      "index": 528,
+      "type": "building",
+      "centroid": [
+        3639.23,
+        -123.22
+      ],
+      "area_px": 672
+    },
+    {
+      "index": 529,
+      "type": "building",
+      "centroid": [
+        3802.94,
+        -111.62
+      ],
+      "area_px": 4625
+    },
+    {
+      "index": 530,
+      "type": "building",
+      "centroid": [
+        3995.76,
+        -69.26
+      ],
+      "area_px": 2600
+    },
+    {
+      "index": 531,
+      "type": "building",
+      "centroid": [
+        4159.37,
+        -146.07
+      ],
+      "area_px": 3117
+    },
+    {
+      "index": 532,
+      "type": "building",
+      "centroid": [
+        4378.82,
+        -122.88
+      ],
+      "area_px": 4265
+    },
+    {
+      "index": 533,
+      "type": "building",
+      "centroid": [
+        4543.94,
+        -81.2
+      ],
+      "area_px": 1410
+    },
+    {
+      "index": 534,
+      "type": "building",
+      "centroid": [
+        -1342.41,
+        45.71
+      ],
+      "area_px": 2815
+    },
+    {
+      "index": 535,
+      "type": "building",
+      "centroid": [
+        -1246.56,
+        -8.21
+      ],
+      "area_px": 1913
+    },
+    {
+      "index": 536,
+      "type": "building",
+      "centroid": [
+        -1144.59,
+        46.84
+      ],
+      "area_px": 1616
+    },
+    {
+      "index": 537,
+      "type": "building",
+      "centroid": [
+        -751.8,
+        23.66
+      ],
+      "area_px": 2997
+    },
+    {
+      "index": 538,
+      "type": "building",
+      "centroid": [
+        -520.48,
+        -10.93
+      ],
+      "area_px": 2277
+    },
+    {
+      "index": 539,
+      "type": "building",
+      "centroid": [
+        -136.55,
+        -43.44
+      ],
+      "area_px": 3626
+    },
+    {
+      "index": 540,
+      "type": "building",
+      "centroid": [
+        12.65,
+        40.17
+      ],
+      "area_px": 2607
+    },
+    {
+      "index": 541,
+      "type": "building",
+      "centroid": [
+        89.68,
+        14.26
+      ],
+      "area_px": 92
+    },
+    {
+      "index": 542,
+      "type": "building",
+      "centroid": [
+        145.19,
+        22.82
+      ],
+      "area_px": 479
+    },
+    {
+      "index": 543,
+      "type": "building",
+      "centroid": [
+        502.42,
+        -37.92
+      ],
+      "area_px": 7610
+    },
+    {
+      "index": 544,
+      "type": "building",
+      "centroid": [
+        844.3,
+        0.29
+      ],
+      "area_px": 2412
+    },
+    {
+      "index": 545,
+      "type": "building",
+      "centroid": [
+        1065.16,
+        22.02
+      ],
+      "area_px": 5070
+    },
+    {
+      "index": 546,
+      "type": "building",
+      "centroid": [
+        1447.59,
+        -41.27
+      ],
+      "area_px": 2916
+    },
+    {
+      "index": 547,
+      "type": "building",
+      "centroid": [
+        1518.02,
+        5.02
+      ],
+      "area_px": 98
+    },
+    {
+      "index": 548,
+      "type": "building",
+      "centroid": [
+        1634.45,
+        -11.63
+      ],
+      "area_px": 3266
+    },
+    {
+      "index": 549,
+      "type": "building",
+      "centroid": [
+        1798.21,
+        -13.19
+      ],
+      "area_px": 533
+    },
+    {
+      "index": 550,
+      "type": "building",
+      "centroid": [
+        1956.98,
+        27.19
+      ],
+      "area_px": 3082
+    },
+    {
+      "index": 551,
+      "type": "building",
+      "centroid": [
+        2062.43,
+        40.77
+      ],
+      "area_px": 706
+    },
+    {
+      "index": 552,
+      "type": "building",
+      "centroid": [
+        2169.06,
+        39.0
+      ],
+      "area_px": 1541
+    },
+    {
+      "index": 553,
+      "type": "building",
+      "centroid": [
+        2204.32,
+        -46.57
+      ],
+      "area_px": 727
+    },
+    {
+      "index": 554,
+      "type": "building",
+      "centroid": [
+        2257.36,
+        -32.57
+      ],
+      "area_px": 720
+    },
+    {
+      "index": 555,
+      "type": "building",
+      "centroid": [
+        2299.99,
+        -28.76
+      ],
+      "area_px": 721
+    },
+    {
+      "index": 556,
+      "type": "building",
+      "centroid": [
+        2399.13,
+        -44.95
+      ],
+      "area_px": 1826
+    },
+    {
+      "index": 557,
+      "type": "building",
+      "centroid": [
+        3829.8,
+        -10.24
+      ],
+      "area_px": 4082
+    },
+    {
+      "index": 558,
+      "type": "building",
+      "centroid": [
+        4045.32,
+        35.67
+      ],
+      "area_px": 3569
+    },
+    {
+      "index": 559,
+      "type": "building",
+      "centroid": [
+        4209.61,
+        -43.77
+      ],
+      "area_px": 4293
+    },
+    {
+      "index": 560,
+      "type": "building",
+      "centroid": [
+        4423.14,
+        -21.92
+      ],
+      "area_px": 3815
+    },
+    {
+      "index": 561,
+      "type": "building",
+      "centroid": [
+        4565.04,
+        4.25
+      ],
+      "area_px": 220
+    },
+    {
+      "index": 562,
+      "type": "building",
+      "centroid": [
+        -1113.32,
+        131.49
+      ],
+      "area_px": 2241
+    },
+    {
+      "index": 563,
+      "type": "building",
+      "centroid": [
+        -507.53,
+        97.84
+      ],
+      "area_px": 2862
+    },
+    {
+      "index": 564,
+      "type": "building",
+      "centroid": [
+        -339.95,
+        93.54
+      ],
+      "area_px": 1543
+    },
+    {
+      "index": 565,
+      "type": "building",
+      "centroid": [
+        92.25,
+        55.75
+      ],
+      "area_px": 478
+    },
+    {
+      "index": 566,
+      "type": "building",
+      "centroid": [
+        519.88,
+        56.59
+      ],
+      "area_px": 5714
+    },
+    {
+      "index": 567,
+      "type": "building",
+      "centroid": [
+        813.98,
+        88.04
+      ],
+      "area_px": 1206
+    },
+    {
+      "index": 568,
+      "type": "building",
+      "centroid": [
+        1051.79,
+        111.75
+      ],
+      "area_px": 3836
+    },
+    {
+      "index": 569,
+      "type": "building",
+      "centroid": [
+        1281.17,
+        50.8
+      ],
+      "area_px": 2708
+    },
+    {
+      "index": 570,
+      "type": "building",
+      "centroid": [
+        1374.73,
+        145.87
+      ],
+      "area_px": 485
+    },
+    {
+      "index": 571,
+      "type": "building",
+      "centroid": [
+        1446.19,
+        63.62
+      ],
+      "area_px": 3456
+    },
+    {
+      "index": 572,
+      "type": "building",
+      "centroid": [
+        1634.63,
+        83.52
+      ],
+      "area_px": 4001
+    },
+    {
+      "index": 573,
+      "type": "building",
+      "centroid": [
+        1829.31,
+        103.84
+      ],
+      "area_px": 914
+    },
+    {
+      "index": 574,
+      "type": "building",
+      "centroid": [
+        1881.24,
+        137.75
+      ],
+      "area_px": 110
+    },
+    {
+      "index": 575,
+      "type": "building",
+      "centroid": [
+        2031.65,
+        128.77
+      ],
+      "area_px": 3532
+    },
+    {
+      "index": 576,
+      "type": "building",
+      "centroid": [
+        2276.1,
+        55.37
+      ],
+      "area_px": 1475
+    },
+    {
+      "index": 577,
+      "type": "building",
+      "centroid": [
+        2563.81,
+        66.74
+      ],
+      "area_px": 1840
+    },
+    {
+      "index": 578,
+      "type": "building",
+      "centroid": [
+        3738.26,
+        144.69
+      ],
+      "area_px": 2224
+    },
+    {
+      "index": 579,
+      "type": "building",
+      "centroid": [
+        3861.8,
+        96.72
+      ],
+      "area_px": 4531
+    },
+    {
+      "index": 580,
+      "type": "building",
+      "centroid": [
+        4081.21,
+        143.13
+      ],
+      "area_px": 4039
+    },
+    {
+      "index": 581,
+      "type": "building",
+      "centroid": [
+        4257.25,
+        60.35
+      ],
+      "area_px": 3828
+    },
+    {
+      "index": 582,
+      "type": "building",
+      "centroid": [
+        4303.73,
+        148.38
+      ],
+      "area_px": 3490
+    },
+    {
+      "index": 583,
+      "type": "building",
+      "centroid": [
+        4459.65,
+        70.89
+      ],
+      "area_px": 3250
+    },
+    {
+      "index": 584,
+      "type": "building",
+      "centroid": [
+        4507.24,
+        136.87
+      ],
+      "area_px": 2420
+    },
+    {
+      "index": 585,
+      "type": "building",
+      "centroid": [
+        -1786.14,
+        157.54
+      ],
+      "area_px": 2315
+    },
+    {
+      "index": 586,
+      "type": "building",
+      "centroid": [
+        -1555.08,
+        206.01
+      ],
+      "area_px": 7456
+    },
+    {
+      "index": 587,
+      "type": "building",
+      "centroid": [
+        -1281.02,
+        154.61
+      ],
+      "area_px": 5019
+    },
+    {
+      "index": 588,
+      "type": "building",
+      "centroid": [
+        -1080.22,
+        222.81
+      ],
+      "area_px": 3071
+    },
+    {
+      "index": 589,
+      "type": "building",
+      "centroid": [
+        -459.78,
+        171.55
+      ],
+      "area_px": 3167
+    },
+    {
+      "index": 590,
+      "type": "building",
+      "centroid": [
+        90.8,
+        204.79
+      ],
+      "area_px": 218
+    },
+    {
+      "index": 591,
+      "type": "building",
+      "centroid": [
+        192.29,
+        194.1
+      ],
+      "area_px": 6599
+    },
+    {
+      "index": 592,
+      "type": "building",
+      "centroid": [
+        312.72,
+        178.97
+      ],
+      "area_px": 9228
+    },
+    {
+      "index": 593,
+      "type": "building",
+      "centroid": [
+        544.06,
+        172.94
+      ],
+      "area_px": 4320
+    },
+    {
+      "index": 594,
+      "type": "building",
+      "centroid": [
+        767.51,
+        227.41
+      ],
+      "area_px": 2742
+    },
+    {
+      "index": 595,
+      "type": "building",
+      "centroid": [
+        844.88,
+        192.26
+      ],
+      "area_px": 2801
+    },
+    {
+      "index": 596,
+      "type": "building",
+      "centroid": [
+        958.69,
+        179.44
+      ],
+      "area_px": 900
+    },
+    {
+      "index": 597,
+      "type": "building",
+      "centroid": [
+        1027.62,
+        165.76
+      ],
+      "area_px": 765
+    },
+    {
+      "index": 598,
+      "type": "building",
+      "centroid": [
+        1159.54,
+        246.16
+      ],
+      "area_px": 3464
+    },
+    {
+      "index": 599,
+      "type": "building",
+      "centroid": [
+        1315.13,
+        183.84
+      ],
+      "area_px": 296
+    },
+    {
+      "index": 600,
+      "type": "building",
+      "centroid": [
+        1450.43,
+        193.68
+      ],
+      "area_px": 1816
+    },
+    {
+      "index": 601,
+      "type": "building",
+      "centroid": [
+        1586.0,
+        168.02
+      ],
+      "area_px": 753
+    },
+    {
+      "index": 602,
+      "type": "building",
+      "centroid": [
+        1747.47,
+        214.79
+      ],
+      "area_px": 1807
+    },
+    {
+      "index": 603,
+      "type": "building",
+      "centroid": [
+        1885.74,
+        192.9
+      ],
+      "area_px": 585
+    },
+    {
+      "index": 604,
+      "type": "building",
+      "centroid": [
+        2220.16,
+        206.74
+      ],
+      "area_px": 1634
+    },
+    {
+      "index": 605,
+      "type": "building",
+      "centroid": [
+        2310.19,
+        171.08
+      ],
+      "area_px": 1669
+    },
+    {
+      "index": 606,
+      "type": "building",
+      "centroid": [
+        2431.17,
+        163.51
+      ],
+      "area_px": 3202
+    },
+    {
+      "index": 607,
+      "type": "building",
+      "centroid": [
+        3904.25,
+        215.41
+      ],
+      "area_px": 4708
+    },
+    {
+      "index": 608,
+      "type": "building",
+      "centroid": [
+        4166.95,
+        215.61
+      ],
+      "area_px": 2114
+    },
+    {
+      "index": 609,
+      "type": "building",
+      "centroid": [
+        4342.58,
+        232.18
+      ],
+      "area_px": 2834
+    },
+    {
+      "index": 610,
+      "type": "building",
+      "centroid": [
+        4543.71,
+        195.06
+      ],
+      "area_px": 2000
+    },
+    {
+      "index": 611,
+      "type": "building",
+      "centroid": [
+        -1696.85,
+        322.8
+      ],
+      "area_px": 1810
+    },
+    {
+      "index": 612,
+      "type": "building",
+      "centroid": [
+        -1259.44,
+        314.52
+      ],
+      "area_px": 5300
+    },
+    {
+      "index": 613,
+      "type": "building",
+      "centroid": [
+        -1040.86,
+        314.04
+      ],
+      "area_px": 3762
+    },
+    {
+      "index": 614,
+      "type": "building",
+      "centroid": [
+        -623.45,
+        275.2
+      ],
+      "area_px": 4390
+    },
+    {
+      "index": 615,
+      "type": "building",
+      "centroid": [
+        -359.99,
+        269.11
+      ],
+      "area_px": 4854
+    },
+    {
+      "index": 616,
+      "type": "building",
+      "centroid": [
+        -161.7,
+        325.67
+      ],
+      "area_px": 2054
+    },
+    {
+      "index": 617,
+      "type": "building",
+      "centroid": [
+        436.52,
+        341.12
+      ],
+      "area_px": 4042
+    },
+    {
+      "index": 618,
+      "type": "building",
+      "centroid": [
+        635.56,
+        284.73
+      ],
+      "area_px": 718
+    },
+    {
+      "index": 619,
+      "type": "building",
+      "centroid": [
+        907.21,
+        346.18
+      ],
+      "area_px": 3531
+    },
+    {
+      "index": 620,
+      "type": "building",
+      "centroid": [
+        1008.1,
+        306.0
+      ],
+      "area_px": 2050
+    },
+    {
+      "index": 621,
+      "type": "building",
+      "centroid": [
+        1079.18,
+        281.8
+      ],
+      "area_px": 3313
+    },
+    {
+      "index": 622,
+      "type": "building",
+      "centroid": [
+        1317.91,
+        289.98
+      ],
+      "area_px": 120
+    },
+    {
+      "index": 623,
+      "type": "building",
+      "centroid": [
+        1396.75,
+        319.09
+      ],
+      "area_px": 1763
+    },
+    {
+      "index": 624,
+      "type": "building",
+      "centroid": [
+        1500.09,
+        325.45
+      ],
+      "area_px": 2095
+    },
+    {
+      "index": 625,
+      "type": "building",
+      "centroid": [
+        1614.55,
+        264.57
+      ],
+      "area_px": 1795
+    },
+    {
+      "index": 626,
+      "type": "building",
+      "centroid": [
+        1831.06,
+        313.59
+      ],
+      "area_px": 559
+    },
+    {
+      "index": 627,
+      "type": "building",
+      "centroid": [
+        1938.16,
+        303.09
+      ],
+      "area_px": 2094
+    },
+    {
+      "index": 628,
+      "type": "building",
+      "centroid": [
+        2027.82,
+        274.37
+      ],
+      "area_px": 1986
+    },
+    {
+      "index": 629,
+      "type": "building",
+      "centroid": [
+        2262.16,
+        296.49
+      ],
+      "area_px": 1539
+    },
+    {
+      "index": 630,
+      "type": "building",
+      "centroid": [
+        2326.57,
+        269.11
+      ],
+      "area_px": 857
+    },
+    {
+      "index": 631,
+      "type": "building",
+      "centroid": [
+        2689.9,
+        344.18
+      ],
+      "area_px": 767
+    },
+    {
+      "index": 632,
+      "type": "building",
+      "centroid": [
+        3942.98,
+        315.36
+      ],
+      "area_px": 4104
+    },
+    {
+      "index": 633,
+      "type": "building",
+      "centroid": [
+        4108.18,
+        264.34
+      ],
+      "area_px": 170
+    },
+    {
+      "index": 634,
+      "type": "building",
+      "centroid": [
+        4177.01,
+        332.29
+      ],
+      "area_px": 3972
+    },
+    {
+      "index": 635,
+      "type": "building",
+      "centroid": [
+        4393.66,
+        285.52
+      ],
+      "area_px": 2321
+    },
+    {
+      "index": 636,
+      "type": "building",
+      "centroid": [
+        4435.02,
+        349.12
+      ],
+      "area_px": 2357
+    },
+    {
+      "index": 637,
+      "type": "building",
+      "centroid": [
+        4613.36,
+        311.81
+      ],
+      "area_px": 2593
+    },
+    {
+      "index": 638,
+      "type": "building",
+      "centroid": [
+        -1624.48,
+        414.11
+      ],
+      "area_px": 1015
+    },
+    {
+      "index": 639,
+      "type": "building",
+      "centroid": [
+        -1554.82,
+        447.83
+      ],
+      "area_px": 154
+    },
+    {
+      "index": 640,
+      "type": "building",
+      "centroid": [
+        -1548.53,
+        363.15
+      ],
+      "area_px": 1193
+    },
+    {
+      "index": 641,
+      "type": "building",
+      "centroid": [
+        -1196.58,
+        394.51
+      ],
+      "area_px": 1616
+    },
+    {
+      "index": 642,
+      "type": "building",
+      "centroid": [
+        -1021.57,
+        406.42
+      ],
+      "area_px": 3717
+    },
+    {
+      "index": 643,
+      "type": "building",
+      "centroid": [
+        -889.67,
+        441.13
+      ],
+      "area_px": 1085
+    },
+    {
+      "index": 644,
+      "type": "building",
+      "centroid": [
+        -789.06,
+        374.01
+      ],
+      "area_px": 3139
+    },
+    {
+      "index": 645,
+      "type": "building",
+      "centroid": [
+        -544.59,
+        367.01
+      ],
+      "area_px": 4772
+    },
+    {
+      "index": 646,
+      "type": "building",
+      "centroid": [
+        -296.75,
+        408.1
+      ],
+      "area_px": 3936
+    },
+    {
+      "index": 647,
+      "type": "building",
+      "centroid": [
+        118.17,
+        359.19
+      ],
+      "area_px": 375
+    },
+    {
+      "index": 648,
+      "type": "building",
+      "centroid": [
+        257.9,
+        422.23
+      ],
+      "area_px": 4166
+    },
+    {
+      "index": 649,
+      "type": "building",
+      "centroid": [
+        346.97,
+        380.69
+      ],
+      "area_px": 3953
+    },
+    {
+      "index": 650,
+      "type": "building",
+      "centroid": [
+        803.63,
+        395.94
+      ],
+      "area_px": 4663
+    },
+    {
+      "index": 651,
+      "type": "building",
+      "centroid": [
+        1139.93,
+        446.33
+      ],
+      "area_px": 3509
+    },
+    {
+      "index": 652,
+      "type": "building",
+      "centroid": [
+        1223.75,
+        410.08
+      ],
+      "area_px": 3728
+    },
+    {
+      "index": 653,
+      "type": "building",
+      "centroid": [
+        1349.01,
+        410.96
+      ],
+      "area_px": 1244
+    },
+    {
+      "index": 654,
+      "type": "building",
+      "centroid": [
+        1475.89,
+        441.32
+      ],
+      "area_px": 420
+    },
+    {
+      "index": 655,
+      "type": "building",
+      "centroid": [
+        1568.98,
+        437.32
+      ],
+      "area_px": 1715
+    },
+    {
+      "index": 656,
+      "type": "building",
+      "centroid": [
+        1649.06,
+        423.27
+      ],
+      "area_px": 2692
+    },
+    {
+      "index": 657,
+      "type": "building",
+      "centroid": [
+        1753.0,
+        387.37
+      ],
+      "area_px": 2330
+    },
+    {
+      "index": 658,
+      "type": "building",
+      "centroid": [
+        1826.03,
+        387.01
+      ],
+      "area_px": 557
+    },
+    {
+      "index": 659,
+      "type": "building",
+      "centroid": [
+        1874.13,
+        377.83
+      ],
+      "area_px": 408
+    },
+    {
+      "index": 660,
+      "type": "building",
+      "centroid": [
+        1880.26,
+        449.5
+      ],
+      "area_px": 1644
+    },
+    {
+      "index": 661,
+      "type": "building",
+      "centroid": [
+        1996.66,
+        392.81
+      ],
+      "area_px": 449
+    },
+    {
+      "index": 662,
+      "type": "building",
+      "centroid": [
+        2534.69,
+        400.16
+      ],
+      "area_px": 775
+    },
+    {
+      "index": 663,
+      "type": "building",
+      "centroid": [
+        2619.01,
+        412.35
+      ],
+      "area_px": 757
+    },
+    {
+      "index": 664,
+      "type": "building",
+      "centroid": [
+        2859.74,
+        356.71
+      ],
+      "area_px": 183
+    },
+    {
+      "index": 665,
+      "type": "building",
+      "centroid": [
+        3998.72,
+        424.86
+      ],
+      "area_px": 5285
+    },
+    {
+      "index": 666,
+      "type": "building",
+      "centroid": [
+        4226.57,
+        394.27
+      ],
+      "area_px": 2960
+    },
+    {
+      "index": 667,
+      "type": "building",
+      "centroid": [
+        4498.09,
+        412.65
+      ],
+      "area_px": 4498
+    },
+    {
+      "index": 668,
+      "type": "building",
+      "centroid": [
+        -1754.18,
+        475.25
+      ],
+      "area_px": 229
+    },
+    {
+      "index": 669,
+      "type": "building",
+      "centroid": [
+        -1698.91,
+        456.86
+      ],
+      "area_px": 1144
+    },
+    {
+      "index": 670,
+      "type": "building",
+      "centroid": [
+        -1573.99,
+        512.19
+      ],
+      "area_px": 1263
+    },
+    {
+      "index": 671,
+      "type": "building",
+      "centroid": [
+        -1518.37,
+        510.02
+      ],
+      "area_px": 151
+    },
+    {
+      "index": 672,
+      "type": "building",
+      "centroid": [
+        -1498.28,
+        461.58
+      ],
+      "area_px": 1031
+    },
+    {
+      "index": 673,
+      "type": "building",
+      "centroid": [
+        -1495.85,
+        546.56
+      ],
+      "area_px": 152
+    },
+    {
+      "index": 674,
+      "type": "building",
+      "centroid": [
+        -1433.21,
+        539.52
+      ],
+      "area_px": 1685
+    },
+    {
+      "index": 675,
+      "type": "building",
+      "centroid": [
+        -1281.89,
+        456.7
+      ],
+      "area_px": 1825
+    },
+    {
+      "index": 676,
+      "type": "building",
+      "centroid": [
+        -1007.37,
+        504.03
+      ],
+      "area_px": 3904
+    },
+    {
+      "index": 677,
+      "type": "building",
+      "centroid": [
+        -737.74,
+        476.17
+      ],
+      "area_px": 4102
+    },
+    {
+      "index": 678,
+      "type": "building",
+      "centroid": [
+        -560.78,
+        450.05
+      ],
+      "area_px": 1818
+    },
+    {
+      "index": 679,
+      "type": "building",
+      "centroid": [
+        -474.55,
+        516.9
+      ],
+      "area_px": 4777
+    },
+    {
+      "index": 680,
+      "type": "building",
+      "centroid": [
+        -243.79,
+        492.54
+      ],
+      "area_px": 3991
+    },
+    {
+      "index": 681,
+      "type": "building",
+      "centroid": [
+        -61.81,
+        493.81
+      ],
+      "area_px": 1907
+    },
+    {
+      "index": 682,
+      "type": "building",
+      "centroid": [
+        74.14,
+        508.31
+      ],
+      "area_px": 3646
+    },
+    {
+      "index": 683,
+      "type": "building",
+      "centroid": [
+        166.27,
+        463.62
+      ],
+      "area_px": 4055
+    },
+    {
+      "index": 684,
+      "type": "building",
+      "centroid": [
+        517.72,
+        512.6
+      ],
+      "area_px": 3576
+    },
+    {
+      "index": 685,
+      "type": "building",
+      "centroid": [
+        634.83,
+        463.18
+      ],
+      "area_px": 3466
+    },
+    {
+      "index": 686,
+      "type": "building",
+      "centroid": [
+        881.89,
+        545.29
+      ],
+      "area_px": 4065
+    },
+    {
+      "index": 687,
+      "type": "building",
+      "centroid": [
+        959.37,
+        467.99
+      ],
+      "area_px": 706
+    },
+    {
+      "index": 688,
+      "type": "building",
+      "centroid": [
+        1072.35,
+        470.73
+      ],
+      "area_px": 2175
+    },
+    {
+      "index": 689,
+      "type": "building",
+      "centroid": [
+        1361.54,
+        498.03
+      ],
+      "area_px": 734
+    },
+    {
+      "index": 690,
+      "type": "building",
+      "centroid": [
+        1445.67,
+        494.88
+      ],
+      "area_px": 1156
+    },
+    {
+      "index": 691,
+      "type": "building",
+      "centroid": [
+        1702.06,
+        522.2
+      ],
+      "area_px": 1973
+    },
+    {
+      "index": 692,
+      "type": "building",
+      "centroid": [
+        2257.98,
+        549.58
+      ],
+      "area_px": 2165
+    },
+    {
+      "index": 693,
+      "type": "building",
+      "centroid": [
+        2323.56,
+        488.03
+      ],
+      "area_px": 748
+    },
+    {
+      "index": 694,
+      "type": "building",
+      "centroid": [
+        2400.58,
+        451.02
+      ],
+      "area_px": 836
+    },
+    {
+      "index": 695,
+      "type": "building",
+      "centroid": [
+        2424.09,
+        525.92
+      ],
+      "area_px": 510
+    },
+    {
+      "index": 696,
+      "type": "building",
+      "centroid": [
+        2477.6,
+        479.59
+      ],
+      "area_px": 1011
+    },
+    {
+      "index": 697,
+      "type": "building",
+      "centroid": [
+        2646.76,
+        496.54
+      ],
+      "area_px": 512
+    },
+    {
+      "index": 698,
+      "type": "building",
+      "centroid": [
+        2738.78,
+        474.63
+      ],
+      "area_px": 766
+    },
+    {
+      "index": 699,
+      "type": "building",
+      "centroid": [
+        3848.95,
+        533.27
+      ],
+      "area_px": 428
+    },
+    {
+      "index": 700,
+      "type": "building",
+      "centroid": [
+        3890.37,
+        480.31
+      ],
+      "area_px": 1866
+    },
+    {
+      "index": 701,
+      "type": "building",
+      "centroid": [
+        4067.0,
+        506.27
+      ],
+      "area_px": 3034
+    },
+    {
+      "index": 702,
+      "type": "building",
+      "centroid": [
+        4284.91,
+        461.05
+      ],
+      "area_px": 3698
+    },
+    {
+      "index": 703,
+      "type": "building",
+      "centroid": [
+        4347.21,
+        536.07
+      ],
+      "area_px": 4957
+    },
+    {
+      "index": 704,
+      "type": "building",
+      "centroid": [
+        4534.54,
+        518.7
+      ],
+      "area_px": 1830
+    },
+    {
+      "index": 705,
+      "type": "building",
+      "centroid": [
+        -1664.06,
+        559.43
+      ],
+      "area_px": 1013
+    },
+    {
+      "index": 706,
+      "type": "building",
+      "centroid": [
+        -1557.23,
+        615.43
+      ],
+      "area_px": 2873
+    },
+    {
+      "index": 707,
+      "type": "building",
+      "centroid": [
+        -991.77,
+        621.42
+      ],
+      "area_px": 3417
+    },
+    {
+      "index": 708,
+      "type": "building",
+      "centroid": [
+        -842.4,
+        580.12
+      ],
+      "area_px": 4753
+    },
+    {
+      "index": 709,
+      "type": "building",
+      "centroid": [
+        -749.42,
+        643.33
+      ],
+      "area_px": 90
+    },
+    {
+      "index": 710,
+      "type": "building",
+      "centroid": [
+        -643.24,
+        617.98
+      ],
+      "area_px": 3402
+    },
+    {
+      "index": 711,
+      "type": "building",
+      "centroid": [
+        -425.5,
+        606.67
+      ],
+      "area_px": 4517
+    },
+    {
+      "index": 712,
+      "type": "building",
+      "centroid": [
+        -186.16,
+        572.72
+      ],
+      "area_px": 3962
+    },
+    {
+      "index": 713,
+      "type": "building",
+      "centroid": [
+        -4.5,
+        583.44
+      ],
+      "area_px": 2069
+    },
+    {
+      "index": 714,
+      "type": "building",
+      "centroid": [
+        120.01,
+        610.17
+      ],
+      "area_px": 777
+    },
+    {
+      "index": 715,
+      "type": "building",
+      "centroid": [
+        251.18,
+        641.38
+      ],
+      "area_px": 3394
+    },
+    {
+      "index": 716,
+      "type": "building",
+      "centroid": [
+        339.65,
+        595.42
+      ],
+      "area_px": 3605
+    },
+    {
+      "index": 717,
+      "type": "building",
+      "centroid": [
+        428.16,
+        554.35
+      ],
+      "area_px": 3463
+    },
+    {
+      "index": 718,
+      "type": "building",
+      "centroid": [
+        692.84,
+        619.8
+      ],
+      "area_px": 4070
+    },
+    {
+      "index": 719,
+      "type": "building",
+      "centroid": [
+        987.23,
+        553.31
+      ],
+      "area_px": 1858
+    },
+    {
+      "index": 720,
+      "type": "building",
+      "centroid": [
+        1134.4,
+        628.94
+      ],
+      "area_px": 1595
+    },
+    {
+      "index": 721,
+      "type": "building",
+      "centroid": [
+        1203.05,
+        603.87
+      ],
+      "area_px": 2736
+    },
+    {
+      "index": 722,
+      "type": "building",
+      "centroid": [
+        1285.36,
+        566.82
+      ],
+      "area_px": 2425
+    },
+    {
+      "index": 723,
+      "type": "building",
+      "centroid": [
+        1395.37,
+        573.66
+      ],
+      "area_px": 617
+    },
+    {
+      "index": 724,
+      "type": "building",
+      "centroid": [
+        1959.69,
+        645.85
+      ],
+      "area_px": 4029
+    },
+    {
+      "index": 725,
+      "type": "building",
+      "centroid": [
+        2069.07,
+        638.5
+      ],
+      "area_px": 915
+    },
+    {
+      "index": 726,
+      "type": "building",
+      "centroid": [
+        2169.07,
+        597.67
+      ],
+      "area_px": 867
+    },
+    {
+      "index": 727,
+      "type": "building",
+      "centroid": [
+        2385.85,
+        604.8
+      ],
+      "area_px": 656
+    },
+    {
+      "index": 728,
+      "type": "building",
+      "centroid": [
+        2447.29,
+        587.16
+      ],
+      "area_px": 136
+    },
+    {
+      "index": 729,
+      "type": "building",
+      "centroid": [
+        2483.03,
+        620.24
+      ],
+      "area_px": 727
+    },
+    {
+      "index": 730,
+      "type": "building",
+      "centroid": [
+        2558.55,
+        559.4
+      ],
+      "area_px": 1054
+    },
+    {
+      "index": 731,
+      "type": "building",
+      "centroid": [
+        2606.77,
+        638.9
+      ],
+      "area_px": 762
+    },
+    {
+      "index": 732,
+      "type": "building",
+      "centroid": [
+        2666.73,
+        550.97
+      ],
+      "area_px": 133
+    },
+    {
+      "index": 733,
+      "type": "building",
+      "centroid": [
+        2773.13,
+        568.84
+      ],
+      "area_px": 764
+    },
+    {
+      "index": 734,
+      "type": "building",
+      "centroid": [
+        3964.76,
+        573.81
+      ],
+      "area_px": 1050
+    },
+    {
+      "index": 735,
+      "type": "building",
+      "centroid": [
+        4142.04,
+        574.07
+      ],
+      "area_px": 3025
+    },
+    {
+      "index": 736,
+      "type": "building",
+      "centroid": [
+        4219.54,
+        618.85
+      ],
+      "area_px": 1534
+    },
+    {
+      "index": 737,
+      "type": "building",
+      "centroid": [
+        4413.8,
+        622.64
+      ],
+      "area_px": 4413
+    },
+    {
+      "index": 738,
+      "type": "building",
+      "centroid": [
+        4558.28,
+        602.8
+      ],
+      "area_px": 256
+    },
+    {
+      "index": 739,
+      "type": "building",
+      "centroid": [
+        -1454.5,
+        673.38
+      ],
+      "area_px": 3673
+    },
+    {
+      "index": 740,
+      "type": "building",
+      "centroid": [
+        -976.81,
+        720.57
+      ],
+      "area_px": 3602
+    },
+    {
+      "index": 741,
+      "type": "building",
+      "centroid": [
+        -797.94,
+        722.29
+      ],
+      "area_px": 3365
+    },
+    {
+      "index": 742,
+      "type": "building",
+      "centroid": [
+        -566.96,
+        692.28
+      ],
+      "area_px": 2072
+    },
+    {
+      "index": 743,
+      "type": "building",
+      "centroid": [
+        -367.15,
+        687.86
+      ],
+      "area_px": 4980
+    },
+    {
+      "index": 744,
+      "type": "building",
+      "centroid": [
+        -128.62,
+        662.26
+      ],
+      "area_px": 4645
+    },
+    {
+      "index": 745,
+      "type": "building",
+      "centroid": [
+        44.95,
+        662.32
+      ],
+      "area_px": 1114
+    },
+    {
+      "index": 746,
+      "type": "building",
+      "centroid": [
+        173.84,
+        681.29
+      ],
+      "area_px": 1715
+    },
+    {
+      "index": 747,
+      "type": "building",
+      "centroid": [
+        499.13,
+        710.9
+      ],
+      "area_px": 3981
+    },
+    {
+      "index": 748,
+      "type": "building",
+      "centroid": [
+        588.67,
+        670.05
+      ],
+      "area_px": 4203
+    },
+    {
+      "index": 749,
+      "type": "building",
+      "centroid": [
+        943.84,
+        704.99
+      ],
+      "area_px": 3209
+    },
+    {
+      "index": 750,
+      "type": "building",
+      "centroid": [
+        1032.6,
+        669.41
+      ],
+      "area_px": 2884
+    },
+    {
+      "index": 751,
+      "type": "building",
+      "centroid": [
+        1177.69,
+        747.79
+      ],
+      "area_px": 1255
+    },
+    {
+      "index": 752,
+      "type": "building",
+      "centroid": [
+        1249.19,
+        724.34
+      ],
+      "area_px": 2451
+    },
+    {
+      "index": 753,
+      "type": "building",
+      "centroid": [
+        1772.17,
+        722.44
+      ],
+      "area_px": 4129
+    },
+    {
+      "index": 754,
+      "type": "building",
+      "centroid": [
+        1870.55,
+        702.61
+      ],
+      "area_px": 2090
+    },
+    {
+      "index": 755,
+      "type": "building",
+      "centroid": [
+        2164.66,
+        748.66
+      ],
+      "area_px": 3167
+    },
+    {
+      "index": 756,
+      "type": "building",
+      "centroid": [
+        2311.05,
+        707.96
+      ],
+      "area_px": 1368
+    },
+    {
+      "index": 757,
+      "type": "building",
+      "centroid": [
+        2417.04,
+        683.03
+      ],
+      "area_px": 971
+    },
+    {
+      "index": 758,
+      "type": "building",
+      "centroid": [
+        2741.52,
+        716.46
+      ],
+      "area_px": 2260
+    },
+    {
+      "index": 759,
+      "type": "building",
+      "centroid": [
+        2822.83,
+        692.13
+      ],
+      "area_px": 734
+    },
+    {
+      "index": 760,
+      "type": "building",
+      "centroid": [
+        4251.05,
+        667.25
+      ],
+      "area_px": 574
+    },
+    {
+      "index": 761,
+      "type": "building",
+      "centroid": [
+        4289.86,
+        726.03
+      ],
+      "area_px": 2610
+    },
+    {
+      "index": 762,
+      "type": "building",
+      "centroid": [
+        4481.81,
+        702.89
+      ],
+      "area_px": 4598
+    },
+    {
+      "index": 763,
+      "type": "building",
+      "centroid": [
+        -1128.44,
+        765.28
+      ],
+      "area_px": 7711
+    },
+    {
+      "index": 764,
+      "type": "building",
+      "centroid": [
+        -964.62,
+        819.45
+      ],
+      "area_px": 3395
+    },
+    {
+      "index": 765,
+      "type": "building",
+      "centroid": [
+        -765.3,
+        796.63
+      ],
+      "area_px": 3141
+    },
+    {
+      "index": 766,
+      "type": "building",
+      "centroid": [
+        -553.09,
+        797.58
+      ],
+      "area_px": 2747
+    },
+    {
+      "index": 767,
+      "type": "building",
+      "centroid": [
+        -313.46,
+        775.53
+      ],
+      "area_px": 5333
+    },
+    {
+      "index": 768,
+      "type": "building",
+      "centroid": [
+        -76.81,
+        754.74
+      ],
+      "area_px": 4243
+    },
+    {
+      "index": 769,
+      "type": "building",
+      "centroid": [
+        2.32,
+        849.02
+      ],
+      "area_px": 4613
+    },
+    {
+      "index": 770,
+      "type": "building",
+      "centroid": [
+        112.49,
+        763.03
+      ],
+      "area_px": 2166
+    },
+    {
+      "index": 771,
+      "type": "building",
+      "centroid": [
+        171.35,
+        847.67
+      ],
+      "area_px": 752
+    },
+    {
+      "index": 772,
+      "type": "building",
+      "centroid": [
+        240.74,
+        820.76
+      ],
+      "area_px": 2645
+    },
+    {
+      "index": 773,
+      "type": "building",
+      "centroid": [
+        319.33,
+        793.85
+      ],
+      "area_px": 4077
+    },
+    {
+      "index": 774,
+      "type": "building",
+      "centroid": [
+        413.62,
+        752.85
+      ],
+      "area_px": 3841
+    },
+    {
+      "index": 775,
+      "type": "building",
+      "centroid": [
+        646.34,
+        838.78
+      ],
+      "area_px": 3542
+    },
+    {
+      "index": 776,
+      "type": "building",
+      "centroid": [
+        755.45,
+        781.09
+      ],
+      "area_px": 3336
+    },
+    {
+      "index": 777,
+      "type": "building",
+      "centroid": [
+        871.82,
+        784.92
+      ],
+      "area_px": 307
+    },
+    {
+      "index": 778,
+      "type": "building",
+      "centroid": [
+        991.21,
+        827.52
+      ],
+      "area_px": 2742
+    },
+    {
+      "index": 779,
+      "type": "building",
+      "centroid": [
+        1080.6,
+        791.95
+      ],
+      "area_px": 2452
+    },
+    {
+      "index": 780,
+      "type": "building",
+      "centroid": [
+        1500.88,
+        772.54
+      ],
+      "area_px": 23389
+    },
+    {
+      "index": 781,
+      "type": "building",
+      "centroid": [
+        2026.69,
+        805.12
+      ],
+      "area_px": 3578
+    },
+    {
+      "index": 782,
+      "type": "building",
+      "centroid": [
+        2454.36,
+        786.41
+      ],
+      "area_px": 751
+    },
+    {
+      "index": 783,
+      "type": "building",
+      "centroid": [
+        2554.16,
+        751.84
+      ],
+      "area_px": 762
+    },
+    {
+      "index": 784,
+      "type": "building",
+      "centroid": [
+        2656.6,
+        774.99
+      ],
+      "area_px": 773
+    },
+    {
+      "index": 785,
+      "type": "building",
+      "centroid": [
+        4147.03,
+        837.67
+      ],
+      "area_px": 2517
+    },
+    {
+      "index": 786,
+      "type": "building",
+      "centroid": [
+        4216.94,
+        784.17
+      ],
+      "area_px": 1202
+    },
+    {
+      "index": 787,
+      "type": "building",
+      "centroid": [
+        4331.11,
+        826.49
+      ],
+      "area_px": 4076
+    },
+    {
+      "index": 788,
+      "type": "building",
+      "centroid": [
+        4521.4,
+        799.9
+      ],
+      "area_px": 3003
+    },
+    {
+      "index": 789,
+      "type": "building",
+      "centroid": [
+        -1321.03,
+        948.42
+      ],
+      "area_px": 380
+    },
+    {
+      "index": 790,
+      "type": "building",
+      "centroid": [
+        -952.34,
+        916.93
+      ],
+      "area_px": 3334
+    },
+    {
+      "index": 791,
+      "type": "building",
+      "centroid": [
+        -766.36,
+        893.41
+      ],
+      "area_px": 3840
+    },
+    {
+      "index": 792,
+      "type": "building",
+      "centroid": [
+        -626.72,
+        880.16
+      ],
+      "area_px": 1123
+    },
+    {
+      "index": 793,
+      "type": "building",
+      "centroid": [
+        -525.69,
+        899.19
+      ],
+      "area_px": 1395
+    },
+    {
+      "index": 794,
+      "type": "building",
+      "centroid": [
+        -441.54,
+        869.6
+      ],
+      "area_px": 976
+    },
+    {
+      "index": 795,
+      "type": "building",
+      "centroid": [
+        -266.98,
+        862.91
+      ],
+      "area_px": 4706
+    },
+    {
+      "index": 796,
+      "type": "building",
+      "centroid": [
+        -234.14,
+        934.69
+      ],
+      "area_px": 2573
+    },
+    {
+      "index": 797,
+      "type": "building",
+      "centroid": [
+        110.53,
+        932.77
+      ],
+      "area_px": 3244
+    },
+    {
+      "index": 798,
+      "type": "building",
+      "centroid": [
+        213.4,
+        914.93
+      ],
+      "area_px": 784
+    },
+    {
+      "index": 799,
+      "type": "building",
+      "centroid": [
+        468.98,
+        925.83
+      ],
+      "area_px": 3790
+    },
+    {
+      "index": 800,
+      "type": "building",
+      "centroid": [
+        556.87,
+        885.29
+      ],
+      "area_px": 3340
+    },
+    {
+      "index": 801,
+      "type": "building",
+      "centroid": [
+        799.82,
+        904.96
+      ],
+      "area_px": 3047
+    },
+    {
+      "index": 802,
+      "type": "building",
+      "centroid": [
+        1187.75,
+        894.95
+      ],
+      "area_px": 171
+    },
+    {
+      "index": 803,
+      "type": "building",
+      "centroid": [
+        1241.73,
+        907.28
+      ],
+      "area_px": 1537
+    },
+    {
+      "index": 804,
+      "type": "building",
+      "centroid": [
+        1320.27,
+        903.27
+      ],
+      "area_px": 3264
+    },
+    {
+      "index": 805,
+      "type": "building",
+      "centroid": [
+        1746.47,
+        926.38
+      ],
+      "area_px": 3896
+    },
+    {
+      "index": 806,
+      "type": "building",
+      "centroid": [
+        1831.41,
+        893.73
+      ],
+      "area_px": 3037
+    },
+    {
+      "index": 807,
+      "type": "building",
+      "centroid": [
+        1938.07,
+        856.67
+      ],
+      "area_px": 3290
+    },
+    {
+      "index": 808,
+      "type": "building",
+      "centroid": [
+        2126.35,
+        891.26
+      ],
+      "area_px": 171
+    },
+    {
+      "index": 809,
+      "type": "building",
+      "centroid": [
+        2310.22,
+        900.09
+      ],
+      "area_px": 602
+    },
+    {
+      "index": 810,
+      "type": "building",
+      "centroid": [
+        2482.5,
+        857.33
+      ],
+      "area_px": 768
+    },
+    {
+      "index": 811,
+      "type": "building",
+      "centroid": [
+        2617.91,
+        941.51
+      ],
+      "area_px": 2146
+    },
+    {
+      "index": 812,
+      "type": "building",
+      "centroid": [
+        2737.43,
+        884.08
+      ],
+      "area_px": 736
+    },
+    {
+      "index": 813,
+      "type": "building",
+      "centroid": [
+        2827.08,
+        858.79
+      ],
+      "area_px": 736
+    },
+    {
+      "index": 814,
+      "type": "building",
+      "centroid": [
+        2849.69,
+        939.02
+      ],
+      "area_px": 735
+    },
+    {
+      "index": 815,
+      "type": "building",
+      "centroid": [
+        4046.37,
+        910.57
+      ],
+      "area_px": 1987
+    },
+    {
+      "index": 816,
+      "type": "building",
+      "centroid": [
+        4189.72,
+        940.89
+      ],
+      "area_px": 3920
+    },
+    {
+      "index": 817,
+      "type": "building",
+      "centroid": [
+        4396.93,
+        921.6
+      ],
+      "area_px": 2915
+    },
+    {
+      "index": 818,
+      "type": "building",
+      "centroid": [
+        4549.94,
+        899.46
+      ],
+      "area_px": 884
+    },
+    {
+      "index": 819,
+      "type": "building",
+      "centroid": [
+        -1688.85,
+        1001.26
+      ],
+      "area_px": 392
+    },
+    {
+      "index": 820,
+      "type": "building",
+      "centroid": [
+        -1472.16,
+        992.3
+      ],
+      "area_px": 277
+    },
+    {
+      "index": 821,
+      "type": "building",
+      "centroid": [
+        -939.38,
+        1012.45
+      ],
+      "area_px": 3402
+    },
+    {
+      "index": 822,
+      "type": "building",
+      "centroid": [
+        -763.36,
+        987.66
+      ],
+      "area_px": 3320
+    },
+    {
+      "index": 823,
+      "type": "building",
+      "centroid": [
+        -602.95,
+        965.5
+      ],
+      "area_px": 1657
+    },
+    {
+      "index": 824,
+      "type": "building",
+      "centroid": [
+        -418.86,
+        960.59
+      ],
+      "area_px": 2369
+    },
+    {
+      "index": 825,
+      "type": "building",
+      "centroid": [
+        -126.62,
+        950.31
+      ],
+      "area_px": 1690
+    },
+    {
+      "index": 826,
+      "type": "building",
+      "centroid": [
+        -65.09,
+        1049.69
+      ],
+      "area_px": 3646
+    },
+    {
+      "index": 827,
+      "type": "building",
+      "centroid": [
+        26.18,
+        983.7
+      ],
+      "area_px": 3485
+    },
+    {
+      "index": 828,
+      "type": "building",
+      "centroid": [
+        281.77,
+        1023.47
+      ],
+      "area_px": 2253
+    },
+    {
+      "index": 829,
+      "type": "building",
+      "centroid": [
+        363.94,
+        959.99
+      ],
+      "area_px": 4239
+    },
+    {
+      "index": 830,
+      "type": "building",
+      "centroid": [
+        598.43,
+        1016.6
+      ],
+      "area_px": 2169
+    },
+    {
+      "index": 831,
+      "type": "building",
+      "centroid": [
+        687.73,
+        972.87
+      ],
+      "area_px": 2420
+    },
+    {
+      "index": 832,
+      "type": "building",
+      "centroid": [
+        960.56,
+        1023.39
+      ],
+      "area_px": 651
+    },
+    {
+      "index": 833,
+      "type": "building",
+      "centroid": [
+        1060.18,
+        1006.85
+      ],
+      "area_px": 4007
+    },
+    {
+      "index": 834,
+      "type": "building",
+      "centroid": [
+        1152.5,
+        973.51
+      ],
+      "area_px": 3401
+    },
+    {
+      "index": 835,
+      "type": "building",
+      "centroid": [
+        1275.12,
+        990.89
+      ],
+      "area_px": 525
+    },
+    {
+      "index": 836,
+      "type": "building",
+      "centroid": [
+        1468.96,
+        1039.6
+      ],
+      "area_px": 3810
+    },
+    {
+      "index": 837,
+      "type": "building",
+      "centroid": [
+        1556.02,
+        992.3
+      ],
+      "area_px": 3008
+    },
+    {
+      "index": 838,
+      "type": "building",
+      "centroid": [
+        1997.71,
+        1022.96
+      ],
+      "area_px": 4148
+    },
+    {
+      "index": 839,
+      "type": "building",
+      "centroid": [
+        2071.62,
+        984.5
+      ],
+      "area_px": 1999
+    },
+    {
+      "index": 840,
+      "type": "building",
+      "centroid": [
+        2127.28,
+        1026.63
+      ],
+      "area_px": 1055
+    },
+    {
+      "index": 841,
+      "type": "building",
+      "centroid": [
+        2161.63,
+        957.69
+      ],
+      "area_px": 555
+    },
+    {
+      "index": 842,
+      "type": "building",
+      "centroid": [
+        2180.1,
+        1030.18
+      ],
+      "area_px": 174
+    },
+    {
+      "index": 843,
+      "type": "building",
+      "centroid": [
+        2460.61,
+        1030.39
+      ],
+      "area_px": 1466
+    },
+    {
+      "index": 844,
+      "type": "building",
+      "centroid": [
+        2528.43,
+        986.93
+      ],
+      "area_px": 741
+    },
+    {
+      "index": 845,
+      "type": "building",
+      "centroid": [
+        2706.71,
+        1010.75
+      ],
+      "area_px": 1299
+    },
+    {
+      "index": 846,
+      "type": "building",
+      "centroid": [
+        2782.3,
+        973.56
+      ],
+      "area_px": 747
+    },
+    {
+      "index": 847,
+      "type": "building",
+      "centroid": [
+        2854.18,
+        1044.48
+      ],
+      "area_px": 744
+    },
+    {
+      "index": 848,
+      "type": "building",
+      "centroid": [
+        4267.88,
+        1012.74
+      ],
+      "area_px": 3136
+    },
+    {
+      "index": 849,
+      "type": "building",
+      "centroid": [
+        4463.72,
+        988.2
+      ],
+      "area_px": 4001
+    },
+    {
+      "index": 850,
+      "type": "building",
+      "centroid": [
+        4561.05,
+        998.93
+      ],
+      "area_px": 197
+    },
+    {
+      "index": 851,
+      "type": "building",
+      "centroid": [
+        -1127.62,
+        1100.43
+      ],
+      "area_px": 5800
+    },
+    {
+      "index": 852,
+      "type": "building",
+      "centroid": [
+        -926.26,
+        1113.58
+      ],
+      "area_px": 3740
+    },
+    {
+      "index": 853,
+      "type": "building",
+      "centroid": [
+        -562.79,
+        1111.89
+      ],
+      "area_px": 5736
+    },
+    {
+      "index": 854,
+      "type": "building",
+      "centroid": [
+        -389.94,
+        1053.93
+      ],
+      "area_px": 3235
+    },
+    {
+      "index": 855,
+      "type": "building",
+      "centroid": [
+        -164.29,
+        1080.21
+      ],
+      "area_px": 5051
+    },
+    {
+      "index": 856,
+      "type": "building",
+      "centroid": [
+        115.46,
+        1121.78
+      ],
+      "area_px": 3788
+    },
+    {
+      "index": 857,
+      "type": "building",
+      "centroid": [
+        203.16,
+        1079.6
+      ],
+      "area_px": 3260
+    },
+    {
+      "index": 858,
+      "type": "building",
+      "centroid": [
+        349.08,
+        1135.79
+      ],
+      "area_px": 831
+    },
+    {
+      "index": 859,
+      "type": "building",
+      "centroid": [
+        419.22,
+        1104.41
+      ],
+      "area_px": 1933
+    },
+    {
+      "index": 860,
+      "type": "building",
+      "centroid": [
+        509.82,
+        1060.2
+      ],
+      "area_px": 2106
+    },
+    {
+      "index": 861,
+      "type": "building",
+      "centroid": [
+        629.67,
+        1126.92
+      ],
+      "area_px": 2147
+    },
+    {
+      "index": 862,
+      "type": "building",
+      "centroid": [
+        718.14,
+        1082.8
+      ],
+      "area_px": 2056
+    },
+    {
+      "index": 863,
+      "type": "building",
+      "centroid": [
+        864.73,
+        1088.09
+      ],
+      "area_px": 5055
+    },
+    {
+      "index": 864,
+      "type": "building",
+      "centroid": [
+        1215.62,
+        1136.4
+      ],
+      "area_px": 3306
+    },
+    {
+      "index": 865,
+      "type": "building",
+      "centroid": [
+        1316.7,
+        1100.36
+      ],
+      "area_px": 2153
+    },
+    {
+      "index": 866,
+      "type": "building",
+      "centroid": [
+        1383.83,
+        1073.64
+      ],
+      "area_px": 3730
+    },
+    {
+      "index": 867,
+      "type": "building",
+      "centroid": [
+        1621.61,
+        1147.27
+      ],
+      "area_px": 2024
+    },
+    {
+      "index": 868,
+      "type": "building",
+      "centroid": [
+        1715.52,
+        1133.14
+      ],
+      "area_px": 3952
+    },
+    {
+      "index": 869,
+      "type": "building",
+      "centroid": [
+        1811.81,
+        1098.04
+      ],
+      "area_px": 4126
+    },
+    {
+      "index": 870,
+      "type": "building",
+      "centroid": [
+        1904.7,
+        1060.18
+      ],
+      "area_px": 4094
+    },
+    {
+      "index": 871,
+      "type": "building",
+      "centroid": [
+        2108.25,
+        1137.3
+      ],
+      "area_px": 940
+    },
+    {
+      "index": 872,
+      "type": "building",
+      "centroid": [
+        2330.6,
+        1101.94
+      ],
+      "area_px": 4848
+    },
+    {
+      "index": 873,
+      "type": "building",
+      "centroid": [
+        2505.43,
+        1097.53
+      ],
+      "area_px": 545
+    },
+    {
+      "index": 874,
+      "type": "building",
+      "centroid": [
+        2532.21,
+        1140.32
+      ],
+      "area_px": 429
+    },
+    {
+      "index": 875,
+      "type": "building",
+      "centroid": [
+        2582.25,
+        1057.56
+      ],
+      "area_px": 752
+    },
+    {
+      "index": 876,
+      "type": "building",
+      "centroid": [
+        2622.73,
+        1115.79
+      ],
+      "area_px": 865
+    },
+    {
+      "index": 877,
+      "type": "building",
+      "centroid": [
+        2722.7,
+        1120.38
+      ],
+      "area_px": 748
+    },
+    {
+      "index": 878,
+      "type": "building",
+      "centroid": [
+        2793.43,
+        1080.27
+      ],
+      "area_px": 746
+    },
+    {
+      "index": 879,
+      "type": "building",
+      "centroid": [
+        4176.65,
+        1088.11
+      ],
+      "area_px": 2103
+    },
+    {
+      "index": 880,
+      "type": "building",
+      "centroid": [
+        4385.44,
+        1091.37
+      ],
+      "area_px": 474
+    },
+    {
+      "index": 881,
+      "type": "building",
+      "centroid": [
+        4528.36,
+        1075.64
+      ],
+      "area_px": 3675
+    },
+    {
+      "index": 882,
+      "type": "building",
+      "centroid": [
+        -1333.86,
+        1150.3
+      ],
+      "area_px": 857
+    },
+    {
+      "index": 883,
+      "type": "building",
+      "centroid": [
+        -1280.39,
+        1153.63
+      ],
+      "area_px": 174
+    },
+    {
+      "index": 884,
+      "type": "building",
+      "centroid": [
+        -1141.83,
+        1242.67
+      ],
+      "area_px": 2325
+    },
+    {
+      "index": 885,
+      "type": "building",
+      "centroid": [
+        -1041.28,
+        1229.83
+      ],
+      "area_px": 1767
+    },
+    {
+      "index": 886,
+      "type": "building",
+      "centroid": [
+        -915.55,
+        1214.22
+      ],
+      "area_px": 3490
+    },
+    {
+      "index": 887,
+      "type": "building",
+      "centroid": [
+        -456.04,
+        1150.98
+      ],
+      "area_px": 332
+    },
+    {
+      "index": 888,
+      "type": "building",
+      "centroid": [
+        -322.73,
+        1205.38
+      ],
+      "area_px": 4024
+    },
+    {
+      "index": 889,
+      "type": "building",
+      "centroid": [
+        -243.03,
+        1154.14
+      ],
+      "area_px": 3896
+    },
+    {
+      "index": 890,
+      "type": "building",
+      "centroid": [
+        -63.1,
+        1238.25
+      ],
+      "area_px": 3596
+    },
+    {
+      "index": 891,
+      "type": "building",
+      "centroid": [
+        21.93,
+        1185.0
+      ],
+      "area_px": 3592
+    },
+    {
+      "index": 892,
+      "type": "building",
+      "centroid": [
+        308.78,
+        1237.15
+      ],
+      "area_px": 4888
+    },
+    {
+      "index": 893,
+      "type": "building",
+      "centroid": [
+        451.03,
+        1214.97
+      ],
+      "area_px": 2642
+    },
+    {
+      "index": 894,
+      "type": "building",
+      "centroid": [
+        560.46,
+        1161.78
+      ],
+      "area_px": 1371
+    },
+    {
+      "index": 895,
+      "type": "building",
+      "centroid": [
+        762.02,
+        1231.87
+      ],
+      "area_px": 4892
+    },
+    {
+      "index": 896,
+      "type": "building",
+      "centroid": [
+        1124.87,
+        1172.85
+      ],
+      "area_px": 3458
+    },
+    {
+      "index": 897,
+      "type": "building",
+      "centroid": [
+        1448.09,
+        1229.37
+      ],
+      "area_px": 3167
+    },
+    {
+      "index": 898,
+      "type": "building",
+      "centroid": [
+        1531.45,
+        1208.18
+      ],
+      "area_px": 3392
+    },
+    {
+      "index": 899,
+      "type": "building",
+      "centroid": [
+        1985.94,
+        1192.87
+      ],
+      "area_px": 1960
+    },
+    {
+      "index": 900,
+      "type": "building",
+      "centroid": [
+        2063.61,
+        1246.61
+      ],
+      "area_px": 1582
+    },
+    {
+      "index": 901,
+      "type": "building",
+      "centroid": [
+        2165.36,
+        1197.87
+      ],
+      "area_px": 3427
+    },
+    {
+      "index": 902,
+      "type": "building",
+      "centroid": [
+        2382.84,
+        1193.8
+      ],
+      "area_px": 4698
+    },
+    {
+      "index": 903,
+      "type": "building",
+      "centroid": [
+        2517.18,
+        1231.01
+      ],
+      "area_px": 2919
+    },
+    {
+      "index": 904,
+      "type": "building",
+      "centroid": [
+        2652.93,
+        1181.42
+      ],
+      "area_px": 759
+    },
+    {
+      "index": 905,
+      "type": "building",
+      "centroid": [
+        2712.57,
+        1246.13
+      ],
+      "area_px": 2056
+    },
+    {
+      "index": 906,
+      "type": "building",
+      "centroid": [
+        2802.37,
+        1191.19
+      ],
+      "area_px": 746
+    },
+    {
+      "index": 907,
+      "type": "building",
+      "centroid": [
+        2864.08,
+        1154.6
+      ],
+      "area_px": 746
+    },
+    {
+      "index": 908,
+      "type": "building",
+      "centroid": [
+        2986.71,
+        1222.91
+      ],
+      "area_px": 441
+    },
+    {
+      "index": 909,
+      "type": "building",
+      "centroid": [
+        4166.36,
+        1165.49
+      ],
+      "area_px": 319
+    },
+    {
+      "index": 910,
+      "type": "building",
+      "centroid": [
+        4482.74,
+        1242.76
+      ],
+      "area_px": 1851
+    },
+    {
+      "index": 911,
+      "type": "building",
+      "centroid": [
+        4593.6,
+        1163.04
+      ],
+      "area_px": 3224
+    },
+    {
+      "index": 912,
+      "type": "building",
+      "centroid": [
+        -1127.55,
+        1339.41
+      ],
+      "area_px": 2225
+    },
+    {
+      "index": 913,
+      "type": "building",
+      "centroid": [
+        -1028.2,
+        1327.04
+      ],
+      "area_px": 1725
+    },
+    {
+      "index": 914,
+      "type": "building",
+      "centroid": [
+        -900.31,
+        1309.8
+      ],
+      "area_px": 3378
+    },
+    {
+      "index": 915,
+      "type": "building",
+      "centroid": [
+        -748.07,
+        1290.59
+      ],
+      "area_px": 2365
+    },
+    {
+      "index": 916,
+      "type": "building",
+      "centroid": [
+        -442.13,
+        1343.65
+      ],
+      "area_px": 893
+    },
+    {
+      "index": 917,
+      "type": "building",
+      "centroid": [
+        -405.34,
+        1259.9
+      ],
+      "area_px": 2613
+    },
+    {
+      "index": 918,
+      "type": "building",
+      "centroid": [
+        -398.07,
+        1331.28
+      ],
+      "area_px": 251
+    },
+    {
+      "index": 919,
+      "type": "building",
+      "centroid": [
+        -232.27,
+        1347.84
+      ],
+      "area_px": 3613
+    },
+    {
+      "index": 920,
+      "type": "building",
+      "centroid": [
+        -143.69,
+        1295.24
+      ],
+      "area_px": 3458
+    },
+    {
+      "index": 921,
+      "type": "building",
+      "centroid": [
+        125.58,
+        1345.5
+      ],
+      "area_px": 4886
+    },
+    {
+      "index": 922,
+      "type": "building",
+      "centroid": [
+        220.21,
+        1285.71
+      ],
+      "area_px": 4916
+    },
+    {
+      "index": 923,
+      "type": "building",
+      "centroid": [
+        588.06,
+        1325.21
+      ],
+      "area_px": 4884
+    },
+    {
+      "index": 924,
+      "type": "building",
+      "centroid": [
+        674.02,
+        1282.26
+      ],
+      "area_px": 3756
+    },
+    {
+      "index": 925,
+      "type": "building",
+      "centroid": [
+        921.54,
+        1258.76
+      ],
+      "area_px": 5892
+    },
+    {
+      "index": 926,
+      "type": "building",
+      "centroid": [
+        1078.74,
+        1318.13
+      ],
+      "area_px": 311
+    },
+    {
+      "index": 927,
+      "type": "building",
+      "centroid": [
+        1263.17,
+        1284.01
+      ],
+      "area_px": 947
+    },
+    {
+      "index": 928,
+      "type": "building",
+      "centroid": [
+        1379.64,
+        1273.87
+      ],
+      "area_px": 2502
+    },
+    {
+      "index": 929,
+      "type": "building",
+      "centroid": [
+        1781.83,
+        1291.26
+      ],
+      "area_px": 5744
+    },
+    {
+      "index": 930,
+      "type": "building",
+      "centroid": [
+        1994.9,
+        1282.04
+      ],
+      "area_px": 1388
+    },
+    {
+      "index": 931,
+      "type": "building",
+      "centroid": [
+        2227.7,
+        1282.43
+      ],
+      "area_px": 2004
+    },
+    {
+      "index": 932,
+      "type": "building",
+      "centroid": [
+        2360.28,
+        1318.47
+      ],
+      "area_px": 1241
+    },
+    {
+      "index": 933,
+      "type": "building",
+      "centroid": [
+        2748.86,
+        1325.65
+      ],
+      "area_px": 768
+    },
+    {
+      "index": 934,
+      "type": "building",
+      "centroid": [
+        2862.88,
+        1262.05
+      ],
+      "area_px": 758
+    },
+    {
+      "index": 935,
+      "type": "building",
+      "centroid": [
+        2890.38,
+        1322.24
+      ],
+      "area_px": 659
+    },
+    {
+      "index": 936,
+      "type": "building",
+      "centroid": [
+        -1108.22,
+        1439.41
+      ],
+      "area_px": 1907
+    },
+    {
+      "index": 937,
+      "type": "building",
+      "centroid": [
+        -1015.78,
+        1423.42
+      ],
+      "area_px": 1753
+    },
+    {
+      "index": 938,
+      "type": "building",
+      "centroid": [
+        -841.79,
+        1400.16
+      ],
+      "area_px": 1373
+    },
+    {
+      "index": 939,
+      "type": "building",
+      "centroid": [
+        -739.9,
+        1382.3
+      ],
+      "area_px": 2133
+    },
+    {
+      "index": 940,
+      "type": "building",
+      "centroid": [
+        -396.35,
+        1430.57
+      ],
+      "area_px": 1770
+    },
+    {
+      "index": 941,
+      "type": "building",
+      "centroid": [
+        -322.27,
+        1395.35
+      ],
+      "area_px": 2619
+    },
+    {
+      "index": 942,
+      "type": "building",
+      "centroid": [
+        41.02,
+        1400.94
+      ],
+      "area_px": 4864
+    },
+    {
+      "index": 943,
+      "type": "building",
+      "centroid": [
+        323.82,
+        1447.76
+      ],
+      "area_px": 3870
+    },
+    {
+      "index": 944,
+      "type": "building",
+      "centroid": [
+        404.61,
+        1408.51
+      ],
+      "area_px": 3270
+    },
+    {
+      "index": 945,
+      "type": "building",
+      "centroid": [
+        500.3,
+        1362.22
+      ],
+      "area_px": 4265
+    },
+    {
+      "index": 946,
+      "type": "building",
+      "centroid": [
+        975.95,
+        1439.19
+      ],
+      "area_px": 5965
+    },
+    {
+      "index": 947,
+      "type": "building",
+      "centroid": [
+        1192.8,
+        1353.72
+      ],
+      "area_px": 3665
+    },
+    {
+      "index": 948,
+      "type": "building",
+      "centroid": [
+        1297.56,
+        1362.41
+      ],
+      "area_px": 1100
+    },
+    {
+      "index": 949,
+      "type": "building",
+      "centroid": [
+        1544.39,
+        1407.34
+      ],
+      "area_px": 592
+    },
+    {
+      "index": 950,
+      "type": "building",
+      "centroid": [
+        1609.75,
+        1376.94
+      ],
+      "area_px": 2147
+    },
+    {
+      "index": 951,
+      "type": "building",
+      "centroid": [
+        1839.61,
+        1375.57
+      ],
+      "area_px": 6766
+    },
+    {
+      "index": 952,
+      "type": "building",
+      "centroid": [
+        2091.98,
+        1355.06
+      ],
+      "area_px": 3616
+    },
+    {
+      "index": 953,
+      "type": "building",
+      "centroid": [
+        2513.6,
+        1354.22
+      ],
+      "area_px": 5064
+    },
+    {
+      "index": 954,
+      "type": "building",
+      "centroid": [
+        2562.94,
+        1443.68
+      ],
+      "area_px": 5875
+    },
+    {
+      "index": 955,
+      "type": "building",
+      "centroid": [
+        2770.11,
+        1388.75
+      ],
+      "area_px": 662
+    },
+    {
+      "index": 956,
+      "type": "building",
+      "centroid": [
+        2917.6,
+        1387.46
+      ],
+      "area_px": 640
+    },
+    {
+      "index": 957,
+      "type": "building",
+      "centroid": [
+        4469.34,
+        1390.62
+      ],
+      "area_px": 7036
+    },
+    {
+      "index": 958,
+      "type": "building",
+      "centroid": [
+        4585.63,
+        1432.83
+      ],
+      "area_px": 4325
+    },
+    {
+      "index": 959,
+      "type": "building",
+      "centroid": [
+        -1100.64,
+        1533.53
+      ],
+      "area_px": 1991
+    },
+    {
+      "index": 960,
+      "type": "building",
+      "centroid": [
+        -1003.07,
+        1521.27
+      ],
+      "area_px": 1590
+    },
+    {
+      "index": 961,
+      "type": "building",
+      "centroid": [
+        -880.01,
+        1500.85
+      ],
+      "area_px": 3127
+    },
+    {
+      "index": 962,
+      "type": "building",
+      "centroid": [
+        -661.13,
+        1465.81
+      ],
+      "area_px": 3428
+    },
+    {
+      "index": 963,
+      "type": "building",
+      "centroid": [
+        -525.03,
+        1459.55
+      ],
+      "area_px": 2152
+    },
+    {
+      "index": 964,
+      "type": "building",
+      "centroid": [
+        -369.28,
+        1507.93
+      ],
+      "area_px": 1014
+    },
+    {
+      "index": 965,
+      "type": "building",
+      "centroid": [
+        -128.44,
+        1509.83
+      ],
+      "area_px": 4757
+    },
+    {
+      "index": 966,
+      "type": "building",
+      "centroid": [
+        -43.27,
+        1455.41
+      ],
+      "area_px": 4842
+    },
+    {
+      "index": 967,
+      "type": "building",
+      "centroid": [
+        239.55,
+        1523.9
+      ],
+      "area_px": 4877
+    },
+    {
+      "index": 968,
+      "type": "building",
+      "centroid": [
+        550.15,
+        1512.39
+      ],
+      "area_px": 1277
+    },
+    {
+      "index": 969,
+      "type": "building",
+      "centroid": [
+        632.24,
+        1486.37
+      ],
+      "area_px": 922
+    },
+    {
+      "index": 970,
+      "type": "building",
+      "centroid": [
+        743.44,
+        1498.25
+      ],
+      "area_px": 5119
+    },
+    {
+      "index": 971,
+      "type": "building",
+      "centroid": [
+        826.92,
+        1455.72
+      ],
+      "area_px": 5373
+    },
+    {
+      "index": 972,
+      "type": "building",
+      "centroid": [
+        1185.54,
+        1523.0
+      ],
+      "area_px": 1529
+    },
+    {
+      "index": 973,
+      "type": "building",
+      "centroid": [
+        1469.7,
+        1468.41
+      ],
+      "area_px": 2119
+    },
+    {
+      "index": 974,
+      "type": "building",
+      "centroid": [
+        1641.97,
+        1511.44
+      ],
+      "area_px": 2180
+    },
+    {
+      "index": 975,
+      "type": "building",
+      "centroid": [
+        1891.82,
+        1466.93
+      ],
+      "area_px": 6230
+    },
+    {
+      "index": 976,
+      "type": "building",
+      "centroid": [
+        2195.01,
+        1452.28
+      ],
+      "area_px": 7222
+    },
+    {
+      "index": 977,
+      "type": "building",
+      "centroid": [
+        2308.35,
+        1467.03
+      ],
+      "area_px": 2752
+    },
+    {
+      "index": 978,
+      "type": "building",
+      "centroid": [
+        2606.27,
+        1526.02
+      ],
+      "area_px": 5225
+    },
+    {
+      "index": 979,
+      "type": "building",
+      "centroid": [
+        2802.25,
+        1452.12
+      ],
+      "area_px": 637
+    },
+    {
+      "index": 980,
+      "type": "building",
+      "centroid": [
+        2836.84,
+        1525.22
+      ],
+      "area_px": 648
+    },
+    {
+      "index": 981,
+      "type": "building",
+      "centroid": [
+        2916.24,
+        1549.52
+      ],
+      "area_px": 880
+    },
+    {
+      "index": 982,
+      "type": "building",
+      "centroid": [
+        2954.29,
+        1468.92
+      ],
+      "area_px": 866
+    },
+    {
+      "index": 983,
+      "type": "building",
+      "centroid": [
+        2991.26,
+        1542.34
+      ],
+      "area_px": 769
+    },
+    {
+      "index": 984,
+      "type": "building",
+      "centroid": [
+        3122.63,
+        1526.45
+      ],
+      "area_px": 131
+    },
+    {
+      "index": 985,
+      "type": "building",
+      "centroid": [
+        -1085.9,
+        1643.28
+      ],
+      "area_px": 2785
+    },
+    {
+      "index": 986,
+      "type": "building",
+      "centroid": [
+        -992.27,
+        1622.37
+      ],
+      "area_px": 1977
+    },
+    {
+      "index": 987,
+      "type": "building",
+      "centroid": [
+        -916.65,
+        1583.4
+      ],
+      "area_px": 550
+    },
+    {
+      "index": 988,
+      "type": "building",
+      "centroid": [
+        -502.53,
+        1551.86
+      ],
+      "area_px": 2626
+    },
+    {
+      "index": 989,
+      "type": "building",
+      "centroid": [
+        -480.01,
+        1639.62
+      ],
+      "area_px": 2083
+    },
+    {
+      "index": 990,
+      "type": "building",
+      "centroid": [
+        -293.15,
+        1614.07
+      ],
+      "area_px": 4516
+    },
+    {
+      "index": 991,
+      "type": "building",
+      "centroid": [
+        -212.9,
+        1566.1
+      ],
+      "area_px": 3880
+    },
+    {
+      "index": 992,
+      "type": "building",
+      "centroid": [
+        71.44,
+        1634.24
+      ],
+      "area_px": 4888
+    },
+    {
+      "index": 993,
+      "type": "building",
+      "centroid": [
+        155.13,
+        1579.2
+      ],
+      "area_px": 4904
+    },
+    {
+      "index": 994,
+      "type": "building",
+      "centroid": [
+        415.0,
+        1592.05
+      ],
+      "area_px": 1871
+    },
+    {
+      "index": 995,
+      "type": "building",
+      "centroid": [
+        509.84,
+        1595.42
+      ],
+      "area_px": 2138
+    },
+    {
+      "index": 996,
+      "type": "building",
+      "centroid": [
+        610.38,
+        1626.78
+      ],
+      "area_px": 1448
+    },
+    {
+      "index": 997,
+      "type": "building",
+      "centroid": [
+        675.61,
+        1590.05
+      ],
+      "area_px": 2813
+    },
+    {
+      "index": 998,
+      "type": "building",
+      "centroid": [
+        1023.22,
+        1598.82
+      ],
+      "area_px": 2440
+    },
+    {
+      "index": 999,
+      "type": "building",
+      "centroid": [
+        1280.66,
+        1562.2
+      ],
+      "area_px": 6676
+    },
+    {
+      "index": 1000,
+      "type": "building",
+      "centroid": [
+        1402.69,
+        1587.6
+      ],
+      "area_px": 974
+    },
+    {
+      "index": 1001,
+      "type": "building",
+      "centroid": [
+        1507.49,
+        1566.79
+      ],
+      "area_px": 728
+    },
+    {
+      "index": 1002,
+      "type": "building",
+      "centroid": [
+        1558.45,
+        1649.69
+      ],
+      "area_px": 785
+    },
+    {
+      "index": 1003,
+      "type": "building",
+      "centroid": [
+        1631.71,
+        1611.23
+      ],
+      "area_px": 1410
+    },
+    {
+      "index": 1004,
+      "type": "building",
+      "centroid": [
+        1724.36,
+        1561.86
+      ],
+      "area_px": 1439
+    },
+    {
+      "index": 1005,
+      "type": "building",
+      "centroid": [
+        1942.28,
+        1555.56
+      ],
+      "area_px": 6045
+    },
+    {
+      "index": 1006,
+      "type": "building",
+      "centroid": [
+        1986.07,
+        1646.27
+      ],
+      "area_px": 4901
+    },
+    {
+      "index": 1007,
+      "type": "building",
+      "centroid": [
+        2293.39,
+        1591.9
+      ],
+      "area_px": 5861
+    },
+    {
+      "index": 1008,
+      "type": "building",
+      "centroid": [
+        2423.31,
+        1633.52
+      ],
+      "area_px": 2324
+    },
+    {
+      "index": 1009,
+      "type": "building",
+      "centroid": [
+        2657.51,
+        1619.4
+      ],
+      "area_px": 6086
+    },
+    {
+      "index": 1010,
+      "type": "building",
+      "centroid": [
+        2869.41,
+        1610.27
+      ],
+      "area_px": 762
+    },
+    {
+      "index": 1011,
+      "type": "building",
+      "centroid": [
+        3042.95,
+        1635.88
+      ],
+      "area_px": 760
+    },
+    {
+      "index": 1012,
+      "type": "building",
+      "centroid": [
+        4492.78,
+        1604.41
+      ],
+      "area_px": 1113
+    },
+    {
+      "index": 1013,
+      "type": "building",
+      "centroid": [
+        -885.56,
+        1733.65
+      ],
+      "area_px": 3446
+    },
+    {
+      "index": 1014,
+      "type": "building",
+      "centroid": [
+        -807.87,
+        1697.5
+      ],
+      "area_px": 4547
+    },
+    {
+      "index": 1015,
+      "type": "building",
+      "centroid": [
+        -718.77,
+        1672.43
+      ],
+      "area_px": 1386
+    },
+    {
+      "index": 1016,
+      "type": "building",
+      "centroid": [
+        -630.19,
+        1668.75
+      ],
+      "area_px": 1625
+    },
+    {
+      "index": 1017,
+      "type": "building",
+      "centroid": [
+        -514.3,
+        1742.12
+      ],
+      "area_px": 1044
+    },
+    {
+      "index": 1018,
+      "type": "building",
+      "centroid": [
+        -451.06,
+        1733.26
+      ],
+      "area_px": 1382
+    },
+    {
+      "index": 1019,
+      "type": "building",
+      "centroid": [
+        -341.29,
+        1681.83
+      ],
+      "area_px": 1755
+    },
+    {
+      "index": 1020,
+      "type": "building",
+      "centroid": [
+        -234.7,
+        1740.48
+      ],
+      "area_px": 778
+    },
+    {
+      "index": 1021,
+      "type": "building",
+      "centroid": [
+        -103.4,
+        1743.26
+      ],
+      "area_px": 3914
+    },
+    {
+      "index": 1022,
+      "type": "building",
+      "centroid": [
+        -12.88,
+        1688.68
+      ],
+      "area_px": 4836
+    },
+    {
+      "index": 1023,
+      "type": "building",
+      "centroid": [
+        263.42,
+        1747.17
+      ],
+      "area_px": 4230
+    },
+    {
+      "index": 1024,
+      "type": "building",
+      "centroid": [
+        346.73,
+        1691.11
+      ],
+      "area_px": 4193
+    },
+    {
+      "index": 1025,
+      "type": "building",
+      "centroid": [
+        481.57,
+        1695.13
+      ],
+      "area_px": 1072
+    },
+    {
+      "index": 1026,
+      "type": "building",
+      "centroid": [
+        730.8,
+        1742.31
+      ],
+      "area_px": 2338
+    },
+    {
+      "index": 1027,
+      "type": "building",
+      "centroid": [
+        812.85,
+        1710.36
+      ],
+      "area_px": 2424
+    },
+    {
+      "index": 1028,
+      "type": "building",
+      "centroid": [
+        891.59,
+        1678.51
+      ],
+      "area_px": 2687
+    },
+    {
+      "index": 1029,
+      "type": "building",
+      "centroid": [
+        1058.28,
+        1686.18
+      ],
+      "area_px": 4268
+    },
+    {
+      "index": 1030,
+      "type": "building",
+      "centroid": [
+        1299.06,
+        1690.66
+      ],
+      "area_px": 3812
+    },
+    {
+      "index": 1031,
+      "type": "building",
+      "centroid": [
+        1689.71,
+        1707.03
+      ],
+      "area_px": 730
+    },
+    {
+      "index": 1032,
+      "type": "building",
+      "centroid": [
+        1775.0,
+        1659.7
+      ],
+      "area_px": 732
+    },
+    {
+      "index": 1033,
+      "type": "building",
+      "centroid": [
+        1830.96,
+        1740.94
+      ],
+      "area_px": 1057
+    },
+    {
+      "index": 1034,
+      "type": "building",
+      "centroid": [
+        2037.96,
+        1733.9
+      ],
+      "area_px": 5850
+    },
+    {
+      "index": 1035,
+      "type": "building",
+      "centroid": [
+        2294.33,
+        1705.01
+      ],
+      "area_px": 3595
+    },
+    {
+      "index": 1036,
+      "type": "building",
+      "centroid": [
+        2480.39,
+        1699.42
+      ],
+      "area_px": 926
+    },
+    {
+      "index": 1037,
+      "type": "building",
+      "centroid": [
+        2723.07,
+        1699.25
+      ],
+      "area_px": 5394
+    },
+    {
+      "index": 1038,
+      "type": "building",
+      "centroid": [
+        2799.32,
+        1737.2
+      ],
+      "area_px": 551
+    },
+    {
+      "index": 1039,
+      "type": "building",
+      "centroid": [
+        2920.94,
+        1703.61
+      ],
+      "area_px": 767
+    },
+    {
+      "index": 1040,
+      "type": "building",
+      "centroid": [
+        2989.97,
+        1687.75
+      ],
+      "area_px": 696
+    },
+    {
+      "index": 1041,
+      "type": "building",
+      "centroid": [
+        3071.22,
+        1712.85
+      ],
+      "area_px": 660
+    },
+    {
+      "index": 1042,
+      "type": "building",
+      "centroid": [
+        -1052.1,
+        1816.09
+      ],
+      "area_px": 1405
+    },
+    {
+      "index": 1043,
+      "type": "building",
+      "centroid": [
+        -967.1,
+        1771.07
+      ],
+      "area_px": 2666
+    },
+    {
+      "index": 1044,
+      "type": "building",
+      "centroid": [
+        -724.22,
+        1801.26
+      ],
+      "area_px": 88
+    },
+    {
+      "index": 1045,
+      "type": "building",
+      "centroid": [
+        -697.94,
+        1767.63
+      ],
+      "area_px": 1095
+    },
+    {
+      "index": 1046,
+      "type": "building",
+      "centroid": [
+        -601.21,
+        1752.27
+      ],
+      "area_px": 1551
+    },
+    {
+      "index": 1047,
+      "type": "building",
+      "centroid": [
+        -438.74,
+        1838.25
+      ],
+      "area_px": 4425
+    },
+    {
+      "index": 1048,
+      "type": "building",
+      "centroid": [
+        -161.23,
+        1830.79
+      ],
+      "area_px": 2985
+    },
+    {
+      "index": 1049,
+      "type": "building",
+      "centroid": [
+        179.21,
+        1801.6
+      ],
+      "area_px": 4208
+    },
+    {
+      "index": 1050,
+      "type": "building",
+      "centroid": [
+        562.23,
+        1822.11
+      ],
+      "area_px": 3470
+    },
+    {
+      "index": 1051,
+      "type": "building",
+      "centroid": [
+        634.0,
+        1793.23
+      ],
+      "area_px": 1330
+    },
+    {
+      "index": 1052,
+      "type": "building",
+      "centroid": [
+        673.12,
+        1756.04
+      ],
+      "area_px": 667
+    },
+    {
+      "index": 1053,
+      "type": "building",
+      "centroid": [
+        828.99,
+        1825.22
+      ],
+      "area_px": 5031
+    },
+    {
+      "index": 1054,
+      "type": "building",
+      "centroid": [
+        1046.49,
+        1810.75
+      ],
+      "area_px": 1943
+    },
+    {
+      "index": 1055,
+      "type": "building",
+      "centroid": [
+        1153.95,
+        1751.83
+      ],
+      "area_px": 1657
+    },
+    {
+      "index": 1056,
+      "type": "building",
+      "centroid": [
+        1380.44,
+        1752.55
+      ],
+      "area_px": 6112
+    },
+    {
+      "index": 1057,
+      "type": "building",
+      "centroid": [
+        1499.46,
+        1797.59
+      ],
+      "area_px": 2497
+    },
+    {
+      "index": 1058,
+      "type": "building",
+      "centroid": [
+        1609.85,
+        1751.43
+      ],
+      "area_px": 730
+    },
+    {
+      "index": 1059,
+      "type": "building",
+      "centroid": [
+        1672.84,
+        1812.38
+      ],
+      "area_px": 729
+    },
+    {
+      "index": 1060,
+      "type": "building",
+      "centroid": [
+        1757.8,
+        1764.94
+      ],
+      "area_px": 728
+    },
+    {
+      "index": 1061,
+      "type": "building",
+      "centroid": [
+        2352.95,
+        1786.66
+      ],
+      "area_px": 4147
+    },
+    {
+      "index": 1062,
+      "type": "building",
+      "centroid": [
+        2508.39,
+        1812.63
+      ],
+      "area_px": 2466
+    },
+    {
+      "index": 1063,
+      "type": "building",
+      "centroid": [
+        2701.67,
+        1825.46
+      ],
+      "area_px": 2828
+    },
+    {
+      "index": 1064,
+      "type": "building",
+      "centroid": [
+        2968.15,
+        1770.42
+      ],
+      "area_px": 663
+    },
+    {
+      "index": 1065,
+      "type": "building",
+      "centroid": [
+        3004.13,
+        1834.83
+      ],
+      "area_px": 665
+    },
+    {
+      "index": 1066,
+      "type": "building",
+      "centroid": [
+        3101.69,
+        1780.49
+      ],
+      "area_px": 658
+    },
+    {
+      "index": 1067,
+      "type": "building",
+      "centroid": [
+        -1567.01,
+        1922.25
+      ],
+      "area_px": 510
+    },
+    {
+      "index": 1068,
+      "type": "building",
+      "centroid": [
+        -824.78,
+        1885.36
+      ],
+      "area_px": 3999
+    },
+    {
+      "index": 1069,
+      "type": "building",
+      "centroid": [
+        -638.74,
+        1863.36
+      ],
+      "area_px": 4092
+    },
+    {
+      "index": 1070,
+      "type": "building",
+      "centroid": [
+        -416.06,
+        1943.96
+      ],
+      "area_px": 4192
+    },
+    {
+      "index": 1071,
+      "type": "building",
+      "centroid": [
+        -258.49,
+        1854.1
+      ],
+      "area_px": 4528
+    },
+    {
+      "index": 1072,
+      "type": "building",
+      "centroid": [
+        6.98,
+        1914.74
+      ],
+      "area_px": 3730
+    },
+    {
+      "index": 1073,
+      "type": "building",
+      "centroid": [
+        94.59,
+        1856.43
+      ],
+      "area_px": 4214
+    },
+    {
+      "index": 1074,
+      "type": "building",
+      "centroid": [
+        253.62,
+        1946.24
+      ],
+      "area_px": 561
+    },
+    {
+      "index": 1075,
+      "type": "building",
+      "centroid": [
+        462.72,
+        1872.84
+      ],
+      "area_px": 3980
+    },
+    {
+      "index": 1076,
+      "type": "building",
+      "centroid": [
+        656.36,
+        1925.71
+      ],
+      "area_px": 3660
+    },
+    {
+      "index": 1077,
+      "type": "building",
+      "centroid": [
+        885.46,
+        1909.72
+      ],
+      "area_px": 5204
+    },
+    {
+      "index": 1078,
+      "type": "building",
+      "centroid": [
+        1142.22,
+        1886.44
+      ],
+      "area_px": 4995
+    },
+    {
+      "index": 1079,
+      "type": "building",
+      "centroid": [
+        1356.48,
+        1877.4
+      ],
+      "area_px": 2380
+    },
+    {
+      "index": 1080,
+      "type": "building",
+      "centroid": [
+        1479.22,
+        1929.77
+      ],
+      "area_px": 6007
+    },
+    {
+      "index": 1081,
+      "type": "building",
+      "centroid": [
+        1784.31,
+        1874.48
+      ],
+      "area_px": 5577
+    },
+    {
+      "index": 1082,
+      "type": "building",
+      "centroid": [
+        1974.45,
+        1850.26
+      ],
+      "area_px": 49
+    },
+    {
+      "index": 1083,
+      "type": "building",
+      "centroid": [
+        2368.96,
+        1894.25
+      ],
+      "area_px": 2627
+    },
+    {
+      "index": 1084,
+      "type": "building",
+      "centroid": [
+        2493.49,
+        1941.75
+      ],
+      "area_px": 5548
+    },
+    {
+      "index": 1085,
+      "type": "building",
+      "centroid": [
+        2737.67,
+        1923.85
+      ],
+      "area_px": 1995
+    },
+    {
+      "index": 1086,
+      "type": "building",
+      "centroid": [
+        2873.59,
+        1857.54
+      ],
+      "area_px": 2047
+    },
+    {
+      "index": 1087,
+      "type": "building",
+      "centroid": [
+        2930.52,
+        1904.29
+      ],
+      "area_px": 581
+    },
+    {
+      "index": 1088,
+      "type": "building",
+      "centroid": [
+        3074.92,
+        1869.75
+      ],
+      "area_px": 1918
+    },
+    {
+      "index": 1089,
+      "type": "building",
+      "centroid": [
+        3133.99,
+        1902.91
+      ],
+      "area_px": 119
+    },
+    {
+      "index": 1090,
+      "type": "building",
+      "centroid": [
+        3182.59,
+        1891.82
+      ],
+      "area_px": 185
+    },
+    {
+      "index": 1091,
+      "type": "building",
+      "centroid": [
+        3238.26,
+        1888.98
+      ],
+      "area_px": 924
+    },
+    {
+      "index": 1092,
+      "type": "building",
+      "centroid": [
+        -1041.89,
+        1961.68
+      ],
+      "area_px": 4330
+    },
+    {
+      "index": 1093,
+      "type": "building",
+      "centroid": [
+        -811.08,
+        1994.54
+      ],
+      "area_px": 3773
+    },
+    {
+      "index": 1094,
+      "type": "building",
+      "centroid": [
+        -625.88,
+        1970.67
+      ],
+      "area_px": 4203
+    },
+    {
+      "index": 1095,
+      "type": "building",
+      "centroid": [
+        -235.21,
+        2032.96
+      ],
+      "area_px": 876
+    },
+    {
+      "index": 1096,
+      "type": "building",
+      "centroid": [
+        -160.01,
+        2017.63
+      ],
+      "area_px": 4034
+    },
+    {
+      "index": 1097,
+      "type": "building",
+      "centroid": [
+        -75.02,
+        1962.05
+      ],
+      "area_px": 4006
+    },
+    {
+      "index": 1098,
+      "type": "building",
+      "centroid": [
+        210.45,
+        2015.0
+      ],
+      "area_px": 549
+    },
+    {
+      "index": 1099,
+      "type": "building",
+      "centroid": [
+        325.66,
+        1980.46
+      ],
+      "area_px": 560
+    },
+    {
+      "index": 1100,
+      "type": "building",
+      "centroid": [
+        569.38,
+        2037.86
+      ],
+      "area_px": 4274
+    },
+    {
+      "index": 1101,
+      "type": "building",
+      "centroid": [
+        712.3,
+        2027.01
+      ],
+      "area_px": 2967
+    },
+    {
+      "index": 1102,
+      "type": "building",
+      "centroid": [
+        938.91,
+        2012.16
+      ],
+      "area_px": 3528
+    },
+    {
+      "index": 1103,
+      "type": "building",
+      "centroid": [
+        1184.51,
+        1977.85
+      ],
+      "area_px": 5239
+    },
+    {
+      "index": 1104,
+      "type": "building",
+      "centroid": [
+        1527.75,
+        2017.57
+      ],
+      "area_px": 5900
+    },
+    {
+      "index": 1105,
+      "type": "building",
+      "centroid": [
+        1833.59,
+        1961.88
+      ],
+      "area_px": 6046
+    },
+    {
+      "index": 1106,
+      "type": "building",
+      "centroid": [
+        2167.92,
+        1963.02
+      ],
+      "area_px": 432
+    },
+    {
+      "index": 1107,
+      "type": "building",
+      "centroid": [
+        2533.68,
+        2032.76
+      ],
+      "area_px": 6011
+    },
+    {
+      "index": 1108,
+      "type": "building",
+      "centroid": [
+        2829.58,
+        1995.21
+      ],
+      "area_px": 3880
+    },
+    {
+      "index": 1109,
+      "type": "building",
+      "centroid": [
+        3249.05,
+        2012.28
+      ],
+      "area_px": 401
+    },
+    {
+      "index": 1110,
+      "type": "building",
+      "centroid": [
+        -931.38,
+        2056.39
+      ],
+      "area_px": 7894
+    },
+    {
+      "index": 1111,
+      "type": "building",
+      "centroid": [
+        -793.17,
+        2098.12
+      ],
+      "area_px": 3363
+    },
+    {
+      "index": 1112,
+      "type": "building",
+      "centroid": [
+        -613.53,
+        2077.33
+      ],
+      "area_px": 4205
+    },
+    {
+      "index": 1113,
+      "type": "building",
+      "centroid": [
+        -392.7,
+        2050.37
+      ],
+      "area_px": 4835
+    },
+    {
+      "index": 1114,
+      "type": "building",
+      "centroid": [
+        -195.4,
+        2110.19
+      ],
+      "area_px": 737
+    },
+    {
+      "index": 1115,
+      "type": "building",
+      "centroid": [
+        42.21,
+        2148.17
+      ],
+      "area_px": 4160
+    },
+    {
+      "index": 1116,
+      "type": "building",
+      "centroid": [
+        121.65,
+        2095.83
+      ],
+      "area_px": 3644
+    },
+    {
+      "index": 1117,
+      "type": "building",
+      "centroid": [
+        234.74,
+        2075.04
+      ],
+      "area_px": 977
+    },
+    {
+      "index": 1118,
+      "type": "building",
+      "centroid": [
+        770.77,
+        2114.68
+      ],
+      "area_px": 2645
+    },
+    {
+      "index": 1119,
+      "type": "building",
+      "centroid": [
+        1226.08,
+        2071.69
+      ],
+      "area_px": 5871
+    },
+    {
+      "index": 1120,
+      "type": "building",
+      "centroid": [
+        1298.19,
+        2145.2
+      ],
+      "area_px": 4262
+    },
+    {
+      "index": 1121,
+      "type": "building",
+      "centroid": [
+        1575.46,
+        2104.87
+      ],
+      "area_px": 6082
+    },
+    {
+      "index": 1122,
+      "type": "building",
+      "centroid": [
+        1883.42,
+        2050.65
+      ],
+      "area_px": 5587
+    },
+    {
+      "index": 1123,
+      "type": "building",
+      "centroid": [
+        1931.84,
+        2136.15
+      ],
+      "area_px": 5495
+    },
+    {
+      "index": 1124,
+      "type": "building",
+      "centroid": [
+        2232.27,
+        2083.36
+      ],
+      "area_px": 6247
+    },
+    {
+      "index": 1125,
+      "type": "building",
+      "centroid": [
+        2656.44,
+        2075.62
+      ],
+      "area_px": 1590
+    },
+    {
+      "index": 1126,
+      "type": "building",
+      "centroid": [
+        3017.93,
+        2087.21
+      ],
+      "area_px": 14426
+    },
+    {
+      "index": 1127,
+      "type": "building",
+      "centroid": [
+        4421.81,
+        2064.7
+      ],
+      "area_px": 195
+    },
+    {
+      "index": 1128,
+      "type": "building",
+      "centroid": [
+        -782.25,
+        2206.77
+      ],
+      "area_px": 3081
+    },
+    {
+      "index": 1129,
+      "type": "building",
+      "centroid": [
+        -599.68,
+        2183.34
+      ],
+      "area_px": 4245
+    },
+    {
+      "index": 1130,
+      "type": "building",
+      "centroid": [
+        -372.79,
+        2155.2
+      ],
+      "area_px": 5251
+    },
+    {
+      "index": 1131,
+      "type": "building",
+      "centroid": [
+        -42.06,
+        2202.38
+      ],
+      "area_px": 3391
+    },
+    {
+      "index": 1132,
+      "type": "building",
+      "centroid": [
+        389.77,
+        2157.15
+      ],
+      "area_px": 8777
+    },
+    {
+      "index": 1133,
+      "type": "building",
+      "centroid": [
+        1006.31,
+        2199.75
+      ],
+      "area_px": 9924
+    },
+    {
+      "index": 1134,
+      "type": "building",
+      "centroid": [
+        1182.19,
+        2209.9
+      ],
+      "area_px": 1150
+    },
+    {
+      "index": 1135,
+      "type": "building",
+      "centroid": [
+        1627.11,
+        2194.44
+      ],
+      "area_px": 5942
+    },
+    {
+      "index": 1136,
+      "type": "building",
+      "centroid": [
+        1978.55,
+        2224.78
+      ],
+      "area_px": 5819
+    },
+    {
+      "index": 1137,
+      "type": "building",
+      "centroid": [
+        2267.68,
+        2175.14
+      ],
+      "area_px": 5257
+    },
+    {
+      "index": 1138,
+      "type": "building",
+      "centroid": [
+        2484.15,
+        2179.38
+      ],
+      "area_px": 1026
+    },
+    {
+      "index": 1139,
+      "type": "building",
+      "centroid": [
+        2572.36,
+        2163.28
+      ],
+      "area_px": 744
+    },
+    {
+      "index": 1140,
+      "type": "building",
+      "centroid": [
+        2638.95,
+        2203.24
+      ],
+      "area_px": 2153
+    },
+    {
+      "index": 1141,
+      "type": "building",
+      "centroid": [
+        2698.32,
+        2215.51
+      ],
+      "area_px": 1402
+    },
+    {
+      "index": 1142,
+      "type": "building",
+      "centroid": [
+        2850.57,
+        2228.37
+      ],
+      "area_px": 286
+    },
+    {
+      "index": 1143,
+      "type": "building",
+      "centroid": [
+        3166.08,
+        2185.98
+      ],
+      "area_px": 2223
+    },
+    {
+      "index": 1144,
+      "type": "building",
+      "centroid": [
+        -889.49,
+        2342.0
+      ],
+      "area_px": 1267
+    },
+    {
+      "index": 1145,
+      "type": "building",
+      "centroid": [
+        -768.89,
+        2312.23
+      ],
+      "area_px": 3578
+    },
+    {
+      "index": 1146,
+      "type": "building",
+      "centroid": [
+        -559.53,
+        2287.05
+      ],
+      "area_px": 2677
+    },
+    {
+      "index": 1147,
+      "type": "building",
+      "centroid": [
+        -316.38,
+        2318.56
+      ],
+      "area_px": 12523
+    },
+    {
+      "index": 1148,
+      "type": "building",
+      "centroid": [
+        -109.42,
+        2280.4
+      ],
+      "area_px": 2694
+    },
+    {
+      "index": 1149,
+      "type": "building",
+      "centroid": [
+        151.76,
+        2318.72
+      ],
+      "area_px": 4928
+    },
+    {
+      "index": 1150,
+      "type": "building",
+      "centroid": [
+        231.6,
+        2266.84
+      ],
+      "area_px": 4469
+    },
+    {
+      "index": 1151,
+      "type": "building",
+      "centroid": [
+        407.2,
+        2345.6
+      ],
+      "area_px": 2183
+    },
+    {
+      "index": 1152,
+      "type": "building",
+      "centroid": [
+        518.4,
+        2269.6
+      ],
+      "area_px": 3294
+    },
+    {
+      "index": 1153,
+      "type": "building",
+      "centroid": [
+        633.43,
+        2324.03
+      ],
+      "area_px": 2120
+    },
+    {
+      "index": 1154,
+      "type": "building",
+      "centroid": [
+        718.56,
+        2271.23
+      ],
+      "area_px": 2139
+    },
+    {
+      "index": 1155,
+      "type": "building",
+      "centroid": [
+        874.39,
+        2280.09
+      ],
+      "area_px": 8528
+    },
+    {
+      "index": 1156,
+      "type": "building",
+      "centroid": [
+        1158.51,
+        2338.32
+      ],
+      "area_px": 1298
+    },
+    {
+      "index": 1157,
+      "type": "building",
+      "centroid": [
+        1314.9,
+        2250.53
+      ],
+      "area_px": 5504
+    },
+    {
+      "index": 1158,
+      "type": "building",
+      "centroid": [
+        1380.76,
+        2331.12
+      ],
+      "area_px": 5157
+    },
+    {
+      "index": 1159,
+      "type": "building",
+      "centroid": [
+        1673.33,
+        2280.46
+      ],
+      "area_px": 6034
+    },
+    {
+      "index": 1160,
+      "type": "building",
+      "centroid": [
+        2138.84,
+        2288.96
+      ],
+      "area_px": 381
+    },
+    {
+      "index": 1161,
+      "type": "building",
+      "centroid": [
+        2333.56,
+        2268.71
+      ],
+      "area_px": 6732
+    },
+    {
+      "index": 1162,
+      "type": "building",
+      "centroid": [
+        2537.59,
+        2277.93
+      ],
+      "area_px": 1136
+    },
+    {
+      "index": 1163,
+      "type": "building",
+      "centroid": [
+        2711.26,
+        2323.9
+      ],
+      "area_px": 3644
+    },
+    {
+      "index": 1164,
+      "type": "building",
+      "centroid": [
+        2886.34,
+        2305.25
+      ],
+      "area_px": 108
+    },
+    {
+      "index": 1165,
+      "type": "building",
+      "centroid": [
+        3050.32,
+        2310.25
+      ],
+      "area_px": 49
+    },
+    {
+      "index": 1166,
+      "type": "building",
+      "centroid": [
+        3058.32,
+        2326.25
+      ],
+      "area_px": 49
+    },
+    {
+      "index": 1167,
+      "type": "building",
+      "centroid": [
+        3096.32,
+        2305.25
+      ],
+      "area_px": 120
+    },
+    {
+      "index": 1168,
+      "type": "building",
+      "centroid": [
+        4527.53,
+        2290.59
+      ],
+      "area_px": 6776
+    },
+    {
+      "index": 1169,
+      "type": "building",
+      "centroid": [
+        -989.2,
+        2447.79
+      ],
+      "area_px": 3080
+    },
+    {
+      "index": 1170,
+      "type": "building",
+      "centroid": [
+        -872.72,
+        2434.36
+      ],
+      "area_px": 1950
+    },
+    {
+      "index": 1171,
+      "type": "building",
+      "centroid": [
+        -751.89,
+        2417.54
+      ],
+      "area_px": 3333
+    },
+    {
+      "index": 1172,
+      "type": "building",
+      "centroid": [
+        -496.3,
+        2400.78
+      ],
+      "area_px": 1358
+    },
+    {
+      "index": 1173,
+      "type": "building",
+      "centroid": [
+        -26.99,
+        2436.04
+      ],
+      "area_px": 6254
+    },
+    {
+      "index": 1174,
+      "type": "building",
+      "centroid": [
+        66.42,
+        2372.27
+      ],
+      "area_px": 4941
+    },
+    {
+      "index": 1175,
+      "type": "building",
+      "centroid": [
+        319.06,
+        2403.48
+      ],
+      "area_px": 2050
+    },
+    {
+      "index": 1176,
+      "type": "building",
+      "centroid": [
+        549.9,
+        2378.36
+      ],
+      "area_px": 2274
+    },
+    {
+      "index": 1177,
+      "type": "building",
+      "centroid": [
+        689.64,
+        2412.52
+      ],
+      "area_px": 2101
+    },
+    {
+      "index": 1178,
+      "type": "building",
+      "centroid": [
+        773.59,
+        2357.56
+      ],
+      "area_px": 2004
+    },
+    {
+      "index": 1179,
+      "type": "building",
+      "centroid": [
+        1010.41,
+        2447.68
+      ],
+      "area_px": 897
+    },
+    {
+      "index": 1180,
+      "type": "building",
+      "centroid": [
+        1190.24,
+        2445.51
+      ],
+      "area_px": 1851
+    },
+    {
+      "index": 1181,
+      "type": "building",
+      "centroid": [
+        1471.72,
+        2384.3
+      ],
+      "area_px": 2515
+    },
+    {
+      "index": 1182,
+      "type": "building",
+      "centroid": [
+        1722.58,
+        2366.94
+      ],
+      "area_px": 6156
+    },
+    {
+      "index": 1183,
+      "type": "building",
+      "centroid": [
+        1853.07,
+        2413.38
+      ],
+      "area_px": 1907
+    },
+    {
+      "index": 1184,
+      "type": "building",
+      "centroid": [
+        1937.87,
+        2366.32
+      ],
+      "area_px": 1265
+    },
+    {
+      "index": 1185,
+      "type": "building",
+      "centroid": [
+        2076.8,
+        2413.4
+      ],
+      "area_px": 6054
+    },
+    {
+      "index": 1186,
+      "type": "building",
+      "centroid": [
+        2386.71,
+        2362.61
+      ],
+      "area_px": 6545
+    },
+    {
+      "index": 1187,
+      "type": "building",
+      "centroid": [
+        2690.39,
+        2444.66
+      ],
+      "area_px": 2791
+    },
+    {
+      "index": 1188,
+      "type": "building",
+      "centroid": [
+        2843.8,
+        2386.77
+      ],
+      "area_px": 696
+    },
+    {
+      "index": 1189,
+      "type": "building",
+      "centroid": [
+        2940.52,
+        2353.63
+      ],
+      "area_px": 447
+    },
+    {
+      "index": 1190,
+      "type": "building",
+      "centroid": [
+        2972.62,
+        2427.88
+      ],
+      "area_px": 945
+    },
+    {
+      "index": 1191,
+      "type": "building",
+      "centroid": [
+        3081.48,
+        2371.16
+      ],
+      "area_px": 227
+    },
+    {
+      "index": 1192,
+      "type": "building",
+      "centroid": [
+        4460.01,
+        2434.13
+      ],
+      "area_px": 237
+    },
+    {
+      "index": 1193,
+      "type": "building",
+      "centroid": [
+        4538.47,
+        2431.2
+      ],
+      "area_px": 1317
+    },
+    {
+      "index": 1194,
+      "type": "building",
+      "centroid": [
+        -834.69,
+        2532.74
+      ],
+      "area_px": 509
+    },
+    {
+      "index": 1195,
+      "type": "building",
+      "centroid": [
+        -706.58,
+        2519.36
+      ],
+      "area_px": 1741
+    },
+    {
+      "index": 1196,
+      "type": "building",
+      "centroid": [
+        -591.49,
+        2530.17
+      ],
+      "area_px": 282
+    },
+    {
+      "index": 1197,
+      "type": "building",
+      "centroid": [
+        -533.95,
+        2499.43
+      ],
+      "area_px": 3853
+    },
+    {
+      "index": 1198,
+      "type": "building",
+      "centroid": [
+        -340.94,
+        2468.19
+      ],
+      "area_px": 4758
+    },
+    {
+      "index": 1199,
+      "type": "building",
+      "centroid": [
+        -155.95,
+        2520.08
+      ],
+      "area_px": 894
+    },
+    {
+      "index": 1200,
+      "type": "building",
+      "centroid": [
+        75.02,
+        2520.07
+      ],
+      "area_px": 260
+    },
+    {
+      "index": 1201,
+      "type": "building",
+      "centroid": [
+        242.44,
+        2454.7
+      ],
+      "area_px": 2193
+    },
+    {
+      "index": 1202,
+      "type": "building",
+      "centroid": [
+        604.82,
+        2468.14
+      ],
+      "area_px": 2228
+    },
+    {
+      "index": 1203,
+      "type": "building",
+      "centroid": [
+        653.93,
+        2529.69
+      ],
+      "area_px": 1084
+    },
+    {
+      "index": 1204,
+      "type": "building",
+      "centroid": [
+        747.36,
+        2498.38
+      ],
+      "area_px": 2284
+    },
+    {
+      "index": 1205,
+      "type": "building",
+      "centroid": [
+        854.99,
+        2470.37
+      ],
+      "area_px": 3078
+    },
+    {
+      "index": 1206,
+      "type": "building",
+      "centroid": [
+        1041.44,
+        2518.29
+      ],
+      "area_px": 3466
+    },
+    {
+      "index": 1207,
+      "type": "building",
+      "centroid": [
+        1110.56,
+        2451.25
+      ],
+      "area_px": 70
+    },
+    {
+      "index": 1208,
+      "type": "building",
+      "centroid": [
+        1234.65,
+        2514.68
+      ],
+      "area_px": 1831
+    },
+    {
+      "index": 1209,
+      "type": "building",
+      "centroid": [
+        1367.36,
+        2461.31
+      ],
+      "area_px": 2433
+    },
+    {
+      "index": 1210,
+      "type": "building",
+      "centroid": [
+        1470.91,
+        2501.21
+      ],
+      "area_px": 2809
+    },
+    {
+      "index": 1211,
+      "type": "building",
+      "centroid": [
+        1594.49,
+        2532.64
+      ],
+      "area_px": 736
+    },
+    {
+      "index": 1212,
+      "type": "building",
+      "centroid": [
+        1710.03,
+        2489.47
+      ],
+      "area_px": 2678
+    },
+    {
+      "index": 1213,
+      "type": "building",
+      "centroid": [
+        1886.12,
+        2507.7
+      ],
+      "area_px": 2635
+    },
+    {
+      "index": 1214,
+      "type": "building",
+      "centroid": [
+        2143.15,
+        2494.22
+      ],
+      "area_px": 5306
+    },
+    {
+      "index": 1215,
+      "type": "building",
+      "centroid": [
+        2440.52,
+        2462.69
+      ],
+      "area_px": 2709
+    },
+    {
+      "index": 1216,
+      "type": "building",
+      "centroid": [
+        2476.45,
+        2527.94
+      ],
+      "area_px": 1838
+    },
+    {
+      "index": 1217,
+      "type": "building",
+      "centroid": [
+        2833.36,
+        2547.7
+      ],
+      "area_px": 2193
+    },
+    {
+      "index": 1218,
+      "type": "building",
+      "centroid": [
+        2881.53,
+        2454.97
+      ],
+      "area_px": 682
+    },
+    {
+      "index": 1219,
+      "type": "building",
+      "centroid": [
+        4521.49,
+        2516.48
+      ],
+      "area_px": 2887
+    },
+    {
+      "index": 1220,
+      "type": "building",
+      "centroid": [
+        -981.97,
+        2551.2
+      ],
+      "area_px": 2735
+    },
+    {
+      "index": 1221,
+      "type": "building",
+      "centroid": [
+        2587.46,
+        2553.43
+      ],
+      "area_px": 1319
+    },
+    {
+      "index": 1222,
+      "type": "building",
+      "centroid": [
+        2686.46,
+        2555.28
+      ],
+      "area_px": 1675
+    },
+    {
+      "index": 1223,
+      "type": "park",
+      "centroid": [
+        -1263.29,
+        -1588.25
+      ],
+      "area_px": 6725,
+      "edge_px": 424,
+      "open_component": 156
+    },
+    {
+      "index": 1224,
+      "type": "park",
+      "centroid": [
+        -1509.57,
+        -1036.32
+      ],
+      "area_px": 10438,
+      "edge_px": 408,
+      "open_component": 144
+    },
+    {
+      "index": 1225,
+      "type": "park",
+      "centroid": [
+        -253.98,
+        -791.82
+      ],
+      "area_px": 8357,
+      "edge_px": 818,
+      "open_component": 135
+    },
+    {
+      "index": 1226,
+      "type": "park",
+      "centroid": [
+        4093.27,
+        -804.43
+      ],
+      "area_px": 5230,
+      "edge_px": 260,
+      "open_component": 138
+    },
+    {
+      "index": 1227,
+      "type": "park",
+      "centroid": [
+        1299.97,
+        232.26
+      ],
+      "area_px": 15753,
+      "edge_px": 1094,
+      "open_component": 106
+    },
+    {
+      "index": 1228,
+      "type": "park",
+      "centroid": [
+        796.45,
+        514.91
+      ],
+      "area_px": 50880,
+      "edge_px": 790,
+      "open_component": 89
+    },
+    {
+      "index": 1229,
+      "type": "park",
+      "centroid": [
+        1646.79,
+        978.65
+      ],
+      "area_px": 6902,
+      "edge_px": 761,
+      "open_component": 82
+    },
+    {
+      "index": 1230,
+      "type": "park",
+      "centroid": [
+        -643.86,
+        1217.85
+      ],
+      "area_px": 27194,
+      "edge_px": 577,
+      "open_component": 66
+    },
+    {
+      "index": 1231,
+      "type": "park",
+      "centroid": [
+        1230.06,
+        1344.48
+      ],
+      "area_px": 35357,
+      "edge_px": 500,
+      "open_component": 55
+    },
+    {
+      "index": 1232,
+      "type": "park",
+      "centroid": [
+        2840.1,
+        1373.2
+      ],
+      "area_px": 7021,
+      "edge_px": 551,
+      "open_component": 62
+    },
+    {
+      "index": 1233,
+      "type": "park",
+      "centroid": [
+        -674.14,
+        1576.79
+      ],
+      "area_px": 10912,
+      "edge_px": 453,
+      "open_component": 47
+    },
+    {
+      "index": 1234,
+      "type": "park",
+      "centroid": [
+        1637.18,
+        1743.31
+      ],
+      "area_px": 6143,
+      "edge_px": 378,
+      "open_component": 37
+    },
+    {
+      "index": 1235,
+      "type": "park",
+      "centroid": [
+        2133.64,
+        1911.0
+      ],
+      "area_px": 25736,
+      "edge_px": 250,
+      "open_component": 27
+    },
+    {
+      "index": 1236,
+      "type": "park",
+      "centroid": [
+        3082.6,
+        1948.76
+      ],
+      "area_px": 7292,
+      "edge_px": 296,
+      "open_component": 31
+    },
+    {
+      "index": 1237,
+      "type": "park",
+      "centroid": [
+        294.19,
+        1957.84
+      ],
+      "area_px": 17626,
+      "edge_px": 254,
+      "open_component": 28
+    },
+    {
+      "index": 1238,
+      "type": "park",
+      "centroid": [
+        -133.92,
+        2144.95
+      ],
+      "area_px": 7698,
+      "edge_px": 169,
+      "open_component": 18
+    },
+    {
+      "index": 1239,
+      "type": "park",
+      "centroid": [
+        649.8,
+        2180.51
+      ],
+      "area_px": 5680,
+      "edge_px": 174,
+      "open_component": 19
+    },
+    {
+      "index": 1240,
+      "type": "park",
+      "centroid": [
+        1104.63,
+        2194.65
+      ],
+      "area_px": 5155,
+      "edge_px": 153,
+      "open_component": 17
+    },
+    {
+      "index": 1241,
+      "type": "park",
+      "centroid": [
+        2050.75,
+        2298.2
+      ],
+      "area_px": 6969,
+      "edge_px": 109,
+      "open_component": 15
+    }
+  ]
+}

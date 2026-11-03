@@ -1,0 +1,98 @@
+Human-scale building floors + full-geometry viewer
+==================================================
+
+Floor scale
+  floor height:          3.0 world units
+  facade U module:       12.0 units (one floor-texture module)
+  roof UV tile:          8.0 units
+  one-floor textures:    10 day + 10 night
+                         Textures/day/floors/<facade>_floor.jpg
+                         Textures/night/floors/<facade>_floor_night.jpg
+
+  Each facade texture was cropped to one vertical window-row period.  Walls
+  map V=0..1 inside every 3-unit floor band and repeat U around the wall;
+  roofs use world-space UVs at an 8-unit tile.  A FACE attribute `floor`
+  records the floor index in the art master.
+
+Floor master (manhattan_floors.blend)
+  Floor_Blocks/           1223 objects, one per city block
+  faces:                  739,616
+  Ground_Blocks           Voronoi ground / block ids
+  Parks/                  19 park empties
+  hidden source           original block master geometry
+
+  Floor bands are separate horizontal shells inside each block object, so a
+  block can be edited without splitting 100k objects.  Use the helper
+  `scripts/separate_block_floors.py` on the active Block_XXXX object to turn
+  its floor bands into individual floor objects when detailed editing is
+  needed.
+
+Viewer assets (viewer/assets/models)
+  manhattan_city.glb      128 MB, 1223 nodes, 11 materials, 1,528,337 tris
+  manhattan_ground.glb    1.4 MB, one mesh, 13,319 tris
+  collision_grid.bin      4.39 MB camera-height grid
+  blocks.json             block metadata
+
+  IMPORTANT: there are no merged-region, full-facade or box-proxy LOD meshes.
+  The viewer renders these real per-block floor meshes for the whole city and
+  only culls them at the fog distance.  Geometry is never modified for
+  rendering speed.
+
+Per-floor day/night rates
+  The shader hashes (block id, floor index = world_y/3, penumbra salt) into a
+  per-floor threshold in 0.12..0.88 and width in 0.03..0.15, then
+  blend = block_blend * smoothstep(threshold-width, threshold+width, progress).
+  Floors therefore turn on/off at individually randomised times while their
+  block is transitioning; the salt re-randomises them at each penumbra.  World
+  Y is used instead of vertex colours because vertex attributes interpolate
+  across the facade.  The ground material disables the variation.
+
+Fog culling
+  VisibilityRange start 0; end = clamp(fog_visibility*1.05, 2.5..24 km), with
+  a 600-unit dithered fade.  Beyond that the fog is effectively opaque, so the
+  real meshes are culled.  The ground is always visible.  No proxy geometry is
+  substituted.
+
+Atmosphere and focus
+  DistanceFog: exponential-squared; visibility =
+      clamp((6000 + camera_y*3.0) * (1 - 0.25*daylight) * weather,
+            2500 .. 24000)
+  weather is a slow 0.78..1.10 wave.  18 horizontal mist sheets drift over the
+  city, tinted to the sky, and fade with the haze.
+  Gaussian DepthOfField: sensor 2.5 m (cinematic city-scale lens),
+      focus = clamp(camera_y*1.35 + 70, 90 .. 3200)
+      aperture f/1.0 at street level .. f/3.6 at altitude
+      max CoC 18 px .. 9 px, max_depth = fog visibility
+  so blur scales with distance and saturates at the fog cutoff.
+
+Camera collision
+  collision_grid.bin:  1685 x 1304 cells, 4 m, 528,170 solid cells
+  max height:          410 m
+  Every frame movement is swept in <= cell/2 steps.  A wall impact removes the
+  normal component and slides on the tangent; descending over a roof rests on
+  it; a final push-out guarantees the camera is never left inside a building.
+  The grid stores vertical columns, not bridges/overhangs.
+
+Viewer
+  Scenes: ground + city
+  materials: 12 (10 building facade + roof + ground)
+  primitives: 3,862
+  VisibilityRange entities: 3,861
+  selftest: 1242 blocks, 1223 building, 19 park, night targets 1242,
+            fog 4.1 km, cull 4.3 km, collision grid solid + resolved free,
+            DOF active, materials ready, exit 0
+  tests: 42 passed
+
+Verification screenshots
+  renders/floor_textures.jpg       one-floor day/night crops
+  renders/floors_closeup.png       floor bands on a tower
+  renders/floors_facade.png        one-floor texture close-up
+  renders/floors_roof.png          human-scale roof texture
+  renders/viewer_full_street.png   full floor geometry at street level
+  renders/viewer_full_mid.png      full floor geometry, mid camera
+  renders/viewer_full_overview.png full floor geometry, overview camera
+  renders/viewer_night_street.png  full floor geometry at night + fog/focus
+  renders/viewer_twilight_early.png 16:50 79/1242
+  renders/viewer_twilight.png       17:00 564/1242
+  renders/viewer_twilight_late.png  17:10 1133/1242, per-floor bands visible
+  renders/viewer_dawn.png           06:15 810/1242

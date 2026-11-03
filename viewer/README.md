@@ -1,0 +1,127 @@
+# Manhattan viewer (Bevy 0.20)
+
+```bash
+cargo run --release
+# or, using the prebuilt binary next to its assets/ folder:
+./manhattan-viewer
+```
+
+The viewer loads two real-geometry GLBs generated from
+`../manhattan_floors.blend` and `../manhattan_blocks.blend`:
+
+- `manhattan_city.glb` — 1223 per-block 3-unit floor meshes, one-floor textures
+- `manhattan_ground.glb` — always-visible satellite ground
+
+There are no merged-region, reduced-facade or box-proxy LOD meshes.
+
+There are 1242 geometry-derived blocks (1223 building clusters + 19 parks).
+Block ids are baked into vertex COLOR_0 alpha; `assets/models/blocks.json`
+contains the block count/metadata.  `assets/textures/night/` holds the night
+variants, including `floors/` for the building floors.
+
+## Controls
+
+- **Fly**: `WASD`, `Q`/`E` down/up, hold **right mouse button** to look,
+  arrow keys also look, `Shift` boost, `Alt` precision, wheel changes speed.
+- **Camera floor**: the camera is clamped to `y >= 3.0`, ground is `y = 0`.
+- **Collision**: movement is swept against a baked 4 m building-height grid.
+  Walls remove the normal component and slide the camera along the facade; the
+  camera can rest on a roof but never enter a building.
+- **Calendar/clock**: `[`/`]` day, `-`/`=` hour, `;`/`'` 5 minutes,
+  `,`/`.` month, `Space` play/pause, `B` reverse time, `R` reset.  The
+  top-right panel has clickable buttons for all of these, including reverse.
+- **Views**: `--view street`, `--view mid`, `--view overview` only move the
+  camera; all three render the same full-detail floor geometry.
+
+## Day/night
+
+`src/astro.rs` computes the NOAA solar position and a Meeus lunar position for
+New York (EST).  `src/environment.rs` turns those into:
+
+- a sun `DirectionalLight` (illuminance/colour/rotation)
+- a moon `DirectionalLight` (cool colour, moonlight scaled by altitude × phase)
+- ambient light, sky/fog colour, sun/moon discs, stars
+
+`src/blocks.rs` owns the city lighting response:
+
+- Twilight progress is a function of the sun's altitude: **+1° = 0.0**,
+  **−6° = 1.0** (civil twilight).  Being altitude-driven makes dusk, dawn and
+  reverse time automatic and symmetric.
+- Each block's switch threshold is drawn from N(0.5, 0.18), so blocks turn on
+  in a bell-curve wave.
+- **Each new penumbra re-randomises every block's threshold and style.**
+  ~55% of blocks are **Flicker** (fluorescent 40–120 ms toggles for 0.25–1.1 s,
+  then settle); ~45% are **Fade** (smooth crossfade over a random 0.06–0.18
+  progress window).  Dusk, dawn and reverse time all trigger fresh styles.
+- The real per-date twilight duration (+1° to −6°) is computed from the solar
+  ephemeris and shown in the status panel (e.g. 38 min on 2026-11-01, 45 min
+  near the June solstice).  The clock defaults to 6 in-game minutes per real
+  second, so that twilight wave plays over ~6 s; `B` reverses it for dawn.
+- `src/city_material.rs` + `assets/shaders/city_block.wesl` read the block id
+  from COLOR_0 alpha, mix the day base texture with the night texture and add
+  the night emissive map.  The result keeps PBR lighting, fog, tonemapping and
+  bloom.
+- The shader derives a per-floor threshold/width pair from the block id, the
+  floor index (`world_y / 3`) and the penumbra salt.  Each floor crosses from
+  day to night at its own randomised time while the block blends, so a
+  transitioning block shows some floors already lit and others still dark.
+  The ground disables the per-floor variation with a material uniform.
+
+### Floors, full geometry and fog culling
+
+- `manhattan_floors.blend` cuts each block into 3-unit floor bands.  Walls use
+  one-floor facade crops (`Textures/day/floors` + `night/floors`) with
+  V=0..1 per floor and a 12-unit U module; roofs use an 8-unit world-space
+  roof tile.
+- `VisibilityRange` culls the **real** block meshes at
+  `clamp(fog_visibility*1.05, 2.5..24 km)`.  There are no merged regions or
+  box proxies: geometry is never modified for rendering speed.  Ground has no
+  range.
+- 12 materials, 3,862 primitives, 3,861 visibility-range entities;
+  `manhattan_city.glb` is 128 MB / 1223 nodes, ground 1.4 MB.
+
+### Atmosphere, focus and collision
+
+- `DistanceFog` is exponential-squared, with visibility from camera altitude
+  (`6 km + 3 m per unit`), night air (25% denser) and a slow weather wave,
+  clamped to 2.5–24 km.  The HUD shows the current visibility.
+- 18 horizontal, soft mist quads drift over the city; they are tinted to the
+  sky and fade with the haze.
+- Gaussian `DepthOfField` uses a 2.5 m sensor (a cinematic city-scale cheat),
+  focus `clamp(y*1.35 + 70, 90..3200)`, aperture f/1.0→f/3.6 and CoC 18→9 px.
+  `max_depth` equals fog visibility, so the blur saturates at the fog cutoff.
+- `collision_grid.bin` (1685×1304 cells, 4 m, 528k solid cells) is baked from
+  the block master by `../scripts/build_collision_grid.py`.  `src/collision.rs`
+  sweeps camera motion and slides along impact normals; `push_out` is the
+  final guarantee that the camera never finishes inside a building.
+
+Night textures are loaded with a repeating sampler because facade UVs are in
+tile units well outside 0..1 — this is what makes the window pattern tile across
+each building correctly.
+
+## Useful commands
+
+```bash
+cargo test                                      # 42 tests, no GPU needed
+cargo clippy --all-targets -- -D warnings
+cargo run --release -- --shot out.png --date 2026-11-01 --time 22:00 --view street
+cargo run --release -- --selftest --report selftest_report.json
+```
+
+`--view street` starts at street level; the default `overview` starts above the
+city.  `--shot` waits 600 frames (~10 s) so the GLB, textures and shaders are
+ready, captures the primary window and exits.
+
+## Layout
+
+```
+src/main.rs         app setup, CLI, capture/self-test modes
+src/astro.rs        date arithmetic + solar/lunar ephemeris (unit tests)
+src/clock.rs        SimClock resource + calendar actions (unit tests)
+src/camera.rs       FlyCamera, ground clamp, collision-aware movement (tests)
+src/collision.rs    baked height grid, swept collision + wall sliding (tests)
+src/environment.rs  lighting, sky, fog, focus, sun/moon discs, stars
+src/blocks.rs       block metadata, twilight wave, mixed flicker/fade (tests)
+src/city_material.rs custom PBR extension + fog culling + per-floor uniforms
+src/ui.rs           status panel, buttons, key handler (unit tests)
+```

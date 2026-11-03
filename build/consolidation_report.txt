@@ -1,0 +1,70 @@
+Manhattan model consolidation report
+===================================
+
+Source files (archived in backup/)
+  manhattan_original.blend  64,246,736 bytes
+  manhattan_original.fbx     8,335,244 bytes
+  Textures_original.zip      all 111 original texture files
+
+Conclusion: the original .blend and .fbx describe the same model.  They have
+identical object names, vertex/poly counts, material names, material->texture
+assignments and world-space bounds.  The .fbx was therefore treated as an
+export of the .blend, and a fresh .fbx was exported from the cleaned .blend.
+
+Geometry / materials
+  .blend (clean master)
+    Manhattan_Buildings   188,170 verts   105,330 polys   11 materials
+    Manhattan_Ground            4 verts         1 poly     1 material
+    total                 188,174 verts   105,331 polys   12 materials
+    bounds (Blender Z-up) x -2019.26..4683.12  y -2558.73..2621.25  z 0..410.00
+
+  .fbx (re-imported with Blender 5.2.2, FBX 7400)
+    Manhattan_Buildings   188,170 verts   105,330 polys   11 materials
+    Manhattan_Ground            4 verts         1 poly     1 material
+    total                 188,174 verts   105,331 polys   12 materials
+    bounds identical to the .blend
+    textures: 12/12 embedded and readable
+    empty marker: Manhattan_Origin (non-render helper; importer normalises its
+    transform, mesh data/bounds are unchanged)
+
+  .obj (Z-up, triangulated, MTL)
+    v 188,174
+    f 259,767 triangles
+    newmtl 12
+    texture map_Kd entries 12, all pointed at Textures/day/...
+    FreeCAD 1.1.4 import: 259,767 facets, 163,571 merged points,
+    bounds x -2446.01..4683.12  y -2558.73..2621.25  z 0..410.00
+    -> build/manhattan_freecad.FCStd saved without import errors.
+    Note: reopening the FCStd prints FreeCAD's benign "mesh data structure has
+    some defects" notice because the model is open building shells
+    (94,085 boundary edges; 0 edges with >2 faces; 0 degenerate/duplicate
+    faces).  Import, display and all 259,767 triangles are intact.
+
+Texture link fixes
+  12 images in the clean .blend now resolve under Textures/day/, all readable:
+    facade_glass_blue_0056.jpg          1024 x 1024
+    facade_glass_blue_horizontal.jpg     225 x  225
+    facade_glass_bronze_0053.jpg        1024 x  991
+    facade_glass_dark_vertical.jpg       150 x  335
+    facade_glass_skyblue_grid.jpg        225 x  225
+    facade_glass_striped_0564.jpg        459 x 1024
+    facade_glass_white_0110.jpg          553 x 1024
+    facade_masonry_beige_classic.jpg     291 x  173
+    facade_office_white_0607.jpg         698 x 1024
+    facade_residential_beige_0197.jpg   1012 x 1024
+    roof_concrete_gravel.jpg             275 x  183
+    satellite_manhattan_ground.jpg      1792 x 1024
+
+  The missing GOOGLE_SAT_WM.tif ground texture was recovered from the packed
+  image data in the original .blend and saved as a normal JPG.
+
+Verification commands
+  blender -b manhattan.blend --python scripts/validate_blend.py
+  blender -b --factory-startup --python scripts/inspect_fbx.py
+  freecadcmd scripts/freecad_check.py
+
+Outputs
+  manhattan.blend / manhattan.fbx / manhattan.obj / manhattan.mtl
+  build/manhattan_freecad.FCStd
+  viewer/assets/models/manhattan_city.glb + manhattan_ground.glb
+  (see floors_report.txt)

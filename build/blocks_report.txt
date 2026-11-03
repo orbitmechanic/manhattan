@@ -1,0 +1,84 @@
+Manhattan irregular city-block framework
+========================================
+
+Art master: manhattan_blocks.blend
+Viewer assets: viewer/assets/models/manhattan_city.glb + manhattan_ground.glb
+Block metadata: build/blocks.json (copied to viewer/assets/models/blocks.json)
+
+Construction
+  1. Top-down building mask rendered from manhattan.blend at 2 world units/pixel.
+  2. Building footprints dilated by 8 world units; connected components are
+     building blocks.  1223 building blocks.
+  3. Empty space morphologically opened by 30 world units; large interior open
+     components are park/open-space blocks.  19 park blocks.
+     (Components touching the map edge / water are excluded.)
+  4. Ground partition: 3388 Voronoi cells around building-component centroids,
+     block centroids, and park seeds, clipped to the ground plane.  Boundaries
+     lie between blocks, i.e. down the middle of streets/alleys.
+  5. Blocks sorted by centroid; metadata + labels written for Blender.
+
+Counts
+  total blocks:                 1242
+  building blocks:              1223
+  park/open-space blocks:       19
+  block mesh objects:           1223 (one per building block, multi-material)
+  park empties:                 19
+  building faces:               105,330 (none lost)
+  ground polygons:              3388
+  ground vertices:              20,095
+  materials/images:             12 / 12
+
+Art master layout
+  City_Blocks/Block_0000 ...    one object per building block, custom props
+                                block_index / block_type / centroid_x/y / area_px
+  City_Blocks/Ground_Blocks     Voronoi ground, per-face block id in COLOR_0
+  Parks/Park_0000 ...           empties at park centres
+  _Source_HIDDEN/               original single building + ground
+
+Viewer representation
+  The viewer uses the real per-block floor geometry plus a separate
+  always-visible ground mesh, and culls real meshes at the fog distance.
+  Block ids are baked into COLOR_0 alpha per face/loop
+  (Blender exports COLOR_0 as normalized 16-bit, enough for 1536 ids).
+  A custom PBR extension shader (assets/shaders/city_block.wesl) reads the id
+  from vertex alpha, reads the block blend from a 1536-entry uniform array,
+  mixes the day texture (base StandardMaterial) with the night texture, and
+  adds the night emissive map.  PBR lighting/fog/tonemapping/bloom are intact.
+
+Twilight / style behaviour
+  Sun altitude +1 deg -> progress 0, -6 deg -> progress 1 (civil twilight).
+  Real per-date span computed from the solar ephemeris (38 min on 2026-11-01,
+  45 min at the June solstice).
+  Each block threshold is N(0.5, 0.18), giving a bell-curve wave.
+  Each new penumbra (dusk or dawn, including reverse time) re-randomises every
+  block's threshold and its transition style:
+     ~55% Flicker — fluorescent 40-120 ms toggles for 0.25-1.1 s, then settle
+     ~45% Fade    — smooth crossfade over a random 0.06-0.18 progress window
+  Measured penumbra #1: 712 flicker / 530 fade (that run; each launch and
+  each new penumbra re-randomises the mix).
+
+Measured wave (2026-11-01, overview, release viewer)
+  16:50  sun -0.6 deg  progress 0.23   79 / 1242 lit
+  17:00  sun -2.4 deg  progress 0.48  564 / 1242 lit
+  17:10  sun -4.2 deg  progress 0.74 1133 / 1242 lit
+  06:15  dawn          progress 0.57  810 / 1242 lit
+  Screenshots: renders/viewer_twilight_early.png, viewer_twilight.png,
+  viewer_twilight_late.png, viewer_dawn.png
+  Block map: renders/blocks_overlay.png
+  Ground partition: renders/blocks_ground_voronoi.png
+
+Runtime self-test (viewer/selftest_report.json)
+  blocks.total = 1242
+  building_blocks = 1223
+  park_blocks = 19
+  noon targets = 0
+  night targets = 1242
+  flicker/fade = 702 / 540 (one run; randomised per launch/penumbra)
+  twilight span = 45 min (2026-06-21)
+  camera clamp = 3.0, hour wrap = 2026-06-22 00:00, exit 0
+
+Viewer tests: 42 passed
+  Includes irregular metadata load, Gaussian thresholds, mixed styles per
+  penumbra, flicker on/off state machine, fade smoothness/reversibility,
+  per-date twilight span, actual Bevy fly-camera systems, calendar keys,
+  and a real button Activate click.

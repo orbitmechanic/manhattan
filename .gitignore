@@ -1,0 +1,10 @@
+# Large local backups and build products
+/backup/
+/viewer/target/
+/viewer/web/dist/
+/target/
+*.blend1
+/viewer/manhattan-viewer
+
+# OS noise
+.DS_Store

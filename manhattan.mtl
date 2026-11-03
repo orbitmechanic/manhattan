@@ -1,0 +1,122 @@
+# Blender 5.2.2 LTS MTL File: 'manhattan.blend'
+# www.blender.org
+
+newmtl Facade_Glass_Blue_0056
+Ns 608.399963
+Ka 0.150000 0.150000 0.150000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures/day/facades/facade_glass_blue_0056.jpg
+
+newmtl Facade_Glass_Blue_Horizontal
+Ns 608.399963
+Ka 0.150000 0.150000 0.150000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures/day/facades/facade_glass_blue_horizontal.jpg
+
+newmtl Facade_Glass_Bronze_0053
+Ns 608.399963
+Ka 0.150000 0.150000 0.150000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures/day/facades/facade_glass_bronze_0053.jpg
+
+newmtl Facade_Glass_Dark_Vertical
+Ns 608.399963
+Ka 0.150000 0.150000 0.150000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures/day/facades/facade_glass_dark_vertical.jpg
+
+newmtl Facade_Glass_SkyBlue_Grid
+Ns 608.399963
+Ka 0.150000 0.150000 0.150000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures/day/facades/facade_glass_skyblue_grid.jpg
+
+newmtl Facade_Glass_Striped_0564
+Ns 608.399963
+Ka 0.150000 0.150000 0.150000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures/day/facades/facade_glass_striped_0564.jpg
+
+newmtl Facade_Glass_White_0110
+Ns 608.399963
+Ka 0.150000 0.150000 0.150000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures/day/facades/facade_glass_white_0110.jpg
+
+newmtl Facade_Masonry_Beige_Classic
+Ns 78.399986
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures/day/facades/facade_masonry_beige_classic.jpg
+
+newmtl Facade_Office_White_0607
+Ns 78.399986
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures/day/facades/facade_office_white_0607.jpg
+
+newmtl Facade_Residential_Beige_0197
+Ns 78.399986
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures/day/facades/facade_residential_beige_0197.jpg
+
+newmtl Ground_Satellite_Manhattan
+Ns 22.499992
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures/day/ground/satellite_manhattan_ground.jpg
+
+newmtl Roof_Concrete_Gravel
+Ns 6.399997
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures/day/roofs/roof_concrete_gravel.jpg
