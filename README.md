@@ -12,8 +12,8 @@ field, and a twilight wave that lights blocks up like fluorescent tubes.
 ```bash
 cd viewer
 cargo run --release
-# or use the prebuilt release binary (assets/ sits beside it):
-./manhattan-viewer
+# or build once and run the release binary from the viewer directory:
+cargo build --release && ./target/release/manhattan-viewer
 ```
 
 First launch takes a few seconds while the 130 MB city mesh and its textures

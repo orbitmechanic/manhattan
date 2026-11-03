@@ -2,8 +2,8 @@
 
 ```bash
 cargo run --release
-# or, using the prebuilt binary next to its assets/ folder:
-./manhattan-viewer
+# or build once and run the release binary from this directory:
+cargo build --release && ./target/release/manhattan-viewer
 ```
 
 The viewer loads two real-geometry GLBs generated from
