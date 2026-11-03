@@ -292,7 +292,7 @@ buildings.
 - Every block id lives in COLOR_0 alpha, so the twilight/flicker/fade behaviour
   continues across the whole city.
 - Viewer totals: **12 materials, 3,862 primitives, 3,861 visibility-range
-  entities**; `manhattan_city.glb` is 128 MB / 1223 nodes.
+  entities**; `manhattan_city.glb` is 93 MB / 1223 nodes.
 - `--view street`, `--view mid` and `--view overview` only change the camera
   position; they all show the same full-detail geometry.
 
@@ -461,7 +461,7 @@ affected presentation and is already reflected in the script.
 - Floor bands are separate horizontal shells with a `floor` attribute, not
   watertight room boxes; use `scripts/separate_block_floors.py` for per-floor
   objects and add caps if a fully closed solid is required.
-- `manhattan_city.glb` is intentionally large (128 MB / 739k faces) because it
+- `manhattan_city.glb` is intentionally large (93 MB / 739k faces) because it
   is the full-detail floor city.  Fog culling hides real meshes beyond the
   visibility distance; no geometry is replaced or simplified.  The ground is
   always visible and the DOF softens the far field.

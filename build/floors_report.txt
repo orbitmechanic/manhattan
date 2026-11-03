@@ -28,10 +28,14 @@ Floor master (manhattan_floors.blend)
   needed.
 
 Viewer assets (viewer/assets/models)
-  manhattan_city.glb      128 MB, 1223 nodes, 11 materials, 1,528,337 tris
-  manhattan_ground.glb    1.4 MB, one mesh, 13,319 tris
+  manhattan_city.glb       93 MB, 1223 nodes, 11 materials, 1,528,337 tris
+  manhattan_ground.glb    1.2 MB, one mesh, 13,319 tris
   collision_grid.bin      4.39 MB camera-height grid
   blocks.json             block metadata
+
+  Normals are not exported (Bevy computes flat normals on load), which keeps
+  the single city GLB under GitHub Pages' 100 MB per-file limit without
+  changing the geometry.
 
   IMPORTANT: there are no merged-region, full-facade or box-proxy LOD meshes.
   The viewer renders these real per-block floor meshes for the whole city and

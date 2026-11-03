@@ -78,7 +78,7 @@ New York (EST).  `src/environment.rs` turns those into:
   box proxies: geometry is never modified for rendering speed.  Ground has no
   range.
 - 12 materials, 3,862 primitives, 3,861 visibility-range entities;
-  `manhattan_city.glb` is 128 MB / 1223 nodes, ground 1.4 MB.
+  `manhattan_city.glb` is 93 MB / 1223 nodes, ground 1.2 MB.
 
 ### Atmosphere, focus and collision
 
