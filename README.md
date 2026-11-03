@@ -449,6 +449,8 @@ affected presentation and is already reflected in the script.
 
 - Times are local **Eastern Standard Time**; daylight-saving is ignored so the
   demo is deterministic.
+- The archived originals in `backup/` are kept local only (not committed); the
+  public repo ships the generated models and all source scripts.
 - The viewer uses the real-geometry `manhattan_city.glb` + `manhattan_ground.glb`
   exported from the floor and block masters.  `manhattan.blend` / `.fbx` /
   `.obj` remain the single-mesh interchange deliverables for FreeCAD and other
