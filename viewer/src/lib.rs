@@ -6,4 +6,5 @@ pub mod city_material;
 pub mod clock;
 pub mod collision;
 pub mod environment;
+pub mod stationing;
 pub mod ui;

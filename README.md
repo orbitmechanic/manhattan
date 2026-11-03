@@ -37,6 +37,9 @@ load.  A 1440×900 window opens on the overview camera.
 | `Space` | play / pause the clock |
 | `B` | reverse the clock direction (dusk ↔ dawn) |
 | `R` | reset to 2026-06-21 12:00 |
+| `L` | show/hide street centreline stationing |
+| `T` | show/hide the vertical 100-ft station ticks |
+| `C` | show/hide the camera civil-coordinate panel |
 
 The top-right panel has clickable buttons for the same calendar/clock actions.
 The camera is hard-clamped to `y >= 3.0` (the city ground line is `y = 0`) and
@@ -116,10 +119,13 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/manhattan_freecad.FCStd` | native FreeCAD document produced by importing the OBJ (validated cleanly). |
 | `build/blocks_report.txt` | irregular block counts, park/Voronoi details, wave measurements, runtime verification. |
 | `build/floors_report.txt` | floor scale, one-floor textures, real-geometry assets, fog/focus/collision. |
+| `build/stationing_report.txt` | street-centreline method, counts, data schema and camera civil coordinates. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
 | `viewer/assets/models/collision_grid.bin` | 4 m building-height grid baked from the 1223 blocks, used for camera collision. |
+| `viewer/assets/models/station_lines.json` | 1479 street centreline stationing lines with 100-ft ticks, plan curves/tangents and vertical profiles. |
+| `build/station_lines_overlay.png` | stationing validation overlay on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
 | `Textures/day/` | canonical day textures, names describe content; `floors/` holds one-floor facade crops. |
 | `Textures/night/` | generated night textures; `floors/` holds matching one-floor night crops. |
@@ -296,6 +302,36 @@ buildings.
 - `--view street`, `--view mid` and `--view overview` only change the camera
   position; they all show the same full-detail geometry.
 
+### Street centreline stationing
+
+`scripts/build_station_lines.py` derives **1479 street centrelines** from a
+combination of the building-block Voronoi geometry and the low-resolution
+satellite road hints (`Textures/day/ground/...`).  It samples each candidate
+Voronoi edge, keeps grey low-saturation road pixels, rejects water/open-ground
+spokes far from building footprints, traces and joins chains, then simplifies
+and fits plan curves.
+
+- **117.7 miles** of centreline, **8405 ticks** at 100-ft intervals.
+- Each line has `points`, plan **tangents**, **circular curves** (radius,
+  left/right, reverse flag), and a **vertical tangent profile** for future
+  grade changes.  The source ground is flat, so current elevations are 0.
+- Stations, offsets and elevations are in **feet**; geometry is in metres.
+- Offset is **negative left / positive right** when looking up-station.
+- Press `L` for centrelines, `T` for the 100-ft vertical ticks (from −3 m to
+  +30 m through the ground), and `C` for the civil-coordinate panel.  The same
+  toggles are clickable buttons in the STATIONING panel.
+- The camera computes an array with one civil coordinate per line
+  (`station_ft`, `offset_ft`, `elevation_ft`, nearest tangent station/elevation
+  and plan distance).  The panel shows the three nearest lines; the full array
+  lives in `StationingState.coords` for future pavement/gutter/sidewalk/
+  crosswalk/signal placement.
+- `build/station_lines_overlay.png` shows the extracted network on the
+  satellite; `renders/viewer_station_street.png` and
+  `viewer_station_overview.png` show the in-viewer inspection layer.
+
+The extraction is a planning aid, not a survey: lines follow the building
+geometry and road-colour hints, and should be field-checked before construction.
+
 ### Atmosphere, focus and camera collision
 
 - **Variable haze**: `DistanceFog` uses an exponential-squared falloff whose
@@ -399,6 +435,9 @@ blender -b manhattan_blocks.blend --python scripts/build_floors.py
 python3 scripts/make_fog_texture.py
 blender -b manhattan_blocks.blend --python scripts/build_collision_grid.py
 
+# 6b3. street centrelines + stationing data
+/tmp/opencode/geoenv/bin/python scripts/build_station_lines.py
+
 # 6c. after floor-master edits, re-export the city mesh
 blender -b manhattan_floors.blend --python scripts/export_city_mesh.py
 
@@ -427,6 +466,9 @@ affected presentation and is already reflected in the script.
 - `renders/viewer_full_street.png`, `viewer_full_mid.png`,
   `viewer_full_overview.png` — the same full floor geometry from street, mid
   and overview cameras (no LOD proxies).
+- `renders/viewer_station_street.png`, `viewer_station_overview.png` —
+  street centrelines and vertical 100-ft ticks with the civil-coordinate panel.
+- `build/station_lines_overlay.png` — extracted centrelines over the satellite.
 - `renders/viewer_twilight_early.png`, `viewer_twilight.png`,
   `viewer_twilight_late.png`, `viewer_dawn.png` — the wave at 79/1242,
   564/1242, 1133/1242 and 810/1242 lit.  The street-level twilight frames also
@@ -436,14 +478,16 @@ affected presentation and is already reflected in the script.
 - `viewer/selftest_report.json` — runtime report: 1242 blocks (1223 building,
   19 park), noon targets 0, night targets 1242, randomised flicker/fade split
   (one run 702/540), 3,861 visibility-range entities, fog cull 4.3 km, focus
-  blur active, collision grid loaded and resolved, camera clamp at y=3,
+  blur active, collision grid loaded and resolved, stationing 1479 lines /
+  1479 camera coordinates / 1847 plan curves / 8405 ticks, camera clamp at y=3,
   hour-wrap date correct.
-- `viewer` tests: **42 passed**, including the camera collision/slide maths,
-  one-floor texture paths, fog-cull distance, the actual Bevy fly camera
-  system, calendar keys, mixed flicker/fade re-randomisation, Gaussian
-  thresholds and per-date twilight duration.
+- `viewer` tests: **44 passed**, including station/offset sign projection and
+  station data loading, camera collision/slide maths, one-floor texture paths,
+  fog-cull distance, the actual Bevy fly camera system, calendar keys, mixed
+  flicker/fade re-randomisation, Gaussian thresholds and per-date twilight
+  duration.
 - `viewer/selftest_report.json` additionally reports the collision grid,
-  fog cull distance, fog visibility and focus blur state.
+  fog cull distance, fog visibility, focus blur state and stationing counts.
 
 ## Notes / caveats
 
@@ -467,6 +511,13 @@ affected presentation and is already reflected in the script.
   is the full-detail floor city.  Fog culling hides real meshes beyond the
   visibility distance; no geometry is replaced or simplified.  The ground is
   always visible and the DOF softens the far field.
+- Street centrelines are heuristic: Voronoi block boundaries + satellite road
+  colour + building distance.  They are a coordinate framework for future
+  graphics, not a legal survey; re-run `build_station_lines.py` after block
+  edits.
+- The vertical profiles are flat (grade 0) because the source city ground is
+  flat; the data schema already supports tangent points, grades and vertical
+  curves for future elevation work.
 - The segmentation is heuristic: 8-unit dilation groups buildings into blocks,
   and the 30-unit empty-space opening finds large parks/plazas.  Very narrow
   streets may merge two blocks and some wide avenues can become open-space

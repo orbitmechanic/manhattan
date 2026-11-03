@@ -85,7 +85,7 @@ Viewer
   selftest: 1242 blocks, 1223 building, 19 park, night targets 1242,
             fog 4.1 km, cull 4.3 km, collision grid solid + resolved free,
             DOF active, materials ready, exit 0
-  tests: 42 passed
+  tests: 44 passed
 
 Verification screenshots
   renders/floor_textures.jpg       one-floor day/night crops

@@ -77,7 +77,7 @@ Runtime self-test (viewer/selftest_report.json)
   twilight span = 45 min (2026-06-21)
   camera clamp = 3.0, hour wrap = 2026-06-22 00:00, exit 0
 
-Viewer tests: 42 passed
+Viewer tests: 44 passed
   Includes irregular metadata load, Gaussian thresholds, mixed styles per
   penumbra, flicker on/off state machine, fade smoothness/reversibility,
   per-date twilight span, actual Bevy fly-camera systems, calendar keys,

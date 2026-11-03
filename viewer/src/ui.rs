@@ -10,12 +10,21 @@ use crate::blocks::BlockLights;
 use crate::camera::{FlyCamera, MIN_CAMERA_HEIGHT};
 use crate::clock::{ClockAction, SimClock};
 use crate::environment::{Environment, fog_cull_distance};
+use crate::stationing::{
+    CivilCoordinate, StationToggle, Stationing, StationingConfig, StationingState, toggle_station,
+};
 
 #[derive(Component)]
 pub struct StatusText;
 
 #[derive(Component)]
 pub struct ControlsText;
+
+#[derive(Component)]
+pub struct StationText;
+
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct StationButton(pub StationToggle);
 
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ClockButton(pub ClockAction);
@@ -51,6 +60,41 @@ fn button(base: &mut ChildSpawnerCommands, label: &str, action: ClockAction) {
     entity.observe(move |_: On<Activate>, mut clock: ResMut<SimClock>| {
         clock.apply(action);
     });
+}
+
+fn station_button(base: &mut ChildSpawnerCommands, label: &str, toggle: StationToggle) {
+    let mut entity = base.spawn((
+        Button,
+        StationButton(toggle),
+        Hovered::default(),
+        Node {
+            min_width: px(88),
+            height: px(28),
+            padding: UiRect::horizontal(px(8)),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            border: UiRect::all(px(1)),
+            border_radius: BorderRadius::all(px(5)),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.12, 0.17, 0.25, 0.92)),
+        BorderColor::all(Color::srgba(0.45, 0.62, 0.82, 0.75)),
+    ));
+    entity.with_children(|p| {
+        p.spawn((
+            Text::new(label),
+            TextFont {
+                font_size: FontSize::Px(12.0),
+                ..default()
+            },
+            TextColor(Color::srgb(0.88, 0.93, 1.0)),
+        ));
+    });
+    entity.observe(
+        move |_: On<Activate>, mut config: ResMut<StationingConfig>| {
+            toggle_station(&mut config, toggle);
+        },
+    );
 }
 
 pub fn spawn_ui(mut commands: Commands) {
@@ -132,12 +176,63 @@ pub fn spawn_ui(mut commands: Commands) {
             });
         });
 
+    // stationing / civil-coordinate panel
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: px(230),
+                right: px(14),
+                width: px(300),
+                padding: UiRect::all(px(10)),
+                flex_direction: FlexDirection::Column,
+                row_gap: px(6),
+                border: UiRect::all(px(1)),
+                border_radius: BorderRadius::all(px(8)),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.015, 0.025, 0.05, 0.85)),
+            BorderColor::all(Color::srgba(0.40, 0.58, 0.82, 0.55)),
+        ))
+        .with_children(|p| {
+            p.spawn((
+                Text::new("STATIONING / CIVIL COORDINATES"),
+                TextFont {
+                    font_size: FontSize::Px(12.0),
+                    ..default()
+                },
+                TextColor(Color::srgb(0.62, 0.76, 0.95)),
+            ));
+            p.spawn(Node {
+                flex_direction: FlexDirection::Row,
+                flex_wrap: FlexWrap::Wrap,
+                column_gap: px(6),
+                row_gap: px(6),
+                ..default()
+            })
+            .with_children(|row| {
+                station_button(row, "lines [L]", StationToggle::Lines);
+                station_button(row, "ticks [T]", StationToggle::Ticks);
+                station_button(row, "coords [C]", StationToggle::Coords);
+            });
+            p.spawn((
+                StationText,
+                Text::new("Station array loading…"),
+                TextFont {
+                    font_size: FontSize::Px(11.0),
+                    ..default()
+                },
+                TextColor(Color::srgba(0.82, 0.88, 0.97, 0.95)),
+            ));
+        });
+
     // bottom-left help
     commands.spawn((
         ControlsText,
         Text::new(
             "FLY: W A S D  |  Q/E down/up  |  hold RMB to look  |  Shift boost  |  wheel speed  |  arrows look\n\
-             TIME: [ / ] day  |  - / = hour  |  ; / ' minute  |  , / . month  |  Space play/pause  |  B reverse  |  R reset",
+             TIME: [ / ] day  |  - / = hour  |  ; / ' minute  |  , / . month  |  Space play/pause  |  B reverse  |  R reset\n\
+             STATIONING: L lines  |  T 100-ft ticks  |  C camera civil coordinates",
         ),
         TextFont {
             font_size: FontSize::Px(13.0),
@@ -260,6 +355,47 @@ pub fn update_status(
         clock.speed.abs(),
         fly.speed,
     );
+}
+
+pub fn update_station_text(
+    config: Res<StationingConfig>,
+    stationing: Res<Stationing>,
+    state: Res<StationingState>,
+    mut text: Query<&mut Text, With<StationText>>,
+) {
+    let Some(mut text) = text.iter_mut().next() else {
+        return;
+    };
+    let lines_state = if config.show_lines { "ON" } else { "OFF" };
+    let ticks_state = if config.show_ticks { "ON" } else { "OFF" };
+    let coords_state = if config.show_coords { "ON" } else { "OFF" };
+    let mut out = format!(
+        "lines {lines_state}   ticks {ticks_state}   coords {coords_state}\n\
+         {} lines / {:.1} mi   camera array {}\n\
+         OFF: negative left / positive right (up-station)\n",
+        stationing.line_count,
+        stationing.total_length_ft / 5280.0,
+        state.coords.len()
+    );
+    if config.show_coords && !state.coords.is_empty() {
+        let mut nearest: Vec<&CivilCoordinate> = state.coords.iter().collect();
+        nearest.sort_by(|a, b| a.plan_distance_ft.total_cmp(&b.plan_distance_ft));
+        for c in nearest.iter().take(3) {
+            out.push_str(&format!(
+                "{}  STA {:.1}  OFF {:+.1}  EL {:+.1}\n",
+                c.line_id, c.station_ft, c.offset_ft, c.elevation_ft
+            ));
+        }
+        if let Some(c) = nearest.first() {
+            out.push_str(&format!(
+                "nearest tangent STA {:.1} @ EL {:.1} ft\n",
+                c.tangent_station_ft, c.tangent_elevation_ft
+            ));
+        }
+    } else if !config.show_coords {
+        out.push_str("camera civil-coordinate array hidden\n");
+    }
+    text.0 = out;
 }
 
 #[cfg(test)]

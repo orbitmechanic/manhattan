@@ -43,7 +43,11 @@ use manhattan_viewer::{
         Environment, fog_cull_distance, setup_lighting, spawn_fog_banks, update_environment,
         update_fog_bank_materials, update_fog_banks,
     },
-    ui::{handle_calendar_keys, spawn_ui, update_status},
+    stationing::{
+        Stationing, StationingConfig, StationingState, configure_station_gizmos, draw_stationing,
+        handle_station_keys, update_civil_coordinates,
+    },
+    ui::{handle_calendar_keys, spawn_ui, update_station_text, update_status},
 };
 
 #[derive(Resource, Clone)]
@@ -85,6 +89,10 @@ struct SelfTest {
     collision_free: bool,
     fog_visibility_km: f32,
     fog_cull_m: f32,
+    station_lines: usize,
+    station_coords: usize,
+    station_curves: usize,
+    station_ticks: usize,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -103,6 +111,8 @@ struct Args {
     selftest: bool,
     report: Option<String>,
     view: ViewPreset,
+    show_lines: bool,
+    show_ticks: bool,
 }
 
 impl Default for Args {
@@ -115,6 +125,8 @@ impl Default for Args {
             selftest: false,
             report: None,
             view: ViewPreset::Overview,
+            show_lines: false,
+            show_ticks: false,
         }
     }
 }
@@ -131,6 +143,8 @@ fn parse_args() -> Args {
                 }
             }
             "--selftest" => args.selftest = true,
+            "--lines" => args.show_lines = true,
+            "--ticks" => args.show_ticks = true,
             "--report" => args.report = it.next(),
             "--view" => {
                 args.view = match it.next().as_deref() {
@@ -219,6 +233,13 @@ fn main() {
         .insert_resource(BlockLights::default())
         .insert_resource(CityMaterialSetup::default())
         .insert_resource(CollisionGrid::default())
+        .insert_resource(Stationing::default())
+        .insert_resource(StationingConfig {
+            show_lines: args.show_lines,
+            show_ticks: args.show_ticks,
+            show_coords: true,
+        })
+        .insert_resource(StationingState::default())
         .insert_resource(args)
         .add_systems(
             Startup,
@@ -228,6 +249,7 @@ fn main() {
                 spawn_scene,
                 spawn_fog_banks,
                 spawn_ui,
+                configure_station_gizmos,
             ),
         )
         .add_systems(
@@ -235,6 +257,7 @@ fn main() {
             (
                 tick_clock,
                 handle_calendar_keys,
+                handle_station_keys,
                 fly_camera_system,
                 update_fog_banks,
                 update_environment,
@@ -243,6 +266,9 @@ fn main() {
                 update_fog_culling,
                 setup_city_materials,
                 cull_web_buildings,
+                update_civil_coordinates,
+                draw_stationing,
+                update_station_text,
                 hide_web_loading,
                 update_blocks,
                 update_city_materials,
@@ -285,6 +311,8 @@ fn apply_web_args(args: &mut Args) {
                     args.time = Some((parts[0], parts[1]));
                 }
             }
+            "lines" => args.show_lines = value == "1" || value == "true",
+            "ticks" => args.show_ticks = value == "1" || value == "true",
             _ => {}
         }
     }
@@ -438,6 +466,8 @@ fn run_selftest(
     culling: Query<&VisibilityRange>,
     dof: Query<&DepthOfField, With<FlyCamera>>,
     grid: Res<CollisionGrid>,
+    stationing: Res<Stationing>,
+    station_state: Res<StationingState>,
     camera: Single<&mut Transform, With<FlyCamera>>,
     mut exit: MessageWriter<AppExit>,
 ) {
@@ -517,6 +547,18 @@ fn run_selftest(
             test.materials_ready = setup.done;
             test.fog_visibility_km = env.fog_visibility / 1000.0;
             test.fog_cull_m = fog_cull_distance(env.fog_visibility);
+            test.station_lines = stationing.line_count;
+            test.station_coords = station_state.coords.len();
+            test.station_curves = stationing
+                .lines
+                .iter()
+                .map(|line| line.plan_curves.len())
+                .sum();
+            test.station_ticks = stationing
+                .lines
+                .iter()
+                .map(|line| line.tick_points.len())
+                .sum();
             clock.set_time(22, 0);
             test.stage = 3;
         }
@@ -529,7 +571,7 @@ fn run_selftest(
             let moved = test.camera_before.distance(test.camera_after);
             let clamped = test.clamp_y_after >= MIN_CAMERA_HEIGHT;
             let report = format!(
-                "{{\n  \"camera\": {{\n    \"moved_units\": {:.2},\n    \"clamped_y\": {:.2},\n    \"floor\": {:.2},\n    \"clamp_ok\": {}\n  }},\n  \"clock\": {{\n    \"noon_sun_alt_deg\": {:.2},\n    \"night_sun_alt_deg\": {:.2},\n    \"noon_mode\": \"{}\",\n    \"night_mode\": \"{}\",\n    \"hour_wrap_date\": \"{}\",\n    \"hour_wrap_hour\": {}\n  }},\n  \"moon\": {{\n    \"alt_deg\": {:.2},\n    \"az_deg\": {:.2},\n    \"illumination\": {:.3}\n  }},\n  \"blocks\": {{\n    \"total\": {},\n    \"building_blocks\": {},\n    \"park_blocks\": {},\n    \"noon_targets\": {},\n    \"night_targets\": {},\n    \"flicker_blocks\": {},\n    \"fade_blocks\": {},\n    \"twilight_span_minutes\": {:.1}\n  }},\n  \"render\": {{\n    \"visibility_range_entities\": {},\n    \"fog_cull_m\": {:.0},\n    \"fog_visibility_km\": {:.1},\n    \"dof_active\": {},\n    \"materials_ready\": {}\n  }},\n  \"collision\": {{\n    \"grid_solid\": {},\n    \"resolved_free\": {}\n  }},\n  \"assertions\": {{\n    \"camera_moves\": {},\n    \"camera_above_ground\": {},\n    \"noon_is_day\": {},\n    \"night_is_night\": {},\n    \"hour_wrap_ok\": {},\n    \"collision_ok\": {},\n    \"fog_cull_ok\": {}\n  }}\n}}\n",
+                "{{\n  \"camera\": {{\n    \"moved_units\": {:.2},\n    \"clamped_y\": {:.2},\n    \"floor\": {:.2},\n    \"clamp_ok\": {}\n  }},\n  \"clock\": {{\n    \"noon_sun_alt_deg\": {:.2},\n    \"night_sun_alt_deg\": {:.2},\n    \"noon_mode\": \"{}\",\n    \"night_mode\": \"{}\",\n    \"hour_wrap_date\": \"{}\",\n    \"hour_wrap_hour\": {}\n  }},\n  \"moon\": {{\n    \"alt_deg\": {:.2},\n    \"az_deg\": {:.2},\n    \"illumination\": {:.3}\n  }},\n  \"blocks\": {{\n    \"total\": {},\n    \"building_blocks\": {},\n    \"park_blocks\": {},\n    \"noon_targets\": {},\n    \"night_targets\": {},\n    \"flicker_blocks\": {},\n    \"fade_blocks\": {},\n    \"twilight_span_minutes\": {:.1}\n  }},\n  \"render\": {{\n    \"visibility_range_entities\": {},\n    \"fog_cull_m\": {:.0},\n    \"fog_visibility_km\": {:.1},\n    \"dof_active\": {},\n    \"materials_ready\": {}\n  }},\n  \"stationing\": {{\n    \"lines\": {},\n    \"camera_coordinate_array\": {},\n    \"plan_curves\": {},\n    \"ticks\": {}\n  }},\n  \"collision\": {{\n    \"grid_solid\": {},\n    \"resolved_free\": {}\n  }},\n  \"assertions\": {{\n    \"camera_moves\": {},\n    \"camera_above_ground\": {},\n    \"noon_is_day\": {},\n    \"night_is_night\": {},\n    \"hour_wrap_ok\": {},\n    \"collision_ok\": {},\n    \"fog_cull_ok\": {},\n    \"stationing_ok\": {}\n  }}\n}}\n",
                 moved,
                 test.clamp_y_after,
                 MIN_CAMERA_HEIGHT,
@@ -556,6 +598,10 @@ fn run_selftest(
                 test.fog_visibility_km,
                 test.dof_active,
                 test.materials_ready,
+                test.station_lines,
+                test.station_coords,
+                test.station_curves,
+                test.station_ticks,
                 test.collision_solid,
                 test.collision_free,
                 moved > 1.0,
@@ -564,7 +610,8 @@ fn run_selftest(
                 test.night_mode == "night",
                 test.hour_wrap_date.ends_with("22 }") && test.hour_wrap_hour == 0,
                 test.collision_solid && test.collision_free,
-                test.fog_cull_m >= 2_500.0 && test.fog_cull_m <= 24_000.0
+                test.fog_cull_m >= 2_500.0 && test.fog_cull_m <= 24_000.0,
+                test.station_lines > 1_000 && test.station_coords == test.station_lines
             );
             let _ = std::fs::write(&path, &report);
             println!("SELFTEST REPORT {path}\n{report}");
@@ -583,7 +630,9 @@ fn run_selftest(
                 && test.dof_active
                 && test.materials_ready
                 && test.collision_solid
-                && test.collision_free;
+                && test.collision_free
+                && test.station_lines > 1_000
+                && test.station_coords == test.station_lines;
             if ok {
                 exit.write(AppExit::Success);
             } else {
