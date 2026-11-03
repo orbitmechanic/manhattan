@@ -94,7 +94,8 @@ vertical tangent profile (currently grade 0 because the model ground is flat).
 `src/stationing.rs` draws the line/ticks as gizmos and maintains
 `StationingState.coords`: one civil coordinate per line with station, signed
 offset (negative left / positive right up-station), camera elevation relative
-to the line, nearest vertical tangent station/elevation and plan distance.
+to the line, nearest vertical tangent station/elevation, signed station and
+elevation from that tangent, and plan distance.
 The panel shows the three nearest lines.  The full array is intended for future
 pavement/gutter/sidewalk/crosswalk/signal placement.
 

@@ -165,6 +165,10 @@ pub struct CivilCoordinate {
     /// Nearest vertical tangent point and its elevation.
     pub tangent_station_ft: f32,
     pub tangent_elevation_ft: f32,
+    /// Signed station distance from that tangent and elevation difference from
+    /// the tangent elevation to the camera.
+    pub station_from_tangent_ft: f32,
+    pub elevation_from_tangent_ft: f32,
 }
 
 #[derive(Resource, Default)]
@@ -244,6 +248,8 @@ pub fn update_civil_coordinates(
             plan_distance_ft,
             tangent_station_ft,
             tangent_elevation_ft,
+            station_from_tangent_ft: station_ft - tangent_station_ft,
+            elevation_from_tangent_ft: camera_elevation_ft - tangent_elevation_ft,
         });
     }
 }

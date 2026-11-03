@@ -24,8 +24,8 @@
     "park_blocks": 19,
     "noon_targets": 0,
     "night_targets": 1242,
-    "flicker_blocks": 697,
-    "fade_blocks": 545,
+    "flicker_blocks": 701,
+    "fade_blocks": 541,
     "twilight_span_minutes": 45.0
   },
   "render": {

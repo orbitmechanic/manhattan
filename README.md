@@ -321,8 +321,9 @@ and fits plan curves.
   +30 m through the ground), and `C` for the civil-coordinate panel.  The same
   toggles are clickable buttons in the STATIONING panel.
 - The camera computes an array with one civil coordinate per line
-  (`station_ft`, `offset_ft`, `elevation_ft`, nearest tangent station/elevation
-  and plan distance).  The panel shows the three nearest lines; the full array
+  (`station_ft`, `offset_ft`, `elevation_ft`, nearest tangent
+  station/elevation, signed station from that tangent, elevation from that
+  tangent, and plan distance).  The panel shows the three nearest lines; the full array
   lives in `StationingState.coords` for future pavement/gutter/sidewalk/
   crosswalk/signal placement.
 - `build/station_lines_overlay.png` shows the extracted network on the
