@@ -60,7 +60,7 @@ Validation
   renders/viewer_station_fronts_mid.png
   native selftest: imagery 2041 lines / 2041 camera coords, fronts 2460 / 2460,
                    stationing_ok true
-  tests: 44 passed
+  tests: 45 passed
 
 Caveat
   Both networks are planning aids, not surveys.  The imagery set inherits the

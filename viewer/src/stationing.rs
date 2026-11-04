@@ -423,6 +423,16 @@ mod tests {
     }
 
     #[test]
+    fn set_toggle_cycles() {
+        let mut config = StationingConfig::default();
+        assert_eq!(config.set, LineSet::Fronts);
+        toggle_station(&mut config, StationToggle::Set);
+        assert_eq!(config.set, LineSet::Imagery);
+        toggle_station(&mut config, StationToggle::Set);
+        assert_eq!(config.set, LineSet::Fronts);
+    }
+
+    #[test]
     fn station_data_loads() {
         let s = Stationing::default();
         for set in [LineSet::Imagery, LineSet::Fronts] {

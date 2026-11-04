@@ -130,7 +130,7 @@ each building correctly.
 ## Useful commands
 
 ```bash
-cargo test                                      # 44 tests, no GPU needed
+cargo test                                      # 45 tests, no GPU needed
 cargo clippy --all-targets -- -D warnings
 cargo run --release -- --shot out.png --date 2026-11-01 --time 22:00 --view street
 cargo run --release -- --selftest --report selftest_report.json
