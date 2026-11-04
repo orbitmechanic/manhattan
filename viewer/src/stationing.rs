@@ -193,7 +193,7 @@ impl Default for StationingConfig {
             show_lines: false,
             show_ticks: false,
             show_coords: true,
-            set: LineSet::Imagery,
+            set: LineSet::Fronts,
         }
     }
 }
@@ -330,7 +330,10 @@ pub fn draw_stationing(
 ) {
     let selected = stationing.set(config.set);
     if config.show_lines {
-        let color = Color::srgb(1.0, 0.68, 0.18);
+        let color = match config.set {
+            LineSet::Imagery => Color::srgb(0.20, 1.0, 0.48),
+            LineSet::Fronts => Color::srgb(1.0, 0.68, 0.18),
+        };
         for line in &selected.lines {
             if line.points.len() < 2 {
                 continue;

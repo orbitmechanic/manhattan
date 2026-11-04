@@ -130,7 +130,7 @@ impl Default for Args {
             view: ViewPreset::Overview,
             show_lines: false,
             show_ticks: false,
-            line_set: LineSet::Imagery,
+            line_set: LineSet::Fronts,
         }
     }
 }
