@@ -480,8 +480,9 @@ affected presentation and is already reflected in the script.
   `viewer_full_overview.png` — the same full floor geometry from street, mid
   and overview cameras (no LOD proxies).
 - `renders/viewer_station_imagery_street.png`,
-  `viewer_station_fronts_street.png`, and the matching `_mid.png` frames —
-  the two centreline sets with vertical 100-ft ticks and civil coordinates.
+  `viewer_station_fronts_street.png`,
+  `viewer_station_completed_street.png`, and the matching `_mid.png` frames —
+  the three centreline sets with vertical 100-ft ticks and civil coordinates.
 - `build/station_lines_imagery_overlay.png`,
   `build/station_lines_fronts_overlay.png` — the two networks over the
   satellite.
