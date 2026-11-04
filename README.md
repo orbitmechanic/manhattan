@@ -125,8 +125,9 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
 | `viewer/assets/models/collision_grid.bin` | 4 m building-height grid baked from the 1223 blocks, used for camera collision. |
-| `viewer/assets/models/station_lines.json` | 1479 street centreline stationing lines with 100-ft ticks, plan curves/tangents and vertical profiles. |
-| `build/station_lines_overlay.png` | stationing validation overlay on the satellite. |
+| `viewer/assets/models/station_lines_imagery.json` | 2041 satellite/road-derived centrelines, 92.1 miles. |
+| `viewer/assets/models/station_lines_fronts.json` | 2460 building-expansion-front centrelines, 185.5 miles. |
+| `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
 | `Textures/day/` | canonical day textures, names describe content; `floors/` holds one-floor facade crops. |
 | `Textures/night/` | generated night textures; `floors/` holds matching one-floor night crops. |
@@ -303,36 +304,43 @@ buildings.
 - `--view street`, `--view mid` and `--view overview` only change the camera
   position; they all show the same full-detail geometry.
 
-### Street centreline stationing
+### Street centreline stationing — two sets
 
-`scripts/build_station_lines.py` derives **1479 street centrelines** from a
-combination of the building-block Voronoi geometry and the low-resolution
-satellite road hints (`Textures/day/ground/...`).  It samples each candidate
-Voronoi edge, keeps grey low-saturation road pixels, rejects water/open-ground
-spokes far from building footprints, traces and joins chains, then simplifies
-and fits plan curves.
+`scripts/build_station_lines.py` produces two independent networks so they can
+be compared:
 
-- **117.7 miles** of centreline, **8405 ticks** at 100-ft intervals.
+| Set | Source | Lines | Length | 100-ft ticks |
+|---|---|---:|---:|---:|
+| **IMAGERY** | grey road pixels in the low-resolution satellite, thinned on the free-space skeleton | 2041 | 92.1 mi | 8003 |
+| **BUILDING FRONTS** | simultaneous expansion fronts from every building; the meeting locus is the road centreline | 2460 | 185.5 mi | 13513 |
+
+- **IMAGERY** is filtered by road colour, a 4–30 m distance from building
+  footprints, and continues straight through junctions.
+- **BUILDING FRONTS** uses the Voronoi boundary of individual building
+  components: two expansion fronts meet where their distances are equal, and
+  that locus is used as the centreline.  The front is limited to 35 m from a
+  building so harbour/open-water boundaries are not included.
 - Each line has `points`, plan **tangents**, **circular curves** (radius,
   left/right, reverse flag), and a **vertical tangent profile** for future
   grade changes.  The source ground is flat, so current elevations are 0.
 - Stations, offsets and elevations are in **feet**; geometry is in metres.
 - Offset is **negative left / positive right** when looking up-station.
 - Press `L` for centrelines, `T` for the 100-ft vertical ticks (from −3 m to
-  +30 m through the ground), and `C` for the civil-coordinate panel.  The same
-  toggles are clickable buttons in the STATIONING panel.
-- The camera computes an array with one civil coordinate per line
-  (`station_ft`, `offset_ft`, `elevation_ft`, nearest tangent
-  station/elevation, signed station from that tangent, elevation from that
-  tangent, and plan distance).  The panel shows the three nearest lines; the full array
-  lives in `StationingState.coords` for future pavement/gutter/sidewalk/
+  +30 m through the ground), `C` for the civil-coordinate panel, and **`G` to
+  switch between IMAGERY and BUILDING FRONTS**.  The same toggles are buttons
+  in the STATIONING panel.
+- The camera computes **one civil-coordinate array per set** (`imagery` and
+  `fronts`) with `station_ft`, `offset_ft`, `elevation_ft`, nearest tangent
+  station/elevation, signed station/elevation from that tangent and plan
+  distance.  The panel shows the three nearest lines for the selected set; the
+  full arrays live in `StationingState` for future pavement/gutter/sidewalk/
   crosswalk/signal placement.
-- `build/station_lines_overlay.png` shows the extracted network on the
-  satellite; `renders/viewer_station_street.png` and
-  `viewer_station_overview.png` show the in-viewer inspection layer.
+- `build/station_lines_imagery_overlay.png` and
+  `station_lines_fronts_overlay.png` show the two networks on the satellite;
+  `renders/viewer_station_*_street.png` / `_mid.png` show them in the viewer.
 
-The extraction is a planning aid, not a survey: lines follow the building
-geometry and road-colour hints, and should be field-checked before construction.
+The extraction is a planning aid, not a survey; both sets should be field-
+checked before construction.
 
 ### Atmosphere, focus and camera collision
 
@@ -468,9 +476,12 @@ affected presentation and is already reflected in the script.
 - `renders/viewer_full_street.png`, `viewer_full_mid.png`,
   `viewer_full_overview.png` — the same full floor geometry from street, mid
   and overview cameras (no LOD proxies).
-- `renders/viewer_station_street.png`, `viewer_station_overview.png` —
-  street centrelines and vertical 100-ft ticks with the civil-coordinate panel.
-- `build/station_lines_overlay.png` — extracted centrelines over the satellite.
+- `renders/viewer_station_imagery_street.png`,
+  `viewer_station_fronts_street.png`, and the matching `_mid.png` frames —
+  the two centreline sets with vertical 100-ft ticks and civil coordinates.
+- `build/station_lines_imagery_overlay.png`,
+  `build/station_lines_fronts_overlay.png` — the two networks over the
+  satellite.
 - `renders/viewer_twilight_early.png`, `viewer_twilight.png`,
   `viewer_twilight_late.png`, `viewer_dawn.png` — the wave at 79/1242,
   564/1242, 1133/1242 and 810/1242 lit.  The street-level twilight frames also
@@ -480,8 +491,8 @@ affected presentation and is already reflected in the script.
 - `viewer/selftest_report.json` — runtime report: 1242 blocks (1223 building,
   19 park), noon targets 0, night targets 1242, randomised flicker/fade split
   (one run 702/540), 3,861 visibility-range entities, fog cull 4.3 km, focus
-  blur active, collision grid loaded and resolved, stationing 1479 lines /
-  1479 camera coordinates / 1847 plan curves / 8405 ticks, camera clamp at y=3,
+  blur active, collision grid loaded and resolved, stationing imagery 2041 /
+  fronts 2460 lines with matching camera arrays, camera clamp at y=3,
   hour-wrap date correct.
 - `viewer` tests: **44 passed**, including station/offset sign projection and
   station data loading, camera collision/slide maths, one-floor texture paths,

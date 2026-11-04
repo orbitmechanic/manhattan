@@ -14,7 +14,8 @@ use crate::camera::FlyCamera;
 pub const FEET_PER_METER: f32 = 3.280_84;
 const COORD_UPDATE_SECS: f32 = 0.15;
 
-static STATION_DATA: &str = include_str!("../assets/models/station_lines.json");
+static IMAGERY_DATA: &str = include_str!("../assets/models/station_lines_imagery.json");
+static FRONTS_DATA: &str = include_str!("../assets/models/station_lines_fronts.json");
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Deserialize)]
@@ -107,21 +108,73 @@ struct StationFile {
     lines: Vec<StationLine>,
 }
 
+#[derive(Clone, Debug)]
+pub struct StationSet {
+    pub lines: Vec<StationLine>,
+    pub total_length_ft: f32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LineSet {
+    Imagery,
+    Fronts,
+}
+
+impl LineSet {
+    pub fn label(self) -> &'static str {
+        match self {
+            LineSet::Imagery => "IMAGERY",
+            LineSet::Fronts => "BUILDING FRONTS",
+        }
+    }
+
+    pub fn next(self) -> Self {
+        match self {
+            LineSet::Imagery => LineSet::Fronts,
+            LineSet::Fronts => LineSet::Imagery,
+        }
+    }
+}
+
 #[derive(Resource)]
 pub struct Stationing {
-    pub lines: Vec<StationLine>,
-    pub line_count: usize,
-    pub total_length_ft: f32,
+    pub imagery: StationSet,
+    pub fronts: StationSet,
+}
+
+impl Stationing {
+    pub fn set(&self, set: LineSet) -> &StationSet {
+        match set {
+            LineSet::Imagery => &self.imagery,
+            LineSet::Fronts => &self.fronts,
+        }
+    }
+
+    pub fn line_count(&self, set: LineSet) -> usize {
+        self.set(set).lines.len()
+    }
 }
 
 impl Default for Stationing {
     fn default() -> Self {
-        let parsed: StationFile =
-            serde_json::from_str(STATION_DATA).expect("station_lines.json is invalid");
+        let parse = |text: &str| {
+            let parsed: StationFile =
+                serde_json::from_str(text).expect("station_lines_*.json is invalid");
+            (parsed.lines, parsed.total_length_ft, parsed.line_count)
+        };
+        let (imagery, imagery_len, imagery_count) = parse(IMAGERY_DATA);
+        let (fronts, fronts_len, fronts_count) = parse(FRONTS_DATA);
+        assert_eq!(imagery.len(), imagery_count);
+        assert_eq!(fronts.len(), fronts_count);
         Self {
-            lines: parsed.lines,
-            line_count: parsed.line_count,
-            total_length_ft: parsed.total_length_ft,
+            imagery: StationSet {
+                lines: imagery,
+                total_length_ft: imagery_len,
+            },
+            fronts: StationSet {
+                lines: fronts,
+                total_length_ft: fronts_len,
+            },
         }
     }
 }
@@ -131,6 +184,7 @@ pub struct StationingConfig {
     pub show_lines: bool,
     pub show_ticks: bool,
     pub show_coords: bool,
+    pub set: LineSet,
 }
 
 impl Default for StationingConfig {
@@ -139,6 +193,7 @@ impl Default for StationingConfig {
             show_lines: false,
             show_ticks: false,
             show_coords: true,
+            set: LineSet::Imagery,
         }
     }
 }
@@ -148,6 +203,7 @@ pub enum StationToggle {
     Lines,
     Ticks,
     Coords,
+    Set,
 }
 
 #[derive(Clone, Debug)]
@@ -173,13 +229,21 @@ pub struct CivilCoordinate {
 
 #[derive(Resource, Default)]
 pub struct StationingState {
-    pub coords: Vec<CivilCoordinate>,
+    pub imagery: Vec<CivilCoordinate>,
+    pub fronts: Vec<CivilCoordinate>,
     last_update: f32,
 }
 
 impl StationingState {
-    pub fn nearest(&self) -> Option<&CivilCoordinate> {
-        self.coords
+    pub fn coords(&self, set: LineSet) -> &[CivilCoordinate] {
+        match set {
+            LineSet::Imagery => &self.imagery,
+            LineSet::Fronts => &self.fronts,
+        }
+    }
+
+    pub fn nearest(&self, set: LineSet) -> Option<&CivilCoordinate> {
+        self.coords(set)
             .iter()
             .min_by(|a, b| a.plan_distance_ft.total_cmp(&b.plan_distance_ft))
     }
@@ -224,34 +288,39 @@ pub fn update_civil_coordinates(
     mut state: ResMut<StationingState>,
 ) {
     let now = time.elapsed_secs();
-    if !state.coords.is_empty() && now - state.last_update < COORD_UPDATE_SECS {
+    if !state.imagery.is_empty() && now - state.last_update < COORD_UPDATE_SECS {
         return;
     }
     state.last_update = now;
     let p = Vec2::new(camera.translation.x, camera.translation.z);
     let camera_elevation_ft = camera.translation.y * FEET_PER_METER;
-    state.coords.clear();
-    state.coords.reserve(stationing.lines.len());
-    for (line_index, line) in stationing.lines.iter().enumerate() {
-        if line.points.len() < 2 {
-            continue;
+
+    let compute = |lines: &[StationLine]| {
+        let mut out = Vec::with_capacity(lines.len());
+        for (line_index, line) in lines.iter().enumerate() {
+            if line.points.len() < 2 {
+                continue;
+            }
+            let (station_ft, offset_ft, plan_distance_ft) = project_line(line, p);
+            let line_elevation = line.elevation_ft(station_ft);
+            let (tangent_station_ft, tangent_elevation_ft) = line.tangent_station(station_ft);
+            out.push(CivilCoordinate {
+                line_index,
+                line_id: line.id.clone(),
+                station_ft,
+                offset_ft,
+                elevation_ft: camera_elevation_ft - line_elevation,
+                plan_distance_ft,
+                tangent_station_ft,
+                tangent_elevation_ft,
+                station_from_tangent_ft: station_ft - tangent_station_ft,
+                elevation_from_tangent_ft: camera_elevation_ft - tangent_elevation_ft,
+            });
         }
-        let (station_ft, offset_ft, plan_distance_ft) = project_line(line, p);
-        let line_elevation = line.elevation_ft(station_ft);
-        let (tangent_station_ft, tangent_elevation_ft) = line.tangent_station(station_ft);
-        state.coords.push(CivilCoordinate {
-            line_index,
-            line_id: line.id.clone(),
-            station_ft,
-            offset_ft,
-            elevation_ft: camera_elevation_ft - line_elevation,
-            plan_distance_ft,
-            tangent_station_ft,
-            tangent_elevation_ft,
-            station_from_tangent_ft: station_ft - tangent_station_ft,
-            elevation_from_tangent_ft: camera_elevation_ft - tangent_elevation_ft,
-        });
-    }
+        out
+    };
+    state.imagery = compute(&stationing.imagery.lines);
+    state.fronts = compute(&stationing.fronts.lines);
 }
 
 pub fn draw_stationing(
@@ -259,9 +328,10 @@ pub fn draw_stationing(
     config: Res<StationingConfig>,
     stationing: Res<Stationing>,
 ) {
+    let selected = stationing.set(config.set);
     if config.show_lines {
         let color = Color::srgb(1.0, 0.68, 0.18);
-        for line in &stationing.lines {
+        for line in &selected.lines {
             if line.points.len() < 2 {
                 continue;
             }
@@ -273,7 +343,7 @@ pub fn draw_stationing(
     }
     if config.show_ticks {
         let color = Color::srgba(0.28, 0.86, 1.0, 0.92);
-        for line in &stationing.lines {
+        for line in &selected.lines {
             for p in &line.tick_points {
                 gizmos.line(
                     Vec3::new(p[0], -3.0, p[1]),
@@ -295,6 +365,9 @@ pub fn handle_station_keys(keys: Res<ButtonInput<KeyCode>>, mut config: ResMut<S
     if keys.just_pressed(KeyCode::KeyC) {
         config.show_coords = !config.show_coords;
     }
+    if keys.just_pressed(KeyCode::KeyG) {
+        config.set = config.set.next();
+    }
 }
 
 pub fn toggle_station(config: &mut StationingConfig, toggle: StationToggle) {
@@ -302,6 +375,7 @@ pub fn toggle_station(config: &mut StationingConfig, toggle: StationToggle) {
         StationToggle::Lines => config.show_lines = !config.show_lines,
         StationToggle::Ticks => config.show_ticks = !config.show_ticks,
         StationToggle::Coords => config.show_coords = !config.show_coords,
+        StationToggle::Set => config.set = config.set.next(),
     }
 }
 
@@ -348,9 +422,11 @@ mod tests {
     #[test]
     fn station_data_loads() {
         let s = Stationing::default();
-        assert!(s.line_count > 1_000, "line count {}", s.line_count);
-        assert_eq!(s.line_count, s.lines.len());
-        assert!(s.lines.iter().all(|l| l.points.len() >= 2));
-        assert!(s.lines.iter().any(|l| !l.plan_curves.is_empty()));
+        for set in [LineSet::Imagery, LineSet::Fronts] {
+            let data = s.set(set);
+            assert!(data.lines.len() > 1_000, "{:?} line count", set);
+            assert!(data.lines.iter().all(|l| l.points.len() >= 2));
+            assert!(data.lines.iter().any(|l| !l.plan_curves.is_empty()));
+        }
     }
 }

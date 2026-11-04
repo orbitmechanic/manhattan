@@ -214,6 +214,7 @@ pub fn spawn_ui(mut commands: Commands) {
                 station_button(row, "lines [L]", StationToggle::Lines);
                 station_button(row, "ticks [T]", StationToggle::Ticks);
                 station_button(row, "coords [C]", StationToggle::Coords);
+                station_button(row, "set [G]", StationToggle::Set);
             });
             p.spawn((
                 StationText,
@@ -232,7 +233,7 @@ pub fn spawn_ui(mut commands: Commands) {
         Text::new(
             "FLY: W A S D  |  Q/E down/up  |  hold RMB to look  |  Shift boost  |  wheel speed  |  arrows look\n\
              TIME: [ / ] day  |  - / = hour  |  ; / ' minute  |  , / . month  |  Space play/pause  |  B reverse  |  R reset\n\
-             STATIONING: L lines  |  T 100-ft ticks  |  C camera civil coordinates",
+             STATIONING: L lines  |  T 100-ft ticks  |  C coordinates  |  G imagery / building fronts",
         ),
         TextFont {
             font_size: FontSize::Px(13.0),
@@ -366,19 +367,22 @@ pub fn update_station_text(
     let Some(mut text) = text.iter_mut().next() else {
         return;
     };
+    let selected = stationing.set(config.set);
+    let coords = state.coords(config.set);
     let lines_state = if config.show_lines { "ON" } else { "OFF" };
     let ticks_state = if config.show_ticks { "ON" } else { "OFF" };
     let coords_state = if config.show_coords { "ON" } else { "OFF" };
     let mut out = format!(
-        "lines {lines_state}   ticks {ticks_state}   coords {coords_state}\n\
-         {} lines / {:.1} mi   camera array {}\n\
+        "set {} [G]   lines {lines_state}   ticks {ticks_state}\n\
+         coords {coords_state}   {} lines / {:.1} mi   array {}\n\
          OFF: negative left / positive right (up-station)\n",
-        stationing.line_count,
-        stationing.total_length_ft / 5280.0,
-        state.coords.len()
+        config.set.label(),
+        selected.lines.len(),
+        selected.total_length_ft / 5280.0,
+        coords.len()
     );
-    if config.show_coords && !state.coords.is_empty() {
-        let mut nearest: Vec<&CivilCoordinate> = state.coords.iter().collect();
+    if config.show_coords && !coords.is_empty() {
+        let mut nearest: Vec<&CivilCoordinate> = coords.iter().collect();
         nearest.sort_by(|a, b| a.plan_distance_ft.total_cmp(&b.plan_distance_ft));
         for c in nearest.iter().take(3) {
             out.push_str(&format!(
@@ -388,8 +392,8 @@ pub fn update_station_text(
         }
         if let Some(c) = nearest.first() {
             out.push_str(&format!(
-                "nearest tangent STA {:.1} @ EL {:.1} ft\n",
-                c.tangent_station_ft, c.tangent_elevation_ft
+                "nearest tangent STA {:.1} @ EL {:.1} ft   dSTA {:+.1}\n",
+                c.tangent_station_ft, c.tangent_elevation_ft, c.station_from_tangent_ft
             ));
         }
     } else if !config.show_coords {

@@ -1,29 +1,24 @@
 #!/usr/bin/env python3
-"""Build street centrelines and stationing data from block geometry + satellite hints.
+"""Build two independent street-centreline sets.
 
-Inputs
-  build/ground_cells.npz           Voronoi ground tiles (boundaries are mid-street)
-  build/blocks_labels.npy          building-block labels, used for footprint distance
-  build/blocks.json                ground/building bounds
-  Textures/day/ground/satellite_manhattan_ground.jpg
+A. imagery  — road-coloured pixels in the low-resolution ground texture,
+              thinned on the free-space skeleton.
+B. fronts   — simultaneous expansion fronts from every building: the locus
+              where the expanded perimeter of one building meets another is
+              taken as the road centreline.
 
 Outputs
-  build/station_lines.json         centrelines, plan curves, vertical tangents
-  viewer/assets/models/station_lines.json
-  build/station_lines_overlay.png  validation overlay on the satellite
+  build/station_lines_imagery.json
+  build/station_lines_fronts.json
+  viewer/assets/models/station_lines_imagery.json
+  viewer/assets/models/station_lines_fronts.json
+  build/station_lines_imagery_overlay.png
+  build/station_lines_fronts_overlay.png
 
-Method
-  1. Keep Voronoi edges shared by two different blocks (these are mid-street).
-  2. Sample the low-res satellite at several points on each edge and keep only
-     edges whose samples look like grey road surface; reject water/open ground.
-  3. Reject edges far from any building footprint (removes basin/water spokes).
-  4. Trace the surviving edges through degree-2 nodes, then join collinear
-     chain ends within 12 m across intersections.
-  5. Simplify each centreline and derive plan curves (tangent/arc/reverse) and
-     a flat vertical tangent profile.  Stations are stored in feet; geometry is
-     in metres.
+Stations/offsets/elevations are in feet; geometry is in metres.  Points are
+written in viewer coordinates (x, z = -Blender-y), so they line up with the GLB.
 
-Run with the geometry venv:
+Run with the geometry venv (needs scikit-image):
   /tmp/opencode/geoenv/bin/python scripts/build_station_lines.py
 """
 import colorsys
@@ -35,216 +30,37 @@ from collections import defaultdict
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage as ndi
+from skimage.morphology import closing, disk, remove_small_objects, skeletonize
 
 ROOT = "/home/orbit9/Work/games/Manhattan"
 BUILD = os.path.join(ROOT, "build")
 SATELLITE = os.path.join(ROOT, "Textures/day/ground/satellite_manhattan_ground.jpg")
-OUT_JSON = os.path.join(BUILD, "station_lines.json")
-OUT_VIEWER = os.path.join(ROOT, "viewer", "assets", "models", "station_lines.json")
-OUT_OVERLAY = os.path.join(BUILD, "station_lines_overlay.png")
 FEET = 3.280839895
 TICK_FT = 100.0
-ROAD_DIST_M = 35.0
-JOIN_DIST_M = 12.0
 
 meta = json.load(open(os.path.join(BUILD, "blocks.json")))
-gb = meta["ground_bounds"]
-cells = np.load(os.path.join(BUILD, "ground_cells.npz"))
-verts = cells["vertices"]
-offsets = cells["offsets"]
-block_ids = cells["block_ids"]
-labels = np.load(os.path.join(BUILD, "blocks_labels.npy"))
-bh, bw = labels.shape
-minx, maxx = meta["bounds"]["min_x"], meta["bounds"]["max_x"]
-miny, maxy = meta["bounds"]["min_y"], meta["bounds"]["max_y"]
+bounds = meta["bounds"]
+ground = meta["ground_bounds"]
+mask = np.asarray(Image.open(os.path.join(BUILD, "building_mask.png")))[..., 3] > 128
+H, W = mask.shape
+minx, maxx = bounds["min_x"], bounds["max_x"]
+miny, maxy = bounds["min_y"], bounds["max_y"]
 
 sat = Image.open(SATELLITE).convert("RGB")
-sat_arr = np.asarray(sat, dtype=np.float32) / 255.0
-sh, sw = sat_arr.shape[:2]
+sw, sh = sat.size
 
 
-def ground_uv(x, y):
-    """The ground mesh uses u=0.1823..1 of the satellite."""
-    u = 0.1823 + (x - gb["min_x"]) / (gb["max_x"] - gb["min_x"]) * (1.0 - 0.1823)
-    v = (y - gb["min_y"]) / (gb["max_y"] - gb["min_y"])
+def world_from_pixel(px, py):
+    return (
+        minx + (px + 0.5) / W * (maxx - minx),
+        maxy - (py + 0.5) / H * (maxy - miny),
+    )
+
+
+def image_uv(x, y):
+    u = 0.1823 + (x - ground["min_x"]) / (ground["max_x"] - ground["min_x"]) * (1.0 - 0.1823)
+    v = (y - ground["min_y"]) / (ground["max_y"] - ground["min_y"])
     return u * sw, (1.0 - v) * sh
-
-
-def road_like(x, y):
-    px, py = ground_uv(x, y)
-    px = int(np.clip(px, 0, sw - 1))
-    py = int(np.clip(py, 0, sh - 1))
-    r, g, b = sat_arr[py, px]
-    mx = max(r, g, b)
-    mn = min(r, g, b)
-    sat_ = 0.0 if mx == 0 else (mx - mn) / mx
-    return sat_ < 0.18 and 0.22 < mx < 0.85
-
-
-def building_distance(x, y):
-    px = int(np.clip((x - minx) / (maxx - minx) * bw, 0, bw - 1))
-    py = int(np.clip((maxy - y) / (maxy - miny) * bh, 0, bh - 1))
-    return float(dist[py, px])
-
-
-# 2 m per label pixel
-dist = ndi.distance_transform_edt(labels == 0) * 2.0
-
-
-def nk(p):
-    return (round(float(p[0]), 1), round(float(p[1]), 1))
-
-
-# ---- candidate Voronoi street edges ---------------------------------------
-edge_map = defaultdict(list)
-for i in range(len(block_ids)):
-    poly = verts[offsets[i]:offsets[i + 1]]
-    for a, b in zip(poly, np.roll(poly, -1, axis=0)):
-        ka, kb = nk(a), nk(b)
-        if ka == kb:
-            continue
-        key = (min(ka, kb), max(ka, kb))
-        edge_map[key].append(int(block_ids[i]))
-
-edges = []
-for key, ids in edge_map.items():
-    if len(set(ids)) < 2:
-        continue
-    a = np.asarray(key[0], dtype=np.float64)
-    b = np.asarray(key[1], dtype=np.float64)
-    length = float(np.linalg.norm(b - a))
-    if length < 1.0:
-        continue
-    samples = [road_like(*(a + (b - a) * t)) for t in np.linspace(0.15, 0.85, 7)]
-    if sum(samples) < 4:
-        continue
-    if building_distance(*((a + b) * 0.5)) > ROAD_DIST_M:
-        continue
-    edges.append((a, b))
-print(f"street edges: {len(edges)}  length {sum(np.linalg.norm(b-a) for a,b in edges)/1000:.1f} km")
-
-# ---- trace through degree-2 nodes -----------------------------------------
-adj = defaultdict(list)
-for ei, (a, b) in enumerate(edges):
-    adj[nk(a)].append(ei)
-    adj[nk(b)].append(ei)
-
-
-def orient(ei, node):
-    a, b = edges[ei]
-    return [tuple(a), tuple(b)] if nk(a) == node else [tuple(b), tuple(a)]
-
-
-used = [False] * len(edges)
-chains = []
-for start in range(len(edges)):
-    if used[start]:
-        continue
-    used[start] = True
-    a, b = edges[start]
-    pts = [tuple(a), tuple(b)]
-    end = nk(b)
-    while len(adj[end]) == 2:
-        cand = [e for e in adj[end] if not used[e]]
-        if len(cand) != 1:
-            break
-        ne = cand[0]
-        used[ne] = True
-        o = orient(ne, end)
-        pts.extend(o[1:])
-        end = nk(o[-1])
-    end = nk(a)
-    rev = []
-    while len(adj[end]) == 2:
-        cand = [e for e in adj[end] if not used[e]]
-        if len(cand) != 1:
-            break
-        ne = cand[0]
-        used[ne] = True
-        o = orient(ne, end)
-        rev.append(o[-1])
-        end = nk(o[-1])
-    if rev:
-        pts = list(reversed(rev)) + pts
-    chains.append(pts)
-
-# ---- join chain ends across intersections --------------------------------
-ends = []
-for ci, chain in enumerate(chains):
-    p0 = np.asarray(chain[0])
-    p1 = np.asarray(chain[1])
-    pn = np.asarray(chain[-1])
-    pp = np.asarray(chain[-2])
-    ends.append([ci, 0, p0, p1 - p0])
-    ends.append([ci, 1, pn, pp - pn])
-
-candidates = []
-for i in range(len(ends)):
-    for j in range(i + 1, len(ends)):
-        ca, sa, pa, da = ends[i]
-        cb, sb, pb, db = ends[j]
-        if ca == cb:
-            continue
-        d = float(np.linalg.norm(pa - pb))
-        if d > JOIN_DIST_M:
-            continue
-        na = float(np.linalg.norm(da))
-        nb = float(np.linalg.norm(db))
-        if na < 1e-6 or nb < 1e-6:
-            continue
-        dot = float(np.dot(da, db) / (na * nb))
-        if dot < -0.82:
-            candidates.append((d + 5.0 * (1.0 + dot), i, j))
-candidates.sort()
-
-pair = {}
-used_end = set()
-for _score, i, j in candidates:
-    if i in used_end or j in used_end:
-        continue
-    ca, sa = ends[i][0], ends[i][1]
-    cb, sb = ends[j][0], ends[j][1]
-    pair[(ca, sa)] = (cb, sb)
-    pair[(cb, sb)] = (ca, sa)
-    used_end.add(i)
-    used_end.add(j)
-
-seen = set()
-merged = []
-for ci in range(len(chains)):
-    if ci in seen:
-        continue
-    seen.add(ci)
-    pts = list(chains[ci])
-    cur, side = ci, 1
-    while (cur, side) in pair:
-        nxt, ns = pair[(cur, side)]
-        if nxt in seen:
-            break
-        seen.add(nxt)
-        c = chains[nxt]
-        if ns == 0:
-            pts += c[1:]
-            cur, side = nxt, 1
-        else:
-            pts += list(reversed(c))[1:]
-            cur, side = nxt, 0
-    cur, side = ci, 0
-    front = []
-    while (cur, side) in pair:
-        nxt, ns = pair[(cur, side)]
-        if nxt in seen:
-            break
-        seen.add(nxt)
-        c = chains[nxt]
-        if ns == 1:
-            front = list(reversed(c))[:-1] + front
-            cur, side = nxt, 0
-        else:
-            front = c[:-1] + front
-            cur, side = nxt, 1
-    merged.append(front + pts)
-print(f"merged centreline candidates: {len(merged)}")
 
 
 def rdp(points, eps):
@@ -265,18 +81,8 @@ def rdp(points, eps):
         if d > best_d:
             best_i, best_d = i, d
     if best_d > eps:
-        left = rdp(points[:best_i + 1], eps)
-        right = rdp(points[best_i:], eps)
-        return left[:-1] + right
+        return rdp(points[: best_i + 1], eps)[:-1] + rdp(points[best_i:], eps)
     return [points[0], points[-1]]
-
-
-def dedupe(points):
-    out = []
-    for p in points:
-        if not out or np.linalg.norm(np.asarray(p) - np.asarray(out[-1])) > 1e-4:
-            out.append(p)
-    return out
 
 
 def signed_turn(a, b, c):
@@ -295,9 +101,88 @@ def circumradius(a, b, c):
     bc = float(np.linalg.norm(c - b))
     ca = float(np.linalg.norm(a - c))
     area2 = abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]))
-    if area2 < 1e-9:
-        return 1e9
-    return ab * bc * ca / (2.0 * area2)
+    return 1e9 if area2 < 1e-9 else ab * bc * ca / (2.0 * area2)
+
+
+def vectorize(skel, eps, min_len_m):
+    ys, xs = np.nonzero(skel)
+    pix = set(zip(ys.tolist(), xs.tolist()))
+    if not pix:
+        return []
+
+    def neigh(p):
+        y, x = p
+        out = []
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                if dy == 0 and dx == 0:
+                    continue
+                q = (y + dy, x + dx)
+                if q in pix:
+                    out.append(q)
+        return out
+
+    deg = {p: len(neigh(p)) for p in pix}
+    seen = set()
+    chains = []
+
+    def trace(start, nxt):
+        path = [start, nxt]
+        seen.add(frozenset((start, nxt)))
+        prev, cur = start, nxt
+        dy, dx = nxt[0] - start[0], nxt[1] - start[1]
+        norm = math.hypot(dy, dx)
+        dir_y, dir_x = dy / norm, dx / norm
+        while True:
+            candidates = [
+                q for q in neigh(cur)
+                if q != prev and frozenset((cur, q)) not in seen
+            ]
+            if not candidates:
+                break
+            best = None
+            best_dot = -2.0
+            for q in candidates:
+                vy, vx = q[0] - cur[0], q[1] - cur[1]
+                norm = math.hypot(vy, vx)
+                dot = (vy * dir_y + vx * dir_x) / norm
+                if dot > best_dot:
+                    best_dot, best = dot, q
+            # Continue straight through intersections; do not turn onto a
+            # cross street just because the skeleton has a branch there.
+            if best is None or best_dot < 0.42:
+                break
+            seen.add(frozenset((cur, best)))
+            path.append(best)
+            vy, vx = best[0] - cur[0], best[1] - cur[1]
+            norm = math.hypot(vy, vx)
+            dir_y, dir_x = vy / norm, vx / norm
+            prev, cur = cur, best
+        return path
+
+    # Start from true endpoints first so branches become separate streets.
+    for p in sorted(q for q in pix if deg[q] == 1):
+        for q in neigh(p):
+            if frozenset((p, q)) not in seen:
+                chains.append(trace(p, q))
+    for p in pix:
+        for q in neigh(p):
+            if frozenset((p, q)) not in seen:
+                chains.append(trace(p, q))
+
+    lines = []
+    for chain in chains:
+        pts = [world_from_pixel(x, y) for y, x in chain]
+        # Viewer coordinates: x, z = -Blender-y.
+        pts = [(x, -y) for x, y in pts]
+        pts = rdp(pts, eps)
+        if len(pts) < 2:
+            continue
+        length = sum(math.dist(pts[i], pts[i + 1]) for i in range(len(pts) - 1))
+        if length < min_len_m:
+            continue
+        lines.append(pts)
+    return lines
 
 
 def plan_geometry(points, stations_m):
@@ -313,7 +198,6 @@ def plan_geometry(points, stations_m):
         direction = "left" if turn > 0 else "right"
         start = (stations_m[i - 1] + stations_m[i]) * 0.5
         end = (stations_m[i] + stations_m[i + 1]) * 0.5
-        reverse = prev_dir != 0 and direction != prev_dir
         curves.append(
             {
                 "start_station_ft": round(start * FEET, 2),
@@ -321,114 +205,166 @@ def plan_geometry(points, stations_m):
                 "radius_ft": round(radius * FEET, 2),
                 "turn_deg": round(turn, 3),
                 "direction": direction,
-                "reverse": reverse,
+                "reverse": prev_dir != 0 and direction != prev_dir,
             }
         )
         prev_dir = 1 if direction == "left" else -1
     return curves
 
 
-lines = []
-for pts in merged:
-    pts = dedupe(pts)
-    if len(pts) < 2:
-        continue
-    pts = rdp(pts, 0.8)
-    pts = dedupe(pts)
-    if len(pts) < 2:
-        continue
-    seg = [float(np.linalg.norm(np.asarray(pts[i + 1]) - np.asarray(pts[i]))) for i in range(len(pts) - 1)]
-    length_m = sum(seg)
-    if length_m < 8.0:
-        continue
-    stations_m = [0.0]
-    for s in seg:
-        stations_m.append(stations_m[-1] + s)
-    length_ft = length_m * FEET
-    ticks_ft = []
-    s = 0.0
-    while s <= length_ft + 1e-6:
-        ticks_ft.append(round(s, 2))
-        s += TICK_FT
-    if ticks_ft[-1] < length_ft - 1e-6:
-        ticks_ft.append(round(length_ft, 2))
-    tick_points = []
-    for tick in ticks_ft:
-        target = tick / FEET
-        j = 0
-        while j + 1 < len(stations_m) and stations_m[j + 1] < target:
-            j += 1
-        if j + 1 >= len(stations_m):
-            tick_points.append(pts[-1])
+def package(lines, source, prefix):
+    lines.sort(key=lambda pts: (round(pts[0][0] / 50), round(pts[0][1] / 50), len(pts)))
+    out_lines = []
+    for index, pts in enumerate(lines):
+        seg = [math.dist(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
+        length_m = sum(seg)
+        if length_m < 1e-6:
             continue
-        span = max(stations_m[j + 1] - stations_m[j], 1e-9)
-        t = (target - stations_m[j]) / span
-        a = np.asarray(pts[j])
-        b = np.asarray(pts[j + 1])
-        q = a + (b - a) * t
-        tick_points.append([round(float(q[0]), 3), round(float(q[1]), 3)])
-    curves = plan_geometry(pts, stations_m)
-    tangents = []
-    cursor = 0.0
-    for c in curves:
-        if c["start_station_ft"] > cursor + 1e-6:
+        stations_m = [0.0]
+        for s in seg:
+            stations_m.append(stations_m[-1] + s)
+        length_ft = length_m * FEET
+        ticks_ft = []
+        s = 0.0
+        while s <= length_ft + 1e-6:
+            ticks_ft.append(round(s, 2))
+            s += TICK_FT
+        if ticks_ft[-1] < length_ft - 1e-6:
+            ticks_ft.append(round(length_ft, 2))
+        tick_points = []
+        for tick in ticks_ft:
+            target = tick / FEET
+            j = 0
+            while j + 1 < len(stations_m) and stations_m[j + 1] < target:
+                j += 1
+            if j + 1 >= len(stations_m):
+                tick_points.append(pts[-1])
+                continue
+            span = max(stations_m[j + 1] - stations_m[j], 1e-9)
+            t = (target - stations_m[j]) / span
+            a = np.asarray(pts[j])
+            b = np.asarray(pts[j + 1])
+            q = a + (b - a) * t
+            tick_points.append([round(float(q[0]), 3), round(float(q[1]), 3)])
+        curves = plan_geometry(pts, stations_m)
+        tangents = []
+        cursor = 0.0
+        for c in curves:
+            if c["start_station_ft"] > cursor + 1e-6:
+                tangents.append(
+                    {"start_station_ft": round(cursor, 2), "end_station_ft": c["start_station_ft"]}
+                )
+            cursor = max(cursor, c["end_station_ft"])
+        if length_ft > cursor + 1e-6:
             tangents.append(
-                {"start_station_ft": round(cursor, 2), "end_station_ft": c["start_station_ft"]}
+                {"start_station_ft": round(cursor, 2), "end_station_ft": round(length_ft, 2)}
             )
-        cursor = max(cursor, c["end_station_ft"])
-    if length_ft > cursor + 1e-6:
-        tangents.append({"start_station_ft": round(cursor, 2), "end_station_ft": round(length_ft, 2)})
-    lines.append(
-        {
-            "id": "",
-            "points": [[round(float(x), 3), round(float(y), 3)] for x, y in pts],
-            "length_m": round(length_m, 3),
-            "length_ft": round(length_ft, 2),
-            "tick_interval_ft": TICK_FT,
-            "ticks_ft": ticks_ft,
-            "tick_points": tick_points,
-            "plan_curves": curves,
-            "plan_tangents": tangents,
-            "station_start_ft": 0.0,
-            "station_end_ft": round(length_ft, 2),
-            "vertical": {
-                "tangent_points_ft": [0.0, round(length_ft, 2)],
-                "grades": [0.0],
-                "curves": [],
-                "start_elevation_ft": 0.0,
-                "end_elevation_ft": 0.0,
-            },
-        }
-    )
+        out_lines.append(
+            {
+                "id": f"{prefix}_{index + 1:04d}",
+                "points": [[round(float(x), 3), round(float(y), 3)] for x, y in pts],
+                "length_m": round(length_m, 3),
+                "length_ft": round(length_ft, 2),
+                "tick_interval_ft": TICK_FT,
+                "ticks_ft": ticks_ft,
+                "tick_points": tick_points,
+                "plan_curves": curves,
+                "plan_tangents": tangents,
+                "station_start_ft": 0.0,
+                "station_end_ft": round(length_ft, 2),
+                "vertical": {
+                    "tangent_points_ft": [0.0, round(length_ft, 2)],
+                    "grades": [0.0],
+                    "curves": [],
+                    "start_elevation_ft": 0.0,
+                    "end_elevation_ft": 0.0,
+                },
+            }
+        )
+    for i, line in enumerate(out_lines):
+        line["id"] = f"{prefix}_{i + 1:04d}"
+    return {
+        "version": 2,
+        "source": source,
+        "units": {"geometry": "meters", "station": "feet", "offset": "feet", "elevation": "feet"},
+        "tick_interval_ft": TICK_FT,
+        "line_count": len(out_lines),
+        "total_length_ft": round(sum(l["length_ft"] for l in out_lines), 2),
+        "lines": out_lines,
+    }
 
-lines.sort(key=lambda l: (round(l["points"][0][0] / 50), round(l["points"][0][1] / 50), l["length_ft"]))
-for i, line in enumerate(lines):
-    line["id"] = f"STG_{i + 1:04d}"
-print(f"station lines: {len(lines)}  length {sum(l['length_ft'] for l in lines)/5280:.1f} miles")
-print(f"ticks: {sum(len(l['ticks_ft']) for l in lines)}")
-print(f"plan curves: {sum(len(l['plan_curves']) for l in lines)}")
 
-out = {
-    "version": 1,
-    "units": {"geometry": "meters", "station": "feet", "offset": "feet", "elevation": "feet"},
-    "tick_interval_ft": TICK_FT,
-    "line_count": len(lines),
-    "total_length_ft": round(sum(l["length_ft"] for l in lines), 2),
-    "lines": lines,
-}
-with open(OUT_JSON, "w") as f:
-    json.dump(out, f, separators=(",", ":"))
-os.makedirs(os.path.dirname(OUT_VIEWER), exist_ok=True)
-with open(OUT_VIEWER, "w") as f:
-    json.dump(out, f, separators=(",", ":"))
+def overlay(lines, path):
+    out = sat.copy()
+    draw = ImageDraw.Draw(out)
+    for i, line in enumerate(lines):
+        hue = (i * 0.618) % 1.0
+        col = (255, 120, 20) if path.endswith("fronts_overlay.png") else (0, 255, 120)
+        pts = [(x, -z) for x, z in line]
+        draw.line([coord for p in pts for coord in image_uv(*p)], fill=col, width=2)
+    out.save(path)
 
-# overlay
-over = sat.copy()
-draw = ImageDraw.Draw(over)
-for i, line in enumerate(lines):
-    hue = (i * 0.618) % 1.0
-    col = tuple(int(v * 255) for v in colorsys.hsv_to_rgb(hue, 0.9, 1.0))
-    p = [ground_uv(*pt) for pt in line["points"]]
-    draw.line([coord for xy in p for coord in xy], fill=col, width=2)
-over.save(OUT_OVERLAY)
-print("wrote", OUT_JSON, OUT_VIEWER, OUT_OVERLAY)
+
+# ---------------------------------------------------------------------------
+# A. imagery: free-space skeleton whose pixels are road-coloured
+# ---------------------------------------------------------------------------
+crop = sat.crop((int(0.1823 * sw), 0, sw, sh)).resize((W, H), Image.BILINEAR)
+rgb = np.asarray(crop, dtype=np.float32) / 255.0
+mx = rgb.max(axis=2)
+mn = rgb.min(axis=2)
+sat_ = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-6), 0.0)
+dist_building = ndi.distance_transform_edt(~mask) * 2.0
+road = (sat_ < 0.16) & (mx > 0.22) & (mx < 0.82)
+road = ndi.binary_dilation(road, iterations=1)
+free_skel = skeletonize(~mask)
+imagery_pixels = free_skel & road & (dist_building >= 4.0) & (dist_building <= 30.0)
+imagery_pixels = remove_small_objects(imagery_pixels, max_size=30, connectivity=2)
+print("imagery skeleton pixels:", int(imagery_pixels.sum()))
+imagery_lines = vectorize(imagery_pixels, 3.0, 30.0)
+imagery = package(imagery_lines, "imagery", "IMG")
+overlay(imagery_lines, os.path.join(BUILD, "station_lines_imagery_overlay.png"))
+print(
+    f"imagery lines: {imagery['line_count']}  "
+    f"{imagery['total_length_ft']/5280:.1f} miles"
+)
+
+# ---------------------------------------------------------------------------
+# B. building expansion fronts: Voronoi boundary of individual buildings
+# ---------------------------------------------------------------------------
+components, n_components = ndi.label(mask, structure=np.ones((3, 3)))
+free = ~mask
+dist, nearest = ndi.distance_transform_edt(free, return_indices=True)
+labels = np.zeros((H, W), dtype=np.int32)
+labels[free] = components[nearest[0][free], nearest[1][free]]
+boundary = np.zeros((H, W), dtype=bool)
+for dy, dx in ((0, 1), (1, 0), (1, 1), (1, -1)):
+    shifted = np.roll(labels, (-dy, -dx), axis=(0, 1))
+    valid = np.ones((H, W), dtype=bool)
+    if dy:
+        valid[-dy:, :] = False
+    if dx > 0:
+        valid[:, -dx:] = False
+    if dx < 0:
+        valid[:, :-dx] = False
+    boundary |= (labels != shifted) & (labels > 0) & (shifted > 0) & valid & free
+# The expansion front is useful while the two fronts are within street width.
+boundary &= (dist * 2.0 >= 1.0) & (dist * 2.0 <= 35.0)
+fronts_pixels = skeletonize(boundary)
+print("fronts skeleton pixels:", int(fronts_pixels.sum()))
+fronts_lines = vectorize(fronts_pixels, 2.0, 25.0)
+fronts = package(fronts_lines, "building_fronts", "FRT")
+overlay(fronts_lines, os.path.join(BUILD, "station_lines_fronts_overlay.png"))
+print(
+    f"fronts lines: {fronts['line_count']}  "
+    f"{fronts['total_length_ft']/5280:.1f} miles"
+)
+
+# ---------------------------------------------------------------------------
+for name, data in (("imagery", imagery), ("fronts", fronts)):
+    for path in (
+        os.path.join(BUILD, f"station_lines_{name}.json"),
+        os.path.join(ROOT, "viewer", "assets", "models", f"station_lines_{name}.json"),
+    ):
+        with open(path, "w") as f:
+            json.dump(data, f, separators=(",", ":"))
+        print("wrote", path)

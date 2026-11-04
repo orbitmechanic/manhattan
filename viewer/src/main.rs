@@ -44,8 +44,8 @@ use manhattan_viewer::{
         update_fog_bank_materials, update_fog_banks,
     },
     stationing::{
-        Stationing, StationingConfig, StationingState, configure_station_gizmos, draw_stationing,
-        handle_station_keys, update_civil_coordinates,
+        LineSet, Stationing, StationingConfig, StationingState, configure_station_gizmos,
+        draw_stationing, handle_station_keys, update_civil_coordinates,
     },
     ui::{handle_calendar_keys, spawn_ui, update_station_text, update_status},
 };
@@ -90,7 +90,9 @@ struct SelfTest {
     fog_visibility_km: f32,
     fog_cull_m: f32,
     station_lines: usize,
+    station_front_lines: usize,
     station_coords: usize,
+    station_front_coords: usize,
     station_curves: usize,
     station_ticks: usize,
 }
@@ -113,6 +115,7 @@ struct Args {
     view: ViewPreset,
     show_lines: bool,
     show_ticks: bool,
+    line_set: LineSet,
 }
 
 impl Default for Args {
@@ -127,6 +130,7 @@ impl Default for Args {
             view: ViewPreset::Overview,
             show_lines: false,
             show_ticks: false,
+            line_set: LineSet::Imagery,
         }
     }
 }
@@ -145,6 +149,12 @@ fn parse_args() -> Args {
             "--selftest" => args.selftest = true,
             "--lines" => args.show_lines = true,
             "--ticks" => args.show_ticks = true,
+            "--set" => {
+                args.line_set = match it.next().as_deref() {
+                    Some("fronts") => LineSet::Fronts,
+                    _ => LineSet::Imagery,
+                }
+            }
             "--report" => args.report = it.next(),
             "--view" => {
                 args.view = match it.next().as_deref() {
@@ -238,6 +248,7 @@ fn main() {
             show_lines: args.show_lines,
             show_ticks: args.show_ticks,
             show_coords: true,
+            set: args.line_set,
         })
         .insert_resource(StationingState::default())
         .insert_resource(args)
@@ -313,6 +324,13 @@ fn apply_web_args(args: &mut Args) {
             }
             "lines" => args.show_lines = value == "1" || value == "true",
             "ticks" => args.show_ticks = value == "1" || value == "true",
+            "set" => {
+                args.line_set = if value == "fronts" {
+                    LineSet::Fronts
+                } else {
+                    LineSet::Imagery
+                }
+            }
             _ => {}
         }
     }
@@ -547,16 +565,22 @@ fn run_selftest(
             test.materials_ready = setup.done;
             test.fog_visibility_km = env.fog_visibility / 1000.0;
             test.fog_cull_m = fog_cull_distance(env.fog_visibility);
-            test.station_lines = stationing.line_count;
-            test.station_coords = station_state.coords.len();
+            test.station_lines = stationing.imagery.lines.len();
+            test.station_front_lines = stationing.fronts.lines.len();
+            test.station_coords = station_state.imagery.len();
+            test.station_front_coords = station_state.fronts.len();
             test.station_curves = stationing
+                .imagery
                 .lines
                 .iter()
+                .chain(stationing.fronts.lines.iter())
                 .map(|line| line.plan_curves.len())
                 .sum();
             test.station_ticks = stationing
+                .imagery
                 .lines
                 .iter()
+                .chain(stationing.fronts.lines.iter())
                 .map(|line| line.tick_points.len())
                 .sum();
             clock.set_time(22, 0);
@@ -571,7 +595,7 @@ fn run_selftest(
             let moved = test.camera_before.distance(test.camera_after);
             let clamped = test.clamp_y_after >= MIN_CAMERA_HEIGHT;
             let report = format!(
-                "{{\n  \"camera\": {{\n    \"moved_units\": {:.2},\n    \"clamped_y\": {:.2},\n    \"floor\": {:.2},\n    \"clamp_ok\": {}\n  }},\n  \"clock\": {{\n    \"noon_sun_alt_deg\": {:.2},\n    \"night_sun_alt_deg\": {:.2},\n    \"noon_mode\": \"{}\",\n    \"night_mode\": \"{}\",\n    \"hour_wrap_date\": \"{}\",\n    \"hour_wrap_hour\": {}\n  }},\n  \"moon\": {{\n    \"alt_deg\": {:.2},\n    \"az_deg\": {:.2},\n    \"illumination\": {:.3}\n  }},\n  \"blocks\": {{\n    \"total\": {},\n    \"building_blocks\": {},\n    \"park_blocks\": {},\n    \"noon_targets\": {},\n    \"night_targets\": {},\n    \"flicker_blocks\": {},\n    \"fade_blocks\": {},\n    \"twilight_span_minutes\": {:.1}\n  }},\n  \"render\": {{\n    \"visibility_range_entities\": {},\n    \"fog_cull_m\": {:.0},\n    \"fog_visibility_km\": {:.1},\n    \"dof_active\": {},\n    \"materials_ready\": {}\n  }},\n  \"stationing\": {{\n    \"lines\": {},\n    \"camera_coordinate_array\": {},\n    \"plan_curves\": {},\n    \"ticks\": {}\n  }},\n  \"collision\": {{\n    \"grid_solid\": {},\n    \"resolved_free\": {}\n  }},\n  \"assertions\": {{\n    \"camera_moves\": {},\n    \"camera_above_ground\": {},\n    \"noon_is_day\": {},\n    \"night_is_night\": {},\n    \"hour_wrap_ok\": {},\n    \"collision_ok\": {},\n    \"fog_cull_ok\": {},\n    \"stationing_ok\": {}\n  }}\n}}\n",
+                "{{\n  \"camera\": {{\n    \"moved_units\": {:.2},\n    \"clamped_y\": {:.2},\n    \"floor\": {:.2},\n    \"clamp_ok\": {}\n  }},\n  \"clock\": {{\n    \"noon_sun_alt_deg\": {:.2},\n    \"night_sun_alt_deg\": {:.2},\n    \"noon_mode\": \"{}\",\n    \"night_mode\": \"{}\",\n    \"hour_wrap_date\": \"{}\",\n    \"hour_wrap_hour\": {}\n  }},\n  \"moon\": {{\n    \"alt_deg\": {:.2},\n    \"az_deg\": {:.2},\n    \"illumination\": {:.3}\n  }},\n  \"blocks\": {{\n    \"total\": {},\n    \"building_blocks\": {},\n    \"park_blocks\": {},\n    \"noon_targets\": {},\n    \"night_targets\": {},\n    \"flicker_blocks\": {},\n    \"fade_blocks\": {},\n    \"twilight_span_minutes\": {:.1}\n  }},\n  \"render\": {{\n    \"visibility_range_entities\": {},\n    \"fog_cull_m\": {:.0},\n    \"fog_visibility_km\": {:.1},\n    \"dof_active\": {},\n    \"materials_ready\": {}\n  }},\n  \"stationing\": {{\n    \"imagery_lines\": {},\n    \"front_lines\": {},\n    \"imagery_camera_coordinates\": {},\n    \"front_camera_coordinates\": {},\n    \"plan_curves\": {},\n    \"ticks\": {}\n  }},\n  \"collision\": {{\n    \"grid_solid\": {},\n    \"resolved_free\": {}\n  }},\n  \"assertions\": {{\n    \"camera_moves\": {},\n    \"camera_above_ground\": {},\n    \"noon_is_day\": {},\n    \"night_is_night\": {},\n    \"hour_wrap_ok\": {},\n    \"collision_ok\": {},\n    \"fog_cull_ok\": {},\n    \"stationing_ok\": {}\n  }}\n}}\n",
                 moved,
                 test.clamp_y_after,
                 MIN_CAMERA_HEIGHT,
@@ -599,7 +623,9 @@ fn run_selftest(
                 test.dof_active,
                 test.materials_ready,
                 test.station_lines,
+                test.station_front_lines,
                 test.station_coords,
+                test.station_front_coords,
                 test.station_curves,
                 test.station_ticks,
                 test.collision_solid,
@@ -611,7 +637,10 @@ fn run_selftest(
                 test.hour_wrap_date.ends_with("22 }") && test.hour_wrap_hour == 0,
                 test.collision_solid && test.collision_free,
                 test.fog_cull_m >= 2_500.0 && test.fog_cull_m <= 24_000.0,
-                test.station_lines > 1_000 && test.station_coords == test.station_lines
+                test.station_lines > 1_000
+                    && test.station_front_lines > 1_000
+                    && test.station_coords == test.station_lines
+                    && test.station_front_coords == test.station_front_lines
             );
             let _ = std::fs::write(&path, &report);
             println!("SELFTEST REPORT {path}\n{report}");
@@ -632,7 +661,9 @@ fn run_selftest(
                 && test.collision_solid
                 && test.collision_free
                 && test.station_lines > 1_000
-                && test.station_coords == test.station_lines;
+                && test.station_front_lines > 1_000
+                && test.station_coords == test.station_lines
+                && test.station_front_coords == test.station_front_lines;
             if ok {
                 exit.write(AppExit::Success);
             } else {
