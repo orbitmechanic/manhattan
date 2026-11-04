@@ -16,6 +16,7 @@ const COORD_UPDATE_SECS: f32 = 0.15;
 
 static IMAGERY_DATA: &str = include_str!("../assets/models/station_lines_imagery.json");
 static FRONTS_DATA: &str = include_str!("../assets/models/station_lines_fronts.json");
+static COMPLETED_DATA: &str = include_str!("../assets/models/station_lines_completed.json");
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Deserialize)]
@@ -118,6 +119,7 @@ pub struct StationSet {
 pub enum LineSet {
     Imagery,
     Fronts,
+    Completed,
 }
 
 impl LineSet {
@@ -125,13 +127,15 @@ impl LineSet {
         match self {
             LineSet::Imagery => "IMAGERY",
             LineSet::Fronts => "BUILDING FRONTS",
+            LineSet::Completed => "COMPLETED",
         }
     }
 
     pub fn next(self) -> Self {
         match self {
             LineSet::Imagery => LineSet::Fronts,
-            LineSet::Fronts => LineSet::Imagery,
+            LineSet::Fronts => LineSet::Completed,
+            LineSet::Completed => LineSet::Imagery,
         }
     }
 }
@@ -140,6 +144,7 @@ impl LineSet {
 pub struct Stationing {
     pub imagery: StationSet,
     pub fronts: StationSet,
+    pub completed: StationSet,
 }
 
 impl Stationing {
@@ -147,6 +152,7 @@ impl Stationing {
         match set {
             LineSet::Imagery => &self.imagery,
             LineSet::Fronts => &self.fronts,
+            LineSet::Completed => &self.completed,
         }
     }
 
@@ -164,8 +170,10 @@ impl Default for Stationing {
         };
         let (imagery, imagery_len, imagery_count) = parse(IMAGERY_DATA);
         let (fronts, fronts_len, fronts_count) = parse(FRONTS_DATA);
+        let (completed, completed_len, completed_count) = parse(COMPLETED_DATA);
         assert_eq!(imagery.len(), imagery_count);
         assert_eq!(fronts.len(), fronts_count);
+        assert_eq!(completed.len(), completed_count);
         Self {
             imagery: StationSet {
                 lines: imagery,
@@ -174,6 +182,10 @@ impl Default for Stationing {
             fronts: StationSet {
                 lines: fronts,
                 total_length_ft: fronts_len,
+            },
+            completed: StationSet {
+                lines: completed,
+                total_length_ft: completed_len,
             },
         }
     }
@@ -193,7 +205,7 @@ impl Default for StationingConfig {
             show_lines: false,
             show_ticks: false,
             show_coords: true,
-            set: LineSet::Fronts,
+            set: LineSet::Completed,
         }
     }
 }
@@ -231,6 +243,7 @@ pub struct CivilCoordinate {
 pub struct StationingState {
     pub imagery: Vec<CivilCoordinate>,
     pub fronts: Vec<CivilCoordinate>,
+    pub completed: Vec<CivilCoordinate>,
     last_update: f32,
 }
 
@@ -239,6 +252,7 @@ impl StationingState {
         match set {
             LineSet::Imagery => &self.imagery,
             LineSet::Fronts => &self.fronts,
+            LineSet::Completed => &self.completed,
         }
     }
 
@@ -321,6 +335,7 @@ pub fn update_civil_coordinates(
     };
     state.imagery = compute(&stationing.imagery.lines);
     state.fronts = compute(&stationing.fronts.lines);
+    state.completed = compute(&stationing.completed.lines);
 }
 
 pub fn draw_stationing(
@@ -333,6 +348,7 @@ pub fn draw_stationing(
         let color = match config.set {
             LineSet::Imagery => Color::srgb(0.20, 1.0, 0.48),
             LineSet::Fronts => Color::srgb(1.0, 0.68, 0.18),
+            LineSet::Completed => Color::srgb(0.72, 0.52, 1.0),
         };
         for line in &selected.lines {
             if line.points.len() < 2 {
@@ -425,17 +441,19 @@ mod tests {
     #[test]
     fn set_toggle_cycles() {
         let mut config = StationingConfig::default();
-        assert_eq!(config.set, LineSet::Fronts);
+        assert_eq!(config.set, LineSet::Completed);
         toggle_station(&mut config, StationToggle::Set);
         assert_eq!(config.set, LineSet::Imagery);
         toggle_station(&mut config, StationToggle::Set);
         assert_eq!(config.set, LineSet::Fronts);
+        toggle_station(&mut config, StationToggle::Set);
+        assert_eq!(config.set, LineSet::Completed);
     }
 
     #[test]
     fn station_data_loads() {
         let s = Stationing::default();
-        for set in [LineSet::Imagery, LineSet::Fronts] {
+        for set in [LineSet::Imagery, LineSet::Fronts, LineSet::Completed] {
             let data = s.set(set);
             assert!(data.lines.len() > 1_000, "{:?} line count", set);
             assert!(data.lines.iter().all(|l| l.points.len() >= 2));

@@ -28,6 +28,16 @@ Set B — BUILDING FRONTS (2460 lines, 185.5 miles, 13513 ticks)
     and open-water boundaries), skeletonise, trace straight through junctions,
     simplify (RDP 2 m), drop lines under 25 m.
 
+Set C — COMPLETED (4447 lines, 192.6 miles, 17095 ticks; default)
+  - Start from the building-front skeleton, drop hair fragments under 400 m².
+  - Connect every remaining component with a minimum spanning tree of
+    free-space paths.  Buildings are impassable; connectors prefer road-coloured
+    pixels and stay out of the harbour.
+  - Re-vectorise the connected skeleton, prune short spurs, and add explicit
+    line-level connectors for any remaining vector gap.
+  - This is the set intended for selecting which graphics elements to display;
+    it is connected, while the two source sets remain available for comparison.
+
 Line data (both sets)
   id, points [[x,z],...] in viewer coordinates, length_m/length_ft
   station_start_ft, station_end_ft, ticks_ft, tick_points [[x,z],...]
@@ -39,15 +49,16 @@ Line data (both sets)
   tangent/curve schema for future elevation work.
 
 Viewer
-  station_lines_imagery.json / station_lines_fronts.json are compiled into
-  the app.  src/stationing.rs:
+  station_lines_imagery.json / station_lines_fronts.json / station_lines_completed.json
+  are compiled into the app.  src/stationing.rs:
     - draws the selected set (L), 100-ft vertical ticks from -3 m to +30 m (T);
     - maintains separate camera coordinate arrays for both sets:
       station_ft, offset_ft (negative left / positive right up-station),
       elevation_ft, plan_distance_ft, nearest tangent station/elevation,
       station_from_tangent_ft, elevation_from_tangent_ft;
     - shows the three nearest lines for the selected set in the panel;
-    - G (or the set [G] button) switches IMAGERY <-> BUILDING FRONTS.
+    - G (or the set [G] button) cycles IMAGERY -> BUILDING FRONTS -> COMPLETED.
+    COMPLETED is the default.
   Keys: L lines, T ticks, C civil-coordinate panel, G set.
   Web: ?lines=1&ticks=1&set=imagery|fronts.
 
@@ -58,8 +69,8 @@ Validation
   renders/viewer_station_fronts_street.png
   renders/viewer_station_imagery_mid.png
   renders/viewer_station_fronts_mid.png
-  native selftest: imagery 2041 lines / 2041 camera coords, fronts 2460 / 2460,
-                   stationing_ok true
+  native selftest: imagery 2041 / 2041, fronts 2460 / 2460,
+                   completed 4447 / 4447, stationing_ok true
   tests: 45 passed
 
 Caveat

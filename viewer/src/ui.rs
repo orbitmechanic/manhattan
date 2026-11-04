@@ -233,7 +233,7 @@ pub fn spawn_ui(mut commands: Commands) {
         Text::new(
             "FLY: W A S D  |  Q/E down/up  |  hold RMB to look  |  Shift boost  |  wheel speed  |  arrows look\n\
              TIME: [ / ] day  |  - / = hour  |  ; / ' minute  |  , / . month  |  Space play/pause  |  B reverse  |  R reset\n\
-             STATIONING: L lines  |  T 100-ft ticks  |  C coordinates  |  G imagery / building fronts",
+             STATIONING: L lines  |  T 100-ft ticks  |  C coordinates  |  G cycles imagery / fronts / completed",
         ),
         TextFont {
             font_size: FontSize::Px(13.0),

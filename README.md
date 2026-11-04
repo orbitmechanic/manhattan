@@ -127,6 +127,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/collision_grid.bin` | 4 m building-height grid baked from the 1223 blocks, used for camera collision. |
 | `viewer/assets/models/station_lines_imagery.json` | 2041 satellite/road-derived centrelines, 92.1 miles. |
 | `viewer/assets/models/station_lines_fronts.json` | 2460 building-expansion-front centrelines, 185.5 miles. |
+| `viewer/assets/models/station_lines_completed.json` | 4447 connected building-front + connector centrelines, 192.6 miles (default). |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
 | `Textures/day/` | canonical day textures, names describe content; `floors/` holds one-floor facade crops. |
@@ -313,6 +314,7 @@ be compared:
 |---|---|---:|---:|---:|
 | **IMAGERY** | grey road pixels in the low-resolution satellite, thinned on the free-space skeleton | 2041 | 92.1 mi | 8003 |
 | **BUILDING FRONTS** | simultaneous expansion fronts from every building; the meeting locus is the road centreline | 2460 | 185.5 mi | 13513 |
+| **COMPLETED** | building fronts + free-space connectors between every meaningful component; default | 4447 | 192.6 mi | 17095 |
 
 - **IMAGERY** is filtered by road colour, a 4–30 m distance from building
   footprints, and continues straight through junctions.
@@ -327,17 +329,18 @@ be compared:
 - Offset is **negative left / positive right** when looking up-station.
 - Press `L` for centrelines, `T` for the 100-ft vertical ticks (from −3 m to
   +30 m through the ground), `C` for the civil-coordinate panel, and **`G` to
-  switch between IMAGERY and BUILDING FRONTS**.  The same toggles are buttons
-  in the STATIONING panel.
-- The camera computes **one civil-coordinate array per set** (`imagery` and
-  `fronts`) with `station_ft`, `offset_ft`, `elevation_ft`, nearest tangent
+  cycle IMAGERY → BUILDING FRONTS → COMPLETED**.  The same toggles are buttons
+  in the STATIONING panel.  **COMPLETED is the default set.**
+- The camera computes **one civil-coordinate array per set** (`imagery`,
+  `fronts`, `completed`) with `station_ft`, `offset_ft`, `elevation_ft`, nearest tangent
   station/elevation, signed station/elevation from that tangent and plan
   distance.  The panel shows the three nearest lines for the selected set; the
   full arrays live in `StationingState` for future pavement/gutter/sidewalk/
   crosswalk/signal placement.
 - `build/station_lines_imagery_overlay.png` and
   `station_lines_fronts_overlay.png` show the two networks on the satellite;
-  `renders/viewer_station_*_street.png` / `_mid.png` show them in the viewer.
+  `renders/viewer_station_*_street.png` / `_mid.png` show them in the viewer,
+  including the completed set.
 
 The extraction is a planning aid, not a survey; both sets should be field-
 checked before construction.
@@ -492,8 +495,8 @@ affected presentation and is already reflected in the script.
   19 park), noon targets 0, night targets 1242, randomised flicker/fade split
   (one run 702/540), 3,861 visibility-range entities, fog cull 4.3 km, focus
   blur active, collision grid loaded and resolved, stationing imagery 2041 /
-  fronts 2460 lines with matching camera arrays, camera clamp at y=3,
-  hour-wrap date correct.
+  fronts 2460 / completed 4447 lines with matching camera arrays, camera clamp
+  at y=3, hour-wrap date correct.
 - `viewer` tests: **45 passed**, including station/offset sign projection and
   station data loading, camera collision/slide maths, one-floor texture paths,
   fog-cull distance, the actual Bevy fly camera system, calendar keys, mixed

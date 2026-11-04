@@ -30,6 +30,7 @@ from collections import defaultdict
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage as ndi
+from scipy.spatial import cKDTree
 from skimage.morphology import closing, disk, remove_small_objects, skeletonize
 
 ROOT = "/home/orbit9/Work/games/Manhattan"
@@ -359,8 +360,356 @@ print(
     f"{fronts['total_length_ft']/5280:.1f} miles"
 )
 
+def prune_spurs(mask, max_len_px):
+    """Remove short dead-end hairs from a skeleton; keep junctions."""
+    work = mask.copy()
+    for _ in range(200):
+        ys, xs = np.nonzero(work)
+        pix = set(zip(ys.tolist(), xs.tolist()))
+
+        def neigh(p):
+            y, x = p
+            return [
+                (y + dy, x + dx)
+                for dy in (-1, 0, 1)
+                for dx in (-1, 0, 1)
+                if (dy or dx) and (y + dy, x + dx) in pix
+            ]
+
+        deg = {p: len(neigh(p)) for p in pix}
+        removed = 0
+        for p in [q for q in pix if deg[q] == 1]:
+            if p not in pix:
+                continue
+            path = [p]
+            prev = None
+            cur = p
+            while len(path) <= max_len_px:
+                nxt = [q for q in neigh(cur) if q != prev]
+                if not nxt:
+                    break
+                if len(nxt) > 1:
+                    break
+                prev, cur = cur, nxt[0]
+                path.append(cur)
+                if deg.get(cur, 0) != 2:
+                    break
+            # Keep the junction pixel; drop the hair.
+            if len(path) <= max_len_px and deg.get(path[-1], 0) != 2:
+                for q in path[:-1] if deg.get(path[-1], 0) > 2 else path:
+                    if q in pix:
+                        work[q] = False
+                        removed += 1
+        if removed == 0:
+            break
+    return work
+
+def line_components(lines, tol=3.0):
+    """Connect line endpoints to any nearby line segment; return components."""
+    segments = []
+    for i, line in enumerate(lines):
+        for a, b in zip(line, line[1:]):
+            segments.append((i, a, b))
+    cell = 20.0
+    grid = defaultdict(list)
+    for si, (i, a, b) in enumerate(segments):
+        for gx in range(int(min(a[0], b[0]) // cell), int(max(a[0], b[0]) // cell) + 1):
+            for gy in range(int(min(a[1], b[1]) // cell), int(max(a[1], b[1]) // cell) + 1):
+                grid[(gx, gy)].append(si)
+
+    def point_segment(p, a, b):
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = dx * dx + dy * dy
+        if L == 0:
+            return math.dist(p, a), a
+        t = max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L))
+        q = (a[0] + t * dx, a[1] + t * dy)
+        return math.dist(p, q), q
+
+    parent = list(range(len(lines)))
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    for i, line in enumerate(lines):
+        for e in (line[0], line[-1]):
+            gx, gy = int(e[0] // cell), int(e[1] // cell)
+            seen = set()
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    for si in grid.get((gx + dx, gy + dy), []):
+                        if si in seen:
+                            continue
+                        seen.add(si)
+                        j, a, b = segments[si]
+                        if j != i and point_segment(e, a, b)[0] <= tol:
+                            union(i, j)
+    comps = {}
+    for i in range(len(lines)):
+        comps.setdefault(find(i), []).append(i)
+    return comps, segments, grid, point_segment
+
+
+def connect_line_components(lines):
+    comps, segments, _, point_segment = line_components(lines)
+    if len(comps) <= 1:
+        return lines
+    # Largest component is the trunk.
+    trunk = max(comps.values(), key=len)
+    trunk_set = set(trunk)
+    for _ in range(len(comps) + 5):
+        comps, segments, _, point_segment = line_components(lines)
+        if len(comps) <= 1:
+            break
+        trunk = max(comps.values(), key=len)
+        trunk_set = set(trunk)
+        # Add one connector from the nearest outside component to the trunk.
+        best = None
+        for root, members in comps.items():
+            if root == max(comps, key=lambda r: len(comps[r])):
+                continue
+            for i in members:
+                for e in (lines[i][0], lines[i][-1]):
+                    for j in trunk:
+                        for a, b in zip(lines[j], lines[j][1:]):
+                            d, q = point_segment(e, a, b)
+                            if best is None or d < best[0]:
+                                best = (d, i, e, q)
+        if best is None:
+            break
+        d, i, e, q = best
+        lines.append([e, q])
+        print("completed vector connector", round(d, 2), "m")
+    return lines
+
+def viewer_from_pixel(px, py):
+    x, y = world_from_pixel(px, py)
+    return (x, -y)
+
+
+def viewer_to_pixel(x, z):
+    px = int(np.clip((x - minx) / (maxx - minx) * W, 0, W - 1))
+    py = int(np.clip((maxy + z) / (maxy - miny) * H, 0, H - 1))
+    return py, px
+
+
+def crosses_building(a, b):
+    for t in np.linspace(0.0, 1.0, 12):
+        x = a[0] + (b[0] - a[0]) * t
+        z = a[1] + (b[1] - a[1]) * t
+        py, px = viewer_to_pixel(x, z)
+        if mask[py, px]:
+            return True
+    return False
+
 # ---------------------------------------------------------------------------
-for name, data in (("imagery", imagery), ("fronts", fronts)):
+# C. completed building-front network: connect all meaningful components
+# ---------------------------------------------------------------------------
+# Drop tiny disconnected hairs before connecting; then connect every remaining
+# component with a minimum spanning tree of free-space paths.  Buildings are
+# impassable and water/open ground is expensive, so connectors follow road
+# corridors where possible.
+labels_all, count_all = ndi.label(fronts_pixels, structure=np.ones((3, 3)))
+sizes_all = ndi.sum(fronts_pixels, labels_all, range(1, count_all + 1))
+keep_ids = [i + 1 for i, size in enumerate(sizes_all) if size >= 100]
+base = np.isin(labels_all, keep_ids)
+base_labels, base_count = ndi.label(base, structure=np.ones((3, 3)))
+print("completed base components:", base_count)
+
+# Component adjacency from nearest boundary pixels.
+boundary = base & ~ndi.binary_erosion(base, iterations=1)
+ys, xs = np.nonzero(base)
+pts = np.column_stack([ys, xs])
+pt_labels = base_labels[ys, xs]
+tree = cKDTree(pts)
+by, bx = np.nonzero(boundary)
+bpts = np.column_stack([by, bx])
+b_labels = base_labels[by, bx]
+dists, idxs = tree.query(bpts, k=32, workers=-1)
+comp_pts = {}
+for i in range(1, base_count + 1):
+    yy, xx = np.nonzero(base_labels == i)
+    comp_pts[i] = np.column_stack([yy, xx])
+comp_ids = sorted(comp_pts)
+centroids = np.array(
+    [
+        [comp_pts[i][:, 1].mean(), comp_pts[i][:, 0].mean()]
+        for i in comp_ids
+    ],
+    dtype=np.float64,
+)
+pair_edges = []
+for ii in range(len(comp_ids)):
+    for jj in range(ii + 1, len(comp_ids)):
+        d = float(np.linalg.norm(centroids[ii] - centroids[jj]))
+        pair_edges.append((d, ii, jj))
+pair_edges.sort(key=lambda e: e[0])
+
+parent = list(range(len(comp_ids)))
+
+
+def find(a):
+    while parent[a] != a:
+        parent[a] = parent[parent[a]]
+        a = parent[a]
+    return a
+
+
+def union(a, b):
+    ra, rb = find(a), find(b)
+    if ra == rb:
+        return False
+    parent[rb] = ra
+    return True
+
+
+mst_edges = []
+for d, ii, jj in pair_edges:
+    if not union(ii, jj):
+        continue
+    a, b = comp_ids[ii], comp_ids[jj]
+    A, B = comp_pts[a], comp_pts[b]
+    tree_a = cKDTree(A)
+    dd, idx = tree_a.query(B)
+    k = int(np.argmin(dd))
+    sa = (int(A[idx[k], 0]), int(A[idx[k], 1]))
+    sb = (int(B[k, 0]), int(B[k, 1]))
+    mst_edges.append((a, b, sa, sb))
+print("completed connector edges:", len(mst_edges))
+
+# Cost: buildings impassable; roads cheap; water/open land expensive.
+mx = rgb.max(axis=2)
+mn = rgb.min(axis=2)
+sat_ = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-6), 0.0)
+road = (sat_ < 0.16) & (mx > 0.22) & (mx < 0.82)
+cost = np.ones((H, W), dtype=np.float64)
+cost[road] = 0.25
+cost += np.clip((dist_building - 20.0) / 10.0, 0.0, 15.0) * 1.5
+# Water/open space is expensive, but a road-coloured bridge remains cheap.
+water = (dist_building > 45.0) & ~road & ~base
+cost[water] = 120.0
+cost[base] = 0.10
+cost[mask] = np.inf
+
+completed = base.copy()
+from skimage.graph import route_through_array
+for i, j, s, e in mst_edges:
+    try:
+        path, _ = route_through_array(
+            cost, s, e, fully_connected=False, geometric=True
+        )
+    except Exception as exc:
+        print("connector failed", i, j, exc)
+        continue
+    yy = np.array([p[0] for p in path])
+    xx = np.array([p[1] for p in path])
+    if mask[yy, xx].any():
+        print("connector rejected (crosses building)", i, j)
+        continue
+    if water[yy, xx].mean() > 0.05:
+        print(
+            "connector crosses water",
+            i,
+            j,
+            "pixels",
+            int(water[yy, xx].sum()),
+            "route",
+            len(path),
+        )
+    completed[yy, xx] = True
+print("completed skeleton pixels:", int(completed.sum()))
+completed = prune_spurs(completed, 10)
+print("completed skeleton after spur pruning:", int(completed.sum()))
+completed_lines = vectorize(completed, 2.0, 5.0)
+completed_lines = connect_line_components(completed_lines)
+# Remove any RDP/connector corner that clips a building: route those segments
+# through the free-space cost field instead.
+clear_lines = []
+for line in completed_lines:
+    if len(line) < 2:
+        clear_lines.append(line)
+        continue
+    out = [line[0]]
+    for a, b in zip(line, line[1:]):
+        if not crosses_building(a, b):
+            out.append(b)
+            continue
+        start = viewer_to_pixel(*a)
+        end = viewer_to_pixel(*b)
+        try:
+            path, _ = route_through_array(
+                cost, start, end, fully_connected=False, geometric=True
+            )
+            out.extend(viewer_from_pixel(x, y) for y, x in path[1:])
+        except Exception:
+            out.append(b)
+    clear_lines.append(out)
+completed_lines = [line for line in clear_lines if not any(
+    crosses_building(a, b) for a, b in zip(line, line[1:])
+)]
+print("completed lines after clearance:", len(completed_lines))
+
+# Reconnect the small number of components left after removing any line that
+# still clipped a building.  Connectors are routed through free space.
+def safe_path(a, b):
+    if not crosses_building(a, b):
+        return [a, b]
+    start = viewer_to_pixel(*a)
+    end = viewer_to_pixel(*b)
+    try:
+        path, _ = route_through_array(
+            cost, start, end, fully_connected=False, geometric=True
+        )
+    except Exception:
+        return None
+    pts = [viewer_from_pixel(x, y) for y, x in path]
+    for p, q in zip(pts, pts[1:]):
+        if crosses_building(p, q):
+            return None
+    return pts
+
+for _ in range(20):
+    comps, _, _, _ = line_components(completed_lines)
+    if len(comps) <= 1:
+        break
+    main = max(comps.values(), key=len)
+    main_pts = [e for i in main for e in (completed_lines[i][0], completed_lines[i][-1])]
+    main_tree = cKDTree(np.asarray(main_pts))
+    best = None
+    for members in comps.values():
+        if members is main or set(members) == set(main):
+            continue
+        for i in members:
+            for e in (completed_lines[i][0], completed_lines[i][-1]):
+                d, k = main_tree.query(e)
+                if best is None or d < best[0]:
+                    best = (d, e, tuple(main_pts[int(k)]))
+    if best is None:
+        break
+    _d, a, b = best
+    connector = safe_path(a, b)
+    if connector is None:
+        break
+    completed_lines.append(connector)
+    print("completed final connector", round(float(_d), 2), "m")
+
+completed_set = package(completed_lines, "completed", "CMP")
+overlay(completed_lines, os.path.join(BUILD, "station_lines_completed_overlay.png"))
+print(
+    f"completed lines: {completed_set['line_count']}  "
+    f"{completed_set['total_length_ft']/5280:.1f} miles"
+)
+
+# ---------------------------------------------------------------------------
+for name, data in (("imagery", imagery), ("fronts", fronts), ("completed", completed_set)):
     for path in (
         os.path.join(BUILD, f"station_lines_{name}.json"),
         os.path.join(ROOT, "viewer", "assets", "models", f"station_lines_{name}.json"),
