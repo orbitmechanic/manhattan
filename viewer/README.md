@@ -30,8 +30,8 @@ variants, including `floors/` for the building floors.
 - **Calendar/clock**: `[`/`]` day, `-`/`=` hour, `;`/`'` 5 minutes,
   `,`/`.` month, `Space` play/pause, `B` reverse time, `R` reset.  The
   top-right panel has clickable buttons for all of these, including reverse.
-- **Views**: `--view street`, `--view mid`, `--view overview` only move the
-  camera; all three render the same full-detail floor geometry.
+- **Views**: `--view street`, `--view mid`, `--view overview`, `--view close`
+  only move the camera; all render the same full-detail floor geometry.
 - **Stationing**: `L` centrelines, `T` 100-ft vertical ticks, `C` civil
   coordinates, `G` switches IMAGERY ↔ BUILDING FRONTS.  The same toggles are
   buttons in the STATIONING panel.  `--lines`, `--ticks`, `--set fronts` and
@@ -111,6 +111,17 @@ Press `G` (or the **set [G]** button) to cycle IMAGERY → BUILDING FRONTS →
 COMPLETED.
 The full arrays are intended for future pavement/gutter/sidewalk/crosswalk/
 signal placement.
+
+### Roadway geometry
+
+`assets/models/roadway.glb` is generated from the completed centreline set by
+`../scripts/build_roadway.py`:
+
+- 12-ft lanes; lane count follows the building corridor (1–4 lanes).
+- 12-ft concrete sidewalks, with a 0.14 m curb face.
+- Dark-grey asphalt and light-grey concrete; widths are clipped by the building
+  mask so pavement does not cross a footprint.
+- `--view close` is a low street-level inspection camera.
 
 ### Atmosphere, focus and collision
 

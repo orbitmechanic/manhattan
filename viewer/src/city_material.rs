@@ -133,7 +133,7 @@ pub fn setup_city_materials(
     let mut has_ground = false;
     for (_e, name, _m) in &query {
         let base = base_material_name(name);
-        has_buildings |= !base.starts_with("ground");
+        has_buildings |= base.starts_with("facade") || base.starts_with("roof");
         has_ground |= base.starts_with("ground");
     }
     if setup.stable < 6 || !has_buildings || !has_ground {
@@ -144,6 +144,10 @@ pub fn setup_city_materials(
     for (_entity, name, material) in &query {
         let key = name.to_string();
         if map.contains_key(&key) {
+            continue;
+        }
+        let base = base_material_name(&key);
+        if base.starts_with("road") || base.starts_with("sidewalk") || base.starts_with("curb") {
             continue;
         }
         let Some(day) = standard_materials.get(&material.0) else {
@@ -160,7 +164,6 @@ pub fn setup_city_materials(
             })
             .load(night_texture_path(&key));
         let strength = emissive_strength(&key);
-        let base = base_material_name(&key);
         let floor_variation = if base.starts_with("ground") { 0.0 } else { 1.0 };
         let handle = city_materials.add(CityMaterial {
             base: day.clone(),
@@ -220,6 +223,58 @@ pub fn update_city_materials(
     }
     for (_, material) in materials.iter_mut() {
         material.extension.blocks = uniform;
+    }
+}
+
+pub fn setup_road_materials(
+    mut done: Local<bool>,
+    query: Query<(&GltfMaterialName, &MeshMaterial3d<StandardMaterial>)>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    if *done {
+        return;
+    }
+    for (name, handle) in &query {
+        let lower = name.to_string().to_ascii_lowercase();
+        if !(lower.contains("road") || lower.contains("sidewalk") || lower.contains("curb")) {
+            continue;
+        }
+        if let Some(mut material) = materials.get_mut(&handle.0) {
+            material.base_color = if lower.contains("road") {
+                Color::srgb(0.10, 0.10, 0.11)
+            } else {
+                Color::srgb(0.78, 0.78, 0.75)
+            };
+            // The road mesh is intentionally unlit so the flat pavement stays
+            // readable at grazing angles; update_road_colors tints it with the
+            // time of day.
+            material.unlit = true;
+            material.depth_bias = 50.0;
+            material.cull_mode = None;
+        }
+        *done = true;
+    }
+}
+
+pub fn update_road_colors(
+    env: Res<crate::environment::Environment>,
+    query: Query<(&GltfMaterialName, &MeshMaterial3d<StandardMaterial>)>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let day = 0.12 + 0.88 * env.daylight;
+    for (name, handle) in &query {
+        let lower = name.to_string().to_ascii_lowercase();
+        if !(lower.contains("road") || lower.contains("sidewalk") || lower.contains("curb")) {
+            continue;
+        }
+        if let Some(mut material) = materials.get_mut(&handle.0) {
+            let base = if lower.contains("road") {
+                Vec3::new(0.10, 0.10, 0.11)
+            } else {
+                Vec3::new(0.78, 0.78, 0.75)
+            };
+            material.base_color = Color::srgb(base.x * day, base.y * day, base.z * day);
+        }
     }
 }
 

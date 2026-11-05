@@ -121,6 +121,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/blocks_report.txt` | irregular block counts, park/Voronoi details, wave measurements, runtime verification. |
 | `build/floors_report.txt` | floor scale, one-floor textures, real-geometry assets, fog/focus/collision. |
 | `build/stationing_report.txt` | street-centreline method, counts, data schema and camera civil coordinates. |
+| `build/roadway_report.txt` | lane/sidewalk geometry method, counts and material notes. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -128,6 +129,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/station_lines_imagery.json` | 2041 satellite/road-derived centrelines, 92.1 miles. |
 | `viewer/assets/models/station_lines_fronts.json` | 2460 building-expansion-front centrelines, 185.5 miles. |
 | `viewer/assets/models/station_lines_completed.json` | 4447 connected building-front + connector centrelines, 192.6 miles (default). |
+| `viewer/assets/models/roadway.glb` | asphalt pavement + concrete sidewalks generated from the completed baselines. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
 | `Textures/day/` | canonical day textures, names describe content; `floors/` holds one-floor facade crops. |
@@ -345,6 +347,24 @@ be compared:
 The extraction is a planning aid, not a survey; both sets should be field-
 checked before construction.
 
+### Roadway geometry — pavement and sidewalks
+
+`scripts/build_roadway.py` generates `viewer/assets/models/roadway.glb` from the
+**COMPLETED** street baselines:
+
+- **12-ft lane width**; lane count is inferred per station from the clear
+  building corridor and clamped to 1–4 lanes.
+- **12-ft concrete sidewalks** on both sides; they shrink only where a building
+  corridor is too narrow.
+- Asphalt is dark grey, sidewalk concrete light grey, with a 0.14 m curb face.
+- Widths are sampled against the building mask, so pavement never crosses a
+  footprint.
+- 4,373 of 4,447 baselines produced roadway geometry; the remainder are too
+  constrained or end inside a footprint.
+- Geometry: 29,434 asphalt triangles and 117,736 sidewalk triangles.
+- `--view close` provides a low street-level inspection camera.
+- `renders/viewer_roadway_close.png` shows the result.
+
 ### Atmosphere, focus and camera collision
 
 - **Variable haze**: `DistanceFog` uses an exponential-squared falloff whose
@@ -451,6 +471,9 @@ blender -b manhattan_blocks.blend --python scripts/build_collision_grid.py
 # 6b3. street centrelines + stationing data
 /tmp/opencode/geoenv/bin/python scripts/build_station_lines.py
 
+# 6b4. asphalt + sidewalk roadway geometry
+/tmp/opencode/roadenv/bin/python scripts/build_roadway.py
+
 # 6c. after floor-master edits, re-export the city mesh
 blender -b manhattan_floors.blend --python scripts/export_city_mesh.py
 
@@ -483,6 +506,8 @@ affected presentation and is already reflected in the script.
   `viewer_station_fronts_street.png`,
   `viewer_station_completed_street.png`, and the matching `_mid.png` frames —
   the three centreline sets with vertical 100-ft ticks and civil coordinates.
+- `renders/viewer_roadway_close.png` — asphalt pavement, 12-ft sidewalks and
+  curb faces at street level.
 - `build/station_lines_imagery_overlay.png`,
   `build/station_lines_fronts_overlay.png` — the two networks over the
   satellite.

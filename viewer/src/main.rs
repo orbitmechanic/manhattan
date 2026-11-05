@@ -35,7 +35,8 @@ use manhattan_viewer::{
     blocks::{BlockLights, update_blocks},
     camera::{FlyCamera, MAX_PITCH, MIN_CAMERA_HEIGHT, MoveState, fly_camera_system, step_camera},
     city_material::{
-        BuildingChunk, CityMaterial, CityMaterialSetup, setup_city_materials, update_city_materials,
+        BuildingChunk, CityMaterial, CityMaterialSetup, setup_city_materials, setup_road_materials,
+        update_city_materials, update_road_colors,
     },
     clock::{ClockAction, SimClock},
     collision::{CAMERA_RADIUS, CollisionGrid},
@@ -104,6 +105,7 @@ enum ViewPreset {
     Overview,
     Mid,
     Street,
+    Close,
 }
 
 #[derive(Resource, Clone, Debug)]
@@ -164,6 +166,7 @@ fn parse_args() -> Args {
                 args.view = match it.next().as_deref() {
                     Some("street") => ViewPreset::Street,
                     Some("mid") => ViewPreset::Mid,
+                    Some("close") => ViewPreset::Close,
                     _ => ViewPreset::Overview,
                 }
             }
@@ -293,6 +296,7 @@ fn main() {
             )
                 .chain(),
         )
+        .add_systems(Update, (setup_road_materials, update_road_colors))
         .run();
 }
 
@@ -317,6 +321,7 @@ fn apply_web_args(args: &mut Args) {
                 args.view = match value {
                     "street" => ViewPreset::Street,
                     "mid" => ViewPreset::Mid,
+                    "close" => ViewPreset::Close,
                     _ => ViewPreset::Overview,
                 };
             }
@@ -353,6 +358,10 @@ fn spawn_camera(mut commands: Commands, args: Res<Args>) {
         ViewPreset::Street => (
             Vec3::new(900.0, 80.0, 900.0),
             Vec3::new(1100.0, 150.0, -400.0),
+        ),
+        ViewPreset::Close => (
+            Vec3::new(1010.0, 20.0, -462.0),
+            Vec3::new(1118.0, 2.0, -712.0),
         ),
     };
     let dir = (target - position).normalize();
@@ -409,7 +418,11 @@ fn spawn_camera(mut commands: Commands, args: Res<Args>) {
 }
 
 fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    for path in ["models/manhattan_ground.glb", "models/manhattan_city.glb"] {
+    for path in [
+        "models/manhattan_ground.glb",
+        "models/manhattan_city.glb",
+        "models/roadway.glb",
+    ] {
         commands.spawn(WorldAssetRoot(
             asset_server.load(GltfAssetLabel::Scene(0).from_asset(path)),
         ));
