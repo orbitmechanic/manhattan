@@ -743,7 +743,7 @@ fn hide_web_loading(setup: Res<CityMaterialSetup>, mut hidden: Local<bool>) {
             && let Some(document) = window.document()
             && let Some(loader) = document.get_element_by_id("loading")
         {
-            let _ = loader.set_class_name("loading hidden");
+            loader.set_class_name("loading hidden");
         }
     }
 }
