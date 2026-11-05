@@ -8,8 +8,9 @@
 
 use std::collections::HashMap;
 
+#[cfg(not(target_arch = "wasm32"))]
+use bevy::camera::visibility::VisibilityRange;
 use bevy::{
-    camera::visibility::VisibilityRange,
     gltf::GltfMaterialName,
     image::{ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor},
     pbr::{ExtendedMaterial, MaterialExtension, StandardMaterial},

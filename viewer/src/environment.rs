@@ -181,6 +181,7 @@ pub fn setup_lighting(
 }
 
 #[allow(clippy::too_many_arguments)]
+#[cfg_attr(target_arch = "wasm32", allow(unused_variables, unused_mut))]
 pub fn update_environment(
     time: Res<Time>,
     clock: Res<SimClock>,

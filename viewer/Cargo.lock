@@ -3636,6 +3636,7 @@ name = "manhattan-viewer"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "js-sys",
  "serde",
  "serde_json",
  "wasm-bindgen",

@@ -5,7 +5,9 @@ Uses 12-ft lanes and 12-ft sidewalks.  Lane count is reduced where the
 building corridor is too narrow, and widths are clamped by the building mask so
 pavement never crosses a footprint.
 
-Output: viewer/assets/models/roadway.glb
+Output:
+  viewer/assets/models/roadway_chunks/chunk_<x>_<z>.glb  (500 m tiles)
+  viewer/assets/models/roadway_manifest.json
 
 Run with the roadway venv:
   /tmp/opencode/roadenv/bin/python scripts/build_roadway.py
@@ -22,7 +24,9 @@ ROOT = "/home/orbit9/Work/games/Manhattan"
 BUILD = os.path.join(ROOT, "build")
 STATIONS = os.path.join(ROOT, "viewer", "assets", "models", "station_lines_completed.json")
 MASK = os.path.join(BUILD, "building_mask.png")
-OUT = os.path.join(ROOT, "viewer", "assets", "models", "roadway.glb")
+OUT_DIR = os.path.join(ROOT, "viewer", "assets", "models", "roadway_chunks")
+OUT_MANIFEST = os.path.join(ROOT, "viewer", "assets", "models", "roadway_manifest.json")
+CHUNK_M = 500.0
 FEET = 3.280839895
 LANE_M = 12.0 / FEET
 SIDEWALK_M = 12.0 / FEET
@@ -214,14 +218,79 @@ def make_mesh(vertices, faces, name, color, roughness):
         uv=np.zeros((len(mesh.vertices), 2), dtype=np.float64),
         material=material,
     )
-
     return mesh
 
 
-asphalt = make_mesh(asphalt_v, asphalt_f, "Road_Asphalt", [0.075, 0.078, 0.085, 1.0], 0.92)
-sidewalk = make_mesh(walk_v, walk_f, "Sidewalk_Concrete", [0.62, 0.62, 0.59, 1.0], 0.86)
-scene = trimesh.Scene()
-scene.add_geometry(asphalt, geom_name="road_asphalt")
-scene.add_geometry(sidewalk, geom_name="sidewalk_concrete")
-scene.export(OUT, include_normals=True)
-print("wrote", OUT, os.path.getsize(OUT))
+def face_buckets(vertices, faces):
+    """Group triangle indices into 500 m x/z tiles by face centroid."""
+    buckets = {}
+    for f in faces:
+        cx = sum(vertices[i][0] for i in f) / 3.0
+        cz = sum(vertices[i][2] for i in f) / 3.0
+        key = (int(math.floor(cx / CHUNK_M)), int(math.floor(cz / CHUNK_M)))
+        buckets.setdefault(key, []).append(f)
+    return buckets
+
+
+def submesh(vertices, faces):
+    used = sorted({i for f in faces for i in f})
+    remap = {old: new for new, old in enumerate(used)}
+    vs = [vertices[i] for i in used]
+    fs = [tuple(remap[i] for i in f) for f in faces]
+    return vs, fs
+
+
+os.makedirs(OUT_DIR, exist_ok=True)
+for name in os.listdir(OUT_DIR):
+    if name.endswith(".glb"):
+        os.remove(os.path.join(OUT_DIR, name))
+
+a_buckets = face_buckets(asphalt_v, asphalt_f)
+w_buckets = face_buckets(walk_v, walk_f)
+keys = sorted(set(a_buckets) | set(w_buckets))
+manifest = []
+for key in keys:
+    cx, cz = key
+    scene = trimesh.Scene()
+    bounds_min = [math.inf, math.inf, math.inf]
+    bounds_max = [-math.inf, -math.inf, -math.inf]
+    parts = 0
+    if key in a_buckets:
+        vs, fs = submesh(asphalt_v, a_buckets[key])
+        mesh = make_mesh(vs, fs, "Road_Asphalt", [0.03, 0.03, 0.035, 1.0], 0.92)
+        scene.add_geometry(mesh, geom_name="road_asphalt")
+        parts += 1
+    if key in w_buckets:
+        vs, fs = submesh(walk_v, w_buckets[key])
+        mesh = make_mesh(vs, fs, "Sidewalk_Concrete", [0.78, 0.78, 0.75, 1.0], 0.86)
+        scene.add_geometry(mesh, geom_name="sidewalk_concrete")
+        parts += 1
+    if parts == 0:
+        continue
+    # Bounds cover both parts; track from the shared source arrays.
+    for src_v, src_b in ((asphalt_v, a_buckets.get(key)), (walk_v, w_buckets.get(key))):
+        if not src_b:
+            continue
+        for f in src_b:
+            for i in f:
+                v = src_v[i]
+                for k in range(3):
+                    bounds_min[k] = min(bounds_min[k], v[k])
+                    bounds_max[k] = max(bounds_max[k], v[k])
+    filename = f"chunk_{cx}_{cz}.glb"
+    path = os.path.join(OUT_DIR, filename)
+    scene.export(path, include_normals=True)
+    manifest.append({
+        "file": f"models/roadway_chunks/{filename}",
+        "min": [round(v, 3) for v in bounds_min],
+        "max": [round(v, 3) for v in bounds_max],
+        "tris": sum(len(fs) for fs in (
+            a_buckets.get(key) or [],
+            w_buckets.get(key) or [],
+        )),
+    })
+manifest.sort(key=lambda m: m["file"])
+with open(OUT_MANIFEST, "w") as f:
+    json.dump({"chunk_m": CHUNK_M, "chunks": manifest}, f, separators=(",", ":"))
+print("wrote", len(manifest), "chunks to", OUT_DIR)
+print("wrote", OUT_MANIFEST, os.path.getsize(OUT_MANIFEST))

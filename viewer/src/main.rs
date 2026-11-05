@@ -40,6 +40,7 @@ use manhattan_viewer::{
     },
     clock::{ClockAction, SimClock},
     collision::{CAMERA_RADIUS, CollisionGrid},
+    detail::{DetailCull, update_detail_culling},
     environment::{
         Environment, fog_cull_distance, setup_lighting, spawn_fog_banks, update_environment,
         update_fog_bank_materials, update_fog_banks,
@@ -48,6 +49,7 @@ use manhattan_viewer::{
         LineSet, Stationing, StationingConfig, StationingState, configure_station_gizmos,
         draw_stationing, handle_station_keys, update_civil_coordinates,
     },
+    storefront::{StorefrontData, StorefrontState, spawn_storefronts},
     ui::{handle_calendar_keys, spawn_ui, update_station_text, update_status},
 };
 
@@ -258,6 +260,8 @@ fn main() {
             set: args.line_set,
         })
         .insert_resource(StationingState::default())
+        .insert_resource(StorefrontData::default())
+        .insert_resource(StorefrontState::default())
         .insert_resource(args)
         .add_systems(
             Startup,
@@ -270,6 +274,7 @@ fn main() {
                 configure_station_gizmos,
             ),
         )
+        .add_systems(Startup, spawn_storefronts)
         .add_systems(
             Update,
             (
@@ -297,6 +302,7 @@ fn main() {
                 .chain(),
         )
         .add_systems(Update, (setup_road_materials, update_road_colors))
+        .add_systems(Update, update_detail_culling)
         .run();
 }
 
@@ -417,14 +423,38 @@ fn spawn_camera(mut commands: Commands, args: Res<Args>) {
     ));
 }
 
+#[derive(serde::Deserialize)]
+struct RoadwayManifest {
+    chunks: Vec<RoadwayChunk>,
+}
+
+#[derive(serde::Deserialize)]
+struct RoadwayChunk {
+    file: String,
+    min: [f32; 3],
+    max: [f32; 3],
+}
+
+const ROADWAY_MANIFEST: &str = include_str!("../assets/models/roadway_manifest.json");
+
 fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    for path in [
-        "models/manhattan_ground.glb",
-        "models/manhattan_city.glb",
-        "models/roadway.glb",
-    ] {
+    for path in ["models/manhattan_ground.glb", "models/manhattan_city.glb"] {
         commands.spawn(WorldAssetRoot(
             asset_server.load(GltfAssetLabel::Scene(0).from_asset(path)),
+        ));
+    }
+    let manifest: RoadwayManifest =
+        serde_json::from_str(ROADWAY_MANIFEST).expect("roadway_manifest.json is invalid");
+    for chunk in manifest.chunks {
+        commands.spawn((
+            Name::new(format!("Roadway_{}", chunk.file)),
+            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(chunk.file))),
+            Transform::IDENTITY,
+            Visibility::Inherited,
+            DetailCull {
+                min: Vec3::from_array(chunk.min),
+                max: Vec3::from_array(chunk.max),
+            },
         ));
     }
 }

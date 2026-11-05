@@ -114,14 +114,33 @@ signal placement.
 
 ### Roadway geometry
 
-`assets/models/roadway.glb` is generated from the completed centreline set by
-`../scripts/build_roadway.py`:
+`assets/models/roadway_chunks/` is generated from the completed centreline set
+by `../scripts/build_roadway.py`:
 
 - 12-ft lanes; lane count follows the building corridor (1–4 lanes).
 - 12-ft concrete sidewalks, with a 0.14 m curb face.
 - Dark-grey asphalt and light-grey concrete; widths are clipped by the building
   mask so pavement does not cross a footprint.
+- 129 x 500 m tiles; `roadway_manifest.json` supplies each tile's AABB.
 - `--view close` is a low street-level inspection camera.
+
+### Ground-floor facades
+
+`assets/models/facade_catalog.json` describes four 4096px atlases
+(`assets/textures/facades/`) with 150 images each: storefront, executive,
+residential and industrial. `asset/models/building_perimeters.json` carries
+1,223 block footprints, heights and categories.
+
+`src/storefront.rs` assigns every building a fixed per-run dressing: one
+library image per footprint edge, tiled to the edge length, with the image id,
+offset, repeat count and scale stored in `StorefrontState`. The seed changes per
+run but the assignment is stable within a run.
+
+### 1 km embellishment cull
+
+`src/detail.rs` (`EMBELLISHMENT_RADIUS = 1_000 m`) hides roadway tiles, facade
+meshes and station gizmos beyond 1 km from the camera. The camera near/far
+planes stay at `1.0` / `45,000`.
 
 ### Atmosphere, focus and collision
 

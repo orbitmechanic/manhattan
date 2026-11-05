@@ -19,7 +19,10 @@ Geometry
   baselines with roads:  4373 of 4447 (74 too constrained/inside footprint)
   asphalt triangles:     29,434
   sidewalk triangles:    117,736
-  output:                viewer/assets/models/roadway.glb (11.2 MB)
+  output:                viewer/assets/models/roadway_chunks/*.glb
+                         129 tiles of 500 m, 11.6 MB total
+  manifest:              viewer/assets/models/roadway_manifest.json
+                         (tile path + world AABB, used by DetailCull)
 
 Method
   - For every completed centreline vertex, cast left/right normals against the
@@ -37,7 +40,9 @@ Materials
   update_road_colors so they darken at night.
 
 Viewer
-  Roadway is loaded alongside the city and ground GLBs.
+  Each 500 m tile is spawned as its own scene root with a DetailCull AABB.
+  The whole tile is hidden once the camera is more than 1000 m from the box,
+  so pavement never renders outside the embellishment radius.
   --view close starts at (1010, 20, -462) looking down CMP_1713.
   Screenshot: renders/viewer_roadway_close.png
 

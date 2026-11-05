@@ -338,12 +338,28 @@ pub fn update_civil_coordinates(
     state.completed = compute(&stationing.completed.lines);
 }
 
+/// Squared distance from `c` to the 2D segment a-b, used to draw only the
+/// parts of a centreline that fall inside the 1 km embellishment radius.
+fn segment_distance_sq(c: Vec2, a: Vec2, b: Vec2) -> f32 {
+    let ab = b - a;
+    let len_sq = ab.length_squared();
+    let t = if len_sq <= f32::EPSILON {
+        0.0
+    } else {
+        ((c - a).dot(ab) / len_sq).clamp(0.0, 1.0)
+    };
+    (a + ab * t).distance_squared(c)
+}
+
 pub fn draw_stationing(
     mut gizmos: Gizmos,
     config: Res<StationingConfig>,
     stationing: Res<Stationing>,
+    camera: Single<&Transform, With<FlyCamera>>,
 ) {
     let selected = stationing.set(config.set);
+    let c = Vec2::new(camera.translation.x, camera.translation.z);
+    let r_sq = crate::detail::EMBELLISHMENT_RADIUS * crate::detail::EMBELLISHMENT_RADIUS;
     if config.show_lines {
         let color = match config.set {
             LineSet::Imagery => Color::srgb(0.20, 1.0, 0.48),
@@ -351,19 +367,24 @@ pub fn draw_stationing(
             LineSet::Completed => Color::srgb(0.72, 0.52, 1.0),
         };
         for line in &selected.lines {
-            if line.points.len() < 2 {
-                continue;
+            for pair in line.points.windows(2) {
+                let a = Vec2::from_array(pair[0]);
+                let b = Vec2::from_array(pair[1]);
+                if segment_distance_sq(c, a, b) > r_sq {
+                    continue;
+                }
+                gizmos.line(Vec3::new(a.x, 0.22, a.y), Vec3::new(b.x, 0.22, b.y), color);
             }
-            gizmos.linestrip(
-                line.points.iter().map(|p| Vec3::new(p[0], 0.22, p[1])),
-                color,
-            );
         }
     }
     if config.show_ticks {
         let color = Color::srgba(0.28, 0.86, 1.0, 0.92);
         for line in &selected.lines {
             for p in &line.tick_points {
+                let point = Vec2::new(p[0], p[1]);
+                if point.distance_squared(c) > r_sq {
+                    continue;
+                }
                 gizmos.line(
                     Vec3::new(p[0], -3.0, p[1]),
                     Vec3::new(p[0], 30.0, p[1]),

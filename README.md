@@ -129,7 +129,11 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/station_lines_imagery.json` | 2041 satellite/road-derived centrelines, 92.1 miles. |
 | `viewer/assets/models/station_lines_fronts.json` | 2460 building-expansion-front centrelines, 185.5 miles. |
 | `viewer/assets/models/station_lines_completed.json` | 4447 connected building-front + connector centrelines, 192.6 miles (default). |
-| `viewer/assets/models/roadway.glb` | asphalt pavement + concrete sidewalks generated from the completed baselines. |
+| `viewer/assets/models/roadway_chunks/` | 129 x 500 m asphalt + sidewalk tiles generated from the completed baselines. |
+| `viewer/assets/models/roadway_manifest.json` | chunk list with world-space AABBs for the 1 km detail cull. |
+| `viewer/assets/models/building_perimeters.json` | 1,223 block footprints, heights and ground-floor categories. |
+| `viewer/assets/models/facade_catalog.json` | 600-image facade catalog (150 per category) with atlas tile coordinates. |
+| `viewer/assets/textures/facades/` | four 4096px atlases: storefront, executive, residential, industrial. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
 | `Textures/day/` | canonical day textures, names describe content; `floors/` holds one-floor facade crops. |
@@ -349,8 +353,10 @@ checked before construction.
 
 ### Roadway geometry — pavement and sidewalks
 
-`scripts/build_roadway.py` generates `viewer/assets/models/roadway.glb` from the
-**COMPLETED** street baselines:
+`scripts/build_roadway.py` generates 500 m tiles in
+`viewer/assets/models/roadway_chunks/` from the **COMPLETED** street baselines
+(plus an AABB manifest), so the viewer can hide pavement beyond the 1 km
+embellishment radius:
 
 - **12-ft lane width**; lane count is inferred per station from the clear
   building corridor and clamped to 1–4 lanes.
@@ -362,8 +368,45 @@ checked before construction.
 - 4,373 of 4,447 baselines produced roadway geometry; the remainder are too
   constrained or end inside a footprint.
 - Geometry: 29,434 asphalt triangles and 117,736 sidewalk triangles.
+- 129 tiles of 500 m; each scene root gets a `DetailCull` AABB and is hidden
+  once the camera is more than 1,000 m from it.
 - `--view close` provides a low street-level inspection camera.
 - `renders/viewer_roadway_close.png` shows the result.
+
+### Ground-floor facade catalog and dressing
+
+`scripts/build_facade_catalog.py` generates a 600-image library (`150` per
+category) and packs it into four 4096 x 4096 JPEG atlases:
+
+| category | count | theme |
+| --- | ---: | --- |
+| `storefront` | 150 | mid-rise shopfronts: awnings, sign bands, display windows |
+| `executive` | 150 | glass/ornate skyscraper lobbies, piers, revolving doors |
+| `residential` | 150 | row houses and apartment fronts, stoops, fire escapes |
+| `industrial` | 150 | warehouses and factories, roll-up doors, corrugation |
+
+`scripts/build_building_meta.py` exports each block's bottom-3 m convex hull,
+height, centroid and category. Category rules: `height >= 150 m` → executive;
+`height < 45 m` near the waterfront/industrial fringe → industrial;
+`height < 45 m` elsewhere → residential; otherwise storefront.
+
+At startup `viewer/src/storefront.rs` gives every building a **fixed
+per-run** dressing. For each footprint edge it picks one library image from the
+matching category, tiles it to the edge length, and records the image id,
+offset along the edge, repeat count and horizontal scale in
+`StorefrontState`. The assignment is stored once and reused, so a building
+looks the same for the whole session; the seed comes from the system clock
+(native) or `Math.random()` (wasm), so it changes between runs. The quads sit
+0.08 m proud of the block wall, use `ClampToEdge` sampling to avoid atlas
+bleed, and carry a `DetailCull` so they only render inside 1,000 m.
+
+### 1 km embellishment cull
+
+`viewer/src/detail.rs` defines `EMBELLISHMENT_RADIUS = 1_000 m`. Roadway
+chunks, facade meshes and station gizmos are tested against that radius every
+frame (3D distance to the entity AABB, 2D distance for stationing), and hidden
+outside it. The camera near plane stays at `1.0` and the far plane at
+`45,000`, so close geometry is never clipped.
 
 ### Atmosphere, focus and camera collision
 
@@ -471,8 +514,14 @@ blender -b manhattan_blocks.blend --python scripts/build_collision_grid.py
 # 6b3. street centrelines + stationing data
 /tmp/opencode/geoenv/bin/python scripts/build_station_lines.py
 
-# 6b4. asphalt + sidewalk roadway geometry
+# 6b4. asphalt + sidewalk roadway tiles (500 m)
 /tmp/opencode/roadenv/bin/python scripts/build_roadway.py
+
+# 6b5. ground-floor facade catalog (600 images, four atlases)
+python3 scripts/build_facade_catalog.py
+
+# 6b6. block footprints, heights and ground-floor categories
+blender -b manhattan_blocks.blend --python scripts/build_building_meta.py
 
 # 6c. after floor-master edits, re-export the city mesh
 blender -b manhattan_floors.blend --python scripts/export_city_mesh.py
@@ -508,6 +557,8 @@ affected presentation and is already reflected in the script.
   the three centreline sets with vertical 100-ft ticks and civil coordinates.
 - `renders/viewer_roadway_close.png` — asphalt pavement, 12-ft sidewalks and
   curb faces at street level.
+- `renders/viewer_facade_close.png` — randomised residential ground-floor
+  facade wrapped around a block corner.
 - `build/station_lines_imagery_overlay.png`,
   `build/station_lines_fronts_overlay.png` — the two networks over the
   satellite.
