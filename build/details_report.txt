@@ -24,18 +24,24 @@ Night windows
   marked financial) give each floor a 35% chance of using the all-lit atlas.
 
 Antennas
-  About 3,600 buildings receive a rooftop antenna (45% chance on financial
-  and industrial buildings, 30% elsewhere).  Height is exactly 8% of the
-  building height.  The mast is placed at a random point inside the building
-  footprint.  Culled beyond 1,000 ft (304.8 m).
+  Density = one antenna per floor per 10,000 sq ft of floor area:
+    count = round(footprint_m2 * 10.7639 * floors / 10,000)
+  with a minimum of 1 and a safety cap of 64 per building.  Current build:
+  63,720 antennas on 10,815 buildings.  Heights are randomised between 1%
+  and 8% of the building's total height.  Each mast is rooted using the
+  baked collision grid's roof height at its random plan position, so antennas
+  on setbacks and lower wings sit on the roof instead of floating at the
+  building's maximum height.  Culled beyond 1,000 ft (304.8 m).
 
-Projecting shop signs
-  About 700 projecting signs are placed on storefront/commercial (30%) and
-  industrial (16%) buildings only.  Each sign is a blade board extending
-  2.4-4.0 m from the facade at the second floor (about 3.7 m), 1.2-2.6 m
-  tall.  The 64-design atlas contains abstract blocky glyphs in random
-  colours.  About 22% blink (six phases), 36% are steadily illuminated and
-  the rest are unlit.  Culled beyond 1,000 ft.
+Signs
+  Population is exactly four times the antenna count (current build: 255,640
+  signs on 10,998 buildings).  Signs appear on every building, not just
+  commercial/industrial neighbourhoods.  Half are flat wall signs parallel to
+  the facade; half are blade signs mounted perpendicular to the facade and
+  projecting 2.4-4.0 m.  Boards are 0.9-2.6 m tall at the second floor.
+  The 64-design atlas has abstract blocky glyphs in random colours.  About
+  25% blink (six phases), 25% are steadily illuminated and the rest are
+  unlit.  Culled beyond 1,000 ft.
 
 Trees
   3,000 low-poly trees in the 19 park/open-space blocks, at least 9 m from

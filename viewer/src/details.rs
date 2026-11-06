@@ -12,8 +12,9 @@ use bevy::{
 use serde::Deserialize;
 
 use crate::{
+    collision::CollisionGrid,
     detail::{DetailCull, NEAR_DETAIL_RADIUS},
-    storefront::StorefrontData,
+    storefront::{BuildingMeta, StorefrontData},
 };
 
 const TREE_DATA: &str = include_str!("../assets/models/trees.json");
@@ -70,8 +71,81 @@ impl Default for TreeData {
 
 #[derive(Resource, Default)]
 pub struct SignMaterials {
+    materials: Vec<Handle<StandardMaterial>>,
     blinking: Vec<Handle<StandardMaterial>>,
     phases: Vec<f32>,
+}
+
+const SQFT_PER_M2: f32 = 10.7639;
+const MAX_ANTENNAS_PER_BUILDING: usize = 64;
+
+fn polygon_area(poly: &[[f32; 2]]) -> f32 {
+    let mut area = 0.0;
+    for i in 0..poly.len() {
+        let a = poly[i];
+        let b = poly[(i + 1) % poly.len()];
+        area += a[0] * b[1] - b[0] * a[1];
+    }
+    area.abs() * 0.5
+}
+
+/// One antenna per floor per 10,000 sq ft of floor area, capped so a
+/// supertall roof does not become a solid thicket.
+fn antenna_count(building: &BuildingMeta) -> usize {
+    let area = polygon_area(&building.perimeter);
+    let floors = (building.height_m / building.floor_height_m.max(1.0))
+        .round()
+        .max(1.0);
+    let count = (area * SQFT_PER_M2 * floors / 10_000.0).round() as usize;
+    count.clamp(1, MAX_ANTENNAS_PER_BUILDING)
+}
+
+struct SignBucket {
+    verts: Vec<[f32; 3]>,
+    normals: Vec<[f32; 3]>,
+    uvs: Vec<[f32; 2]>,
+    indices: Vec<u32>,
+    min: Vec3,
+    max: Vec3,
+}
+
+impl Default for SignBucket {
+    fn default() -> Self {
+        Self {
+            verts: Vec::new(),
+            normals: Vec::new(),
+            uvs: Vec::new(),
+            indices: Vec::new(),
+            min: Vec3::splat(f32::INFINITY),
+            max: Vec3::splat(f32::NEG_INFINITY),
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn add_sign_quad(
+    bucket: &mut SignBucket,
+    a: [f32; 3],
+    b: [f32; 3],
+    c: [f32; 3],
+    d: [f32; 3],
+    uv: [[f32; 2]; 4],
+) {
+    let ab = Vec3::from_array(b) - Vec3::from_array(a);
+    let ac = Vec3::from_array(c) - Vec3::from_array(a);
+    let n = ab.cross(ac).normalize_or_zero();
+    let base = bucket.verts.len() as u32;
+    bucket.verts.extend([a, b, c, d]);
+    bucket.normals.extend([[n.x, n.y, n.z]; 4]);
+    bucket.uvs.extend(uv);
+    bucket
+        .indices
+        .extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+    for p in [a, b, c, d] {
+        let v = Vec3::from_array(p);
+        bucket.min = bucket.min.min(v);
+        bucket.max = bucket.max.max(v);
+    }
 }
 
 fn point_in_poly(x: f32, z: f32, poly: &[[f32; 2]]) -> bool {
@@ -356,49 +430,66 @@ fn tree_mesh(variant: usize) -> Mesh {
     .with_inserted_indices(Indices::U32(indices))
 }
 
-fn antenna_mesh() -> Mesh {
-    let mut verts = Vec::new();
-    let mut normals = Vec::new();
-    let mut colors = Vec::new();
-    let mut indices = Vec::new();
-    let metal = [0.36, 0.37, 0.39, 1.0];
-    add_box(
-        &mut verts,
-        &mut normals,
-        &mut colors,
-        &mut indices,
-        Vec3::new(0.0, 0.5, 0.0),
-        Vec3::new(0.022, 0.5, 0.022),
-        metal,
-    );
-    for (y, half) in [(0.70, 0.13), (0.84, 0.09)] {
-        add_box(
-            &mut verts,
-            &mut normals,
-            &mut colors,
-            &mut indices,
-            Vec3::new(0.0, y, 0.0),
-            Vec3::new(half, 0.008, 0.008),
-            metal,
-        );
+#[allow(clippy::too_many_arguments)]
+fn add_flat_quad(
+    verts: &mut Vec<[f32; 3]>,
+    normals: &mut Vec<[f32; 3]>,
+    indices: &mut Vec<u32>,
+    a: [f32; 3],
+    b: [f32; 3],
+    c: [f32; 3],
+    d: [f32; 3],
+) {
+    let ab = Vec3::from_array(b) - Vec3::from_array(a);
+    let ac = Vec3::from_array(c) - Vec3::from_array(a);
+    let n = ab.cross(ac).normalize_or_zero();
+    let base = verts.len() as u32;
+    verts.extend([a, b, c, d]);
+    normals.extend([[n.x, n.y, n.z]; 4]);
+    indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+}
+
+fn add_antenna(
+    verts: &mut Vec<[f32; 3]>,
+    normals: &mut Vec<[f32; 3]>,
+    indices: &mut Vec<u32>,
+    x: f32,
+    base_y: f32,
+    z: f32,
+    height: f32,
+) {
+    let radius = (height * 0.035).max(0.02);
+    let apex = [x, base_y + height, z];
+    let base = [
+        [x - radius, base_y, z - radius],
+        [x + radius, base_y, z - radius],
+        [x + radius, base_y, z + radius],
+        [x - radius, base_y, z + radius],
+    ];
+    for i in 0..4 {
+        let a = base[i];
+        let b = base[(i + 1) % 4];
+        let ab = Vec3::from_array(a) - Vec3::from_array(apex);
+        let ac = Vec3::from_array(b) - Vec3::from_array(apex);
+        let n = ab.cross(ac).normalize_or_zero();
+        let first = verts.len() as u32;
+        verts.extend([apex, a, b]);
+        normals.extend([[n.x, n.y, n.z]; 3]);
+        indices.extend([first, first + 1, first + 2]);
     }
-    add_box(
-        &mut verts,
-        &mut normals,
-        &mut colors,
-        &mut indices,
-        Vec3::new(0.0, 0.97, 0.0),
-        Vec3::new(0.03, 0.03, 0.03),
-        metal,
+    // One small horizontal crossbar, kept cheap but visible from above.
+    let y = base_y + height * 0.72;
+    let w = (height * 0.12).max(0.06);
+    let d = (height * 0.012).max(0.01);
+    add_flat_quad(
+        verts,
+        normals,
+        indices,
+        [x - w, y, z - d],
+        [x - w, y, z + d],
+        [x + w, y, z + d],
+        [x + w, y, z - d],
     );
-    Mesh::new(
-        PrimitiveTopology::TriangleList,
-        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-    )
-    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, verts)
-    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-    .with_inserted_attribute(Mesh::ATTRIBUTE_COLOR, colors)
-    .with_inserted_indices(Indices::U32(indices))
 }
 
 // ---------------------------------------------------------------------------
@@ -441,6 +532,7 @@ pub fn spawn_trees(
 pub fn spawn_antennas(
     mut commands: Commands,
     data: Res<StorefrontData>,
+    grid: Res<CollisionGrid>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -450,40 +542,67 @@ pub fn spawn_antennas(
         perceptual_roughness: 0.42,
         ..default()
     });
-    let mesh = meshes.add(antenna_mesh());
     let mut seed = run_seed() ^ 0xA17E_55AA;
-    let mut count = 0usize;
+    let mut total = 0usize;
+    let mut buildings = 0usize;
     for building in data.buildings() {
-        if building.height_m < 8.0 || building.perimeter.len() < 3 {
+        if building.perimeter.len() < 3 || building.height_m < 4.0 {
             continue;
         }
-        let chance = if matches!(building.category.as_str(), "executive" | "industrial") {
-            0.45
-        } else {
-            0.30
-        };
-        if next_rand(&mut seed) > chance {
+        let count = antenna_count(building);
+        let mut verts = Vec::new();
+        let mut normals = Vec::new();
+        let mut indices = Vec::new();
+        let mut min = Vec3::splat(f32::INFINITY);
+        let mut max = Vec3::splat(f32::NEG_INFINITY);
+        let mut placed = 0usize;
+        for _ in 0..count {
+            let mut rooted = None;
+            // The collision grid gives the actual roof height at this plan
+            // point, so antennas on setbacks and lower wings sit on the roof
+            // instead of floating at the building's maximum height.
+            for _ in 0..32 {
+                let [x, z] = random_inside(&building.perimeter, &mut seed);
+                let roof = grid.height_at(x, z);
+                if roof < 2.0 {
+                    continue;
+                }
+                let roof = roof.min(building.height_m + 0.5);
+                rooted = Some((x, roof, z));
+                break;
+            }
+            let Some((x, roof, z)) = rooted else {
+                continue;
+            };
+            let height = building.height_m * (0.01 + next_rand(&mut seed) * 0.07);
+            let base_y = roof - 0.04;
+            add_antenna(&mut verts, &mut normals, &mut indices, x, base_y, z, height);
+            let r = height * 0.18;
+            min = min.min(Vec3::new(x - r, base_y, z - r));
+            max = max.max(Vec3::new(x + r, base_y + height, z + r));
+            placed += 1;
+        }
+        if placed == 0 {
             continue;
         }
-        let [x, z] = random_inside(&building.perimeter, &mut seed);
-        let height = building.height_m * 0.08;
-        let roof_y = building.height_m;
-        let translation = Vec3::new(x, roof_y, z);
-        let half = height * 0.18;
+        let mesh = Mesh::new(
+            PrimitiveTopology::TriangleList,
+            RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+        )
+        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, verts)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+        .with_inserted_indices(Indices::U32(indices));
         commands.spawn((
-            Name::new(format!("Antenna_{:05}", building.id)),
-            Mesh3d(mesh.clone()),
+            Name::new(format!("Antennas_{:05}", building.id)),
+            Mesh3d(meshes.add(mesh)),
             MeshMaterial3d(material.clone()),
-            Transform::from_translation(translation).with_scale(Vec3::splat(height)),
-            DetailCull::new(
-                translation - Vec3::new(half, 0.0, half),
-                translation + Vec3::new(half, height, half),
-                NEAR_DETAIL_RADIUS,
-            ),
+            Transform::IDENTITY,
+            DetailCull::new(min, max, NEAR_DETAIL_RADIUS),
         ));
-        count += 1;
+        total += placed;
+        buildings += 1;
     }
-    info!("Antennas: {count}");
+    info!("Antennas: {total} on {buildings} buildings");
 }
 
 pub fn spawn_signs(
@@ -537,104 +656,138 @@ pub fn spawn_signs(
                 ..default()
             }));
     }
+    sign_materials.materials.clear();
+    sign_materials.materials.push(static_material);
+    sign_materials.materials.push(lit_material);
+    let blinking_handles = sign_materials.blinking.clone();
+    sign_materials.materials.extend(blinking_handles);
+    let material_handles = sign_materials.materials.clone();
 
     let mut seed = run_seed() ^ 0x516E_5EED;
-    let mut count = 0usize;
+    let mut total = 0usize;
+    let mut buildings = 0usize;
     for building in data.buildings() {
+        if building.perimeter.len() < 4 {
+            continue;
+        }
+        let antenna_count = antenna_count(building);
+        let sign_count = antenna_count * 4;
         let cx =
             building.perimeter.iter().map(|p| p[0]).sum::<f32>() / building.perimeter.len() as f32;
         let cz =
             building.perimeter.iter().map(|p| p[1]).sum::<f32>() / building.perimeter.len() as f32;
-        let chance = match building.category.as_str() {
-            "storefront" => 0.30,
-            "industrial" => 0.16,
-            _ => continue,
-        };
-        if building.perimeter.len() < 4 || next_rand(&mut seed) > chance {
-            continue;
-        }
-        let mut candidates: Vec<(usize, f32)> = building
-            .perimeter
-            .iter()
-            .enumerate()
-            .map(|(i, a)| {
-                let b = building.perimeter[(i + 1) % building.perimeter.len()];
-                (i, ((b[0] - a[0]).powi(2) + (b[1] - a[1]).powi(2)).sqrt())
-            })
-            .filter(|(_, length)| *length > 4.0)
+        let mut buckets: Vec<SignBucket> = (0..material_handles.len())
+            .map(|_| SignBucket::default())
             .collect();
-        if candidates.is_empty() {
+        let mut placed = 0usize;
+
+        for _ in 0..sign_count {
+            let mut candidates: Vec<(usize, f32)> = building
+                .perimeter
+                .iter()
+                .enumerate()
+                .map(|(i, a)| {
+                    let b = building.perimeter[(i + 1) % building.perimeter.len()];
+                    (i, ((b[0] - a[0]).powi(2) + (b[1] - a[1]).powi(2)).sqrt())
+                })
+                .filter(|(_, length)| *length > 4.0)
+                .collect();
+            if candidates.is_empty() {
+                break;
+            }
+            let pick = (next_rand(&mut seed) * candidates.len() as f32) as usize;
+            let (edge, length) = candidates.swap_remove(pick.min(candidates.len() - 1));
+            let a = Vec2::from(building.perimeter[edge]);
+            let b = Vec2::from(building.perimeter[(edge + 1) % building.perimeter.len()]);
+            let direction = (b - a) / length;
+            let mut outward = Vec2::new(direction.y, -direction.x);
+            let midpoint = a + (b - a) * 0.5;
+            if outward.dot(midpoint - Vec2::new(cx, cz)) < 0.0 {
+                outward = -outward;
+            }
+            let y0 = building.floor_height_m + 0.8;
+            let perpendicular = next_rand(&mut seed) < 0.5;
+            let tile = (next_rand(&mut seed) * 64.0) as usize % 64;
+            let col = (tile % 8) as f32;
+            let row = (tile / 8) as f32;
+            let u0 = col * SIGN_TILE_UV;
+            let v0 = row * SIGN_TILE_UV;
+            let u1 = u0 + SIGN_TILE_UV;
+            let v1 = v0 + SIGN_TILE_UV;
+            let uv = [[u0, v1], [u1, v1], [u1, v0], [u0, v0]];
+
+            let roll = next_rand(&mut seed);
+            let bucket = if roll < 0.25 {
+                1
+            } else if roll < 0.50 {
+                0
+            } else {
+                let span = material_handles.len().saturating_sub(2).max(1);
+                2 + ((next_rand(&mut seed) * span as f32) as usize).min(span - 1)
+            };
+
+            if perpendicular {
+                let t = 0.20 + next_rand(&mut seed) * 0.60;
+                let wall = a + (b - a) * t + outward * 0.12;
+                let projection = 2.4 + next_rand(&mut seed) * 1.6;
+                let height = projection * (0.50 + next_rand(&mut seed) * 0.16);
+                let tip = wall + outward * projection;
+                add_sign_quad(
+                    &mut buckets[bucket],
+                    [wall.x, y0, wall.y],
+                    [tip.x, y0, tip.y],
+                    [tip.x, y0 + height, tip.y],
+                    [wall.x, y0 + height, wall.y],
+                    uv,
+                );
+            } else {
+                let width = (2.0 + next_rand(&mut seed) * 2.0).min(length * 0.8);
+                let height = 0.9 + next_rand(&mut seed) * 1.1;
+                let half = width / (2.0 * length);
+                let t = (0.18 + next_rand(&mut seed) * 0.64).clamp(half + 0.02, 0.98 - half);
+                let t0 = (t - half).max(0.02);
+                let t1 = (t + half).min(0.98);
+                let p0 = a + (b - a) * t0 + outward * 0.14;
+                let p1 = a + (b - a) * t1 + outward * 0.14;
+                add_sign_quad(
+                    &mut buckets[bucket],
+                    [p0.x, y0, p0.y],
+                    [p1.x, y0, p1.y],
+                    [p1.x, y0 + height, p1.y],
+                    [p0.x, y0 + height, p0.y],
+                    uv,
+                );
+            }
+            placed += 1;
+        }
+
+        if placed == 0 {
             continue;
         }
-        let pick = (next_rand(&mut seed) * candidates.len() as f32) as usize;
-        let (edge, length) = candidates.swap_remove(pick.min(candidates.len() - 1));
-        let a = Vec2::from(building.perimeter[edge]);
-        let b = Vec2::from(building.perimeter[(edge + 1) % building.perimeter.len()]);
-        let direction = (b - a) / length;
-        let mut outward = Vec2::new(direction.y, -direction.x);
-        let midpoint = a + (b - a) * 0.5;
-        // Guarantee the blade points away from the building centre even for
-        // courtyard/hole loops whose winding is opposite the outer wall.
-        if outward.dot(midpoint - Vec2::new(cx, cz)) < 0.0 {
-            outward = -outward;
+        for (index, bucket) in buckets.into_iter().enumerate() {
+            if bucket.indices.is_empty() {
+                continue;
+            }
+            let mesh = Mesh::new(
+                PrimitiveTopology::TriangleList,
+                RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+            )
+            .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, bucket.verts)
+            .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, bucket.normals)
+            .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, bucket.uvs)
+            .with_inserted_indices(Indices::U32(bucket.indices));
+            commands.spawn((
+                Name::new(format!("Signs_{:05}_{index}", building.id)),
+                Mesh3d(meshes.add(mesh)),
+                MeshMaterial3d(material_handles[index].clone()),
+                Transform::IDENTITY,
+                DetailCull::new(bucket.min, bucket.max, NEAR_DETAIL_RADIUS),
+            ));
         }
-        let t = 0.22 + next_rand(&mut seed) * 0.56;
-        let wall = a + (b - a) * t + outward * 0.12;
-        let projection = 2.4 + next_rand(&mut seed) * 1.6;
-        let height = projection * (0.50 + next_rand(&mut seed) * 0.16);
-        let y0 = building.floor_height_m + 0.7;
-        let y1 = y0 + height;
-        let tip = wall + outward * projection;
-        let vertices = [
-            [wall.x, y0, wall.y],
-            [tip.x, y0, tip.y],
-            [tip.x, y1, tip.y],
-            [wall.x, y1, wall.y],
-        ];
-        let normal = Vec3::new(direction.x, 0.0, direction.y);
-        let mut mesh = Mesh::new(
-            PrimitiveTopology::TriangleList,
-            RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-        );
-        let tile = (next_rand(&mut seed) * 64.0) as usize % 64;
-        let col = (tile % 8) as f32;
-        let row = (tile / 8) as f32;
-        let u0 = col * SIGN_TILE_UV;
-        let v0 = row * SIGN_TILE_UV;
-        let u1 = u0 + SIGN_TILE_UV;
-        let v1 = v0 + SIGN_TILE_UV;
-        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices.to_vec());
-        mesh.insert_attribute(
-            Mesh::ATTRIBUTE_NORMAL,
-            vec![[normal.x, normal.y, normal.z]; 4],
-        );
-        mesh.insert_attribute(
-            Mesh::ATTRIBUTE_UV_0,
-            vec![[u0, v1], [u1, v1], [u1, v0], [u0, v0]],
-        );
-        mesh.insert_indices(Indices::U32(vec![0, 1, 2, 0, 2, 3]));
-
-        let roll = next_rand(&mut seed);
-        let material = if roll < 0.22 {
-            let phase = (next_rand(&mut seed) * sign_materials.blinking.len() as f32) as usize;
-            sign_materials.blinking[phase.min(sign_materials.blinking.len() - 1)].clone()
-        } else if roll < 0.58 {
-            lit_material.clone()
-        } else {
-            static_material.clone()
-        };
-        let min = Vec3::new(wall.x.min(tip.x) - 0.1, y0 - 0.1, wall.y.min(tip.y) - 0.1);
-        let max = Vec3::new(wall.x.max(tip.x) + 0.1, y1 + 0.1, wall.y.max(tip.y) + 0.1);
-        commands.spawn((
-            Name::new(format!("Sign_{:05}", building.id)),
-            Mesh3d(meshes.add(mesh)),
-            MeshMaterial3d(material),
-            Transform::IDENTITY,
-            DetailCull::new(min, max, NEAR_DETAIL_RADIUS),
-        ));
-        count += 1;
+        total += placed;
+        buildings += 1;
     }
-    info!("Signs: {count}");
+    info!("Signs: {total} on {buildings} buildings");
 }
 
 pub fn update_sign_blink(

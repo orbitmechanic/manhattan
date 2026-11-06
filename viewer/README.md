@@ -163,10 +163,12 @@ night-to-day switch begins at +1° and completes over the next 1.5°.  Night
 facades use two random lit-window atlases selected per floor, plus an all-lit
 atlas used on random floors of tall financial buildings.
 
-`src/details.rs` adds rooftop masts (8% of building height), projecting
-commercial/industrial shop signs (abstract atlas, some blinking or
-illuminated) and 3,000 park trees.  These use a **1,000 ft (304.8 m)**
-`DetailCull` radius; roads and facades keep the 1 km radius.
+`src/details.rs` adds volume-based rooftop masts (one per floor per 10,000
+sq ft, heights 1–8% of the building, rooted on the collision-grid roof),
+four-times-density shop signs on every building (half flat to the facade,
+half perpendicular blade signs) and 3,000 park trees.  These use a
+**1,000 ft (304.8 m)** `DetailCull` radius; roads and facades keep the 1 km
+radius.
 
 ### 1 km embellishment cull
 

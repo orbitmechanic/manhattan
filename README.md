@@ -489,13 +489,18 @@ using the all-lit atlas, producing random fully lit floors.
 `viewer/src/details.rs` adds the near-detail layer.  All of it uses a
 **1,000 ft (304.8 m)** cull radius; roads and facades keep the 1 km radius.
 
-- **Antennas**: about 3,600 buildings receive a rooftop mast at a random point
-  inside the footprint.  Height is exactly **8% of the building height**.
-- **Projecting signs**: about 700 blade signs on commercial/storefront and
-  industrial buildings only, at the second floor (about 3.7 m).  Boards extend
-  2.4–4.0 m from the facade and are 1.2–2.6 m tall.  The 64-design atlas has
-  abstract blocky glyphs in random colours; roughly 22% blink, 36% are steadily
-  illuminated, the rest are unlit.
+- **Antennas**: one per floor per 10,000 sq ft of floor area
+  (`footprint_m2 × 10.7639 × floors / 10,000`), with a minimum of 1 and a
+  safety cap of 64 per building.  Heights are randomised between **1% and 8%
+  of the building's total height**.  Each mast is rooted at the baked
+  collision grid's roof height for its random plan position, so setback and
+  lower-wing roofs get antennas on the actual roof instead of floating.
+- **Signs**: every building gets four times its antenna count.  Half are flat
+  wall signs parallel to the facade and half are blade signs mounted
+  perpendicular to the facade, projecting 2.4–4.0 m.  Boards are 0.9–2.6 m
+  tall at the second floor.  The 64-design atlas has abstract blocky glyphs in
+  random colours; roughly 25% blink, 25% are steadily illuminated, the rest are
+  unlit.  Signs are no longer limited to commercial/industrial areas.
 - **Trees**: 3,000 low-poly park trees in the 19 park/open-space blocks, at
   least 9 m from street centrelines and outside building footprints.  Three
   variants, random scale and rotation.
