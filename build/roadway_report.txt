@@ -37,6 +37,8 @@ Road geometry
   yellow marking triangles:68,004
   roadway tiles:          130 x 500 m
   total size:             25.8 MB
+  traffic lanes:          24,175 centrelines
+  traffic_lanes.json:     3.0 MB
   output:                 viewer/assets/models/roadway_chunks/
   manifest:               viewer/assets/models/roadway_manifest.json
 

@@ -27,6 +27,7 @@ STATIONS = os.path.join(ROOT, "viewer", "assets", "models", "station_lines_compl
 MASK = os.path.join(BUILD, "building_mask.png")
 OUT_DIR = os.path.join(ROOT, "viewer", "assets", "models", "roadway_chunks")
 OUT_MANIFEST = os.path.join(ROOT, "viewer", "assets", "models", "roadway_manifest.json")
+OUT_LANES = os.path.join(ROOT, "viewer", "assets", "models", "traffic_lanes.json")
 FEET = 3.280839895
 LANE_M = 12.0 / FEET
 SIDEWALK_M = 12.0 / FEET
@@ -303,6 +304,7 @@ walk_v, walk_f = [], []
 mark_v, mark_f = [], []
 mark_y_v, mark_y_f = [], []
 runs = []
+traffic_lanes = []
 built_lines = 0
 built_runs = 0
 dropped_runs = 0
@@ -457,6 +459,28 @@ for line_index, line in enumerate(stations):
                         0.09, y0 + 0.0045,
                     )
 
+        # Lane centreline catalogue for the vehicle traffic system.
+        for lane in range(lanes):
+            lane_points = []
+            for section in sections:
+                offset = section["road_l_off"] + (lane + 0.5) * section["lane_w"]
+                lane_points.append(point_at(section, offset))
+            if lane < lanes // 2:
+                lane_points.reverse()
+            if len(lane_points) < 2:
+                continue
+            lane_length = sum(
+                math.dist(lane_points[i], lane_points[i + 1])
+                for i in range(len(lane_points) - 1)
+            )
+            if lane_length < 5.0:
+                continue
+            traffic_lanes.append({
+                "points": [[round(x, 2), round(z, 2)] for x, z in lane_points],
+                "width": round(percentile([section["lane_w"] for section in sections], 0.5), 2),
+                "length": round(lane_length, 1),
+            })
+
         max_half = max(section["road_w"] for section in sections) * 0.5
         runs.append((run, max_half))
         built_runs += 1
@@ -578,6 +602,9 @@ manifest.sort(key=lambda m: m["file"])
 with open(OUT_MANIFEST, "w") as handle:
     json.dump({"chunk_m": CHUNK_M, "chunks": manifest}, handle, separators=(",", ":"))
 
+with open(OUT_LANES, "w") as handle:
+    json.dump({"lanes": traffic_lanes}, handle, separators=(",", ":"))
+print("traffic lanes", len(traffic_lanes), "bytes", os.path.getsize(OUT_LANES))
 print("asphalt triangles", len(asphalt_f))
 print("sidewalk triangles", len(walk_f))
 print("white marking triangles", len(mark_f))

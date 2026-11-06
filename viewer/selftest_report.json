@@ -24,13 +24,13 @@
     "park_blocks": 19,
     "noon_targets": 0,
     "night_targets": 1242,
-    "flicker_blocks": 671,
-    "fade_blocks": 571,
+    "flicker_blocks": 672,
+    "fade_blocks": 570,
     "twilight_span_minutes": 45.0
   },
   "render": {
     "visibility_range_entities": 3861,
-    "fog_cull_m": 4310,
+    "fog_cull_m": 4304,
     "fog_visibility_km": 4.1,
     "dof_active": true,
     "materials_ready": true

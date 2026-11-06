@@ -54,6 +54,10 @@ use manhattan_viewer::{
         draw_stationing, handle_station_keys, update_civil_coordinates,
     },
     storefront::{StorefrontData, StorefrontState, spawn_storefronts},
+    traffic::{
+        Traffic, TrafficLanes, setup_vehicle_catalog, stream_traffic, update_traffic,
+        update_vehicle_lights,
+    },
     ui::{handle_calendar_keys, spawn_ui, update_station_text, update_status},
 };
 
@@ -269,6 +273,8 @@ fn main() {
         .init_resource::<TreeData>()
         .init_resource::<SignMaterials>()
         .init_resource::<Crowd>()
+        .init_resource::<TrafficLanes>()
+        .init_resource::<Traffic>()
         .insert_resource(args)
         .add_systems(
             Startup,
@@ -284,6 +290,7 @@ fn main() {
         .add_systems(Startup, spawn_storefronts)
         .add_systems(Startup, (spawn_trees, spawn_antennas, spawn_signs))
         .add_systems(Startup, setup_people_catalog)
+        .add_systems(Startup, setup_vehicle_catalog)
         .add_systems(
             Update,
             (
@@ -316,6 +323,10 @@ fn main() {
         .add_systems(
             Update,
             (stream_people, update_pedestrians, update_limbs).chain(),
+        )
+        .add_systems(
+            Update,
+            (stream_traffic, update_traffic, update_vehicle_lights).chain(),
         )
         .run();
 }

@@ -1,0 +1,53 @@
+Vehicle traffic
+===============
+
+Catalog
+  Generated once at startup in viewer/src/traffic.rs.
+  150 low-poly variants: 30 each of
+    tractor-trailer  10% spawn share
+    cargo van        20%
+    sport utility    40%
+    passenger sedan  20%
+    emergency        10% (ambulance / fire truck / police, 10 variants each)
+  Civilian body colours are muted greys, blues, greens, browns and beiges;
+  dimensions and cabin proportions vary per variant.  Emergency vehicles use
+  white/red, fire-red and police dark/white schemes with roof light bars.
+  One shared white body material (vertex colours) and one shared emissive
+  lights material.
+
+Lane network
+  Exported by scripts/build_roadway.py to
+    viewer/assets/models/traffic_lanes.json
+  24,175 lane centrelines, 3.0 MB.
+  Left-half lanes are reversed so every vehicle travels along its lane
+  centreline.  Each lane carries its width and length.
+
+Streaming
+  - Lanes within 220 m (150 m web) of the camera are populated; distant lanes
+    are despawned.  Only the active lane/vehicle set is kept.
+  - Visible limits: 1,200 vehicles native / 600 web.
+  - Each lane is filled to 85% occupancy (vehicle lengths plus 0.7 m gaps).
+  - Vehicles are selected from the catalog at spawn and rejected if their
+    width plus 0.35 m does not fit the lane, so they stay off the 12-ft
+    sidewalk tracks.
+
+Movement / gridlock
+  - Vehicles are always aligned to the lane tangent with only +/-0.03 rad of
+    yaw jitter, so they are parallel to the road and perpendicular to the
+    adjacent building faces.
+  - Same-lane car-following keeps at least 1.2 m clear and only allows small
+    creep moves (<= 0.18 m) when space opens; a per-vehicle stop/go oscillator
+    keeps the flow uneven.
+  - A 6 m spatial grid of vehicle AABBs blocks cross-lane moves at
+    intersections, so vehicles never overlap.
+  - The normal state is dense gridlock.
+
+Lights
+  Headlight boxes and side cabin-light strips use one shared emissive
+  material.  It is black during the day and warm white at night, following the
+  Environment day/night state with the rest of the city.
+
+Verification
+  renders/viewer_traffic.png        daylight gridlock, lane alignment and
+                                    vehicle mix
+  renders/viewer_traffic_night.png  headlights/cabin lights at 22:00

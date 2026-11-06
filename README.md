@@ -125,6 +125,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/upper_facade_report.txt` | upper-floor facade/roof libraries, packed COLOR_0 schema and assignment counts. |
 | `build/details_report.txt` | dawn timing, night-window variants, antennas, signs, trees and the 1,000 ft detail cull. |
 | `build/people_report.txt` | pedestrian catalog, density, walk cycle, avoidance, homeless figures, corner ads and streaming limits. |
+| `build/traffic_report.txt` | vehicle catalog, lane network, 85% occupancy, gridlock movement, collision grid and night lights. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -142,6 +143,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/textures/people/` | 8 x 8 clothing-pattern atlas for pedestrian outfits. |
 | `viewer/assets/models/clothing_catalog.json` | clothing tile ranges (shirts, pants, skirts, jackets, hats, bags). |
 | `viewer/assets/models/trees.json` | 3,000 park/open-ground tree placements. |
+| `viewer/assets/models/traffic_lanes.json` | 24,175 lane centrelines exported by the roadway builder. |
 | `viewer/assets/models/upper_facade_catalog.json` | facade/roof atlas grids, category ranges and neighbourhood mapping. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
@@ -541,6 +543,29 @@ part meshes; individual outfits choose shared clothing materials.
 - **12% of signs** are now vertical banners running up building corners; the
   remaining split is 50% perpendicular blade signs and 38% flat wall signs.
 
+### Vehicle traffic
+
+`viewer/src/traffic.rs` streams low-poly traffic from the lane centrelines
+exported with the roadway:
+
+- **150 catalog variants**, 30 each of tractor-trailer, cargo van, SUV,
+  passenger sedan and emergency (ambulance/fire/police).  Civilian colours are
+  muted; emergency vehicles use white/red, fire-red and police dark/white
+  schemes.
+- Spawn shares: **10% tractor-trailer, 20% cargo van, 40% SUV, 20% sedan,
+  10% emergency**.
+- Lanes within 220 m native / 150 m web are filled to **85% occupancy**;
+  1,200 vehicles native / 600 web are kept active.  Vehicles are despawned
+  when their lane leaves the radius.
+- Vehicles align to the lane tangent (parallel to the road, perpendicular to
+  adjacent building faces), are rejected if they do not fit inside the lane,
+  and therefore stay off the 12-ft sidewalk tracks.
+- Gridlock movement: small creep moves only when space opens, with a
+  per-vehicle stop/go oscillator.  A spatial grid of AABBs prevents
+  cross-lane overlaps at intersections.
+- Headlights and side cabin-light strips share an emissive material that turns
+  on at night with the city.
+
 ### 1 km embellishment cull
 
 `viewer/src/detail.rs` defines `EMBELLISHMENT_RADIUS = 1_000 m`. Roadway
@@ -719,6 +744,8 @@ affected presentation and is already reflected in the script.
 - `renders/viewer_trees.png` — low-poly park trees at human scale.
 - `renders/viewer_people.png` — streamed pedestrians, randomized outfits,
   articulated walk poses and second-floor/corner signage.
+- `renders/viewer_traffic.png` and `renders/viewer_traffic_night.png` —
+  gridlocked traffic by day and headlight/cabin lights at 22:00.
 - `renders/viewer_upper_facades_night.png` — random per-floor night windows
   and all-lit financial floors.
 - `renders/viewer_facade_close.png` — randomised residential ground-floor

@@ -184,6 +184,16 @@ peaks; one homeless figure per 20 ft lies against the perimeter.  Crowds are
 despawned when a building leaves the near radius.  Twelve percent of signs are
 vertical corner banners.
 
+### Vehicle traffic
+
+`src/traffic.rs` streams 150 low-poly vehicle variants (30 each of
+tractor-trailer, cargo van, SUV, sedan and emergency) from the lane centrelines
+in `assets/models/traffic_lanes.json`.  Lanes within 220 m (150 m web) are
+filled to 85% occupancy up to 1,200 vehicles (600 web); vehicles align to the
+lane, keep clear of sidewalks, creep forward unevenly in gridlock, and use an
+AABB grid to avoid cross-lane overlaps.  Shared emissive lights turn on at
+night.
+
 ### 1 km embellishment cull
 
 `src/detail.rs` (`EMBELLISHMENT_RADIUS = 1_000 m`) hides roadway tiles, facade
