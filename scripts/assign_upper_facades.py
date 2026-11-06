@@ -189,6 +189,37 @@ def pack(assignment):
     return r, g, b
 
 
+def set_roof_uvs(mesh, poly, mw, uv_layer):
+    """Align the roof texture grid to this roof face's longest edge."""
+    coords = []
+    for li in poly.loop_indices:
+        idx = mesh.loops[li].vertex_index
+        coords.append((li, mw @ mesh.vertices[idx].co))
+    if len(coords) < 3:
+        return
+    # Longest plan edge of the face, in world XY.
+    best = None
+    count = len(coords)
+    for i in range(count):
+        a = coords[i][1]
+        b = coords[(i + 1) % count][1]
+        dx, dy = b.x - a.x, b.y - a.y
+        length = math.hypot(dx, dy)
+        if length < 1e-6:
+            continue
+        if best is None or length > best[0]:
+            best = (length, a, dx / length, dy / length)
+    if best is None:
+        return
+    _, origin, ux, uy = best
+    vx, vy = -uy, ux
+    for li, p in coords:
+        dx, dy = p.x - origin.x, p.y - origin.y
+        u = (dx * ux + dy * uy) / 8.0
+        v = (dx * vx + dy * vy) / 8.0
+        uv_layer.data[li].uv = (u, v)
+
+
 def main():
     buildings, catalog = load_data()
     by_block = defaultdict(list)
@@ -215,6 +246,10 @@ def main():
         mw = obj.matrix_world
         normal_matrix = mw.to_3x3()
         mesh = obj.data
+        uv_layer = mesh.uv_layers.active or (mesh.uv_layers[0] if mesh.uv_layers else None)
+        if uv_layer is None:
+            uv_layer = mesh.uv_layers.new(name="UVMap")
+            mesh.uv_layers.active = uv_layer
         color = mesh.color_attributes.get("block_id")
         if color is None:
             color = mesh.color_attributes.new(name="block_id", type="FLOAT_COLOR", domain="CORNER")
@@ -258,6 +293,8 @@ def main():
             a = (block_id + 0.5) / MAX_BLOCKS
             for li in poly.loop_indices:
                 color.data[li].color = (r, g, b, a)
+            if roof:
+                set_roof_uvs(mesh, poly, mw, uv_layer)
             matched_buildings.add(chosen.building["id"])
             tile_use[assignment["facade_tile"]] += 1
             roof_use[assignment["roof_tile"]] += 1

@@ -24,13 +24,13 @@
     "park_blocks": 19,
     "noon_targets": 0,
     "night_targets": 1242,
-    "flicker_blocks": 690,
-    "fade_blocks": 552,
+    "flicker_blocks": 698,
+    "fade_blocks": 544,
     "twilight_span_minutes": 45.0
   },
   "render": {
     "visibility_range_entities": 3861,
-    "fog_cull_m": 4313,
+    "fog_cull_m": 4315,
     "fog_visibility_km": 4.1,
     "dof_active": true,
     "materials_ready": true
@@ -38,12 +38,12 @@
   "stationing": {
     "imagery_lines": 2041,
     "front_lines": 2460,
-    "completed_lines": 4447,
+    "completed_lines": 4445,
     "imagery_camera_coordinates": 2041,
     "front_camera_coordinates": 2460,
-    "completed_camera_coordinates": 4447,
-    "plan_curves": 21663,
-    "ticks": 38611
+    "completed_camera_coordinates": 4445,
+    "plan_curves": 34979,
+    "ticks": 38410
   },
   "collision": {
     "grid_solid": true,

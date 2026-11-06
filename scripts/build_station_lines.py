@@ -628,7 +628,7 @@ for i, j, s, e in mst_edges:
 print("completed skeleton pixels:", int(completed.sum()))
 completed = prune_spurs(completed, 10)
 print("completed skeleton after spur pruning:", int(completed.sum()))
-completed_lines = vectorize(completed, 2.0, 5.0)
+completed_lines = vectorize(completed, 1.0, 5.0)
 completed_lines = connect_line_components(completed_lines)
 # Remove any RDP/connector corner that clips a building: route those segments
 # through the free-space cost field instead.
@@ -700,6 +700,42 @@ for _ in range(20):
         break
     completed_lines.append(connector)
     print("completed final connector", round(float(_d), 2), "m")
+
+def smooth_line(pts, passes=2):
+    """Round gentle polyline jitter while preserving endpoints and corners."""
+    if len(pts) < 3:
+        return pts
+    original = list(pts)
+    for _ in range(passes):
+        out = [original[0]]
+        for i in range(1, len(original) - 1):
+            a = np.asarray(original[i - 1], dtype=float)
+            b = np.asarray(original[i], dtype=float)
+            c = np.asarray(original[i + 1], dtype=float)
+            v1 = b - a
+            v2 = c - b
+            n1 = float(np.linalg.norm(v1))
+            n2 = float(np.linalg.norm(v2))
+            if n1 < 1e-9 or n2 < 1e-9:
+                out.append(original[i])
+                continue
+            cosang = float(np.clip(np.dot(v1, v2) / (n1 * n2), -1.0, 1.0))
+            angle = math.degrees(math.acos(cosang))
+            if angle < 25.0:
+                out.append(original[i])
+            else:
+                q = a * 0.25 + b * 0.5 + c * 0.25
+                out.append((float(q[0]), float(q[1])))
+        out.append(original[-1])
+        original = rdp(out, 0.15)
+    if any(crosses_building(a, b) for a, b in zip(original, original[1:])):
+        return pts
+    return original
+
+
+before_smooth = len(completed_lines)
+completed_lines = [smooth_line(line) for line in completed_lines]
+print("completed lines smoothed:", before_smooth)
 
 completed_set = package(completed_lines, "completed", "CMP")
 overlay(completed_lines, os.path.join(BUILD, "station_lines_completed_overlay.png"))

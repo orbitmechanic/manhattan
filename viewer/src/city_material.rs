@@ -327,11 +327,17 @@ pub fn setup_road_materials(
     }
     for (name, handle) in &query {
         let lower = name.to_string().to_ascii_lowercase();
-        if !(lower.contains("road") || lower.contains("sidewalk") || lower.contains("curb")) {
+        if !(lower.contains("road")
+            || lower.contains("sidewalk")
+            || lower.contains("curb")
+            || lower.contains("marking"))
+        {
             continue;
         }
         if let Some(mut material) = materials.get_mut(&handle.0) {
-            material.base_color = if lower.contains("road") {
+            material.base_color = if lower.contains("marking") {
+                Color::srgb(0.92, 0.92, 0.88)
+            } else if lower.contains("road") {
                 Color::srgb(0.10, 0.10, 0.11)
             } else {
                 Color::srgb(0.78, 0.78, 0.75)
@@ -355,11 +361,17 @@ pub fn update_road_colors(
     let day = 0.12 + 0.88 * env.daylight;
     for (name, handle) in &query {
         let lower = name.to_string().to_ascii_lowercase();
-        if !(lower.contains("road") || lower.contains("sidewalk") || lower.contains("curb")) {
+        if !(lower.contains("road")
+            || lower.contains("sidewalk")
+            || lower.contains("curb")
+            || lower.contains("marking"))
+        {
             continue;
         }
         if let Some(mut material) = materials.get_mut(&handle.0) {
-            let base = if lower.contains("road") {
+            let base = if lower.contains("marking") {
+                Vec3::new(0.92, 0.92, 0.88)
+            } else if lower.contains("road") {
                 Vec3::new(0.10, 0.10, 0.11)
             } else {
                 Vec3::new(0.78, 0.78, 0.75)

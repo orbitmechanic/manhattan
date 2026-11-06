@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Build asphalt and sidewalk ribbons from the completed street baselines.
+"""Build smooth asphalt, sidewalk and road-marking ribbons.
 
-Uses 12-ft lanes and 12-ft sidewalks.  Lane count is reduced where the
-building corridor is too narrow, and widths are clamped by the building mask so
-pavement never crosses a footprint.
+The centreline network is the cleaned COMPLETED set.  Roads use a constant
+width per street run (instead of wobbling per vertex), mitered joins, free-run
+trimming at building footprints, filled junction patches, and painted edge and
+centre lines.  Geometry is exported as 500 m tiles with an AABB manifest.
 
-Output:
-  viewer/assets/models/roadway_chunks/chunk_<x>_<z>.glb  (500 m tiles)
+Outputs
+  viewer/assets/models/roadway_chunks/chunk_<x>_<z>.glb
   viewer/assets/models/roadway_manifest.json
 
 Run with the roadway venv:
@@ -26,26 +27,25 @@ STATIONS = os.path.join(ROOT, "viewer", "assets", "models", "station_lines_compl
 MASK = os.path.join(BUILD, "building_mask.png")
 OUT_DIR = os.path.join(ROOT, "viewer", "assets", "models", "roadway_chunks")
 OUT_MANIFEST = os.path.join(ROOT, "viewer", "assets", "models", "roadway_manifest.json")
-CHUNK_M = 500.0
 FEET = 3.280839895
 LANE_M = 12.0 / FEET
 SIDEWALK_M = 12.0 / FEET
-MAX_SCAN_M = 30.0
+MAX_SCAN_M = 34.0
 CURB_H = 0.14
 ASPHALT_Y = 0.05
-SIDEWALK_Y = ASPHALT_Y + 0.14
+SIDEWALK_Y = ASPHALT_Y + CURB_H
+CHUNK_M = 500.0
 
 meta = json.load(open(os.path.join(BUILD, "blocks.json")))
-b = meta["bounds"]
-minx, maxx = b["min_x"], b["max_x"]
-miny, maxy = b["min_y"], b["max_y"]
+bounds = meta["bounds"]
+minx, maxx = bounds["min_x"], bounds["max_x"]
+miny, maxy = bounds["min_y"], bounds["max_y"]
 mask = np.asarray(Image.open(MASK))[..., 3] > 128
 H, W = mask.shape
 
 
 def pixel(x, z):
     px = int(np.clip((x - minx) / (maxx - minx) * W, 0, W - 1))
-    # Viewer z = -Blender y.
     py = int(np.clip((maxy + z) / (maxy - miny) * H, 0, H - 1))
     return px, py
 
@@ -64,6 +64,76 @@ def clearance(x, z, nx, nz):
     return MAX_SCAN_M
 
 
+def segment_inside(a, b, step=0.75):
+    length = math.hypot(b[0] - a[0], b[1] - a[1])
+    count = max(2, int(length / step) + 1)
+    for i in range(count + 1):
+        t = i / count
+        x = a[0] + (b[0] - a[0]) * t
+        z = a[1] + (b[1] - a[1]) * t
+        if inside(x, z):
+            return True
+    return False
+
+
+def rdp(points, eps):
+    if len(points) < 3:
+        return points
+    a = np.asarray(points[0], dtype=float)
+    b = np.asarray(points[-1], dtype=float)
+    ab = b - a
+    ab2 = float(np.dot(ab, ab))
+    best_i, best_d = 0, -1.0
+    for i in range(1, len(points) - 1):
+        p = np.asarray(points[i], dtype=float)
+        if ab2 < 1e-12:
+            d = float(np.linalg.norm(p - a))
+        else:
+            t = float(np.clip(np.dot(p - a, ab) / ab2, 0.0, 1.0))
+            d = float(np.linalg.norm(p - (a + ab * t)))
+        if d > best_d:
+            best_i, best_d = i, d
+    if best_d > eps:
+        return rdp(points[: best_i + 1], eps)[:-1] + rdp(points[best_i:], eps)
+    return [points[0], points[-1]]
+
+
+def smooth(points, passes=1):
+    if len(points) < 3:
+        return points
+    original = list(points)
+    for _ in range(passes):
+        out = [original[0]]
+        for i in range(1, len(original) - 1):
+            a = np.asarray(original[i - 1], dtype=float)
+            b = np.asarray(original[i], dtype=float)
+            c = np.asarray(original[i + 1], dtype=float)
+            q = a * 0.25 + b * 0.5 + c * 0.25
+            out.append((float(q[0]), float(q[1])))
+        out.append(original[-1])
+        original = rdp(out, 0.12)
+    if any(segment_inside(a, b) for a, b in zip(original, original[1:])):
+        return points
+    return original
+
+
+def split_free_runs(points):
+    runs = []
+    current = []
+    for a, b in zip(points, points[1:]):
+        if segment_inside(a, b):
+            if len(current) >= 2:
+                runs.append(current)
+            current = []
+        else:
+            if not current:
+                current = [a]
+            current.append(b)
+    if len(current) >= 2:
+        runs.append(current)
+    return runs
+
+
 def polyline_normals(points):
     n = len(points)
     normals = []
@@ -78,12 +148,28 @@ def polyline_normals(points):
             dx = points[i + 1][0] - points[i - 1][0]
             dz = points[i + 1][1] - points[i - 1][1]
         length = math.hypot(dx, dz)
-        if length < 1e-9:
-            normals.append((1.0, 0.0))
-        else:
-            # Right normal in the viewer's x/z plane.
-            normals.append((-dz / length, dx / length))
+        normals.append((1.0, 0.0) if length < 1e-9 else (-dz / length, dx / length))
     return normals
+
+
+def miter_offsets(normals):
+    out = []
+    count = len(normals)
+    for i, n in enumerate(normals):
+        if i == 0 or i == count - 1:
+            out.append((n[0], n[1], 1.0))
+            continue
+        prev = normals[i - 1]
+        nx, nz = prev[0] + n[0], prev[1] + n[1]
+        length = math.hypot(nx, nz)
+        if length < 1e-6:
+            out.append((n[0], n[1], 1.0))
+            continue
+        nx, nz = nx / length, nz / length
+        dot = nx * prev[0] + nz * prev[1]
+        scale = 1.0 / max(0.35, dot)
+        out.append((nx, nz, min(2.5, scale)))
+    return out
 
 
 def add_quad(verts, faces, a, b, c, d):
@@ -93,7 +179,6 @@ def add_quad(verts, faces, a, b, c, d):
 
 
 def add_vertical_quad(verts, faces, a, b, h0, h1):
-    # a,b are plan points; create a vertical curb face between heights.
     base = len(verts)
     verts.extend([
         (a[0], h0, a[1]),
@@ -104,101 +189,52 @@ def add_vertical_quad(verts, faces, a, b, h0, h1):
     faces.extend([(base, base + 1, base + 2), (base, base + 2, base + 3)])
 
 
-stations = json.load(open(STATIONS))["lines"]
-asphalt_v = []
-asphalt_f = []
-walk_v = []
-walk_f = []
-built = 0
-for li, line in enumerate(stations):
-    points = [(float(p[0]), float(p[1])) for p in line["points"]]
-    if len(points) < 2:
-        continue
-    # Skip a line whose centre falls inside a building.
-    if any(inside(x, z) for x, z in points):
-        continue
-    normals = polyline_normals(points)
-    widths = []
-    for (x, z), (nx, nz) in zip(points, normals):
-        if inside(x, z):
-            widths.append(None)
-            continue
-        left = clearance(x, z, -nx, -nz)
-        right = clearance(x, z, nx, nz)
-        avail = min(left, right)
-        lanes = int(math.floor(avail / LANE_M))
-        if lanes < 1:
-            widths.append(None)
-            continue
-        lanes = min(lanes, 4)
-        road_half = lanes * LANE_M * 0.5
-        side_l = min(SIDEWALK_M, max(0.0, left - road_half))
-        side_r = min(SIDEWALK_M, max(0.0, right - road_half))
-        widths.append((road_half, side_l, side_r))
-    # Fill occasional skipped vertices from neighbours, then skip the line if
-    # it is still badly constrained.
-    for i in range(len(widths)):
-        if widths[i] is None:
-            neighbours = [widths[j] for j in (i - 1, i + 1) if 0 <= j < len(widths) and widths[j]]
-            widths[i] = neighbours[0] if neighbours else None
-    if sum(w is not None for w in widths) < 2:
-        continue
-    # A tiny vertical offset keeps crossing streets from z-fighting.
-    y0 = ASPHALT_Y + (li % 97) * 0.00004
-    y1 = SIDEWALK_Y + (li % 97) * 0.00004
-    for i in range(len(points) - 1):
-        w0, w1 = widths[i], widths[i + 1]
-        if w0 is None or w1 is None:
-            continue
-        a = points[i]
-        bb = points[i + 1]
-        n0 = normals[i]
-        n1 = normals[i + 1]
-        r0, sl0, sr0 = w0
-        r1, sl1, sr1 = w1
+def add_disk(verts, faces, cx, cz, radius, y, segments=12):
+    base = len(verts)
+    verts.append((cx, y, cz))
+    for i in range(segments):
+        angle = 2.0 * math.pi * i / segments
+        verts.append((cx + math.cos(angle) * radius, y, cz + math.sin(angle) * radius))
+    for i in range(segments):
+        a = base + 1 + i
+        b = base + 1 + (i + 1) % segments
+        faces.append((base, a, b))
 
-        # Asphalt strip.
-        add_quad(
-            asphalt_v, asphalt_f,
-            (a[0] + n0[0] * r0, y0, a[1] + n0[1] * r0),
-            (a[0] - n0[0] * r0, y0, a[1] - n0[1] * r0),
-            (bb[0] - n1[0] * r1, y0, bb[1] - n1[1] * r1),
-            (bb[0] + n1[0] * r1, y0, bb[1] + n1[1] * r1),
-        )
-        # Sidewalk tops and inner curbs.
-        if sl0 > 0.02 or sl1 > 0.02:
-            add_quad(
-                walk_v, walk_f,
-                (a[0] + n0[0] * (r0 + sl0), y1, a[1] + n0[1] * (r0 + sl0)),
-                (a[0] + n0[0] * r0, y1, a[1] + n0[1] * r0),
-                (bb[0] + n1[0] * r1, y1, bb[1] + n1[1] * r1),
-                (bb[0] + n1[0] * (r1 + sl1), y1, bb[1] + n1[1] * (r1 + sl1)),
-            )
-            add_vertical_quad(
-                walk_v, walk_f,
-                (a[0] + n0[0] * r0, a[1] + n0[1] * r0),
-                (bb[0] + n1[0] * r1, bb[1] + n1[1] * r1),
-                y0, y1,
-            )
-        if sr0 > 0.02 or sr1 > 0.02:
-            add_quad(
-                walk_v, walk_f,
-                (a[0] - n0[0] * r0, y1, a[1] - n0[1] * r0),
-                (a[0] - n0[0] * (r0 + sr0), y1, a[1] - n0[1] * (r0 + sr0)),
-                (bb[0] - n1[0] * (r1 + sr1), y1, bb[1] - n1[1] * (r1 + sr1)),
-                (bb[0] - n1[0] * r1, y1, bb[1] - n1[1] * r1),
-            )
-            add_vertical_quad(
-                walk_v, walk_f,
-                (a[0] - n0[0] * r0, a[1] - n0[1] * r0),
-                (bb[0] - n1[0] * r1, bb[1] - n1[1] * r1),
-                y0, y1,
-            )
-    built += 1
 
-print("lines with roadway geometry:", built, "of", len(stations))
-print("asphalt verts/faces", len(asphalt_v), len(asphalt_f))
-print("walk verts/faces", len(walk_v), len(walk_f))
+def segment_intersection(a, b, c, d):
+    ax, az = a
+    bx, bz = b
+    cx, cz = c
+    dx, dz = d
+    r_x, r_z = bx - ax, bz - az
+    s_x, s_z = dx - cx, dz - cz
+    denom = r_x * s_z - r_z * s_x
+    if abs(denom) < 1e-9:
+        return None
+    t = ((cx - ax) * s_z - (cz - az) * s_x) / denom
+    u = ((cx - ax) * r_z - (cz - az) * r_x) / denom
+    if -0.001 <= t <= 1.001 and -0.001 <= u <= 1.001:
+        return (ax + r_x * t, az + r_z * t)
+    return None
+
+
+def point_segment_distance(p, a, b):
+    dx, dz = b[0] - a[0], b[1] - a[1]
+    length_sq = dx * dx + dz * dz
+    if length_sq < 1e-12:
+        return math.hypot(p[0] - a[0], p[1] - a[1]), a
+    t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / length_sq
+    t = max(0.0, min(1.0, t))
+    q = (a[0] + dx * t, a[1] + dz * t)
+    return math.hypot(p[0] - q[0], p[1] - q[1]), q
+
+
+def percentile(values, fraction):
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    index = int(round((len(ordered) - 1) * fraction))
+    return ordered[max(0, min(len(ordered) - 1, index))]
 
 
 def make_mesh(vertices, faces, name, color, roughness):
@@ -222,7 +258,6 @@ def make_mesh(vertices, faces, name, color, roughness):
 
 
 def face_buckets(vertices, faces):
-    """Group triangle indices into 500 m x/z tiles by face centroid."""
     buckets = {}
     for f in faces:
         cx = sum(vertices[i][0] for i in f) / 3.0
@@ -235,11 +270,230 @@ def face_buckets(vertices, faces):
 def submesh(vertices, faces):
     used = sorted({i for f in faces for i in f})
     remap = {old: new for new, old in enumerate(used)}
-    vs = [vertices[i] for i in used]
-    fs = [tuple(remap[i] for i in f) for f in faces]
-    return vs, fs
+    return [vertices[i] for i in used], [tuple(remap[i] for i in f) for f in faces]
 
 
+stations = json.load(open(STATIONS))["lines"]
+asphalt_v, asphalt_f = [], []
+walk_v, walk_f = [], []
+mark_v, mark_f = [], []
+runs = []
+built_lines = 0
+built_runs = 0
+dropped_runs = 0
+dropped_short = 0
+dropped_blocked = 0
+
+for line_index, line in enumerate(stations):
+    points = [(float(p[0]), float(p[1])) for p in line["points"]]
+    points = [p for i, p in enumerate(points) if i == 0 or math.dist(p, points[i - 1]) > 0.05]
+    points = rdp(points, 0.5)
+    points = smooth(points, passes=1)
+    free_runs = split_free_runs(points)
+    for run in free_runs:
+        run = rdp(run, 0.6)
+        length = sum(math.dist(run[i], run[i + 1]) for i in range(len(run) - 1))
+        if len(run) < 2 or length < 4.0:
+            dropped_runs += 1
+            dropped_short += 1
+            continue
+        normals = polyline_normals(run)
+        lefts, rights, min_clear = [], [], []
+        for (x, z), (nx, nz) in zip(run, normals):
+            if inside(x, z):
+                lefts.append(0.0)
+                rights.append(0.0)
+                min_clear.append(0.0)
+                continue
+            left = clearance(x, z, -nx, -nz)
+            right = clearance(x, z, nx, nz)
+            lefts.append(left)
+            rights.append(right)
+            min_clear.append(min(left, right))
+        if len(min_clear) < 2 or min(min_clear) <= 0.0:
+            dropped_runs += 1
+            dropped_blocked += 1
+            continue
+        clear_typ = percentile(min_clear, 0.15)
+        clear_min = min(min_clear)
+        # Reserve sidewalk space first, then spend the remaining corridor on
+        # whole lanes.  This keeps a 20 m street from becoming four lanes plus
+        # full sidewalks, which made the earlier pavement look bloated.
+        sidewalk_alloc = min(SIDEWALK_M, max(1.5, clear_typ * 0.15))
+        lanes = max(1, min(4, int((clear_typ - 2.0 * sidewalk_alloc) // LANE_M)))
+        road_half = lanes * LANE_M * 0.5
+        sidewalk = min(SIDEWALK_M, max(0.0, (clear_typ - lanes * LANE_M) * 0.5))
+        if clear_typ < LANE_M * 0.9:
+            lanes = 1
+            road_half = max(1.4, min(LANE_M * 0.5, clear_typ * 0.45))
+            sidewalk = 0.0
+        # Do not let a single pinch make the road clip deeply into a building.
+        if road_half + sidewalk > clear_min + 0.9:
+            sidewalk = max(0.0, min(sidewalk, clear_min - road_half + 0.5))
+            if road_half > clear_min + 0.6:
+                road_half = max(1.2, clear_min + 0.2)
+                sidewalk = 0.0
+        y0 = ASPHALT_Y + (line_index % 97) * 0.00002
+        y1 = SIDEWALK_Y + (line_index % 97) * 0.00002
+        miter = miter_offsets(normals)
+        sections = []
+        for (x, z), (nx, nz, scale) in zip(run, miter):
+            r = road_half * scale
+            s = (road_half + sidewalk) * scale
+            sections.append({
+                "a": (x, z),
+                "lr": (x - nx * r, z - nz * r),
+                "rr": (x + nx * r, z + nz * r),
+                "lw": (x - nx * s, z - nz * s),
+                "rw": (x + nx * s, z + nz * s),
+            })
+
+        cumulative = [0.0]
+        for j in range(len(run) - 1):
+            cumulative.append(cumulative[-1] + math.dist(run[j], run[j + 1]))
+        for i in range(len(sections) - 1):
+            a = sections[i]
+            b = sections[i + 1]
+            add_quad(asphalt_v, asphalt_f,
+                     (a["lr"][0], y0, a["lr"][1]),
+                     (a["rr"][0], y0, a["rr"][1]),
+                     (b["rr"][0], y0, b["rr"][1]),
+                     (b["lr"][0], y0, b["lr"][1]))
+            if sidewalk > 0.02:
+                add_quad(walk_v, walk_f,
+                         (a["rr"][0], y1, a["rr"][1]),
+                         (a["rw"][0], y1, a["rw"][1]),
+                         (b["rw"][0], y1, b["rw"][1]),
+                         (b["rr"][0], y1, b["rr"][1]))
+                add_quad(walk_v, walk_f,
+                         (a["lw"][0], y1, a["lw"][1]),
+                         (a["lr"][0], y1, a["lr"][1]),
+                         (b["lr"][0], y1, b["lr"][1]),
+                         (b["lw"][0], y1, b["lw"][1]))
+                add_vertical_quad(walk_v, walk_f,
+                                  a["rr"], b["rr"], y0, y1)
+                add_vertical_quad(walk_v, walk_f,
+                                  a["lr"], b["lr"], y0, y1)
+
+            # Painted edge lines.
+            edge = max(0.0, road_half - 0.18)
+            if lanes >= 2 and edge > 1.0:
+                for side in (-1.0, 1.0):
+                    e0 = (a["a"][0] + side * (edge) * (a["rr"][0] - a["a"][0]) / max(1e-6, road_half * 1.0),
+                          a["a"][1] + side * (edge) * (a["rr"][1] - a["a"][1]) / max(1e-6, road_half * 1.0))
+                    e1 = (b["a"][0] + side * (edge) * (b["rr"][0] - b["a"][0]) / max(1e-6, road_half * 1.0),
+                          b["a"][1] + side * (edge) * (b["rr"][1] - b["a"][1]) / max(1e-6, road_half * 1.0))
+                    nx = -(b["a"][1] - a["a"][1])
+                    nz = (b["a"][0] - a["a"][0])
+                    nl = math.hypot(nx, nz)
+                    if nl < 1e-6:
+                        continue
+                    nx, nz = nx / nl, nz / nl
+                    w = 0.055
+                    add_quad(mark_v, mark_f,
+                             (e0[0] - nx * w, ASPHALT_Y + 0.0045, e0[1] - nz * w),
+                             (e0[0] + nx * w, ASPHALT_Y + 0.0045, e0[1] + nz * w),
+                             (e1[0] + nx * w, ASPHALT_Y + 0.0045, e1[1] + nz * w),
+                             (e1[0] - nx * w, ASPHALT_Y + 0.0045, e1[1] - nz * w))
+
+            # Dashed centre line on multi-lane streets.
+            if lanes >= 2:
+                a0 = a["a"]
+                b0 = b["a"]
+                seg_len = math.hypot(b0[0] - a0[0], b0[1] - a0[1])
+                if seg_len > 1e-6:
+                    nx = -(b0[1] - a0[1]) / seg_len
+                    nz = (b0[0] - a0[0]) / seg_len
+                    steps = max(1, int(seg_len / 1.0))
+                    for k in range(steps):
+                        t0 = k / steps
+                        t1 = min(1.0, (k + 1) / steps)
+                        along = (a0[0] + (b0[0] - a0[0]) * (t0 + t1) * 0.5)
+                        distance = cumulative[i] + seg_len * (t0 + t1) * 0.5
+                        if distance % 7.0 > 3.2:
+                            continue
+                        p0 = (a0[0] + (b0[0] - a0[0]) * t0, a0[1] + (b0[1] - a0[1]) * t0)
+                        p1 = (a0[0] + (b0[0] - a0[0]) * t1, a0[1] + (b0[1] - a0[1]) * t1)
+                        w = 0.065
+                        add_quad(mark_v, mark_f,
+                                 (p0[0] - nx * w, ASPHALT_Y + 0.0048, p0[1] - nz * w),
+                                 (p0[0] + nx * w, ASPHALT_Y + 0.0048, p0[1] + nz * w),
+                                 (p1[0] + nx * w, ASPHALT_Y + 0.0048, p1[1] + nz * w),
+                                 (p1[0] - nx * w, ASPHALT_Y + 0.0048, p1[1] - nz * w))
+
+        runs.append((run, road_half, sidewalk))
+        built_runs += 1
+    built_lines += 1
+
+print("lines processed", built_lines, "of", len(stations))
+print("road runs", built_runs, "dropped", dropped_runs,
+      "(short", dropped_short, "blocked", dropped_blocked, ")")
+
+# ---------------------------------------------------------------------------
+# junction patches
+# ---------------------------------------------------------------------------
+cell = 30.0
+grid = {}
+segments = []
+for run_index, (run, road_half, sidewalk) in enumerate(runs):
+    for a, b in zip(run, run[1:]):
+        sid = len(segments)
+        segments.append((run_index, a, b, road_half))
+        x0, x1 = sorted((a[0], b[0]))
+        z0, z1 = sorted((a[1], b[1]))
+        pad = road_half + 2.0
+        for gx in range(int((x0 - pad) // cell), int((x1 + pad) // cell) + 1):
+            for gz in range(int((z0 - pad) // cell), int((z1 + pad) // cell) + 1):
+                grid.setdefault((gx, gz), []).append(sid)
+
+junctions = {}
+for members in grid.values():
+    for i in range(len(members)):
+        for j in range(i + 1, len(members)):
+            si = segments[members[i]]
+            sj = segments[members[j]]
+            if si[0] == sj[0]:
+                continue
+            p = segment_intersection(si[1], si[2], sj[1], sj[2])
+            if p is None:
+                continue
+            key = (round(p[0] / 3.0), round(p[1] / 3.0))
+            half = max(si[3], sj[3])
+            if key not in junctions or half > junctions[key][2]:
+                junctions[key] = (p[0], p[1], half)
+
+# T-junctions: run endpoints close to another run.
+endpoints = []
+for run_index, (run, road_half, _) in enumerate(runs):
+    endpoints.append((run_index, run[0], road_half))
+    endpoints.append((run_index, run[-1], road_half))
+for run_index, point, road_half in endpoints:
+    gx, gz = int(point[0] // cell), int(point[1] // cell)
+    best = None
+    for dx in (-1, 0, 1):
+        for dz in (-1, 0, 1):
+            for sid in grid.get((gx + dx, gz + dz), []):
+                other, a, b, half = segments[sid]
+                if other == run_index:
+                    continue
+                distance, q = point_segment_distance(point, a, b)
+                if distance <= max(1.6, road_half * 0.45):
+                    if best is None or distance < best[0]:
+                        best = (distance, q, half)
+    if best is not None:
+        _, q, half = best
+        key = (round(q[0] / 3.0), round(q[1] / 3.0))
+        if key not in junctions or half > junctions[key][2]:
+            junctions[key] = (q[0], q[1], half)
+
+for index, (key, (x, z, half)) in enumerate(junctions.items()):
+    add_disk(asphalt_v, asphalt_f, x, z, min(10.0, half + 0.6),
+             ASPHALT_Y + 0.0001 + (index % 31) * 0.000001)
+print("junction patches", len(junctions))
+
+# ---------------------------------------------------------------------------
+# chunk export
+# ---------------------------------------------------------------------------
 os.makedirs(OUT_DIR, exist_ok=True)
 for name in os.listdir(OUT_DIR):
     if name.endswith(".glb"):
@@ -247,50 +501,47 @@ for name in os.listdir(OUT_DIR):
 
 a_buckets = face_buckets(asphalt_v, asphalt_f)
 w_buckets = face_buckets(walk_v, walk_f)
-keys = sorted(set(a_buckets) | set(w_buckets))
+m_buckets = face_buckets(mark_v, mark_f)
+keys = sorted(set(a_buckets) | set(w_buckets) | set(m_buckets))
 manifest = []
 for key in keys:
-    cx, cz = key
     scene = trimesh.Scene()
     bounds_min = [math.inf, math.inf, math.inf]
     bounds_max = [-math.inf, -math.inf, -math.inf]
-    parts = 0
-    if key in a_buckets:
-        vs, fs = submesh(asphalt_v, a_buckets[key])
-        mesh = make_mesh(vs, fs, "Road_Asphalt", [0.03, 0.03, 0.035, 1.0], 0.92)
-        scene.add_geometry(mesh, geom_name="road_asphalt")
-        parts += 1
-    if key in w_buckets:
-        vs, fs = submesh(walk_v, w_buckets[key])
-        mesh = make_mesh(vs, fs, "Sidewalk_Concrete", [0.78, 0.78, 0.75, 1.0], 0.86)
-        scene.add_geometry(mesh, geom_name="sidewalk_concrete")
-        parts += 1
-    if parts == 0:
-        continue
-    # Bounds cover both parts; track from the shared source arrays.
-    for src_v, src_b in ((asphalt_v, a_buckets.get(key)), (walk_v, w_buckets.get(key))):
-        if not src_b:
+    total_tris = 0
+    for source_v, source_f, buckets, name, color, roughness in (
+        (asphalt_v, asphalt_f, a_buckets, "Road_Asphalt", [0.03, 0.03, 0.035, 1.0], 0.92),
+        (walk_v, walk_f, w_buckets, "Sidewalk_Concrete", [0.78, 0.78, 0.75, 1.0], 0.86),
+        (mark_v, mark_f, m_buckets, "Road_Marking_White", [0.93, 0.93, 0.89, 1.0], 0.7),
+    ):
+        if key not in buckets:
             continue
-        for f in src_b:
+        vs, fs = submesh(source_v, buckets[key])
+        mesh = make_mesh(vs, fs, name, color, roughness)
+        scene.add_geometry(mesh, geom_name=name.lower())
+        total_tris += len(fs)
+        for f in buckets[key]:
             for i in f:
-                v = src_v[i]
+                v = source_v[i]
                 for k in range(3):
                     bounds_min[k] = min(bounds_min[k], v[k])
                     bounds_max[k] = max(bounds_max[k], v[k])
-    filename = f"chunk_{cx}_{cz}.glb"
+    filename = f"chunk_{key[0]}_{key[1]}.glb"
     path = os.path.join(OUT_DIR, filename)
     scene.export(path, include_normals=True)
     manifest.append({
         "file": f"models/roadway_chunks/{filename}",
         "min": [round(v, 3) for v in bounds_min],
         "max": [round(v, 3) for v in bounds_max],
-        "tris": sum(len(fs) for fs in (
-            a_buckets.get(key) or [],
-            w_buckets.get(key) or [],
-        )),
+        "tris": total_tris,
     })
+
 manifest.sort(key=lambda m: m["file"])
-with open(OUT_MANIFEST, "w") as f:
-    json.dump({"chunk_m": CHUNK_M, "chunks": manifest}, f, separators=(",", ":"))
+with open(OUT_MANIFEST, "w") as handle:
+    json.dump({"chunk_m": CHUNK_M, "chunks": manifest}, handle, separators=(",", ":"))
+
+print("asphalt triangles", len(asphalt_f))
+print("sidewalk triangles", len(walk_f))
+print("marking triangles", len(mark_f))
 print("wrote", len(manifest), "chunks to", OUT_DIR)
 print("wrote", OUT_MANIFEST, os.path.getsize(OUT_MANIFEST))

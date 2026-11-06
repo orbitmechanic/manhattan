@@ -41,6 +41,9 @@ Catalog
   viewer/assets/models/upper_facade_catalog.json
     facade grid, category ranges, tile list, module size
     roof grid and tile list
+  - roof UVs are rebuilt per roof face from that face's longest edge, in 8 m
+    units; the shader maps them to the 16 m roof-atlas module.  This keeps the
+    garden/pool/AC grid aligned to the roof geometry instead of world axes.
     neighbourhood mapping:
       residential -> residential
       industrial  -> industrial

@@ -129,7 +129,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/collision_grid.bin` | 4 m building-height grid baked from the 1223 blocks, used for camera collision. |
 | `viewer/assets/models/station_lines_imagery.json` | 2041 satellite/road-derived centrelines, 92.1 miles. |
 | `viewer/assets/models/station_lines_fronts.json` | 2460 building-expansion-front centrelines, 185.5 miles. |
-| `viewer/assets/models/station_lines_completed.json` | 4447 connected building-front + connector centrelines, 192.6 miles (default). |
+| `viewer/assets/models/station_lines_completed.json` | 4,445 connected, smoothed building-front + connector centrelines, 189.1 miles (default). |
 | `viewer/assets/models/roadway_chunks/` | 129 x 500 m asphalt + sidewalk tiles generated from the completed baselines. |
 | `viewer/assets/models/roadway_manifest.json` | chunk list with world-space AABBs for the 1 km detail cull. |
 | `viewer/assets/models/building_perimeters.json` | 11,032 building first-floor wall loops, heights, floor heights and facade categories. |
@@ -285,9 +285,9 @@ Evidence: `renders/blocks_overlay.png`, `renders/blocks_ground_voronoi.png`,
   window-row crop in `Textures/day/floors/` and `Textures/night/floors/`), but
   the viewer now overrides those ten legacy crops with the 320-template
   per-building upper-floor atlas described below.
-- Roof UVs remain a **world-space 8-unit tile**; the shader maps them to a
-  16-unit roof-atlas module by scaling the UV by 0.5, so gardens, pools and
-  equipment appear at human scale.
+- Roof UVs are rebuilt per roof face from that face's **longest edge**.  The
+  8-unit local UVs are mapped by the shader to a 16-unit roof-atlas module, so
+  the garden/pool/AC grid follows the roof geometry instead of world axes.
 - A FACE attribute `floor` records the floor index.  The helper
   `scripts/separate_block_floors.py` turns the active block's floor bands into
   individual `Block_XXXX_Floor_NN` objects for detailed editing; the viewer
@@ -325,7 +325,7 @@ be compared:
 |---|---|---:|---:|---:|
 | **IMAGERY** | grey road pixels in the low-resolution satellite, thinned on the free-space skeleton | 2041 | 92.1 mi | 8003 |
 | **BUILDING FRONTS** | simultaneous expansion fronts from every building; the meeting locus is the road centreline | 2460 | 185.5 mi | 13513 |
-| **COMPLETED** | building fronts + free-space connectors between every meaningful component; default | 4447 | 192.6 mi | 17095 |
+| **COMPLETED** | building fronts + free-space connectors, smoothed with corner preservation; default | 4445 | 189.1 mi | 16894 |
 
 - **IMAGERY** is filtered by road colour, a 4–30 m distance from building
   footprints, and continues straight through junctions.
@@ -370,11 +370,17 @@ embellishment radius:
 - Asphalt is dark grey, sidewalk concrete light grey, with a 0.14 m curb face.
 - Widths are sampled against the building mask, so pavement never crosses a
   footprint.
-- 4,373 of 4,447 baselines produced roadway geometry; the remainder are too
-  constrained or end inside a footprint.
-- Geometry: 29,434 asphalt triangles and 117,736 sidewalk triangles.
-- 129 tiles of 500 m; each scene root gets a `DetailCull` AABB and is hidden
-  once the camera is more than 1,000 m from it.
+- 4,445 baselines split into 4,472 free street runs; only 18 runs shorter
+  than 4 m are omitted.
+- Constant width per run: sidewalk space is reserved first, then the rest is
+  spent on whole 12-ft lanes, so a 20 m corridor is 3 lanes + sidewalks rather
+  than 4 lanes + full sidewalks.
+- Mitred joins keep bends crack-free; 4,524 asphalt junction patches fill
+  crossings and T-junctions.
+- Geometry: 88,290 asphalt triangles, 104,304 sidewalk triangles and 185,676
+  white edge/centre-line triangles.
+- 128 tiles of 500 m (27.7 MB); each scene root gets a `DetailCull` AABB and
+  is hidden once the camera is more than 1,000 m from it.
 - `--view close` provides a low street-level inspection camera.
 - `renders/viewer_roadway_close.png` shows the result.
 
@@ -429,6 +435,10 @@ floor above the street:
 Each template covers one **12 m x 3 m floor module** and tiles seamlessly
 around the building. Day and night versions share window positions. The
 library is packed into a 3840 x 3072 day atlas and a 1920 x 1536 night atlas.
+
+Each roof face's UV frame is rebuilt from its longest edge, so the texture grid
+follows the roof geometry rather than the world axes; the 16 m module then
+tiles within that frame.
 
 It also generates **160 roof templates** on a 16 m x 16 m module: gardens,
 planters and trees, pools with loungers, AC/HVAC units, cooling towers, ducts,
@@ -642,7 +652,7 @@ affected presentation and is already reflected in the script.
   19 park), noon targets 0, night targets 1242, randomised flicker/fade split
   (one run 702/540), 3,861 visibility-range entities, fog cull 4.3 km, focus
   blur active, collision grid loaded and resolved, stationing imagery 2041 /
-  fronts 2460 / completed 4447 lines with matching camera arrays, camera clamp
+  fronts 2460 / completed 4445 lines with matching camera arrays, camera clamp
   at y=3, hour-wrap date correct.
 - `viewer` tests: **45 passed**, including station/offset sign projection and
   station data loading, camera collision/slide maths, one-floor texture paths,

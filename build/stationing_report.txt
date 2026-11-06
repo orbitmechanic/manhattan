@@ -28,13 +28,16 @@ Set B — BUILDING FRONTS (2460 lines, 185.5 miles, 13513 ticks)
     and open-water boundaries), skeletonise, trace straight through junctions,
     simplify (RDP 2 m), drop lines under 25 m.
 
-Set C — COMPLETED (4447 lines, 192.6 miles, 17095 ticks; default)
+Set C — COMPLETED (4445 lines, 189.1 miles, 16894 ticks; default)
   - Start from the building-front skeleton, drop hair fragments under 400 m².
   - Connect every remaining component with a minimum spanning tree of
     free-space paths.  Buildings are impassable; connectors prefer road-coloured
     pixels and stay out of the harbour.
-  - Re-vectorise the connected skeleton, prune short spurs, and add explicit
-    line-level connectors for any remaining vector gap.
+  - Re-vectorise the connected skeleton at 1.0 m RDP tolerance, prune short
+    spurs, and add explicit line-level connectors for any remaining vector gap.
+  - Smooth each completed line with two 3-point passes that preserve corners
+    sharper than 25 degrees, then simplify at 0.15 m.  Smoothed segments that
+    enter a building are rejected in favour of the original polyline.
   - This is the set intended for selecting which graphics elements to display;
     it is connected, while the two source sets remain available for comparison.
 
@@ -70,7 +73,7 @@ Validation
   renders/viewer_station_imagery_mid.png
   renders/viewer_station_fronts_mid.png
   native selftest: imagery 2041 / 2041, fronts 2460 / 2460,
-                   completed 4447 / 4447, stationing_ok true
+                   completed 4445 / 4445, stationing_ok true
   tests: 45 passed
 
 Caveat
