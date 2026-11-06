@@ -126,7 +126,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/details_report.txt` | dawn timing, night-window variants, antennas, signs, trees and the 1,000 ft detail cull. |
 | `build/people_report.txt` | pedestrian catalog, density, walk cycle, avoidance, homeless figures, corner ads and streaming limits. |
 | `build/traffic_report.txt` | vehicle catalog, lane network, 85% occupancy, gridlock movement, collision grid and night lights. |
-| `build/lighting_report.txt` | building sun-shadow cascades, shadow-caster filtering and vehicle night-light atlas. |
+| `build/lighting_report.txt` | streetlamp/signal streaming, night-light atlas and the removed shadow pass. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -146,6 +146,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/clothing_catalog.json` | clothing tile ranges (shirts, pants, skirts, jackets, hats, bags). |
 | `viewer/assets/models/trees.json` | 3,000 park/open-ground tree placements. |
 | `viewer/assets/models/traffic_lanes.json` | 24,175 lane centrelines exported by the roadway builder. |
+| `viewer/assets/models/intersections.json` | 5,908 intersections with position, yaw and road half-width for signal placement. |
 | `viewer/assets/models/upper_facade_catalog.json` | facade/roof atlas grids, category ranges and neighbourhood mapping. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
@@ -575,17 +576,21 @@ exported with the roadway:
   the texture on at night, and the vehicle bodies get a subtle emissive lift so
   their silhouettes remain readable.  Far proxies carry a roof light too.
 
-### Dynamic building shadows
+### Streetlamps and traffic signals
 
-The sun now casts **cascaded directional shadows** (first bound 60 m, maximum
-distance 900 m), following the real sun direction through the day.  Buildings
-cast onto each other and onto the ground/road/sidewalk receivers.
+`viewer/src/street_furniture.rs` streams near-field street furniture and
+despawns it again as the camera moves:
 
-The huge translucent fog sheets, sky discs/stars and all small detail layers
-(signs, antennas, trees, storefront overlays, pedestrians, vehicles and traffic
-proxies) are marked `NotShadowCaster`.  Without that filter the mist sheets
-blocked the directional light and darkened the whole city; the shadow pass now
-focuses on the real building geometry.
+- **Streetlamps** every 24 m along each building's first-floor perimeter,
+  offset 2.8 m onto the sidewalk.  Each has a 6.25 m pole/arm, a lamp head and
+  a shared emissive panel that turns on at night.
+- **Traffic signals** at the 5,908 exported intersections, two poles per
+  intersection on opposite corners.  Each has red/amber/green lenses on a
+  shared 14-second cycle (6 s red, 5 s green, 3 s amber); the active lens is
+  bright by day and emissive at night.
+- Both streams use a **330 m native / 240 m web** radius; buildings and
+  intersections outside it are despawned, so the city does not keep furniture
+  for the whole map.
 
 ### 1 km embellishment cull
 
@@ -768,8 +773,8 @@ affected presentation and is already reflected in the script.
   articulated walk poses and second-floor/corner signage.
 - `renders/viewer_traffic.png` and `renders/viewer_traffic_night.png` —
   gridlocked traffic by day and cabin/headlight/taillight/marker lights at 22:00.
-- `renders/viewer_building_shadows.png` — late-afternoon building shadows
-  across the streets and neighbouring roofs.
+- `renders/viewer_streetlamps.png` — streamed streetlamps glowing along the
+  sidewalks at night.
 - `renders/viewer_upper_facades_night.png` — random per-floor night windows
   and all-lit financial floors.
 - `renders/viewer_facade_close.png` — randomised residential ground-floor

@@ -11,5 +11,6 @@ pub mod environment;
 pub mod people;
 pub mod stationing;
 pub mod storefront;
+pub mod street_furniture;
 pub mod traffic;
 pub mod ui;

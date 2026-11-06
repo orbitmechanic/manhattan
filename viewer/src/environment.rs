@@ -3,7 +3,7 @@
 use bevy::{
     camera::visibility::Visibility,
     color::LinearRgba,
-    light::{CascadeShadowConfigBuilder, NotShadowCaster},
+    light::NotShadowCaster,
     pbr::{DistanceFog, FogFalloff},
     prelude::*,
 };
@@ -98,16 +98,10 @@ pub fn setup_lighting(
         SunLight,
         DirectionalLight {
             illuminance: 10_000.0,
-            shadow_maps_enabled: true,
+            shadow_maps_enabled: false,
             ..default()
         },
         Transform::from_rotation(Quat::from_rotation_x(-0.7)),
-        CascadeShadowConfigBuilder {
-            first_cascade_far_bound: 60.0,
-            maximum_distance: 900.0,
-            ..default()
-        }
-        .build(),
     ));
     // WebGL2 supports only one directional light per view.  The browser build
     // uses a single combined sun/moon fixture; native keeps both.

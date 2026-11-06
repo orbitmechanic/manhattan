@@ -54,6 +54,10 @@ use manhattan_viewer::{
         draw_stationing, handle_station_keys, update_civil_coordinates,
     },
     storefront::{StorefrontData, StorefrontState, spawn_storefronts},
+    street_furniture::{
+        Intersections, StreetFurniture, setup_street_furniture, stream_street_furniture,
+        update_street_lights,
+    },
     traffic::{
         Traffic, TrafficLanes, setup_vehicle_catalog, stream_traffic, update_traffic,
         update_vehicle_lights,
@@ -275,6 +279,8 @@ fn main() {
         .init_resource::<Crowd>()
         .init_resource::<TrafficLanes>()
         .init_resource::<Traffic>()
+        .init_resource::<Intersections>()
+        .init_resource::<StreetFurniture>()
         .insert_resource(args)
         .add_systems(
             Startup,
@@ -291,6 +297,7 @@ fn main() {
         .add_systems(Startup, (spawn_trees, spawn_antennas, spawn_signs))
         .add_systems(Startup, setup_people_catalog)
         .add_systems(Startup, setup_vehicle_catalog)
+        .add_systems(Startup, setup_street_furniture)
         .add_systems(
             Update,
             (
@@ -327,6 +334,10 @@ fn main() {
         .add_systems(
             Update,
             (stream_traffic, update_traffic, update_vehicle_lights).chain(),
+        )
+        .add_systems(
+            Update,
+            (stream_street_furniture, update_street_lights).chain(),
         )
         .run();
 }

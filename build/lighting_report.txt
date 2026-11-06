@@ -1,36 +1,40 @@
-Dynamic shadows and vehicle night lights
-========================================
+Lighting, street furniture and vehicle night visibility
+=======================================================
 
 Building shadows
-  - The sun DirectionalLight now has shadow_maps_enabled = true.
-  - CascadeShadowConfigBuilder: first cascade far bound 60 m, maximum
-    distance 900 m, four default cascades.  Shadows follow the real sun
-    direction every frame and cover the near roadway/building field.
-  - The moon light keeps shadows disabled.
-  - Fog banks, sun/moon discs and stars are marked NotShadowCaster.  Without
-    this the huge translucent mist sheets and sky spheres blocked the
-    directional light and made the whole city render as if in shadow.
-  - Signs, antennas, trees, storefront overlays, pedestrians, vehicles and
-    traffic proxies are NotShadowCaster too.  The shadow pass therefore
-    focuses on the real building meshes, which cast onto each other and the
-    ground/sidewalk/road receivers.
+  Removed.  The sun DirectionalLight has shadow_maps_enabled = false and the
+  cascade configuration is gone.  The NotShadowCaster markers from the shadow
+  experiment remain inert; they have no rendering cost when shadow maps are
+  disabled.
+
+Streetlamps
+  viewer/src/street_furniture.rs streams lamps around buildings within
+  330 m native / 240 m web.
+  - Placement: every 24 m along each building's first-floor perimeter,
+    offset 2.8 m outward onto the sidewalk.
+  - Geometry: metal pole, 6.25 m arm and lamp head, plus a shared emissive
+    lamp panel.
+  - Lamp heads turn on at night with the city and are off during the day.
+  - Lamps for a building are despawned when that building leaves the radius.
+
+Traffic signals
+  scripts/build_roadway.py writes viewer/assets/models/intersections.json
+  (5,908 intersections, with position, yaw and road half-width).
+  - Two signal poles are placed per nearby intersection, on opposite corners.
+  - Geometry: metal pole/head with red, amber and green lens meshes.
+  - One shared 14 s cycle: red 6 s, green 5 s, amber 3 s.  The active lens is
+    bright by day and emissive at night; inactive lenses are dark.
+  - Signals are streamed/despawned with the same 330 m / 240 m near radius.
 
 Vehicle night visibility
-  - New vehicle_night_atlas.png (4 x 4 tiles, 512 px) contains:
-      warm cabin windows, white headlights, red taillights, amber side
-      markers, red/blue emergency bars and variants.
-  - The vehicle light mesh now has per-face atlas UVs and includes:
-      two headlights, two taillights, side cabin windows, four amber markers,
-      a roof cabin light, a rear safety marker and an emergency roof bar.
-  - One shared emissive material uses the atlas; its emissive color is black
-    by day and bright white at night, so the atlas colors (warm/red/amber)
-    show along with the city dusk transition.
-  - The vehicle body material gets a subtle blue-grey emissive lift at night
-    so the car silhouette remains readable.  Both body and light materials
-    are double-sided solids.
-  - Far traffic proxies carry a glowing roof light as well, so distant lanes
-    remain visible at night.
+  viewer/assets/textures/vehicles/vehicle_night_atlas.png (4 x 4 tiles):
+  warm cabin windows, white headlights, red taillights, amber side markers and
+  red/blue emergency bars.  Vehicle light meshes use per-face atlas UVs and
+  turn their shared emissive material on at night.  Bodies get a subtle
+  blue-grey emissive lift so silhouettes stay readable.  Far proxies carry a
+  roof light too.
 
 Verification
-  renders/viewer_building_shadows.png   late-afternoon building shadows
-  renders/viewer_traffic_night.png      cabin/headlight/taillight/marker lights
+  renders/viewer_streetlamps.png     streamed lamp glows along sidewalks at
+                                     night
+  renders/viewer_traffic_night.png   cabin/headlight/taillight/marker lights

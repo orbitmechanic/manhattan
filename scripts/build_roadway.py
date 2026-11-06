@@ -28,6 +28,7 @@ MASK = os.path.join(BUILD, "building_mask.png")
 OUT_DIR = os.path.join(ROOT, "viewer", "assets", "models", "roadway_chunks")
 OUT_MANIFEST = os.path.join(ROOT, "viewer", "assets", "models", "roadway_manifest.json")
 OUT_LANES = os.path.join(ROOT, "viewer", "assets", "models", "traffic_lanes.json")
+OUT_INTERSECTIONS = os.path.join(ROOT, "viewer", "assets", "models", "intersections.json")
 FEET = 3.280839895
 LANE_M = 12.0 / FEET
 SIDEWALK_M = 12.0 / FEET
@@ -520,8 +521,9 @@ for members in grid.values():
                 continue
             key = (round(p[0] / 3.0), round(p[1] / 3.0))
             half = max(si[3], sj[3])
+            yaw = math.atan2(si[2][0] - si[1][0], si[2][1] - si[1][1])
             if key not in junctions or half > junctions[key][2]:
-                junctions[key] = (p[0], p[1], half)
+                junctions[key] = (p[0], p[1], half, yaw)
 
 endpoints = []
 for run_index, (run, road_half) in enumerate(runs):
@@ -538,17 +540,25 @@ for run_index, point, road_half in endpoints:
                     continue
                 distance, q = point_segment_distance(point, a, b)
                 if distance <= max(1.6, road_half * 0.45):
+                    yaw = math.atan2(b[0] - a[0], b[1] - a[1])
                     if best is None or distance < best[0]:
-                        best = (distance, q, half)
+                        best = (distance, q, half, yaw)
     if best is not None:
-        _, q, half = best
+        _, q, half, yaw = best
         key = (round(q[0] / 3.0), round(q[1] / 3.0))
         if key not in junctions or half > junctions[key][2]:
-            junctions[key] = (q[0], q[1], half)
+            junctions[key] = (q[0], q[1], half, yaw)
 
-for index, (key, (x, z, half)) in enumerate(junctions.items()):
+for index, (key, (x, z, half, _yaw)) in enumerate(junctions.items()):
     add_disk(asphalt_v, asphalt_f, x, z, min(11.5, half + 0.6),
              ASPHALT_Y + 0.0001 + (index % 31) * 0.000001)
+intersection_rows = [
+    {"x": round(x, 2), "z": round(z, 2), "yaw": round(yaw, 3), "half": round(half, 2)}
+    for x, z, half, yaw in junctions.values()
+]
+with open(OUT_INTERSECTIONS, "w") as handle:
+    json.dump({"intersections": intersection_rows}, handle, separators=(",", ":"))
+print("intersections", len(intersection_rows), "bytes", os.path.getsize(OUT_INTERSECTIONS))
 print("junction patches", len(junctions))
 
 # ---------------------------------------------------------------------------

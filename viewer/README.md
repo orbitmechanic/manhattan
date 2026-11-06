@@ -196,9 +196,10 @@ gridlock, and use an AABB grid to avoid cross-lane overlaps.  A shared emissive
 night-light atlas (cabin windows, headlights, taillights, amber markers and
 emergency bars) turns on at night.
 
-The sun casts cascaded directional shadows on the buildings, ground and road.
-Fog banks, sky sheets, signage, trees, pedestrians and vehicles are
-`NotShadowCaster`; the real building meshes remain the shadow casters.
+Building shadow maps are disabled.  `src/street_furniture.rs` streams
+streetlamps along building sidewalks and traffic signals at exported
+intersections within a 330 m native / 240 m web radius; both turn on at night
+and are despawned as the camera moves.
 
 ### 1 km embellishment cull
 
