@@ -131,7 +131,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/station_lines_completed.json` | 4447 connected building-front + connector centrelines, 192.6 miles (default). |
 | `viewer/assets/models/roadway_chunks/` | 129 x 500 m asphalt + sidewalk tiles generated from the completed baselines. |
 | `viewer/assets/models/roadway_manifest.json` | chunk list with world-space AABBs for the 1 km detail cull. |
-| `viewer/assets/models/building_perimeters.json` | 1,223 block footprints, heights and ground-floor categories. |
+| `viewer/assets/models/building_perimeters.json` | 11,032 building first-floor wall loops, heights, floor heights and facade categories. |
 | `viewer/assets/models/facade_catalog.json` | 600-image facade catalog (150 per category) with atlas tile coordinates. |
 | `viewer/assets/textures/facades/` | four 4096px atlases: storefront, executive, residential, industrial. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
@@ -385,20 +385,29 @@ category) and packs it into four 4096 x 4096 JPEG atlases:
 | `residential` | 150 | row houses and apartment fronts, stoops, fire escapes |
 | `industrial` | 150 | warehouses and factories, roll-up doors, corrugation |
 
-`scripts/build_building_meta.py` exports each block's bottom-3 m convex hull,
-height, centroid and category. Category rules: `height >= 150 m` → executive;
-`height < 45 m` near the waterfront/industrial fringe → industrial;
-`height < 45 m` elsewhere → residential; otherwise storefront.
+`scripts/build_building_meta.py` reads `manhattan_floors.blend`, takes the
+bottom edges of every vertical first-floor wall polygon, and chains them into
+the real exterior wall loop of each building. It exports **11,032 building
+loops** (not block hulls), so facades follow the building outline and do not
+bridge alleys, courtyards or streets. Loops with near-collinear micro-jogs are
+simplified within 0.15 m; the small number of block-sized rows are simplified
+further so each building stays under the 150-image deck.
 
-At startup `viewer/src/storefront.rs` gives every building a **fixed
-per-run** dressing. For each footprint edge it picks one library image from the
-matching category, tiles it to the edge length, and records the image id,
-offset along the edge, repeat count and horizontal scale in
-`StorefrontState`. The assignment is stored once and reused, so a building
-looks the same for the whole session; the seed comes from the system clock
-(native) or `Math.random()` (wasm), so it changes between runs. The quads sit
-0.08 m proud of the block wall, use `ClampToEdge` sampling to avoid atlas
-bleed, and carry a `DetailCull` so they only render inside 1,000 m.
+Category rules use the building height and its block's neighbourhood:
+`height >= 150 m` → executive; `height < 45 m` in an industrial block →
+industrial; `height < 45 m` elsewhere → residential; otherwise storefront.
+
+At startup `viewer/src/storefront.rs` gives every building a **fixed per-run**
+dressing. Each wall loop is divided into panels roughly one catalog image wide
+(8 m storefront, 12 m executive, 6 m residential, 10 m industrial). Panels are
+assigned from a shuffled per-building deck, so **no image repeats around a
+building's perimeter**; each panel records its image id, perimeter offset,
+width and scale in `StorefrontState`. The assignment is stored once and reused,
+so a building looks the same for the whole session; the seed comes from the
+system clock (native) or `Math.random()` (wasm), so it changes between runs.
+The quads sit 0.08 m proud of the first-floor wall, use `ClampToEdge` sampling
+to avoid atlas bleed, and carry a `DetailCull` so they only render inside
+1,000 m.
 
 ### 1 km embellishment cull
 
@@ -521,7 +530,7 @@ blender -b manhattan_blocks.blend --python scripts/build_collision_grid.py
 python3 scripts/build_facade_catalog.py
 
 # 6b6. block footprints, heights and ground-floor categories
-blender -b manhattan_blocks.blend --python scripts/build_building_meta.py
+blender -b manhattan_floors.blend --python scripts/build_building_meta.py
 
 # 6c. after floor-master edits, re-export the city mesh
 blender -b manhattan_floors.blend --python scripts/export_city_mesh.py

@@ -128,13 +128,15 @@ by `../scripts/build_roadway.py`:
 
 `assets/models/facade_catalog.json` describes four 4096px atlases
 (`assets/textures/facades/`) with 150 images each: storefront, executive,
-residential and industrial. `asset/models/building_perimeters.json` carries
-1,223 block footprints, heights and categories.
+residential and industrial. `assets/models/building_perimeters.json` carries
+11,032 building first-floor wall loops, heights, floor heights and categories,
+extracted from the actual `Floor_Block_*` ground-floor wall polygons.
 
-`src/storefront.rs` assigns every building a fixed per-run dressing: one
-library image per footprint edge, tiled to the edge length, with the image id,
-offset, repeat count and scale stored in `StorefrontState`. The seed changes per
-run but the assignment is stable within a run.
+`src/storefront.rs` panelises each wall loop at roughly one image width.
+Panels draw from a shuffled per-building deck, so no image repeats around a
+building's perimeter. Each panel stores its image id, perimeter offset, width
+and scale in `StorefrontState`. The seed changes per run but the assignment is
+stable within a run.
 
 ### 1 km embellishment cull
 
