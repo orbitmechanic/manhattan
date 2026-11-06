@@ -358,7 +358,11 @@ pub fn setup_road_materials(
         }
         if let Some(mut material) = materials.get_mut(&handle.0) {
             material.base_color = if lower.contains("marking") {
-                Color::srgb(0.92, 0.92, 0.88)
+                if lower.contains("yellow") {
+                    Color::srgb(0.95, 0.72, 0.08)
+                } else {
+                    Color::srgb(0.93, 0.93, 0.89)
+                }
             } else if lower.contains("road") {
                 Color::srgb(0.10, 0.10, 0.11)
             } else {
@@ -392,7 +396,11 @@ pub fn update_road_colors(
         }
         if let Some(mut material) = materials.get_mut(&handle.0) {
             let base = if lower.contains("marking") {
-                Vec3::new(0.92, 0.92, 0.88)
+                if lower.contains("yellow") {
+                    Vec3::new(0.95, 0.72, 0.08)
+                } else {
+                    Vec3::new(0.93, 0.93, 0.89)
+                }
             } else if lower.contains("road") {
                 Vec3::new(0.10, 0.10, 0.11)
             } else {

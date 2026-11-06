@@ -369,23 +369,29 @@ checked before construction.
 (plus an AABB manifest), so the viewer can hide pavement beyond the 1 km
 embellishment radius:
 
-- **12-ft lane width**; lane count is inferred per station from the clear
-  building corridor and clamped to 1–4 lanes.
-- **12-ft concrete sidewalks** on both sides; they shrink only where a building
-  corridor is too narrow.
+- **12-ft nominal lane width**; the remaining traffic area is divided into an
+  even 2–6 lanes, with a double yellow centreline.
+- **12-ft concrete sidewalks** aligned to the building faces; they stop at
+  open intersections where no building is within the corridor cap.
 - Asphalt is dark grey, sidewalk concrete light grey, with a 0.14 m curb face.
-- Widths are sampled against the building mask, so pavement never crosses a
-  footprint.
+- Pavement extends to the measured building perimeters instead of using a
+  constant ribbon width.
 - 4,445 baselines split into 4,472 free street runs; only 18 runs shorter
   than 4 m are omitted.
-- Constant width per run: sidewalk space is reserved first, then the rest is
-  spent on whole 12-ft lanes, so a 20 m corridor is 3 lanes + sidewalks rather
-  than 4 lanes + full sidewalks.
-- Mitred joins keep bends crack-free; 4,524 asphalt junction patches fill
+- Pavement now fills the **full building-to-building corridor**: the actual
+  clearance is measured on each side of every centreline vertex (capped at
+  15 m half-width in open intersections/plazas).
+- The outer **12 ft** of each side is sidewalk aligned to the building face;
+  the remaining space is divided into an even number of traffic lanes
+  (2–6), each close to 12 ft.  Where the clearance hits the cap there is no
+  building, so the sidewalk stops and the intersection stays asphalt.
+- Markings: solid white edge lines, white dashed lane dividers, and a
+  **double yellow centreline** with a 0.24 m gap.
+- Mitred joins keep bends crack-free; 5,908 asphalt junction patches fill
   crossings and T-junctions.
-- Geometry: 88,290 asphalt triangles, 104,304 sidewalk triangles and 185,676
-  white edge/centre-line triangles.
-- 128 tiles of 500 m (27.7 MB); each scene root gets a `DetailCull` AABB and
+- Geometry: 104,898 asphalt triangles, 60,220 sidewalk triangles, 122,892
+  white markings and 68,004 yellow markings.
+- 130 tiles of 500 m (25.8 MB); each scene root gets a `DetailCull` AABB and
   is hidden once the camera is more than 1,000 m from it.
 - `--view close` provides a low street-level inspection camera.
 - `renders/viewer_roadway_close.png` shows the result.

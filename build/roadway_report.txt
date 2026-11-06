@@ -22,44 +22,52 @@ Centreline cleanup
   - final connectors are routed through the free-space cost field.
 
 Road geometry
-  lane width:             12 ft (3.6576 m)
-  sidewalk width:         12 ft (3.6576 m), allocated before lanes
-  lane count:             1..4; from the 15th-percentile clear corridor
+  lane width:             12 ft nominal (remaining width / even lane count)
+  sidewalk width:         12 ft (3.6576 m) max, aligned to building face
+  lane count:             even 2..6, from median clear corridor
   curb height:            0.14 m
   asphalt elevation:      0.05 m + tiny per-line offset
   sidewalk top:           0.19 m + tiny per-line offset
   street runs:            4,472 free runs from 4,445 lines
   dropped runs:           18 (shorter than 4 m)
-  junction patches:       4,524 filled asphalt disks
-  asphalt triangles:      88,290
-  sidewalk triangles:     104,304
-  marking triangles:      185,676
-  roadway tiles:          128 x 500 m
-  total size:             27.7 MB
+  junction patches:       5,908 filled asphalt disks
+  asphalt triangles:      104,898
+  sidewalk triangles:     60,220
+  white marking triangles:122,892
+  yellow marking triangles:68,004
+  roadway tiles:          130 x 500 m
+  total size:             25.8 MB
   output:                 viewer/assets/models/roadway_chunks/
   manifest:               viewer/assets/models/roadway_manifest.json
 
 Method
   - Split each baseline into free runs at building footprints instead of
     discarding the whole line; keep runs down to 4 m.
-  - Choose one width per run: reserve sidewalk space first
-    (min(12 ft, max(1.5 m, 15% of corridor))), then spend the rest on whole
-    12-ft lanes.  This prevents a 20 m corridor from becoming four lanes plus
-    two full sidewalks.
+  - Measure the actual building clearance on each side of every centreline
+    vertex.  The asphalt/sidewalk corridor now runs all the way to the
+    building perimeters, capped at 15 m half-width in open intersections and
+    plazas.
+  - The outer 12 ft of each corridor side is sidewalk, aligned to the building
+    face.  Where the scan hits the 15 m cap there is no building on that side,
+    so the sidewalk is omitted and the intersection remains open asphalt.
+  - Traffic lanes split the remaining space evenly.  The lane count is kept
+    even (2-6 lanes) so the double yellow is a true centreline; lane width is
+    road_width / lanes, close to 12 ft on normal streets.
   - Build continuous cross-sections with mitred joins, so bends have no
     cracks or width waves.  A miter scale is clamped to 2.5 to avoid spikes.
   - Emit asphalt, sidewalk tops and vertical curb faces from the same
     cross-sections.
   - Fill every crossing/T-junction with an asphalt disk sized to the wider
     road, so intersections are continuous and do not show star-shaped gaps.
-  - Paint solid white edge lines on multi-lane streets and dashed centre
-    lines on 2+ lane streets.  Markings sit 4.5 mm above the asphalt and are
-    chunked with the road.
+  - Mark: solid white edge lines, white dashed lane dividers, and a double
+    yellow centreline with a 0.24 m gap.  Markings sit 4.5 mm above the
+    asphalt and are chunked with the road.
 
 Materials
   Road_Asphalt:        dark grey (0.10, 0.10, 0.11), unlit, roughness 0.92
   Sidewalk_Concrete:   light grey (0.78, 0.78, 0.75), unlit, roughness 0.86
-  Road_Marking_White:  warm white (0.92, 0.92, 0.88), unlit
+  Road_Marking_White:  warm white (0.93, 0.93, 0.89), unlit
+  Road_Marking_Yellow: traffic yellow (0.95, 0.72, 0.08), unlit
   All three are tinted by daylight in update_road_colors.
 
 Viewer

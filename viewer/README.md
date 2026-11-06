@@ -118,13 +118,15 @@ signal placement.
 `assets/models/roadway_chunks/` is generated from the completed centreline set
 by `../scripts/build_roadway.py`:
 
-- 12-ft lanes; lane count follows the building corridor (1–4 lanes).
-- 12-ft concrete sidewalks, with a 0.14 m curb face.
-- Dark-grey asphalt and light-grey concrete; widths are clipped by the building
-  mask so pavement does not cross a footprint.
-- 128 x 500 m tiles; `roadway_manifest.json` supplies each tile's AABB.
-- Constant width per street run, mitred joins, 4,524 junction patches, white
-  edge lines and dashed centre lines.
+- Pavement fills the full building-to-building corridor, measured at every
+  centreline vertex and capped at 15 m half-width in open intersections.
+- 12-ft concrete sidewalks aligned to the building perimeters, with a 0.14 m
+  curb face; sidewalks stop at open intersections.
+- Traffic lanes split the remaining space into an even 2–6 lanes close to
+  12 ft, with a double yellow centreline, dashed white lane dividers and
+  solid white edge lines.
+- 130 x 500 m tiles; `roadway_manifest.json` supplies each tile's AABB.
+- Mitred joins and 5,908 junction patches.
 - `--view close` is a low street-level inspection camera.
 
 ### Ground-floor facades
