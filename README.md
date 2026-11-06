@@ -573,8 +573,9 @@ exported with the roadway:
 - `viewer/assets/textures/vehicles/vehicle_night_atlas.png` supplies warm cabin
   windows, white headlights, red taillights, amber markers and emergency bars.
   The light meshes have per-face atlas UVs; one shared emissive material turns
-  the texture on at night, and the vehicle bodies get a subtle emissive lift so
-  their silhouettes remain readable.  Far proxies carry a roof light too.
+  the texture on at night.  Vehicle bodies switch to an unlit vertex-coloured
+  presentation, dimmed to 0.72, so each vehicle keeps its own muted paint colour
+  instead of washing to a uniform grey.  Far proxies carry a roof light too.
 
 ### Streetlamps and traffic signals
 

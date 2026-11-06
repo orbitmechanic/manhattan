@@ -260,16 +260,16 @@ fn finish_mesh(
 
 fn civilian_palette() -> [[f32; 4]; 10] {
     [
-        [0.28, 0.30, 0.33, 1.0],
-        [0.42, 0.42, 0.40, 1.0],
-        [0.20, 0.23, 0.26, 1.0],
-        [0.36, 0.31, 0.28, 1.0],
-        [0.23, 0.28, 0.32, 1.0],
-        [0.45, 0.44, 0.40, 1.0],
-        [0.30, 0.34, 0.30, 1.0],
-        [0.40, 0.33, 0.25, 1.0],
-        [0.18, 0.20, 0.22, 1.0],
-        [0.50, 0.48, 0.43, 1.0],
+        [0.44, 0.10, 0.08, 1.0], // muted red
+        [0.10, 0.18, 0.38, 1.0], // navy
+        [0.10, 0.30, 0.16, 1.0], // forest green
+        [0.38, 0.26, 0.10, 1.0], // ochre
+        [0.08, 0.30, 0.32, 1.0], // teal
+        [0.30, 0.12, 0.28, 1.0], // plum
+        [0.45, 0.38, 0.22, 1.0], // sand
+        [0.16, 0.17, 0.19, 1.0], // charcoal
+        [0.52, 0.38, 0.14, 1.0], // amber
+        [0.30, 0.31, 0.34, 1.0], // slate grey
     ]
 }
 
@@ -1258,10 +1258,16 @@ pub fn update_vehicle_lights(
         };
     }
     if let Some(mut material) = materials.get_mut(&catalog.body_material) {
-        material.emissive = if on {
-            LinearRgba::rgb(0.075, 0.080, 0.10)
+        // No uniform emissive tint: it washed every vehicle to the same grey.
+        // At night the body is unlit so its vertex-coloured paint remains
+        // readable and keeps each vehicle's own colour; by day it returns to
+        // normal PBR lighting.
+        material.emissive = LinearRgba::BLACK;
+        material.unlit = on;
+        material.base_color = if on {
+            Color::srgb(0.72, 0.72, 0.72)
         } else {
-            LinearRgba::BLACK
+            Color::WHITE
         };
     }
 }

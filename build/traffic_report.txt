@@ -13,7 +13,8 @@ Catalog
   dimensions and cabin proportions vary per variant.  Emergency vehicles use
   white/red, fire-red and police dark/white schemes with roof light bars.
   One shared white body material (vertex colours) and one shared emissive
-  lights material.  Both are double-sided so every vehicle is a closed solid
+  lights material.  The civilian palette is ten distinct muted hues (red,
+  navy, forest, ochre, teal, plum, sand, charcoal, amber, slate).  Both are double-sided so every vehicle is a closed solid
   from every viewing angle, not a facade.
 
 Lane network

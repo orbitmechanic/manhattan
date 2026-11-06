@@ -194,7 +194,8 @@ solid far-proxy boxes beyond, all at 85% occupancy.  Vehicles are double-sided
 solids, align to the lane, keep clear of sidewalks, creep forward unevenly in
 gridlock, and use an AABB grid to avoid cross-lane overlaps.  A shared emissive
 night-light atlas (cabin windows, headlights, taillights, amber markers and
-emergency bars) turns on at night.
+emergency bars) turns on at night.  Body paint is preserved at night with an
+unlit, dimmed vertex-colour presentation rather than a uniform grey emissive.
 
 Building shadow maps are disabled.  `src/street_furniture.rs` streams
 streetlamps along building sidewalks and traffic signals at exported
