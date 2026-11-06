@@ -13,7 +13,8 @@ Catalog
   dimensions and cabin proportions vary per variant.  Emergency vehicles use
   white/red, fire-red and police dark/white schemes with roof light bars.
   One shared white body material (vertex colours) and one shared emissive
-  lights material.
+  lights material.  Both are double-sided so every vehicle is a closed solid
+  from every viewing angle, not a facade.
 
 Lane network
   Exported by scripts/build_roadway.py to
@@ -23,13 +24,16 @@ Lane network
   centreline.  Each lane carries its width and length.
 
 Streaming
-  - Lanes within 220 m (150 m web) of the camera are populated; distant lanes
-    are despawned.  Only the active lane/vehicle set is kept.
-  - Visible limits: 1,200 vehicles native / 600 web.
-  - Each lane is filled to 85% occupancy (vehicle lengths plus 0.7 m gaps).
-  - Vehicles are selected from the catalog at spawn and rejected if their
-    width plus 0.35 m does not fit the lane, so they stay off the 12-ft
-    sidewalk tracks.
+  - Traffic now covers the same 1,000 m radius as the roadway.
+  - Within 250 m native / 180 m web, lanes are populated with individually
+    animated vehicles (limits 1,200 / 600).
+  - Beyond the near radius, each lane is filled with a merged far-proxy mesh
+    of simple solid vehicle boxes to 85% occupancy, so every visible road is
+    covered out to 1 km.  Proxies are despawned when the lane leaves range.
+  - Only the active near-lane, far-proxy and vehicle sets are kept.
+  - Each near lane is filled to 85% occupancy (vehicle lengths plus 0.7 m
+    gaps).  Vehicles are rejected if their width plus 0.35 m does not fit the
+    lane, so they stay off the 12-ft sidewalk tracks.
 
 Movement / gridlock
   - Vehicles are always aligned to the lane tangent with only +/-0.03 rad of
@@ -40,7 +44,8 @@ Movement / gridlock
     keeps the flow uneven.
   - A 6 m spatial grid of vehicle AABBs blocks cross-lane moves at
     intersections, so vehicles never overlap.
-  - The normal state is dense gridlock.
+  - The normal state is dense gridlock.  Far proxies are static merged solid
+    boxes, so the distant road remains filled without per-vehicle updates.
 
 Lights
   Headlight boxes and side cabin-light strips use one shared emissive

@@ -188,11 +188,12 @@ vertical corner banners.
 
 `src/traffic.rs` streams 150 low-poly vehicle variants (30 each of
 tractor-trailer, cargo van, SUV, sedan and emergency) from the lane centrelines
-in `assets/models/traffic_lanes.json`.  Lanes within 220 m (150 m web) are
-filled to 85% occupancy up to 1,200 vehicles (600 web); vehicles align to the
-lane, keep clear of sidewalks, creep forward unevenly in gridlock, and use an
-AABB grid to avoid cross-lane overlaps.  Shared emissive lights turn on at
-night.
+in `assets/models/traffic_lanes.json`.  Traffic covers the full 1,000 m roadway
+radius: individually animated vehicles within 250 m (180 m web) and merged
+solid far-proxy boxes beyond, all at 85% occupancy.  Vehicles are double-sided
+solids, align to the lane, keep clear of sidewalks, creep forward unevenly in
+gridlock, and use an AABB grid to avoid cross-lane overlaps.  Shared emissive
+lights turn on at night.
 
 ### 1 km embellishment cull
 

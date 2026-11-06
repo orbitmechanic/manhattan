@@ -554,12 +554,16 @@ exported with the roadway:
   schemes.
 - Spawn shares: **10% tractor-trailer, 20% cargo van, 40% SUV, 20% sedan,
   10% emergency**.
-- Lanes within 220 m native / 150 m web are filled to **85% occupancy**;
-  1,200 vehicles native / 600 web are kept active.  Vehicles are despawned
-  when their lane leaves the radius.
+- Traffic covers the same **1,000 m radius as the roadway**.  Within 250 m
+  native / 180 m web, lanes use individually animated vehicles at **85%
+  occupancy** (1,200 / 600 active).  Beyond that, each lane gets a merged
+  far-proxy mesh of solid vehicle boxes at 85% occupancy, so every visible
+  road is covered out to 1 km.  Proxies and near vehicles are despawned as
+  lanes leave range.
 - Vehicles align to the lane tangent (parallel to the road, perpendicular to
   adjacent building faces), are rejected if they do not fit inside the lane,
-  and therefore stay off the 12-ft sidewalk tracks.
+  and therefore stay off the 12-ft sidewalk tracks.  Body and light materials
+  are double-sided, so each vehicle is a closed solid from any angle.
 - Gridlock movement: small creep moves only when space opens, with a
   per-vehicle stop/go oscillator.  A spatial grid of AABBs prevents
   cross-lane overlaps at intersections.

@@ -19,15 +19,22 @@ use crate::{camera::FlyCamera, environment::Environment};
 
 const LANE_DATA: &str = include_str!("../assets/models/traffic_lanes.json");
 
-#[cfg(target_arch = "wasm32")]
-const TRAFFIC_RADIUS: f32 = 150.0;
-#[cfg(not(target_arch = "wasm32"))]
-const TRAFFIC_RADIUS: f32 = 220.0;
+const TRAFFIC_RADIUS: f32 = 1_000.0;
 
 #[cfg(target_arch = "wasm32")]
-const MAX_VEHICLES: usize = 600;
+const NEAR_TRAFFIC_RADIUS: f32 = 180.0;
 #[cfg(not(target_arch = "wasm32"))]
-const MAX_VEHICLES: usize = 1_200;
+const NEAR_TRAFFIC_RADIUS: f32 = 250.0;
+
+#[cfg(target_arch = "wasm32")]
+const MAX_NEAR_VEHICLES: usize = 600;
+#[cfg(not(target_arch = "wasm32"))]
+const MAX_NEAR_VEHICLES: usize = 1_200;
+
+#[cfg(target_arch = "wasm32")]
+const MAX_PROXIES: usize = 2_000;
+#[cfg(not(target_arch = "wasm32"))]
+const MAX_PROXIES: usize = 3_000;
 
 const OCCUPANCY: f32 = 0.85;
 const VEHICLE_GAP: f32 = 0.7;
@@ -127,6 +134,8 @@ struct VehicleVariant {
     lights: Handle<Mesh>,
     length: f32,
     width: f32,
+    height: f32,
+    body_color: [f32; 4],
     kind: VehicleKind,
 }
 
@@ -140,6 +149,7 @@ pub struct VehicleCatalog {
 #[derive(Resource, Default)]
 pub struct Traffic {
     active: HashMap<usize, Vec<Entity>>,
+    proxies: HashMap<usize, Entity>,
     last_check: f32,
 }
 
@@ -257,7 +267,11 @@ fn civilian_palette() -> [[f32; 4]; 10] {
     ]
 }
 
-fn vehicle_and_lights(kind: VehicleKind, index: usize, seed: &mut u32) -> (Mesh, Mesh, f32, f32) {
+fn vehicle_and_lights(
+    kind: VehicleKind,
+    index: usize,
+    seed: &mut u32,
+) -> (Mesh, Mesh, f32, f32, f32, [f32; 4]) {
     let palette = civilian_palette();
     let mut color = palette[(next_rand(seed) * palette.len() as f32) as usize % palette.len()];
     let (mut length, mut width, mut height) = match kind {
@@ -476,6 +490,8 @@ fn vehicle_and_lights(kind: VehicleKind, index: usize, seed: &mut u32) -> (Mesh,
         finish_mesh(lv, ln, None, li),
         length,
         width,
+        height,
+        color,
     )
 }
 
@@ -488,12 +504,16 @@ pub fn setup_vehicle_catalog(
         base_color: Color::WHITE,
         metallic: 0.15,
         perceptual_roughness: 0.55,
+        double_sided: true,
+        cull_mode: None,
         ..default()
     });
     let lights_material = materials.add(StandardMaterial {
         base_color: Color::BLACK,
         emissive: LinearRgba::BLACK,
         perceptual_roughness: 0.4,
+        double_sided: true,
+        cull_mode: None,
         ..default()
     });
     let mut seed = 0x7E31_C1E5u32;
@@ -506,12 +526,15 @@ pub fn setup_vehicle_catalog(
         VehicleKind::Emergency,
     ] {
         for index in 0..30 {
-            let (body, lights, length, width) = vehicle_and_lights(kind, index, &mut seed);
+            let (body, lights, length, width, height, body_color) =
+                vehicle_and_lights(kind, index, &mut seed);
             variants.push(VehicleVariant {
                 body: meshes.add(body),
                 lights: meshes.add(lights),
                 length,
                 width,
+                height,
+                body_color,
                 kind,
             });
         }
@@ -612,12 +635,169 @@ fn vehicle_aabb(x: f32, z: f32, yaw: f32, length: f32, width: f32) -> (f32, f32,
     (x - ex, x + ex, z - ez, z + ez)
 }
 
+#[allow(clippy::too_many_arguments)]
+fn add_box_yaw(
+    verts: &mut Vec<[f32; 3]>,
+    normals: &mut Vec<[f32; 3]>,
+    colors: &mut Vec<[f32; 4]>,
+    indices: &mut Vec<u32>,
+    center: Vec3,
+    half: Vec3,
+    yaw: f32,
+    color: [f32; 4],
+) {
+    let (sin, cos) = yaw.sin_cos();
+    let rotate = |p: Vec3| {
+        Vec3::new(
+            center.x + p.x * cos + p.z * sin,
+            center.y + p.y,
+            center.z - p.x * sin + p.z * cos,
+        )
+    };
+    let p = [
+        rotate(Vec3::new(-half.x, -half.y, -half.z)),
+        rotate(Vec3::new(half.x, -half.y, -half.z)),
+        rotate(Vec3::new(half.x, half.y, -half.z)),
+        rotate(Vec3::new(-half.x, half.y, -half.z)),
+        rotate(Vec3::new(-half.x, -half.y, half.z)),
+        rotate(Vec3::new(half.x, -half.y, half.z)),
+        rotate(Vec3::new(half.x, half.y, half.z)),
+        rotate(Vec3::new(-half.x, half.y, half.z)),
+    ];
+    for (a, b, c, d) in [
+        (0, 1, 2, 3),
+        (5, 4, 7, 6),
+        (4, 0, 3, 7),
+        (1, 5, 6, 2),
+        (3, 2, 6, 7),
+        (4, 5, 1, 0),
+    ] {
+        push_quad_color(
+            verts,
+            normals,
+            colors,
+            indices,
+            p[a].to_array(),
+            p[b].to_array(),
+            p[c].to_array(),
+            p[d].to_array(),
+            color,
+        );
+    }
+}
+
+fn proxy_mesh(lane: &LaneData, catalog: &VehicleCatalog, seed: &mut u32) -> Option<(Mesh, Mesh)> {
+    let mut bv = Vec::new();
+    let mut bn = Vec::new();
+    let mut bc = Vec::new();
+    let mut bi = Vec::new();
+    let mut lv = Vec::new();
+    let mut ln = Vec::new();
+    let mut lc = Vec::new();
+    let mut li = Vec::new();
+    let mut cursor = 1.2;
+    let limit = lane.length * OCCUPANCY;
+    let window = [0.07, 0.08, 0.10, 1.0];
+    while cursor < limit {
+        let mut variant = None;
+        for _ in 0..10 {
+            let kind = choose_kind(seed);
+            if let Some(index) = choose_variant(catalog, kind, lane.width, seed) {
+                variant = Some(index);
+                break;
+            }
+        }
+        let Some(index) = variant else {
+            break;
+        };
+        let v = &catalog.variants[index];
+        let length = v.length;
+        if cursor + length > limit {
+            break;
+        }
+        let center_s = cursor + length * 0.5;
+        let (point, tangent) = lane_sample(lane, center_s);
+        let yaw = tangent[0].atan2(tangent[1]);
+        let center = Vec3::new(point[0], 0.07 + v.height * 0.5, point[1]);
+        add_box_yaw(
+            &mut bv,
+            &mut bn,
+            &mut bc,
+            &mut bi,
+            center,
+            Vec3::new(v.width * 0.5, v.height * 0.5, length * 0.5),
+            yaw,
+            v.body_color,
+        );
+        add_box_yaw(
+            &mut bv,
+            &mut bn,
+            &mut bc,
+            &mut bi,
+            Vec3::new(point[0], 0.07 + v.height * 0.72, point[1]),
+            Vec3::new(v.width * 0.42, v.height * 0.18, length * 0.22),
+            yaw,
+            window,
+        );
+        // One forward-facing light box; enough to read as traffic at 0.25-1 km.
+        let front = Vec3::new(point[0], 0.07 + v.height * 0.42, point[1])
+            + Vec3::new(tangent[0], 0.0, tangent[1]) * (length * 0.5);
+        add_box_yaw(
+            &mut lv,
+            &mut ln,
+            &mut lc,
+            &mut li,
+            front,
+            Vec3::new(v.width * 0.22, 0.08, 0.06),
+            yaw,
+            [1.0, 1.0, 1.0, 1.0],
+        );
+        cursor += length + VEHICLE_GAP;
+    }
+    if bi.is_empty() {
+        return None;
+    }
+    Some((
+        finish_mesh(bv, bn, Some(bc), bi),
+        finish_mesh(lv, ln, None, li),
+    ))
+}
+
+fn spawn_proxy(
+    commands: &mut Commands,
+    meshes: &mut Assets<Mesh>,
+    catalog: &VehicleCatalog,
+    lane: &LaneData,
+    lane_index: usize,
+    seed: &mut u32,
+) -> Option<Entity> {
+    let (body, lights) = proxy_mesh(lane, catalog, seed)?;
+    let entity = commands
+        .spawn((
+            Name::new(format!("TrafficProxy_{lane_index}")),
+            Mesh3d(meshes.add(body)),
+            MeshMaterial3d(catalog.body_material.clone()),
+            Transform::IDENTITY,
+            Visibility::Inherited,
+        ))
+        .id();
+    commands.entity(entity).with_children(|parent| {
+        parent.spawn((
+            Mesh3d(meshes.add(lights)),
+            MeshMaterial3d(catalog.lights_material.clone()),
+            Transform::IDENTITY,
+        ));
+    });
+    Some(entity)
+}
+
 pub fn stream_traffic(
     mut commands: Commands,
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
     lanes: Res<TrafficLanes>,
     catalog: Res<VehicleCatalog>,
+    mut meshes: ResMut<Assets<Mesh>>,
     mut traffic: ResMut<Traffic>,
 ) {
     let now = time.elapsed_secs();
@@ -635,65 +815,98 @@ pub fn stream_traffic(
             let dx = point[0] - cam.x;
             let dz = point[1] - cam.z;
             let distance = (dx * dx + dz * dz).sqrt();
-            (distance <= TRAFFIC_RADIUS + lane.length * 0.5).then_some((distance, index))
+            (distance <= TRAFFIC_RADIUS).then_some((distance, index))
         })
         .collect();
     near.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let near_ids: std::collections::HashSet<usize> = near
+        .iter()
+        .filter(|(distance, _)| *distance <= NEAR_TRAFFIC_RADIUS)
+        .map(|(_, id)| *id)
+        .collect();
+    let within_ids: std::collections::HashSet<usize> = near.iter().map(|(_, id)| *id).collect();
 
-    let near_ids: std::collections::HashSet<usize> = near.iter().map(|(_, id)| *id).collect();
-    let far: Vec<usize> = traffic
+    let far_active: Vec<usize> = traffic
         .active
         .keys()
         .copied()
         .filter(|id| !near_ids.contains(id))
         .collect();
-    for id in far {
+    for id in far_active {
         if let Some(entities) = traffic.active.remove(&id) {
             for entity in entities {
                 commands.entity(entity).despawn();
             }
         }
     }
+    let far_proxies: Vec<usize> = traffic
+        .proxies
+        .keys()
+        .copied()
+        .filter(|id| !within_ids.contains(id) || near_ids.contains(id))
+        .collect();
+    for id in far_proxies {
+        if let Some(entity) = traffic.proxies.remove(&id) {
+            commands.entity(entity).despawn();
+        }
+    }
+
     let mut count: usize = traffic.active.values().map(|list| list.len()).sum();
     let mut seed = (now * 1000.0) as u32 ^ 0x7A3F_5EED;
-
-    for (_, lane_id) in near {
-        if traffic.active.contains_key(&lane_id) {
-            continue;
-        }
-        let lane = &lanes.lanes[lane_id];
-        let mut entities = Vec::new();
-        let mut cursor = 1.2;
-        let limit = lane.length * OCCUPANCY;
-        while cursor < limit && count < MAX_VEHICLES {
-            let mut variant = None;
-            for _ in 0..12 {
-                let kind = choose_kind(&mut seed);
-                if let Some(index) = choose_variant(&catalog, kind, lane.width, &mut seed) {
-                    variant = Some(index);
+    for (distance, lane_id) in near {
+        if distance <= NEAR_TRAFFIC_RADIUS {
+            if let Some(entity) = traffic.proxies.remove(&lane_id) {
+                commands.entity(entity).despawn();
+            }
+            if traffic.active.contains_key(&lane_id) {
+                continue;
+            }
+            let lane = &lanes.lanes[lane_id];
+            let mut entities = Vec::new();
+            let mut cursor = 1.2;
+            let limit = lane.length * OCCUPANCY;
+            while cursor < limit && count < MAX_NEAR_VEHICLES {
+                let mut variant = None;
+                for _ in 0..12 {
+                    let kind = choose_kind(&mut seed);
+                    if let Some(index) = choose_variant(&catalog, kind, lane.width, &mut seed) {
+                        variant = Some(index);
+                        break;
+                    }
+                }
+                let Some(variant_index) = variant else {
+                    break;
+                };
+                let length = catalog.variants[variant_index].length;
+                if cursor + length > limit {
+                    break;
+                }
+                let center = cursor + length * 0.5;
+                if let Some(entity) =
+                    spawn_vehicle(&mut commands, &catalog, lane, lane_id, center, &mut seed)
+                {
+                    entities.push(entity);
+                    count += 1;
+                    cursor += length + VEHICLE_GAP;
+                } else {
                     break;
                 }
             }
-            let Some(variant_index) = variant else {
-                break;
-            };
-            let length = catalog.variants[variant_index].length;
-            if cursor + length > limit {
-                break;
+            if !entities.is_empty() {
+                traffic.active.insert(lane_id, entities);
             }
-            let center = cursor + length * 0.5;
-            if let Some(entity) =
-                spawn_vehicle(&mut commands, &catalog, lane, lane_id, center, &mut seed)
-            {
-                entities.push(entity);
-                count += 1;
-                cursor += length + VEHICLE_GAP;
-            } else {
-                break;
-            }
-        }
-        if !entities.is_empty() {
-            traffic.active.insert(lane_id, entities);
+        } else if !traffic.proxies.contains_key(&lane_id)
+            && traffic.proxies.len() < MAX_PROXIES
+            && let Some(entity) = spawn_proxy(
+                &mut commands,
+                &mut meshes,
+                &catalog,
+                &lanes.lanes[lane_id],
+                lane_id,
+                &mut seed,
+            )
+        {
+            traffic.proxies.insert(lane_id, entity);
         }
     }
 }
