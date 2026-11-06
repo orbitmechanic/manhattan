@@ -74,9 +74,9 @@ New York (EST).  `src/environment.rs` turns those into:
 ### Floors, full geometry and fog culling
 
 - `manhattan_floors.blend` cuts each block into 3-unit floor bands.  Walls use
-  one-floor facade crops (`Textures/day/floors` + `night/floors`) with
-  V=0..1 per floor and a 12-unit U module; roofs use an 8-unit world-space
-  roof tile.
+  V=0..1 per floor and a 12-unit U module; the shader overrides the ten legacy
+  one-floor crops with the 320-template upper-floor atlas.  Roof UVs keep an
+  8-unit world tile and the shader maps them to a 16-unit roof-atlas module.
 - `VisibilityRange` culls the **real** block meshes at
   `clamp(fog_visibility*1.05, 2.5..24 km)`.  There are no merged regions or
   box proxies: geometry is never modified for rendering speed.  Ground has no

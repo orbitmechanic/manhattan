@@ -281,11 +281,13 @@ Evidence: `renders/blocks_overlay.png`, `renders/blocks_ground_voronoi.png`,
 - **739,616** floor-band faces across 1223 block objects.
 - Facade walls map `V = 0..1` inside each floor and repeat `U` around the wall
   with a **12-unit window module**.
-- Each facade material has a **one-floor texture**: a single window-row crop of
-  the original day/night facade, in `Textures/day/floors/` and
-  `Textures/night/floors/`.
-- Roofs use the roof texture at a **world-space 8-unit tile**, so the gravel /
-  concrete scale is human.
+- Each facade material still carries a **one-floor texture** (a single
+  window-row crop in `Textures/day/floors/` and `Textures/night/floors/`), but
+  the viewer now overrides those ten legacy crops with the 320-template
+  per-building upper-floor atlas described below.
+- Roof UVs remain a **world-space 8-unit tile**; the shader maps them to a
+  16-unit roof-atlas module by scaling the UV by 0.5, so gardens, pools and
+  equipment appear at human scale.
 - A FACE attribute `floor` records the floor index.  The helper
   `scripts/separate_block_floors.py` turns the active block's floor bands into
   individual `Block_XXXX_Floor_NN` objects for detailed editing; the viewer
