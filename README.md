@@ -654,7 +654,7 @@ affected presentation and is already reflected in the script.
   blur active, collision grid loaded and resolved, stationing imagery 2041 /
   fronts 2460 / completed 4445 lines with matching camera arrays, camera clamp
   at y=3, hour-wrap date correct.
-- `viewer` tests: **45 passed**, including station/offset sign projection and
+- `viewer` tests: **50 passed**, including station/offset sign projection and
   station data loading, camera collision/slide maths, one-floor texture paths,
   fog-cull distance, the actual Bevy fly camera system, calendar keys, mixed
   flicker/fade re-randomisation, Gaussian thresholds and per-date twilight
