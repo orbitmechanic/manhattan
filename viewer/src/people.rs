@@ -11,6 +11,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use bevy::{
     asset::RenderAssetUsages,
     image::{ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor},
+    light::NotShadowCaster,
     math::Affine2,
     mesh::{Indices, PrimitiveTopology},
     prelude::*,
@@ -603,6 +604,7 @@ fn spawn_walker(
 
     let entity = commands
         .spawn((
+            NotShadowCaster,
             Name::new(format!("Pedestrian_{}", building.id)),
             root_transform,
             Visibility::Inherited,
@@ -625,22 +627,26 @@ fn spawn_walker(
 
     commands.entity(entity).with_children(|p| {
         p.spawn((
+            NotShadowCaster,
             Mesh3d(torso),
             MeshMaterial3d(shirt),
             Transform::from_xyz(0.0, 1.18, 0.0),
         ));
         p.spawn((
+            NotShadowCaster,
             Mesh3d(catalog.head.clone()),
             MeshMaterial3d(skin),
             Transform::from_xyz(0.0, 1.58, 0.0),
         ));
         p.spawn((
+            NotShadowCaster,
             Mesh3d(hair_mesh),
             MeshMaterial3d(hair),
             Transform::from_xyz(0.0, 1.63, 0.0),
         ));
         if wear_hat {
             p.spawn((
+                NotShadowCaster,
                 Mesh3d(catalog.hat.clone()),
                 MeshMaterial3d(hat),
                 Transform::from_xyz(0.0, 1.73, 0.0),
@@ -648,6 +654,7 @@ fn spawn_walker(
         }
         if wear_skirt {
             p.spawn((
+                NotShadowCaster,
                 Mesh3d(catalog.skirt.clone()),
                 MeshMaterial3d(skirt),
                 Transform::from_xyz(0.0, 0.96, 0.0),
@@ -655,12 +662,14 @@ fn spawn_walker(
         }
         if wear_bag {
             p.spawn((
+                NotShadowCaster,
                 Mesh3d(catalog.bag.clone()),
                 MeshMaterial3d(bag),
                 Transform::from_xyz(0.23, 1.02, 0.02),
             ));
         }
         p.spawn((
+            NotShadowCaster,
             Mesh3d(catalog.arm.clone()),
             MeshMaterial3d(arms.clone()),
             Transform::from_xyz(-shoulder, 1.35, 0.0),
@@ -671,6 +680,7 @@ fn spawn_walker(
             },
         ));
         p.spawn((
+            NotShadowCaster,
             Mesh3d(catalog.arm.clone()),
             MeshMaterial3d(arms),
             Transform::from_xyz(shoulder, 1.35, 0.0),
@@ -681,6 +691,7 @@ fn spawn_walker(
             },
         ));
         p.spawn((
+            NotShadowCaster,
             Mesh3d(catalog.leg.clone()),
             MeshMaterial3d(pants.clone()),
             Transform::from_xyz(-0.09, 0.88, 0.0),
@@ -691,6 +702,7 @@ fn spawn_walker(
             },
         ));
         p.spawn((
+            NotShadowCaster,
             Mesh3d(catalog.leg.clone()),
             MeshMaterial3d(pants),
             Transform::from_xyz(0.09, 0.88, 0.0),
@@ -726,6 +738,7 @@ fn spawn_homeless(
     let hair = pick(&catalog.hairs, seed);
     let entity = commands
         .spawn((
+            NotShadowCaster,
             Name::new(format!("Homeless_{}", building.id)),
             Transform::from_xyz(point[0], 0.02, point[1])
                 .with_rotation(Quat::from_rotation_y(yaw))
@@ -736,16 +749,19 @@ fn spawn_homeless(
         .id();
     commands.entity(entity).with_children(|p| {
         p.spawn((
+            NotShadowCaster,
             Mesh3d(catalog.prone_body.clone()),
             MeshMaterial3d(body),
             Transform::IDENTITY,
         ));
         p.spawn((
+            NotShadowCaster,
             Mesh3d(catalog.head.clone()),
             MeshMaterial3d(skin),
             Transform::from_xyz(0.0, 0.22, 0.80),
         ));
         p.spawn((
+            NotShadowCaster,
             Mesh3d(catalog.hair_male.clone()),
             MeshMaterial3d(hair),
             Transform::from_xyz(0.0, 0.27, 0.82),

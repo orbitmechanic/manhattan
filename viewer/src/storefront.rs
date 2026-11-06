@@ -15,6 +15,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use bevy::{
     asset::RenderAssetUsages,
     image::{ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor},
+    light::NotShadowCaster,
     mesh::{Indices, PrimitiveTopology},
     prelude::*,
 };
@@ -369,6 +370,7 @@ pub fn spawn_storefronts(
             m.max(Vec3::from_array(*v))
         });
         commands.spawn((
+            NotShadowCaster,
             Name::new(format!("Storefront_{:05}", building.id)),
             Mesh3d(meshes.add(mesh)),
             MeshMaterial3d(material.clone()),

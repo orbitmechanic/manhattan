@@ -126,6 +126,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/details_report.txt` | dawn timing, night-window variants, antennas, signs, trees and the 1,000 ft detail cull. |
 | `build/people_report.txt` | pedestrian catalog, density, walk cycle, avoidance, homeless figures, corner ads and streaming limits. |
 | `build/traffic_report.txt` | vehicle catalog, lane network, 85% occupancy, gridlock movement, collision grid and night lights. |
+| `build/lighting_report.txt` | building sun-shadow cascades, shadow-caster filtering and vehicle night-light atlas. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -141,6 +142,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/textures/upper/` | 320-template upper-floor facade atlases and 160-template roof atlases; three facade night variants. |
 | `viewer/assets/textures/signage/` | 64-design abstract projecting-sign atlas. |
 | `viewer/assets/textures/people/` | 8 x 8 clothing-pattern atlas for pedestrian outfits. |
+| `viewer/assets/textures/vehicles/` | emissive vehicle night-light atlas (cabins, headlights, taillights, markers, emergency bars). |
 | `viewer/assets/models/clothing_catalog.json` | clothing tile ranges (shirts, pants, skirts, jackets, hats, bags). |
 | `viewer/assets/models/trees.json` | 3,000 park/open-ground tree placements. |
 | `viewer/assets/models/traffic_lanes.json` | 24,175 lane centrelines exported by the roadway builder. |
@@ -567,8 +569,23 @@ exported with the roadway:
 - Gridlock movement: small creep moves only when space opens, with a
   per-vehicle stop/go oscillator.  A spatial grid of AABBs prevents
   cross-lane overlaps at intersections.
-- Headlights and side cabin-light strips share an emissive material that turns
-  on at night with the city.
+- `viewer/assets/textures/vehicles/vehicle_night_atlas.png` supplies warm cabin
+  windows, white headlights, red taillights, amber markers and emergency bars.
+  The light meshes have per-face atlas UVs; one shared emissive material turns
+  the texture on at night, and the vehicle bodies get a subtle emissive lift so
+  their silhouettes remain readable.  Far proxies carry a roof light too.
+
+### Dynamic building shadows
+
+The sun now casts **cascaded directional shadows** (first bound 60 m, maximum
+distance 900 m), following the real sun direction through the day.  Buildings
+cast onto each other and onto the ground/road/sidewalk receivers.
+
+The huge translucent fog sheets, sky discs/stars and all small detail layers
+(signs, antennas, trees, storefront overlays, pedestrians, vehicles and traffic
+proxies) are marked `NotShadowCaster`.  Without that filter the mist sheets
+blocked the directional light and darkened the whole city; the shadow pass now
+focuses on the real building geometry.
 
 ### 1 km embellishment cull
 
@@ -699,9 +716,10 @@ python3 scripts/build_upper_facade_library.py
 # 6b8. bake per-building upper facade/roof choices into the city mesh
 blender -b manhattan_floors.blend --python scripts/assign_upper_facades.py
 
-# 6b9. signage atlas, clothing atlas and park tree placement
+# 6b9. signage atlas, clothing atlas, vehicle night atlas and trees
 python3 scripts/build_sign_library.py
 python3 scripts/build_clothing_atlas.py
+python3 scripts/build_vehicle_night_atlas.py
 /tmp/opencode/geoenv/bin/python scripts/build_trees.py
 
 # 6c. after floor-master edits, re-export the city mesh
@@ -749,7 +767,9 @@ affected presentation and is already reflected in the script.
 - `renders/viewer_people.png` — streamed pedestrians, randomized outfits,
   articulated walk poses and second-floor/corner signage.
 - `renders/viewer_traffic.png` and `renders/viewer_traffic_night.png` —
-  gridlocked traffic by day and headlight/cabin lights at 22:00.
+  gridlocked traffic by day and cabin/headlight/taillight/marker lights at 22:00.
+- `renders/viewer_building_shadows.png` — late-afternoon building shadows
+  across the streets and neighbouring roofs.
 - `renders/viewer_upper_facades_night.png` — random per-floor night windows
   and all-lit financial floors.
 - `renders/viewer_facade_close.png` — randomised residential ground-floor

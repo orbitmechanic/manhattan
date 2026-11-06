@@ -10,6 +10,8 @@ use std::collections::HashMap;
 
 use bevy::{
     asset::RenderAssetUsages,
+    image::{ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor},
+    light::NotShadowCaster,
     mesh::{Indices, PrimitiveTopology},
     prelude::*,
 };
@@ -237,6 +239,7 @@ fn finish_mesh(
     verts: Vec<[f32; 3]>,
     normals: Vec<[f32; 3]>,
     colors: Option<Vec<[f32; 4]>>,
+    uvs: Option<Vec<[f32; 2]>>,
     indices: Vec<u32>,
 ) -> Mesh {
     let mut mesh = Mesh::new(
@@ -248,6 +251,9 @@ fn finish_mesh(
     .with_inserted_indices(Indices::U32(indices));
     if let Some(colors) = colors {
         mesh = mesh.with_inserted_attribute(Mesh::ATTRIBUTE_COLOR, colors);
+    }
+    if let Some(uvs) = uvs {
+        mesh = mesh.with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
     }
     mesh
 }
@@ -265,6 +271,81 @@ fn civilian_palette() -> [[f32; 4]; 10] {
         [0.18, 0.20, 0.22, 1.0],
         [0.50, 0.48, 0.43, 1.0],
     ]
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_quad_uv_tile(
+    verts: &mut Vec<[f32; 3]>,
+    normals: &mut Vec<[f32; 3]>,
+    uvs: &mut Vec<[f32; 2]>,
+    indices: &mut Vec<u32>,
+    a: [f32; 3],
+    b: [f32; 3],
+    c: [f32; 3],
+    d: [f32; 3],
+    tile: usize,
+) {
+    let ab = Vec3::from_array(b) - Vec3::from_array(a);
+    let ac = Vec3::from_array(c) - Vec3::from_array(a);
+    let n = ab.cross(ac).normalize_or_zero();
+    let base = verts.len() as u32;
+    let col = (tile % 4) as f32;
+    let row = (tile / 4) as f32;
+    let u0 = col * 0.25;
+    let v0 = row * 0.25;
+    verts.extend([a, b, c, d]);
+    normals.extend([[n.x, n.y, n.z]; 4]);
+    uvs.extend([
+        [u0, v0 + 0.25],
+        [u0 + 0.25, v0 + 0.25],
+        [u0 + 0.25, v0],
+        [u0, v0],
+    ]);
+    indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+}
+
+#[allow(clippy::too_many_arguments)]
+fn add_box_uv_tile(
+    verts: &mut Vec<[f32; 3]>,
+    normals: &mut Vec<[f32; 3]>,
+    uvs: &mut Vec<[f32; 2]>,
+    indices: &mut Vec<u32>,
+    center: Vec3,
+    half: Vec3,
+    tile: usize,
+) {
+    let c = center;
+    let h = half;
+    let p = [
+        c + Vec3::new(-h.x, -h.y, -h.z),
+        c + Vec3::new(h.x, -h.y, -h.z),
+        c + Vec3::new(h.x, h.y, -h.z),
+        c + Vec3::new(-h.x, h.y, -h.z),
+        c + Vec3::new(-h.x, -h.y, h.z),
+        c + Vec3::new(h.x, -h.y, h.z),
+        c + Vec3::new(h.x, h.y, h.z),
+        c + Vec3::new(-h.x, h.y, h.z),
+    ];
+    for (a, b, cc, d) in [
+        (0, 1, 2, 3),
+        (5, 4, 7, 6),
+        (4, 0, 3, 7),
+        (1, 5, 6, 2),
+        (3, 2, 6, 7),
+        (4, 5, 1, 0),
+    ] {
+        push_quad_uv_tile(
+            verts,
+            normals,
+            uvs,
+            indices,
+            p[a].to_array(),
+            p[b].to_array(),
+            p[cc].to_array(),
+            p[d].to_array(),
+            tile,
+        );
+    }
 }
 
 fn vehicle_and_lights(
@@ -442,17 +523,17 @@ fn vehicle_and_lights(
     // lights mesh (shared warm-white emissive material)
     let mut lv = Vec::new();
     let mut ln = Vec::new();
-    let mut lc = Vec::new();
+    let mut lu = Vec::new();
     let mut li = Vec::new();
     for x in [-half_w * 0.65, half_w * 0.65] {
-        add_box_color(
+        add_box_uv_tile(
             &mut lv,
             &mut ln,
-            &mut lc,
+            &mut lu,
             &mut li,
             Vec3::new(x, chassis_h * 0.9, length * 0.5 + 0.02),
             Vec3::new(0.14, 0.08, 0.035),
-            [1.0, 1.0, 1.0, 1.0],
+            1,
         );
     }
     let cabin_light_z = if kind == VehicleKind::Tractor {
@@ -463,31 +544,83 @@ fn vehicle_and_lights(
         -length * 0.08
     };
     for x in [-half_w * 0.91, half_w * 0.91] {
-        add_box_color(
+        add_box_uv_tile(
             &mut lv,
             &mut ln,
-            &mut lc,
+            &mut lu,
             &mut li,
             Vec3::new(x, chassis_h + height * 0.24, cabin_light_z),
-            Vec3::new(0.012, height * 0.06, length * 0.12),
-            [1.0, 1.0, 1.0, 1.0],
+            Vec3::new(0.016, height * 0.11, length * 0.17),
+            0,
         );
     }
-    if kind == VehicleKind::Emergency {
-        add_box_color(
+    // Red taillights, amber side markers and (for emergency) the roof bar.
+    for x in [-half_w * 0.65, half_w * 0.65] {
+        add_box_uv_tile(
             &mut lv,
             &mut ln,
-            &mut lc,
+            &mut lu,
+            &mut li,
+            Vec3::new(x, chassis_h * 0.82, -length * 0.5 - 0.02),
+            Vec3::new(0.16, 0.09, 0.045),
+            2,
+        );
+    }
+    for x in [-half_w - 0.01, half_w + 0.01] {
+        for z in [-length * 0.28, length * 0.28] {
+            add_box_uv_tile(
+                &mut lv,
+                &mut ln,
+                &mut lu,
+                &mut li,
+                Vec3::new(x, chassis_h * 0.8, z),
+                Vec3::new(0.025, 0.055, 0.08),
+                3,
+            );
+        }
+    }
+    add_box_uv_tile(
+        &mut lv,
+        &mut ln,
+        &mut lu,
+        &mut li,
+        Vec3::new(0.0, height + 0.02, cabin_light_z),
+        Vec3::new(half_w * 0.30, 0.025, length * 0.15),
+        0,
+    );
+    add_box_uv_tile(
+        &mut lv,
+        &mut ln,
+        &mut lu,
+        &mut li,
+        Vec3::new(0.0, height + 0.02, -length * 0.35),
+        Vec3::new(half_w * 0.45, 0.02, 0.055),
+        3,
+    );
+    add_box_uv_tile(
+        &mut lv,
+        &mut ln,
+        &mut lu,
+        &mut li,
+        Vec3::new(0.0, height * 0.72, length * 0.50),
+        Vec3::new(half_w * 0.55, 0.02, 0.05),
+        1,
+    );
+    if kind == VehicleKind::Emergency {
+        add_box_uv_tile(
+            &mut lv,
+            &mut ln,
+            &mut lu,
             &mut li,
             Vec3::new(0.0, height * 0.98, 0.0),
             Vec3::new(half_w * 0.45, 0.06, 0.08),
-            [1.0, 1.0, 1.0, 1.0],
+            4,
         );
     }
 
     (
-        finish_mesh(v, n, Some(c), i),
-        finish_mesh(lv, ln, None, li),
+        finish_mesh(v, n, Some(c), None, i),
+        finish_mesh(lv, ln, None, Some(lu), li),
         length,
         width,
         height,
@@ -497,9 +630,20 @@ fn vehicle_and_lights(
 
 pub fn setup_vehicle_catalog(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let night_atlas = asset_server
+        .load_builder()
+        .with_settings(|s: &mut ImageLoaderSettings| {
+            s.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
+                address_mode_u: ImageAddressMode::ClampToEdge,
+                address_mode_v: ImageAddressMode::ClampToEdge,
+                ..default()
+            });
+        })
+        .load("textures/vehicles/vehicle_night_atlas.png".to_string());
     let body_material = materials.add(StandardMaterial {
         base_color: Color::WHITE,
         metallic: 0.15,
@@ -511,6 +655,7 @@ pub fn setup_vehicle_catalog(
     let lights_material = materials.add(StandardMaterial {
         base_color: Color::BLACK,
         emissive: LinearRgba::BLACK,
+        emissive_texture: Some(night_atlas),
         perceptual_roughness: 0.4,
         double_sided: true,
         cull_mode: None,
@@ -604,6 +749,7 @@ fn spawn_vehicle(
     let yaw = tangent[0].atan2(tangent[1]) + yaw_offset;
     let entity = commands
         .spawn((
+            NotShadowCaster,
             Name::new("Vehicle"),
             Mesh3d(variant.body.clone()),
             MeshMaterial3d(catalog.body_material.clone()),
@@ -620,6 +766,7 @@ fn spawn_vehicle(
         .id();
     commands.entity(entity).with_children(|parent| {
         parent.spawn((
+            NotShadowCaster,
             Mesh3d(variant.lights.clone()),
             MeshMaterial3d(catalog.lights_material.clone()),
             Transform::IDENTITY,
@@ -686,6 +833,57 @@ fn add_box_yaw(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+fn add_box_yaw_uv(
+    verts: &mut Vec<[f32; 3]>,
+    normals: &mut Vec<[f32; 3]>,
+    uvs: &mut Vec<[f32; 2]>,
+    indices: &mut Vec<u32>,
+    center: Vec3,
+    half: Vec3,
+    yaw: f32,
+    tile: usize,
+) {
+    let (sin, cos) = yaw.sin_cos();
+    let rotate = |p: Vec3| {
+        Vec3::new(
+            center.x + p.x * cos + p.z * sin,
+            center.y + p.y,
+            center.z - p.x * sin + p.z * cos,
+        )
+    };
+    let p = [
+        rotate(Vec3::new(-half.x, -half.y, -half.z)),
+        rotate(Vec3::new(half.x, -half.y, -half.z)),
+        rotate(Vec3::new(half.x, half.y, -half.z)),
+        rotate(Vec3::new(-half.x, half.y, -half.z)),
+        rotate(Vec3::new(-half.x, -half.y, half.z)),
+        rotate(Vec3::new(half.x, -half.y, half.z)),
+        rotate(Vec3::new(half.x, half.y, half.z)),
+        rotate(Vec3::new(-half.x, half.y, half.z)),
+    ];
+    for (a, b, c, d) in [
+        (0, 1, 2, 3),
+        (5, 4, 7, 6),
+        (4, 0, 3, 7),
+        (1, 5, 6, 2),
+        (3, 2, 6, 7),
+        (4, 5, 1, 0),
+    ] {
+        push_quad_uv_tile(
+            verts,
+            normals,
+            uvs,
+            indices,
+            p[a].to_array(),
+            p[b].to_array(),
+            p[c].to_array(),
+            p[d].to_array(),
+            tile,
+        );
+    }
+}
+
 fn proxy_mesh(lane: &LaneData, catalog: &VehicleCatalog, seed: &mut u32) -> Option<(Mesh, Mesh)> {
     let mut bv = Vec::new();
     let mut bn = Vec::new();
@@ -693,7 +891,7 @@ fn proxy_mesh(lane: &LaneData, catalog: &VehicleCatalog, seed: &mut u32) -> Opti
     let mut bi = Vec::new();
     let mut lv = Vec::new();
     let mut ln = Vec::new();
-    let mut lc = Vec::new();
+    let mut lu = Vec::new();
     let mut li = Vec::new();
     let mut cursor = 1.2;
     let limit = lane.length * OCCUPANCY;
@@ -739,18 +937,40 @@ fn proxy_mesh(lane: &LaneData, catalog: &VehicleCatalog, seed: &mut u32) -> Opti
             yaw,
             window,
         );
-        // One forward-facing light box; enough to read as traffic at 0.25-1 km.
-        let front = Vec3::new(point[0], 0.07 + v.height * 0.42, point[1])
-            + Vec3::new(tangent[0], 0.0, tangent[1]) * (length * 0.5);
-        add_box_yaw(
+        // Headlight and taillight boxes; enough to read as traffic at 0.25-1 km.
+        let forward = Vec3::new(tangent[0], 0.0, tangent[1]);
+        let front =
+            Vec3::new(point[0], 0.07 + v.height * 0.42, point[1]) + forward * (length * 0.5);
+        add_box_yaw_uv(
             &mut lv,
             &mut ln,
-            &mut lc,
+            &mut lu,
             &mut li,
             front,
             Vec3::new(v.width * 0.22, 0.08, 0.06),
             yaw,
-            [1.0, 1.0, 1.0, 1.0],
+            1,
+        );
+        let rear = Vec3::new(point[0], 0.07 + v.height * 0.42, point[1]) - forward * (length * 0.5);
+        add_box_yaw_uv(
+            &mut lv,
+            &mut ln,
+            &mut lu,
+            &mut li,
+            rear,
+            Vec3::new(v.width * 0.18, 0.06, 0.05),
+            yaw,
+            2,
+        );
+        add_box_yaw_uv(
+            &mut lv,
+            &mut ln,
+            &mut lu,
+            &mut li,
+            Vec3::new(point[0], 0.07 + v.height + 0.02, point[1]),
+            Vec3::new(v.width * 0.30, 0.025, length * 0.14),
+            yaw,
+            0,
         );
         cursor += length + VEHICLE_GAP;
     }
@@ -758,8 +978,8 @@ fn proxy_mesh(lane: &LaneData, catalog: &VehicleCatalog, seed: &mut u32) -> Opti
         return None;
     }
     Some((
-        finish_mesh(bv, bn, Some(bc), bi),
-        finish_mesh(lv, ln, None, li),
+        finish_mesh(bv, bn, Some(bc), None, bi),
+        finish_mesh(lv, ln, None, Some(lu), li),
     ))
 }
 
@@ -774,6 +994,7 @@ fn spawn_proxy(
     let (body, lights) = proxy_mesh(lane, catalog, seed)?;
     let entity = commands
         .spawn((
+            NotShadowCaster,
             Name::new(format!("TrafficProxy_{lane_index}")),
             Mesh3d(meshes.add(body)),
             MeshMaterial3d(catalog.body_material.clone()),
@@ -783,6 +1004,7 @@ fn spawn_proxy(
         .id();
     commands.entity(entity).with_children(|parent| {
         parent.spawn((
+            NotShadowCaster,
             Mesh3d(meshes.add(lights)),
             MeshMaterial3d(catalog.lights_material.clone()),
             Transform::IDENTITY,
@@ -1030,7 +1252,14 @@ pub fn update_vehicle_lights(
     let on = env.night || env.daylight < 0.35;
     if let Some(mut material) = materials.get_mut(&catalog.lights_material) {
         material.emissive = if on {
-            LinearRgba::rgb(1.35, 1.0, 0.55)
+            LinearRgba::rgb(2.2, 2.2, 2.2)
+        } else {
+            LinearRgba::BLACK
+        };
+    }
+    if let Some(mut material) = materials.get_mut(&catalog.body_material) {
+        material.emissive = if on {
+            LinearRgba::rgb(0.075, 0.080, 0.10)
         } else {
             LinearRgba::BLACK
         };

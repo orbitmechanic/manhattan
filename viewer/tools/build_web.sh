@@ -32,7 +32,7 @@ cp "$ROOT/web/index.html" "$ROOT/web/style.css" "$DIST/"
 mkdir -p "$DIST/assets/models" "$DIST/assets/textures/night" \
   "$DIST/assets/textures/facades" "$DIST/assets/textures/upper" \
   "$DIST/assets/textures/signage" "$DIST/assets/textures/people" \
-  "$DIST/assets/shaders"
+  "$DIST/assets/textures/vehicles" "$DIST/assets/shaders"
 cp "$ROOT/assets/models/manhattan_city.glb" "$DIST/assets/models/"
 cp "$ROOT/assets/models/manhattan_ground.glb" "$DIST/assets/models/"
 cp -R "$ROOT/assets/models/roadway_chunks" "$DIST/assets/models/"
@@ -41,6 +41,7 @@ cp -R "$ROOT/assets/textures/facades/." "$DIST/assets/textures/facades/"
 cp -R "$ROOT/assets/textures/upper/." "$DIST/assets/textures/upper/"
 cp -R "$ROOT/assets/textures/signage/." "$DIST/assets/textures/signage/"
 cp -R "$ROOT/assets/textures/people/." "$DIST/assets/textures/people/"
+cp -R "$ROOT/assets/textures/vehicles/." "$DIST/assets/textures/vehicles/"
 cp -R "$ROOT/assets/textures/night/." "$DIST/assets/textures/night/"
 cp "$ROOT/assets/shaders/city_block.wesl" "$DIST/assets/shaders/"
 touch "$DIST/.nojekyll"

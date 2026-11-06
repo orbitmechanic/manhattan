@@ -6,6 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use bevy::{
     asset::RenderAssetUsages,
     image::{ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor},
+    light::NotShadowCaster,
     mesh::{Indices, PrimitiveTopology},
     prelude::*,
 };
@@ -513,6 +514,7 @@ pub fn spawn_trees(
         let translation = Vec3::new(tree.x, 0.03, tree.z);
         let half = 3.0 * scale;
         commands.spawn((
+            NotShadowCaster,
             Name::new(format!("Tree_{index:04}")),
             Mesh3d(mesh),
             MeshMaterial3d(material.clone()),
@@ -593,6 +595,7 @@ pub fn spawn_antennas(
         .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
         .with_inserted_indices(Indices::U32(indices));
         commands.spawn((
+            NotShadowCaster,
             Name::new(format!("Antennas_{:05}", building.id)),
             Mesh3d(meshes.add(mesh)),
             MeshMaterial3d(material.clone()),
@@ -813,6 +816,7 @@ pub fn spawn_signs(
             .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, bucket.uvs)
             .with_inserted_indices(Indices::U32(bucket.indices));
             commands.spawn((
+                NotShadowCaster,
                 Name::new(format!("Signs_{:05}_{index}", building.id)),
                 Mesh3d(meshes.add(mesh)),
                 MeshMaterial3d(material_handles[index].clone()),

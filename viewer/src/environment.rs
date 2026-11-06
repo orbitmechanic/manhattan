@@ -3,6 +3,7 @@
 use bevy::{
     camera::visibility::Visibility,
     color::LinearRgba,
+    light::{CascadeShadowConfigBuilder, NotShadowCaster},
     pbr::{DistanceFog, FogFalloff},
     prelude::*,
 };
@@ -97,10 +98,16 @@ pub fn setup_lighting(
         SunLight,
         DirectionalLight {
             illuminance: 10_000.0,
-            shadow_maps_enabled: false,
+            shadow_maps_enabled: true,
             ..default()
         },
         Transform::from_rotation(Quat::from_rotation_x(-0.7)),
+        CascadeShadowConfigBuilder {
+            first_cascade_far_bound: 60.0,
+            maximum_distance: 900.0,
+            ..default()
+        }
+        .build(),
     ));
     // WebGL2 supports only one directional light per view.  The browser build
     // uses a single combined sun/moon fixture; native keeps both.
@@ -146,12 +153,14 @@ pub fn setup_lighting(
         .with_children(|parent| {
             parent.spawn((
                 SunDisc,
+                NotShadowCaster,
                 Mesh3d(sun_mesh),
                 MeshMaterial3d(sun_material),
                 Transform::from_translation(Vec3::NEG_Z * SKY_DISTANCE),
             ));
             parent.spawn((
                 MoonDisc,
+                NotShadowCaster,
                 Mesh3d(moon_mesh),
                 MeshMaterial3d(moon_material),
                 Transform::from_translation(Vec3::NEG_Z * SKY_DISTANCE),
@@ -171,6 +180,7 @@ pub fn setup_lighting(
                 let scale = 0.7 + (seed % 100) as f32 / 32.0;
                 parent.spawn((
                     Star,
+                    NotShadowCaster,
                     Mesh3d(star_mesh.clone()),
                     MeshMaterial3d(star_material.clone()),
                     Transform::from_translation(pos).with_scale(Vec3::splat(scale)),
@@ -446,6 +456,7 @@ pub fn spawn_fog_banks(
         let depth = 1_400.0 + rnd() * 1_600.0;
         let angle = rnd() * std::f32::consts::TAU;
         commands.spawn((
+            NotShadowCaster,
             FogBank {
                 drift: Vec2::new(angle.cos(), angle.sin()) * (3.0 + rnd() * 6.0),
                 base_y: y,

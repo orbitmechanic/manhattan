@@ -192,8 +192,13 @@ in `assets/models/traffic_lanes.json`.  Traffic covers the full 1,000 m roadway
 radius: individually animated vehicles within 250 m (180 m web) and merged
 solid far-proxy boxes beyond, all at 85% occupancy.  Vehicles are double-sided
 solids, align to the lane, keep clear of sidewalks, creep forward unevenly in
-gridlock, and use an AABB grid to avoid cross-lane overlaps.  Shared emissive
-lights turn on at night.
+gridlock, and use an AABB grid to avoid cross-lane overlaps.  A shared emissive
+night-light atlas (cabin windows, headlights, taillights, amber markers and
+emergency bars) turns on at night.
+
+The sun casts cascaded directional shadows on the buildings, ground and road.
+Fog banks, sky sheets, signage, trees, pedestrians and vehicles are
+`NotShadowCaster`; the real building meshes remain the shadow casters.
 
 ### 1 km embellishment cull
 

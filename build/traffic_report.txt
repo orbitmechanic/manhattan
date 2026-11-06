@@ -47,10 +47,15 @@ Movement / gridlock
   - The normal state is dense gridlock.  Far proxies are static merged solid
     boxes, so the distant road remains filled without per-vehicle updates.
 
-Lights
-  Headlight boxes and side cabin-light strips use one shared emissive
-  material.  It is black during the day and warm white at night, following the
-  Environment day/night state with the rest of the city.
+Night texture and lights
+  viewer/assets/textures/vehicles/vehicle_night_atlas.png is a 4 x 4 atlas of
+  warm cabin windows, white headlights, red taillights, amber side markers and
+  red/blue emergency bars.  The near light mesh has per-face atlas UVs and
+  includes headlights, taillights, side cabin windows, four amber markers, a
+  roof cabin light, a rear safety marker and an emergency roof bar.  One shared
+  emissive material uses the atlas; it is black by day and bright white at
+  night.  The body material also gets a subtle blue-grey emissive lift so the
+  silhouette remains readable.  Far proxies carry a glowing roof light too.
 
 Verification
   renders/viewer_traffic.png        daylight gridlock, lane alignment and
