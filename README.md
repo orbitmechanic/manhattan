@@ -122,6 +122,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/floors_report.txt` | floor scale, one-floor textures, real-geometry assets, fog/focus/collision. |
 | `build/stationing_report.txt` | street-centreline method, counts, data schema and camera civil coordinates. |
 | `build/roadway_report.txt` | lane/sidewalk geometry method, counts and material notes. |
+| `build/upper_facade_report.txt` | upper-floor facade/roof libraries, packed COLOR_0 schema and assignment counts. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -133,7 +134,9 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/roadway_manifest.json` | chunk list with world-space AABBs for the 1 km detail cull. |
 | `viewer/assets/models/building_perimeters.json` | 11,032 building first-floor wall loops, heights, floor heights and facade categories. |
 | `viewer/assets/models/facade_catalog.json` | 600-image facade catalog (150 per category) with atlas tile coordinates. |
-| `viewer/assets/textures/facades/` | four 4096px atlases: storefront, executive, residential, industrial. |
+| `viewer/assets/textures/facades/` | four 4096px atlases: storefront, executive, residential, industrial (ground floor). |
+| `viewer/assets/textures/upper/` | 320-template upper-floor facade atlases and 160-template roof atlases (day + night). |
+| `viewer/assets/models/upper_facade_catalog.json` | facade/roof atlas grids, category ranges and neighbourhood mapping. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
 | `Textures/day/` | canonical day textures, names describe content; `floors/` holds one-floor facade crops. |
@@ -409,6 +412,49 @@ The quads sit 0.08 m proud of the first-floor wall, use `ClampToEdge` sampling
 to avoid atlas bleed, and carry a `DetailCull` so they only render inside
 1,000 m.
 
+### Upper-floor facades and roofs
+
+`scripts/build_upper_facade_library.py` generates a second library for every
+floor above the street:
+
+| facade category | templates | theme |
+| --- | ---: | --- |
+| `residential` | 80 | brick, stucco and brownstone, punched windows, balconies, window AC units |
+| `industrial` | 80 | corrugated metal, concrete panels, steel-framed ribbon windows, vents |
+| `financial` | 80 | dark/blue glass curtain walls, stone piers, vertical fins, spandrels |
+| `commercial` | 80 | masonry/stone mid-rise upper floors, large windows, cornices |
+
+Each template covers one **12 m x 3 m floor module** and tiles seamlessly
+around the building. Day and night versions share window positions. The
+library is packed into a 3840 x 3072 day atlas and a 1920 x 1536 night atlas.
+
+It also generates **160 roof templates** on a 16 m x 16 m module: gardens,
+planters and trees, pools with loungers, AC/HVAC units, cooling towers, ducts,
+solar panels, skylights, water tanks and wooden patios with tables and
+umbrellas. Day and night roof atlases are 4096 x 2560 and 2048 x 1280.
+
+`scripts/assign_upper_facades.py` matches every city face to its building
+using the first-floor wall loops, then bakes a 24-bit choice into COLOR_0 RGB:
+
+- bits 0–8: facade template
+- bits 9–16: roof template
+- bits 17–19: per-building tint variation
+- bits 20–23: per-building horizontal U offset
+- alpha: block id (unchanged)
+
+One template is used for **every wall face of a building, on every floor**;
+one roof template is used for all of its horizontal faces. The tint and U
+offset make neighbouring buildings differ even when they draw the same
+template. Neighbourhood mapping is `residential → residential`,
+`industrial → industrial`, `storefront → commercial`,
+`executive → financial`.
+
+`viewer/assets/shaders/city_block.wesl` decodes the packed value per fragment,
+samples the facade atlas with U tiled around the building and V mapped to one
+floor, and samples the roof atlas on horizontal faces. Day/night blending and
+the per-floor twilight wave are unchanged. Current build: 739,453 city faces,
+728,210 wall faces, 11,243 roof faces, 0 unmatched faces.
+
 ### 1 km embellishment cull
 
 `viewer/src/detail.rs` defines `EMBELLISHMENT_RADIUS = 1_000 m`. Roadway
@@ -532,6 +578,12 @@ python3 scripts/build_facade_catalog.py
 # 6b6. block footprints, heights and ground-floor categories
 blender -b manhattan_floors.blend --python scripts/build_building_meta.py
 
+# 6b7. upper-floor facade + roof library
+python3 scripts/build_upper_facade_library.py
+
+# 6b8. bake per-building upper facade/roof choices into the city mesh
+blender -b manhattan_floors.blend --python scripts/assign_upper_facades.py
+
 # 6c. after floor-master edits, re-export the city mesh
 blender -b manhattan_floors.blend --python scripts/export_city_mesh.py
 
@@ -566,6 +618,13 @@ affected presentation and is already reflected in the script.
   the three centreline sets with vertical 100-ft ticks and civil coordinates.
 - `renders/viewer_roadway_close.png` — asphalt pavement, 12-ft sidewalks and
   curb faces at street level.
+- `renders/viewer_upper_facades.png` and
+  `renders/viewer_upper_facades_night.png` — per-building upper-floor facades
+  in daylight and with lit windows at 22:00.
+- `renders/viewer_roofs.png` — oblique roof detail with gardens, pools, HVAC,
+  tanks, solar panels and patios.
+- `renders/viewer_upper_facades_web.png` — the same building dressing in the
+  browser build (1440 x 900).
 - `renders/viewer_facade_close.png` — randomised residential ground-floor
   facade wrapped around a block corner.
 - `build/station_lines_imagery_overlay.png`,

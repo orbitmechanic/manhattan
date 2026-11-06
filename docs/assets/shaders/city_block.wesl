@@ -41,6 +41,24 @@ fn floor_random(block: u32, fl: i32, salt: u32) -> vec2<f32> {
     );
 }
 
+// Sample one tile from a grid atlas.  `local` is already in 0..1 tile space;
+// the inset keeps linear filtering away from the neighbouring tile.
+fn sample_atlas(
+    tex: texture_2d<f32>,
+    samp: sampler,
+    index: u32,
+    cols: u32,
+    rows: u32,
+    local: vec2<f32>,
+    inset: vec2<f32>,
+) -> vec3<f32> {
+    let safe = min(index, cols * rows - 1u);
+    let origin = vec2<f32>(f32(safe % cols), f32(safe / cols));
+    let inner = mix(inset, vec2<f32>(1.0) - inset, local);
+    let uv = (origin + inner) * vec2<f32>(1.0 / f32(cols), 1.0 / f32(rows));
+    return textureSample(tex, samp, uv).rgb;
+}
+
 struct BlockStates {
     values: array<vec4<f32>, 1536>,
 }
@@ -49,13 +67,43 @@ struct BlockStates {
 var<uniform> block_states: BlockStates;
 
 @group(constants::MATERIAL_BIND_GROUP) @binding(101)
-var night_texture: texture_2d<f32>;
+var legacy_night_texture: texture_2d<f32>;
 
 @group(constants::MATERIAL_BIND_GROUP) @binding(102)
-var night_sampler: sampler;
+var legacy_night_sampler: sampler;
 
 @group(constants::MATERIAL_BIND_GROUP) @binding(103)
 var<uniform> emissive_strength: vec4<f32>;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(104)
+var facade_day_texture: texture_2d<f32>;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(105)
+var facade_day_sampler: sampler;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(106)
+var facade_night_texture: texture_2d<f32>;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(107)
+var facade_night_sampler: sampler;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(108)
+var roof_day_texture: texture_2d<f32>;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(109)
+var roof_day_sampler: sampler;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(110)
+var roof_night_texture: texture_2d<f32>;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(111)
+var roof_night_sampler: sampler;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(112)
+var<uniform> atlas_info: vec4<f32>;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(113)
+var<uniform> atlas_uv: vec4<f32>;
 
 @fragment
 fn fragment(
@@ -64,15 +112,15 @@ fn fragment(
 ) -> FragmentOutput {
     var pbr_input = pbr_input_from_standard_material(in, is_front);
 
-    // Block id is baked into COLOR_0 alpha by the Blender export.  On LOD0
-    // floors the RGB channels carry a per-floor threshold/width pair, so each
-    // floor crosses over at its own randomised rate while the block blends.
+    // Block id is baked into COLOR_0 alpha by the Blender export.  COLOR_0 RGB
+    // carries a packed per-building facade/roof choice plus tint and U offset.
     let block_id = clamp(i32(round(in.color.a * 1536.0 - 0.5)), 0, 1535);
     let state = block_states.values[block_id];
     let block_blend = state.x;
     let progress = state.y;
     let salt = u32(max(state.z, 0.0));
     let floor_flag = emissive_strength.y;
+    let is_ground = emissive_strength.z > 0.5;
 
     let floor_index = i32(floor(pbr_input.world_position.y / 3.0));
     let rnd = floor_random(u32(block_id), floor_index, salt);
@@ -81,10 +129,56 @@ fn fragment(
     let floor_t = smoothstep(floor_threshold - floor_width, floor_threshold + floor_width, progress);
     let blend = block_blend * mix(1.0, floor_t, floor_flag);
 
-    let day = pbr_input.material.base_color.rgb;
-    let night = textureSample(night_texture, night_sampler, in.uv).rgb;
+    var day = pbr_input.material.base_color.rgb;
+    var night = vec3<f32>(0.0);
+    var tint = vec3<f32>(1.0);
 
-    pbr_input.material.base_color = vec4<f32>(mix(day, night, blend), 1.0);
+    if (is_ground) {
+        night = textureSample(legacy_night_texture, legacy_night_sampler, in.uv).rgb;
+    } else {
+        let packed =
+            u32(round(in.color.r * 255.0)) * 65536u
+            + u32(round(in.color.g * 255.0)) * 256u
+            + u32(round(in.color.b * 255.0));
+        let facade_index = packed & 511u;
+        let roof_index = (packed >> 9u) & 255u;
+        let tint_t = f32((packed >> 17u) & 7u) / 7.0;
+        let offset = f32((packed >> 20u) & 15u) / 16.0;
+        tint = mix(vec3<f32>(0.9, 0.92, 0.94), vec3<f32>(1.08, 1.04, 1.0), tint_t);
+
+        let cols = u32(atlas_info.x);
+        let rows = u32(atlas_info.y);
+        let roof_cols = u32(atlas_info.z);
+        let roof_rows = u32(atlas_info.w);
+        let is_roof = abs(pbr_input.world_normal.y) > 0.55;
+
+        if (is_roof) {
+            let local = fract(in.uv * atlas_uv.w + vec2<f32>(offset));
+            day = sample_atlas(
+                roof_day_texture, roof_day_sampler, roof_index,
+                roof_cols, roof_rows, local, vec2<f32>(atlas_uv.z)
+            ) * tint;
+            night = sample_atlas(
+                roof_night_texture, roof_night_sampler, roof_index,
+                roof_cols, roof_rows, local, vec2<f32>(atlas_uv.z)
+            ) * tint;
+        } else {
+            let local = vec2<f32>(
+                fract(in.uv.x + offset),
+                clamp(in.uv.y, 0.0, 1.0)
+            );
+            day = sample_atlas(
+                facade_day_texture, facade_day_sampler, facade_index,
+                cols, rows, local, vec2<f32>(atlas_uv.x, atlas_uv.y)
+            ) * tint;
+            night = sample_atlas(
+                facade_night_texture, facade_night_sampler, facade_index,
+                cols, rows, local, vec2<f32>(atlas_uv.x, atlas_uv.y)
+            ) * tint;
+        }
+    }
+
+    pbr_input.material.base_color = vec4<f32>(day, 1.0);
     pbr_input.material.emissive = vec4<f32>(night * blend * emissive_strength.x, 0.0);
 
     pbr_input.material.base_color = alpha_discard(

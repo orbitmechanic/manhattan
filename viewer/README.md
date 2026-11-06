@@ -138,6 +138,21 @@ building's perimeter. Each panel stores its image id, perimeter offset, width
 and scale in `StorefrontState`. The seed changes per run but the assignment is
 stable within a run.
 
+### Upper-floor facades and roofs
+
+`assets/textures/upper/` contains 320 one-floor facade templates (80 each:
+residential, industrial, financial, commercial) and 160 roof templates
+(gardens, pools, AC/HVAC, cooling towers, solar panels, tanks, patios).
+Facade templates cover a 12 m x 3 m floor module; roof templates cover
+16 m x 16 m.
+
+`scripts/assign_upper_facades.py` packs a per-building facade tile, roof tile,
+tint and U offset into COLOR_0 RGB (alpha keeps the block id). `city_block.wesl`
+decodes it, so every wall face of a building uses the same facade template on
+every floor, and every horizontal face uses the same roof template. The
+category mapping is residential → residential, industrial → industrial,
+storefront → commercial, executive → financial.
+
 ### 1 km embellishment cull
 
 `src/detail.rs` (`EMBELLISHMENT_RADIUS = 1_000 m`) hides roadway tiles, facade

@@ -47,20 +47,47 @@ impl Default for BlockUniform {
 pub struct BlockExtension {
     #[uniform(100)]
     pub blocks: BlockUniform,
+    /// Legacy night texture for the always-visible ground plane.
     #[texture(101)]
     #[sampler(102)]
-    pub night_texture: Option<Handle<Image>>,
-    /// x = emissive strength
+    pub legacy_night: Option<Handle<Image>>,
+    /// x = emissive strength, y = per-floor variation, z = ground flag
     #[uniform(103)]
     pub emissive: Vec4,
+    /// Upper-floor facade atlases.  The per-building tile index is packed into
+    /// COLOR_0 RGB by scripts/assign_upper_facades.py.
+    #[texture(104)]
+    #[sampler(105)]
+    pub facade_day: Option<Handle<Image>>,
+    #[texture(106)]
+    #[sampler(107)]
+    pub facade_night: Option<Handle<Image>>,
+    #[texture(108)]
+    #[sampler(109)]
+    pub roof_day: Option<Handle<Image>>,
+    #[texture(110)]
+    #[sampler(111)]
+    pub roof_night: Option<Handle<Image>>,
+    /// x = facade columns, y = facade rows, z = roof columns, w = roof rows
+    #[uniform(112)]
+    pub atlas_info: Vec4,
+    /// x/y = facade UV inset, z = roof UV inset, w = roof UV scale
+    #[uniform(113)]
+    pub atlas_uv: Vec4,
 }
 
 impl Default for BlockExtension {
     fn default() -> Self {
         Self {
             blocks: BlockUniform::default(),
-            night_texture: None,
+            legacy_night: None,
             emissive: Vec4::new(1.0, 0.0, 0.0, 0.0),
+            facade_day: None,
+            facade_night: None,
+            roof_day: None,
+            roof_night: None,
+            atlas_info: Vec4::new(10.0, 32.0, 16.0, 10.0),
+            atlas_uv: Vec4::new(1.0 / 384.0, 1.0 / 96.0, 1.0 / 256.0, 0.5),
         }
     }
 }
@@ -94,6 +121,24 @@ fn night_texture_path(material: &str) -> String {
         return "textures/night/roofs/roof_concrete_gravel_night.jpg".to_string();
     }
     format!("textures/night/floors/{base}_floor_night.jpg")
+}
+
+const FACADE_COLS: f32 = 10.0;
+const FACADE_ROWS: f32 = 32.0;
+const ROOF_COLS: f32 = 16.0;
+const ROOF_ROWS: f32 = 10.0;
+
+fn load_atlas(asset_server: &AssetServer, path: String, mode: ImageAddressMode) -> Handle<Image> {
+    asset_server
+        .load_builder()
+        .with_settings(move |s: &mut ImageLoaderSettings| {
+            s.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
+                address_mode_u: mode,
+                address_mode_v: mode,
+                ..default()
+            });
+        })
+        .load(path)
 }
 
 fn emissive_strength(material: &str) -> f32 {
@@ -141,6 +186,27 @@ pub fn setup_city_materials(
         return;
     }
 
+    let facade_day = load_atlas(
+        &asset_server,
+        "textures/upper/facade_atlas_day.jpg".to_string(),
+        ImageAddressMode::ClampToEdge,
+    );
+    let facade_night = load_atlas(
+        &asset_server,
+        "textures/upper/facade_atlas_night.jpg".to_string(),
+        ImageAddressMode::ClampToEdge,
+    );
+    let roof_day = load_atlas(
+        &asset_server,
+        "textures/upper/roof_atlas_day.jpg".to_string(),
+        ImageAddressMode::ClampToEdge,
+    );
+    let roof_night = load_atlas(
+        &asset_server,
+        "textures/upper/roof_atlas_night.jpg".to_string(),
+        ImageAddressMode::ClampToEdge,
+    );
+
     let mut map: HashMap<String, Handle<CityMaterial>> = HashMap::new();
     for (_entity, name, material) in &query {
         let key = name.to_string();
@@ -151,27 +217,51 @@ pub fn setup_city_materials(
         if base.starts_with("road") || base.starts_with("sidewalk") || base.starts_with("curb") {
             continue;
         }
+        let is_ground = base.starts_with("ground");
+        let is_roof = base.starts_with("roof");
+        let is_facade = base.starts_with("facade");
+        if !(is_ground || is_roof || is_facade) {
+            continue;
+        }
         let Some(day) = standard_materials.get(&material.0) else {
             continue;
         };
-        let night = asset_server
-            .load_builder()
-            .with_settings(|s: &mut ImageLoaderSettings| {
-                s.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
-                    address_mode_u: ImageAddressMode::Repeat,
-                    address_mode_v: ImageAddressMode::Repeat,
-                    ..default()
-                });
-            })
-            .load(night_texture_path(&key));
+        let mut day = day.clone();
+        let legacy_night = if is_ground {
+            day.base_color = Color::WHITE;
+            Some(load_atlas(
+                &asset_server,
+                night_texture_path(&key),
+                ImageAddressMode::Repeat,
+            ))
+        } else {
+            // Upper floors sample the per-building atlas instead of the
+            // original ten repeating floor textures.
+            day.base_color = Color::WHITE;
+            day.base_color_texture = None;
+            day.emissive = LinearRgba::BLACK;
+            day.perceptual_roughness = 0.78;
+            None
+        };
         let strength = emissive_strength(&key);
-        let floor_variation = if base.starts_with("ground") { 0.0 } else { 1.0 };
+        let floor_variation = if is_ground || is_roof { 0.0 } else { 1.0 };
         let handle = city_materials.add(CityMaterial {
-            base: day.clone(),
+            base: day,
             extension: BlockExtension {
                 blocks: BlockUniform::default(),
-                night_texture: Some(night),
-                emissive: Vec4::new(strength, floor_variation, 0.0, 0.0),
+                legacy_night,
+                emissive: Vec4::new(
+                    strength,
+                    floor_variation,
+                    if is_ground { 1.0 } else { 0.0 },
+                    0.0,
+                ),
+                facade_day: Some(facade_day.clone()),
+                facade_night: Some(facade_night.clone()),
+                roof_day: Some(roof_day.clone()),
+                roof_night: Some(roof_night.clone()),
+                atlas_info: Vec4::new(FACADE_COLS, FACADE_ROWS, ROOF_COLS, ROOF_ROWS),
+                atlas_uv: Vec4::new(1.0 / 384.0, 1.0 / 96.0, 1.0 / 256.0, 0.5),
             },
         });
         map.insert(key, handle);
