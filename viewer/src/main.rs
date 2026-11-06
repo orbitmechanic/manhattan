@@ -41,6 +41,9 @@ use manhattan_viewer::{
     clock::{ClockAction, SimClock},
     collision::{CAMERA_RADIUS, CollisionGrid},
     detail::{DetailCull, update_detail_culling},
+    details::{
+        SignMaterials, TreeData, spawn_antennas, spawn_signs, spawn_trees, update_sign_blink,
+    },
     environment::{
         Environment, fog_cull_distance, setup_lighting, spawn_fog_banks, update_environment,
         update_fog_bank_materials, update_fog_banks,
@@ -262,6 +265,8 @@ fn main() {
         .insert_resource(StationingState::default())
         .insert_resource(StorefrontData::default())
         .insert_resource(StorefrontState::default())
+        .init_resource::<TreeData>()
+        .init_resource::<SignMaterials>()
         .insert_resource(args)
         .add_systems(
             Startup,
@@ -275,6 +280,7 @@ fn main() {
             ),
         )
         .add_systems(Startup, spawn_storefronts)
+        .add_systems(Startup, (spawn_trees, spawn_antennas, spawn_signs))
         .add_systems(
             Update,
             (
@@ -303,6 +309,7 @@ fn main() {
         )
         .add_systems(Update, (setup_road_materials, update_road_colors))
         .add_systems(Update, update_detail_culling)
+        .add_systems(Update, update_sign_blink)
         .run();
 }
 
@@ -451,10 +458,11 @@ fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(chunk.file))),
             Transform::IDENTITY,
             Visibility::Inherited,
-            DetailCull {
-                min: Vec3::from_array(chunk.min),
-                max: Vec3::from_array(chunk.max),
-            },
+            DetailCull::new(
+                Vec3::from_array(chunk.min),
+                Vec3::from_array(chunk.max),
+                manhattan_viewer::detail::EMBELLISHMENT_RADIUS,
+            ),
         ));
     }
 }

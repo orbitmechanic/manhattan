@@ -68,6 +68,14 @@ pub struct BlockExtension {
     #[texture(110)]
     #[sampler(111)]
     pub roof_night: Option<Handle<Image>>,
+    /// Alternate random night window pattern, selected per floor.
+    #[texture(114)]
+    #[sampler(115)]
+    pub facade_night_b: Option<Handle<Image>>,
+    /// Every window lit; used on random floors of tall financial buildings.
+    #[texture(116)]
+    #[sampler(117)]
+    pub facade_night_all: Option<Handle<Image>>,
     /// x = facade columns, y = facade rows, z = roof columns, w = roof rows
     #[uniform(112)]
     pub atlas_info: Vec4,
@@ -86,6 +94,8 @@ impl Default for BlockExtension {
             facade_night: None,
             roof_day: None,
             roof_night: None,
+            facade_night_b: None,
+            facade_night_all: None,
             atlas_info: Vec4::new(10.0, 32.0, 16.0, 10.0),
             atlas_uv: Vec4::new(1.0 / 384.0, 1.0 / 96.0, 1.0 / 256.0, 0.5),
         }
@@ -206,6 +216,16 @@ pub fn setup_city_materials(
         "textures/upper/roof_atlas_night.jpg".to_string(),
         ImageAddressMode::ClampToEdge,
     );
+    let facade_night_b = load_atlas(
+        &asset_server,
+        "textures/upper/facade_atlas_night_b.jpg".to_string(),
+        ImageAddressMode::ClampToEdge,
+    );
+    let facade_night_all = load_atlas(
+        &asset_server,
+        "textures/upper/facade_atlas_night_all.jpg".to_string(),
+        ImageAddressMode::ClampToEdge,
+    );
 
     let mut map: HashMap<String, Handle<CityMaterial>> = HashMap::new();
     for (_entity, name, material) in &query {
@@ -260,6 +280,8 @@ pub fn setup_city_materials(
                 facade_night: Some(facade_night.clone()),
                 roof_day: Some(roof_day.clone()),
                 roof_night: Some(roof_night.clone()),
+                facade_night_b: Some(facade_night_b.clone()),
+                facade_night_all: Some(facade_night_all.clone()),
                 atlas_info: Vec4::new(FACADE_COLS, FACADE_ROWS, ROOF_COLS, ROOF_ROWS),
                 atlas_uv: Vec4::new(1.0 / 384.0, 1.0 / 96.0, 1.0 / 256.0, 0.5),
             },

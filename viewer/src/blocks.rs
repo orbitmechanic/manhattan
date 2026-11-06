@@ -32,6 +32,19 @@ pub fn twilight_progress(sun_altitude_deg: f32) -> f32 {
         .clamp(0.0, 1.0)
 }
 
+/// Dawn holds the night texture set for the whole penumbra, then switches to
+/// day just after the penumbra ends (+1°).  The short post-penumbra window is
+/// 1.5° of sun altitude, enough for the per-block/per-floor thresholds to
+/// stagger the shut-off instead of snapping all at once.
+pub fn dawn_switch_progress(sun_altitude_deg: f32) -> f32 {
+    if sun_altitude_deg <= TWILIGHT_START_ALT {
+        1.0
+    } else {
+        let t = ((sun_altitude_deg - TWILIGHT_START_ALT) / 1.5).clamp(0.0, 1.0);
+        1.0 - t * t * (3.0 - 2.0 * t)
+    }
+}
+
 /// Actual dusk duration in minutes for the current date, from +1° to −6°.
 pub fn twilight_span_minutes(date: Date) -> f32 {
     let mut prev = sun_position(
@@ -110,6 +123,9 @@ pub struct BlockLights {
     pub fade_count: usize,
     pub twilight_span_min: f32,
     span_date: Date,
+    last_sun_alt: f32,
+    has_sun_history: bool,
+    dawn: bool,
 }
 
 impl Default for BlockLights {
@@ -146,6 +162,9 @@ impl Default for BlockLights {
             fade_count: 0,
             twilight_span_min: 0.0,
             span_date: Date::new(0, 1, 1),
+            last_sun_alt: 0.0,
+            has_sun_history: false,
+            dawn: true,
         }
     }
 }
@@ -281,9 +300,27 @@ pub fn update_blocks(
         lights.span_date = clock.date;
     }
 
-    let progress = twilight_progress(env.sun.altitude_deg);
+    let raw_progress = twilight_progress(env.sun.altitude_deg);
+    let alt = env.sun.altitude_deg;
+    if lights.has_sun_history {
+        let delta = alt - lights.last_sun_alt;
+        if delta.abs() > 1e-4 {
+            lights.dawn = delta > 0.0;
+        }
+    } else {
+        lights.dawn = clock.minute_of_day.rem_euclid(1440.0) < 720.0;
+        lights.has_sun_history = true;
+    }
+    lights.last_sun_alt = alt;
+    // Dusk keeps the existing in-penumbra fade.  Dawn holds the night set
+    // until the penumbra is over, then fades out over the next 1.5 degrees.
+    let progress = if lights.dawn {
+        dawn_switch_progress(alt)
+    } else {
+        raw_progress
+    };
     lights.progress = progress;
-    let in_penumbra = progress > 0.0 && progress < 1.0;
+    let in_penumbra = raw_progress > 0.0 && raw_progress < 1.0;
     if in_penumbra && !lights.was_in_penumbra {
         lights.randomize_penumbra(progress);
     }
@@ -334,6 +371,16 @@ mod tests {
         assert!((twilight_progress(-2.5) - 0.5).abs() < 1e-5);
         assert_eq!(twilight_progress(-6.0), 1.0);
         assert_eq!(twilight_progress(-30.0), 1.0);
+    }
+
+    #[test]
+    fn dawn_holds_night_until_penumbra_ends() {
+        assert_eq!(dawn_switch_progress(1.0), 1.0);
+        assert_eq!(dawn_switch_progress(0.0), 1.0);
+        assert_eq!(dawn_switch_progress(-6.0), 1.0);
+        assert!((dawn_switch_progress(1.75) - 0.5).abs() < 1e-5);
+        assert_eq!(dawn_switch_progress(2.5), 0.0);
+        assert_eq!(dawn_switch_progress(6.0), 0.0);
     }
 
     #[test]

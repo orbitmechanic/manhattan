@@ -210,9 +210,17 @@ def make_facade(category, rng):
     draw = ImageDraw.Draw(day)
     draw_wall_texture(draw, category, rng, wall, width, height)
 
-    night = Image.new("RGB", (width, height), shade(wall, 0.16))
-    nd = ImageDraw.Draw(night)
-    draw_wall_texture(nd, category, rng, shade(wall, 0.16), width, height)
+    night_a = Image.new("RGB", (width, height), shade(wall, 0.16))
+    night_b = Image.new("RGB", (width, height), shade(wall, 0.16))
+    night_all = Image.new("RGB", (width, height), shade(wall, 0.16))
+    nd_a = ImageDraw.Draw(night_a)
+    nd_b = ImageDraw.Draw(night_b)
+    nd_all = ImageDraw.Draw(night_all)
+    for nd in (nd_a, nd_b, nd_all):
+        draw_wall_texture(nd, category, rng, shade(wall, 0.16), width, height)
+
+    lit_p = {"financial": 0.42, "residential": 0.28,
+             "industrial": 0.20, "commercial": 0.30}[category]
 
     if category == "financial":
         # glass curtain wall: wide bays, thin mullions, spandrel band
@@ -225,13 +233,17 @@ def make_facade(category, rng):
             x1 = int((b + 1) * cell - cell * 0.06)
             rect = (x0, top, x1, bottom)
             draw_window(draw, rect, rng, category, wall, night=False)
-            lit = rng.random() < 0.72
-            draw_window(nd, rect, rng, category, wall, lit_night=lit, night=True)
+            draw_window(nd_a, rect, rng, category, wall,
+                        lit_night=rng.random() < lit_p, night=True)
+            draw_window(nd_b, rect, rng, category, wall,
+                        lit_night=rng.random() < lit_p, night=True)
+            draw_window(nd_all, rect, rng, category, wall, lit_night=True, night=True)
         # spandrels
         draw.rectangle((0, 0, width, int(height * 0.1)), fill=shade(wall, 0.7))
         draw.rectangle((0, int(height * 0.9), width, height), fill=shade(wall, 0.66))
-        nd.rectangle((0, 0, width, int(height * 0.1)), fill=shade(wall, 0.1))
-        nd.rectangle((0, int(height * 0.9), width, height), fill=shade(wall, 0.1))
+        for nd in (nd_a, nd_b, nd_all):
+            nd.rectangle((0, 0, width, int(height * 0.1)), fill=shade(wall, 0.1))
+            nd.rectangle((0, int(height * 0.9), width, height), fill=shade(wall, 0.1))
     else:
         count = rng.choice([3, 4, 5, 6]) if category != "industrial" else rng.choice([3, 4, 5])
         cell = width / count
@@ -242,12 +254,16 @@ def make_facade(category, rng):
             x1 = int((index + 1) * cell - cell * rng.uniform(0.16, 0.26))
             rect = (x0, top, x1, bottom)
             draw_window(draw, rect, rng, category, wall, night=False)
-            lit = rng.random() < (0.5 if category == "residential" else 0.42)
-            draw_window(nd, rect, rng, category, wall, lit_night=lit, night=True)
+            draw_window(nd_a, rect, rng, category, wall,
+                        lit_night=rng.random() < lit_p, night=True)
+            draw_window(nd_b, rect, rng, category, wall,
+                        lit_night=rng.random() < lit_p, night=True)
+            draw_window(nd_all, rect, rng, category, wall, lit_night=True, night=True)
             # sills / lintels
             draw.rectangle((x0 - 4, bottom, x1 + 4, bottom + 4), fill=shade(wall, 1.16))
             draw.line((x0 - 2, top - 4, x1 + 2, top - 4), fill=shade(wall, 0.72), width=2)
-            nd.rectangle((x0 - 4, bottom, x1 + 4, bottom + 4), fill=shade(wall, 0.12))
+            for nd in (nd_a, nd_b, nd_all):
+                nd.rectangle((x0 - 4, bottom, x1 + 4, bottom + 4), fill=shade(wall, 0.12))
 
             if category == "residential" and rng.random() < 0.45:
                 # balcony rail and planter
@@ -256,7 +272,8 @@ def make_facade(category, rng):
                 for bx in range(x0 - 8, x1 + 8, 10):
                     draw.line((bx, rail_y, bx, rail_y + 16), fill=(60, 56, 52), width=1)
                 draw.rectangle((x0 - 6, rail_y + 16, x1 + 6, rail_y + 22), fill=(70, 52, 38))
-                nd.rectangle((x0 - 10, rail_y, x1 + 10, rail_y + 3), fill=(20, 18, 16))
+                for nd in (nd_a, nd_b, nd_all):
+                    nd.rectangle((x0 - 10, rail_y, x1 + 10, rail_y + 3), fill=(20, 18, 16))
             if category == "residential" and rng.random() < 0.3:
                 # window AC unit
                 ac_w = max(20, (x1 - x0) // 3)
@@ -281,13 +298,15 @@ def make_facade(category, rng):
             if category == "commercial" and rng.random() < 0.35:
                 # cornice / lintel band
                 draw.rectangle((x0 - 6, top - 12, x1 + 6, top - 5), fill=shade(wall, 1.2))
-                nd.rectangle((x0 - 6, top - 12, x1 + 6, top - 5), fill=shade(wall, 0.14))
+                for nd in (nd_a, nd_b, nd_all):
+                    nd.rectangle((x0 - 6, top - 12, x1 + 6, top - 5), fill=shade(wall, 0.14))
 
     # floor separation lines
     draw.line((0, 0, width, 0), fill=shade(wall, 0.55), width=2)
     draw.line((0, height - 1, width, height - 1), fill=shade(wall, 0.6), width=2)
-    nd.line((0, 0, width, 0), fill=(8, 10, 12), width=2)
-    nd.line((0, height - 1, width, height - 1), fill=(8, 10, 12), width=2)
+    for nd in (nd_a, nd_b, nd_all):
+        nd.line((0, 0, width, 0), fill=(8, 10, 12), width=2)
+        nd.line((0, height - 1, width, height - 1), fill=(8, 10, 12), width=2)
 
     # gentle vertical grime / highlights
     for _ in range(22):
@@ -296,8 +315,10 @@ def make_facade(category, rng):
                   fill=shade(wall, rng.uniform(0.82, 1.08)), width=1)
 
     day = day.resize((FACADE_W, FACADE_H), Image.LANCZOS)
-    night = night.resize((FACADE_W, FACADE_H), Image.LANCZOS)
-    return day, night
+    night_a = night_a.resize((FACADE_W, FACADE_H), Image.LANCZOS)
+    night_b = night_b.resize((FACADE_W, FACADE_H), Image.LANCZOS)
+    night_all = night_all.resize((FACADE_W, FACADE_H), Image.LANCZOS)
+    return day, night_a, night_b, night_all
 
 
 # ---------------------------------------------------------------------------
@@ -594,28 +615,38 @@ def make_roof(rng):
 # ---------------------------------------------------------------------------
 def build_facades():
     day_atlas = Image.new("RGB", (FACADE_COLS * FACADE_W, FACADE_ROWS * FACADE_H), (20, 20, 22))
-    night_atlas = Image.new("RGB", (FACADE_COLS * FACADE_W // 2, FACADE_ROWS * FACADE_H // 2), (10, 10, 12))
+    night_a = Image.new("RGB", (FACADE_COLS * FACADE_W // 2, FACADE_ROWS * FACADE_H // 2), (10, 10, 12))
+    night_b = Image.new("RGB", (FACADE_COLS * FACADE_W // 2, FACADE_ROWS * FACADE_H // 2), (10, 10, 12))
+    night_all = Image.new("RGB", (FACADE_COLS * FACADE_W // 2, FACADE_ROWS * FACADE_H // 2), (10, 10, 12))
     tiles = []
     for index in range(FACADE_COUNT):
         category = CATEGORIES[index // PER_CATEGORY]
         rng = random.Random(0xFA_CADE_0000 + index * 7919)
-        day, night = make_facade(category, rng)
+        day, na, nb, nall = make_facade(category, rng)
         col, row = index % FACADE_COLS, index // FACADE_COLS
         day_atlas.paste(day, (col * FACADE_W, row * FACADE_H))
-        night_small = night.resize((FACADE_W // 2, FACADE_H // 2), Image.LANCZOS)
-        night_atlas.paste(night_small, (col * FACADE_W // 2, row * FACADE_H // 2))
+        for atlas, img in ((night_a, na), (night_b, nb), (night_all, nall)):
+            small = img.resize((FACADE_W // 2, FACADE_H // 2), Image.LANCZOS)
+            atlas.paste(small, (col * FACADE_W // 2, row * FACADE_H // 2))
         tiles.append({"id": index, "category": category, "col": col, "row": row})
         if (index + 1) % 40 == 0:
             print("facade", index + 1, "/", FACADE_COUNT)
     day_path = os.path.join(OUT_TEX, "facade_atlas_day.jpg")
     night_path = os.path.join(OUT_TEX, "facade_atlas_night.jpg")
+    night_b_path = os.path.join(OUT_TEX, "facade_atlas_night_b.jpg")
+    night_all_path = os.path.join(OUT_TEX, "facade_atlas_night_all.jpg")
     day_atlas.save(day_path, quality=90, optimize=True)
-    night_atlas.save(night_path, quality=88, optimize=True)
-    # contact sheet
+    night_a.save(night_path, quality=88, optimize=True)
+    night_b.save(night_b_path, quality=88, optimize=True)
+    night_all.save(night_all_path, quality=88, optimize=True)
     contact = day_atlas.resize((FACADE_COLS * 96, FACADE_ROWS * 24), Image.LANCZOS)
     contact.save(os.path.join(OUT_BUILD, "upper_facade_contact.png"))
-    print("facade atlas", day_atlas.size, os.path.getsize(day_path), night_atlas.size, os.path.getsize(night_path))
-    return tiles, day_path, night_path
+    night_contact = night_a.resize((FACADE_COLS * 96, FACADE_ROWS * 24), Image.LANCZOS)
+    night_contact.save(os.path.join(OUT_BUILD, "upper_facade_night_contact.png"))
+    print("facade atlas", day_atlas.size,
+          os.path.getsize(day_path), os.path.getsize(night_path),
+          os.path.getsize(night_b_path), os.path.getsize(night_all_path))
+    return tiles, day_path, night_path, night_b_path, night_all_path
 
 
 def build_roofs():
@@ -641,7 +672,7 @@ def build_roofs():
     return tiles, day_path, night_path
 
 
-facade_tiles, facade_day, facade_night = build_facades()
+facade_tiles, facade_day, facade_night, facade_night_b, facade_night_all = build_facades()
 roof_tiles, roof_day, roof_night = build_roofs()
 
 catalog = {
@@ -654,6 +685,8 @@ catalog = {
         "module_m": [12.0, 3.0],
         "atlas_day": "textures/upper/facade_atlas_day.jpg",
         "atlas_night": "textures/upper/facade_atlas_night.jpg",
+        "atlas_night_b": "textures/upper/facade_atlas_night_b.jpg",
+        "atlas_night_all": "textures/upper/facade_atlas_night_all.jpg",
         "categories": CATEGORY_RANGES,
         "tiles": facade_tiles,
     },

@@ -50,14 +50,15 @@ struct CatalogFile {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-struct BuildingMeta {
-    id: usize,
-    block: usize,
-    height_m: f32,
-    floor_height_m: f32,
+pub struct BuildingMeta {
+    pub id: usize,
+    pub block: usize,
+    pub height_m: f32,
+    pub floor_height_m: f32,
     #[serde(rename = "loop")]
-    perimeter: Vec<[f32; 2]>,
-    category: String,
+    pub perimeter: Vec<[f32; 2]>,
+    pub centroid: [f32; 2],
+    pub category: String,
 }
 
 #[derive(Deserialize)]
@@ -69,6 +70,12 @@ struct BuildingFile {
 pub struct StorefrontData {
     buildings: Vec<BuildingMeta>,
     catalog: CatalogFile,
+}
+
+impl StorefrontData {
+    pub fn buildings(&self) -> &[BuildingMeta] {
+        &self.buildings
+    }
 }
 
 impl Default for StorefrontData {
@@ -367,7 +374,7 @@ pub fn spawn_storefronts(
             MeshMaterial3d(material.clone()),
             Transform::IDENTITY,
             Visibility::Inherited,
-            DetailCull { min, max },
+            DetailCull::new(min, max, crate::detail::EMBELLISHMENT_RADIUS),
         ));
         state.assignments.push(BuildingDressing {
             building_id: building.id,

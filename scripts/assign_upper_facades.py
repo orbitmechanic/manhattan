@@ -164,6 +164,10 @@ def build_assignments(buildings, catalog):
         h = splitmix64(SEED ^ (building["id"] * 0x9E3779B97F4A7C15))
         tint = (h >> 17) & 7
         offset = (h >> 20) & 15
+        financial = 1 if building["category"] == "executive" else 0
+        height_bucket = min(7, int(building["height_m"] / 40.0))
+        signage = 1 if building["category"] in ("storefront", "industrial") else 0
+        extra = financial | (height_bucket << 1) | (signage << 4)
         assignments[building["id"]] = {
             "block": building["block"],
             "category": category,
@@ -172,6 +176,10 @@ def build_assignments(buildings, catalog):
             "tint": tint,
             "offset": offset,
             "height_m": building["height_m"],
+            "financial": financial,
+            "height_bucket": height_bucket,
+            "signage": signage,
+            "extra": extra,
         }
     return assignments
 
@@ -290,7 +298,8 @@ def main():
                 chosen = loops[0]
             assignment = assignments[chosen.building["id"]]
             r, g, b = pack(assignment)
-            a = (block_id + 0.5) / MAX_BLOCKS
+            extra = assignment["extra"]
+            a = (((block_id & 0x7FF) | (extra << 11)) & 0xFFFF) / 65535.0
             for li in poly.loop_indices:
                 color.data[li].color = (r, g, b, a)
             if roof:

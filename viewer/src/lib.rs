@@ -6,6 +6,7 @@ pub mod city_material;
 pub mod clock;
 pub mod collision;
 pub mod detail;
+pub mod details;
 pub mod environment;
 pub mod stationing;
 pub mod storefront;

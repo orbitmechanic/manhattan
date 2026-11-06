@@ -19,10 +19,15 @@ Facade library
   module:              12 m wide x 3 m tall (one floor)
   day atlas:           viewer/assets/textures/upper/facade_atlas_day.jpg
                        3840 x 3072, 10 x 32 tiles of 384 x 96
-  night atlas:         viewer/assets/textures/upper/facade_atlas_night.jpg
+  night atlas A:       viewer/assets/textures/upper/facade_atlas_night.jpg
+  night atlas B:       viewer/assets/textures/upper/facade_atlas_night_b.jpg
+  night all-lit:       viewer/assets/textures/upper/facade_atlas_night_all.jpg
                        1920 x 1536, same 10 x 32 grid
-  night windows:       lit windows share the day window positions; the night
-                       atlas supplies warm/cool interior light and blinds
+  night windows:       two independent random lit subsets are generated; each
+                       floor picks one by hash.  A third all-lit atlas is used
+                       on random floors of tall financial buildings.  Lit
+                       probabilities: residential 28%, industrial 20%,
+                       commercial 30%, financial 42%.
 
 Roof library
   160 top-down templates, 16 m x 16 m module:
@@ -59,7 +64,9 @@ Per-building assignment
     bits  9..16  roof tile index (0..255)
     bits 17..19  facade tint variation (0..7)
     bits 20..23  facade U offset (0..15)
-    alpha        block id / 1536 (unchanged)
+    alpha        (block_id & 0x7FF) | (extra << 11), divided by 65535
+                 extra bit 0 = financial, bits 1..3 = height bucket,
+                 bit 4 = signage-eligible neighbourhood
 
   One facade tile is used for every wall face of a building, on every floor
   from the second floor to the top.  One roof tile is used for every

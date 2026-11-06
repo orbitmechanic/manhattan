@@ -123,6 +123,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/stationing_report.txt` | street-centreline method, counts, data schema and camera civil coordinates. |
 | `build/roadway_report.txt` | lane/sidewalk geometry method, counts and material notes. |
 | `build/upper_facade_report.txt` | upper-floor facade/roof libraries, packed COLOR_0 schema and assignment counts. |
+| `build/details_report.txt` | dawn timing, night-window variants, antennas, signs, trees and the 1,000 ft detail cull. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -135,7 +136,9 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/building_perimeters.json` | 11,032 building first-floor wall loops, heights, floor heights and facade categories. |
 | `viewer/assets/models/facade_catalog.json` | 600-image facade catalog (150 per category) with atlas tile coordinates. |
 | `viewer/assets/textures/facades/` | four 4096px atlases: storefront, executive, residential, industrial (ground floor). |
-| `viewer/assets/textures/upper/` | 320-template upper-floor facade atlases and 160-template roof atlases (day + night). |
+| `viewer/assets/textures/upper/` | 320-template upper-floor facade atlases and 160-template roof atlases; three facade night variants. |
+| `viewer/assets/textures/signage/` | 64-design abstract projecting-sign atlas. |
+| `viewer/assets/models/trees.json` | 3,000 park/open-ground tree placements. |
 | `viewer/assets/models/upper_facade_catalog.json` | facade/roof atlas grids, category ranges and neighbourhood mapping. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
@@ -467,6 +470,39 @@ floor, and samples the roof atlas on horizontal faces. Day/night blending and
 the per-floor twilight wave are unchanged. Current build: 739,453 city faces,
 728,210 wall faces, 11,243 roof faces, 0 unmatched faces.
 
+### Dawn timing and night windows
+
+At dusk the city still fades into night during the +1° to −6° penumbra.  At
+dawn it now **holds the night set for the whole penumbra** and only starts the
+night-to-day switch after the sun reaches +1°.  The switch is spread over the
+next 1.5° so the per-block and per-floor thresholds still stagger the change.
+
+Night windows no longer show the same lit strip on every floor.  Three facade
+night atlases are generated: two independent random lit subsets and one
+all-lit variant.  Each floor picks one of the random subsets by hash.  Lit
+probabilities are 28% residential, 20% industrial, 30% commercial and 42%
+financial.  Tall financial buildings also give each floor a 35% chance of
+using the all-lit atlas, producing random fully lit floors.
+
+### Rooftop antennas, shop signs and trees
+
+`viewer/src/details.rs` adds the near-detail layer.  All of it uses a
+**1,000 ft (304.8 m)** cull radius; roads and facades keep the 1 km radius.
+
+- **Antennas**: about 3,600 buildings receive a rooftop mast at a random point
+  inside the footprint.  Height is exactly **8% of the building height**.
+- **Projecting signs**: about 700 blade signs on commercial/storefront and
+  industrial buildings only, at the second floor (about 3.7 m).  Boards extend
+  2.4–4.0 m from the facade and are 1.2–2.6 m tall.  The 64-design atlas has
+  abstract blocky glyphs in random colours; roughly 22% blink, 36% are steadily
+  illuminated, the rest are unlit.
+- **Trees**: 3,000 low-poly park trees in the 19 park/open-space blocks, at
+  least 9 m from street centrelines and outside building footprints.  Three
+  variants, random scale and rotation.
+
+`DetailCull` now carries a per-entity radius, so the new objects disappear
+past 1,000 ft while the roadway and facade dressing remain visible to 1 km.
+
 ### 1 km embellishment cull
 
 `viewer/src/detail.rs` defines `EMBELLISHMENT_RADIUS = 1_000 m`. Roadway
@@ -596,6 +632,10 @@ python3 scripts/build_upper_facade_library.py
 # 6b8. bake per-building upper facade/roof choices into the city mesh
 blender -b manhattan_floors.blend --python scripts/assign_upper_facades.py
 
+# 6b9. signage atlas and park tree placement
+python3 scripts/build_sign_library.py
+/tmp/opencode/geoenv/bin/python scripts/build_trees.py
+
 # 6c. after floor-master edits, re-export the city mesh
 blender -b manhattan_floors.blend --python scripts/export_city_mesh.py
 
@@ -637,6 +677,9 @@ affected presentation and is already reflected in the script.
   tanks, solar panels and patios.
 - `renders/viewer_upper_facades_web.png` — the same building dressing in the
   browser build (1440 x 900).
+- `renders/viewer_trees.png` — low-poly park trees at human scale.
+- `renders/viewer_upper_facades_night.png` — random per-floor night windows
+  and all-lit financial floors.
 - `renders/viewer_facade_close.png` — randomised residential ground-floor
   facade wrapped around a block corner.
 - `build/station_lines_imagery_overlay.png`,

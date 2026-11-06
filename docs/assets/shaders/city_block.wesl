@@ -99,6 +99,18 @@ var roof_night_texture: texture_2d<f32>;
 @group(constants::MATERIAL_BIND_GROUP) @binding(111)
 var roof_night_sampler: sampler;
 
+@group(constants::MATERIAL_BIND_GROUP) @binding(114)
+var facade_night_b_texture: texture_2d<f32>;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(115)
+var facade_night_b_sampler: sampler;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(116)
+var facade_night_all_texture: texture_2d<f32>;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(117)
+var facade_night_all_sampler: sampler;
+
 @group(constants::MATERIAL_BIND_GROUP) @binding(112)
 var<uniform> atlas_info: vec4<f32>;
 
@@ -112,15 +124,23 @@ fn fragment(
 ) -> FragmentOutput {
     var pbr_input = pbr_input_from_standard_material(in, is_front);
 
-    // Block id is baked into COLOR_0 alpha by the Blender export.  COLOR_0 RGB
-    // carries a packed per-building facade/roof choice plus tint and U offset.
-    let block_id = clamp(i32(round(in.color.a * 1536.0 - 0.5)), 0, 1535);
+    // COLOR_0 RGB carries the per-building facade/roof choice, tint and U
+    // offset.  Alpha carries the block id plus a few per-building flags:
+    //   bits 0..10 block id, bit 11 financial, bits 12..14 height bucket,
+    //   bit 15 signage-eligible neighbourhood.
+    let is_ground = emissive_strength.z > 0.5;
+    let packed_color = u32(round(in.color.a * 65535.0));
+    var block_id = 0i;
+    var extra = 0u;
+    if (!is_ground) {
+        block_id = clamp(i32(packed_color & 2047u), 0, 1535);
+        extra = packed_color >> 11u;
+    }
     let state = block_states.values[block_id];
     let block_blend = state.x;
     let progress = state.y;
     let salt = u32(max(state.z, 0.0));
     let floor_flag = emissive_strength.y;
-    let is_ground = emissive_strength.z > 0.5;
 
     let floor_index = i32(floor(pbr_input.world_position.y / 3.0));
     let rnd = floor_random(u32(block_id), floor_index, salt);
@@ -171,10 +191,26 @@ fn fragment(
                 facade_day_texture, facade_day_sampler, facade_index,
                 cols, rows, local, vec2<f32>(atlas_uv.x, atlas_uv.y)
             ) * tint;
-            night = sample_atlas(
-                facade_night_texture, facade_night_sampler, facade_index,
-                cols, rows, local, vec2<f32>(atlas_uv.x, atlas_uv.y)
-            ) * tint;
+            let financial = (extra & 1u) != 0u;
+            let height_bucket = (extra >> 1u) & 7u;
+            let floor_variant = floor_random(u32(block_id), floor_index, salt ^ 0x9E37u);
+            let all_lit = financial && height_bucket >= 2u && floor_variant.y < 0.35;
+            if (all_lit) {
+                night = sample_atlas(
+                    facade_night_all_texture, facade_night_all_sampler, facade_index,
+                    cols, rows, local, vec2<f32>(atlas_uv.x, atlas_uv.y)
+                ) * tint * 1.15;
+            } else if (floor_variant.x < 0.5) {
+                night = sample_atlas(
+                    facade_night_texture, facade_night_sampler, facade_index,
+                    cols, rows, local, vec2<f32>(atlas_uv.x, atlas_uv.y)
+                ) * tint;
+            } else {
+                night = sample_atlas(
+                    facade_night_b_texture, facade_night_b_sampler, facade_index,
+                    cols, rows, local, vec2<f32>(atlas_uv.x, atlas_uv.y)
+                ) * tint;
+            }
         }
     }
 

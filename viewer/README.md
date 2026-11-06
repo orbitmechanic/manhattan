@@ -156,6 +156,18 @@ every floor, and every horizontal face uses the same roof template. The
 category mapping is residential → residential, industrial → industrial,
 storefront → commercial, executive → financial.
 
+### Dawn timing, night windows and near detail
+
+At dawn the night texture set is held for the whole +1°..−6° penumbra; the
+night-to-day switch begins at +1° and completes over the next 1.5°.  Night
+facades use two random lit-window atlases selected per floor, plus an all-lit
+atlas used on random floors of tall financial buildings.
+
+`src/details.rs` adds rooftop masts (8% of building height), projecting
+commercial/industrial shop signs (abstract atlas, some blinking or
+illuminated) and 3,000 park trees.  These use a **1,000 ft (304.8 m)**
+`DetailCull` radius; roads and facades keep the 1 km radius.
+
 ### 1 km embellishment cull
 
 `src/detail.rs` (`EMBELLISHMENT_RADIUS = 1_000 m`) hides roadway tiles, facade
