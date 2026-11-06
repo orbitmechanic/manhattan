@@ -170,6 +170,18 @@ half perpendicular blade signs) and 3,000 park trees.  These use a
 **1,000 ft (304.8 m)** `DetailCull` radius; roads and facades keep the 1 km
 radius.
 
+### Pedestrians and homeless figures
+
+`src/people.rs` builds a mannequin/clothing catalog once, then streams
+pedestrians and prone homeless figures around buildings within 140 m
+(100 m on web).  Walkers follow tracks offset 1–12 ft from the first-floor
+perimeter, are 50/50 male/female with 10% juveniles, animate an articulated
+walk cycle with avoidance, and are dressed from the shared clothing atlas.
+Density is 1 per 5 ft nominally and 1 per ft at the morning/evening rush
+peaks; one homeless figure per 20 ft lies against the perimeter.  Crowds are
+despawned when a building leaves the near radius.  Twelve percent of signs are
+vertical corner banners.
+
 ### 1 km embellishment cull
 
 `src/detail.rs` (`EMBELLISHMENT_RADIUS = 1_000 m`) hides roadway tiles, facade

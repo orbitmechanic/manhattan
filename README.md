@@ -124,6 +124,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/roadway_report.txt` | lane/sidewalk geometry method, counts and material notes. |
 | `build/upper_facade_report.txt` | upper-floor facade/roof libraries, packed COLOR_0 schema and assignment counts. |
 | `build/details_report.txt` | dawn timing, night-window variants, antennas, signs, trees and the 1,000 ft detail cull. |
+| `build/people_report.txt` | pedestrian catalog, density, walk cycle, avoidance, homeless figures, corner ads and streaming limits. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -138,6 +139,8 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/textures/facades/` | four 4096px atlases: storefront, executive, residential, industrial (ground floor). |
 | `viewer/assets/textures/upper/` | 320-template upper-floor facade atlases and 160-template roof atlases; three facade night variants. |
 | `viewer/assets/textures/signage/` | 64-design abstract projecting-sign atlas. |
+| `viewer/assets/textures/people/` | 8 x 8 clothing-pattern atlas for pedestrian outfits. |
+| `viewer/assets/models/clothing_catalog.json` | clothing tile ranges (shirts, pants, skirts, jackets, hats, bags). |
 | `viewer/assets/models/trees.json` | 3,000 park/open-ground tree placements. |
 | `viewer/assets/models/upper_facade_catalog.json` | facade/roof atlas grids, category ranges and neighbourhood mapping. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
@@ -508,6 +511,30 @@ using the all-lit atlas, producing random fully lit floors.
 `DetailCull` now carries a per-entity radius, so the new objects disappear
 past 1,000 ft while the roadway and facade dressing remain visible to 1 km.
 
+### Pedestrians, homeless figures and corner ads
+
+`viewer/src/people.rs` adds a streaming crowd layer.  The catalog is built
+once at startup from a 64-pattern clothing atlas plus male/female mannequin
+part meshes; individual outfits choose shared clothing materials.
+
+- Walkers follow mitered tracks **1–12 ft outside** each building's first-floor
+  perimeter, starting at random points and walking clockwise or
+  counter-clockwise at 0.85–1.5 m/s.
+- **50% male / 50% female**, **10% juvenile** at 30–80% adult scale.
+- Randomized shirts, pants, skirts, jackets, hats and bags; arms and legs are
+  articulated and animate a walk cycle, with body bob and basic avoidance
+  (slow/stop behind and lateral passing for oncoming walkers).
+- Density is **1 person per 5 ft of perimeter** nominally and surges to
+  **1 person per 1 ft** around the 08:00 and 17:30 rush hours.
+- **One prone homeless figure per 20 ft** of perimeter lies against the
+  building and does not move.
+- Only buildings within 140 m (100 m on web) are populated; crowds are
+  despawned when they leave that radius.  Visible limits are 1,000 walkers /
+  300 homeless native (500 / 150 web); catalogs stay in memory, individual
+  accessories do not.
+- **12% of signs** are now vertical banners running up building corners; the
+  remaining split is 50% perpendicular blade signs and 38% flat wall signs.
+
 ### 1 km embellishment cull
 
 `viewer/src/detail.rs` defines `EMBELLISHMENT_RADIUS = 1_000 m`. Roadway
@@ -637,8 +664,9 @@ python3 scripts/build_upper_facade_library.py
 # 6b8. bake per-building upper facade/roof choices into the city mesh
 blender -b manhattan_floors.blend --python scripts/assign_upper_facades.py
 
-# 6b9. signage atlas and park tree placement
+# 6b9. signage atlas, clothing atlas and park tree placement
 python3 scripts/build_sign_library.py
+python3 scripts/build_clothing_atlas.py
 /tmp/opencode/geoenv/bin/python scripts/build_trees.py
 
 # 6c. after floor-master edits, re-export the city mesh
@@ -683,6 +711,8 @@ affected presentation and is already reflected in the script.
 - `renders/viewer_upper_facades_web.png` — the same building dressing in the
   browser build (1440 x 900).
 - `renders/viewer_trees.png` — low-poly park trees at human scale.
+- `renders/viewer_people.png` — streamed pedestrians, randomized outfits,
+  articulated walk poses and second-floor/corner signage.
 - `renders/viewer_upper_facades_night.png` — random per-floor night windows
   and all-lit financial floors.
 - `renders/viewer_facade_close.png` — randomised residential ground-floor

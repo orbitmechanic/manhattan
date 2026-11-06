@@ -1,0 +1,55 @@
+Pedestrians, homeless figures and corner advertising
+==================================================
+
+Catalog (built once at startup)
+  Mannequin meshes:
+    male torso, female torso, head, short hair, long hair, arm, leg,
+    skirt, hat, bag, prone body
+  Clothing catalog:
+    viewer/assets/textures/people/clothing_atlas.jpg
+    8 x 8 tiles of 128 px; shirts 0-15, pants 16-31, skirts 32-39,
+    jackets 40-47, hats 48-55, bags 56-61
+  Materials are created once from the atlas using StandardMaterial uv
+  transforms.  Individual pedestrians choose shared handles at spawn; no
+  per-person texture or mesh is retained in the catalog.
+
+Pedestrian behaviour
+  - Each walker gets a mitered track offset 1-12 ft (0.30-3.66 m) outside the
+    building's first-floor perimeter.  The track follows that offset around
+    the building.
+  - Random start position, clockwise or counter-clockwise direction, and a
+    walking speed of 0.85-1.5 m/s.
+  - 50% male / 50% female; 10% juvenile at 30-80% adult scale.
+  - Random outfit: shirt, pants, skirt (female only), jacket/arms, hat, bag.
+  - Walk cycle: arms and legs are separate limb entities rotating around the
+    shoulder/hip, with a small body bob.  The cycle frequency follows walking
+    speed.
+  - Avoidance: same-direction walkers slow/stop within 1.6 m of the walker
+    ahead; oncoming walkers shift laterally by 0.35 m to pass each other.
+  - Density: 1 person per 5 ft of perimeter nominally (0.2/ft), rising to
+    1 person per 1 ft at the morning and evening rush-hour peaks (Gaussian
+    around 08:00 and 17:30).
+
+Homeless figures
+  - One per 20 ft of building perimeter, in addition to walkers.
+  - Low-poly prone body, head and hair lying against the building perimeter,
+    offset 1-3 ft outward.  They do not move.
+
+Corner advertising
+  - 12% of the sign population is generated as a vertical banner running up a
+    randomly chosen building corner (3-16 m tall, 1-1.9 m wide).
+  - Of the remaining signs, 50% are perpendicular blade signs and 38% are
+    flat wall signs (the regular 50/50 split is rotated by the corner share).
+
+Streaming
+  - Only buildings within 140 m (native) / 100 m (web) of the camera are
+    populated.  Each building's walkers/homeless are despawned when it leaves
+    that radius, and the catalogue remains in memory.
+  - Global visible limits: 1,000 walkers / 300 homeless native;
+    500 / 150 web.  Per-building limits: 100 walkers / 20 homeless.
+  - No crowd or accessory data is retained for distant buildings.
+
+Verification
+  renders/viewer_people.png   low-poly crowd, outfits, hats, skirts, bags,
+                              walk poses and second-floor signage
+  build/clothing_contact.png  clothing-pattern atlas

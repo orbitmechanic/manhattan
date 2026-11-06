@@ -48,6 +48,7 @@ use manhattan_viewer::{
         Environment, fog_cull_distance, setup_lighting, spawn_fog_banks, update_environment,
         update_fog_bank_materials, update_fog_banks,
     },
+    people::{Crowd, setup_people_catalog, stream_people, update_limbs, update_pedestrians},
     stationing::{
         LineSet, Stationing, StationingConfig, StationingState, configure_station_gizmos,
         draw_stationing, handle_station_keys, update_civil_coordinates,
@@ -267,6 +268,7 @@ fn main() {
         .insert_resource(StorefrontState::default())
         .init_resource::<TreeData>()
         .init_resource::<SignMaterials>()
+        .init_resource::<Crowd>()
         .insert_resource(args)
         .add_systems(
             Startup,
@@ -281,6 +283,7 @@ fn main() {
         )
         .add_systems(Startup, spawn_storefronts)
         .add_systems(Startup, (spawn_trees, spawn_antennas, spawn_signs))
+        .add_systems(Startup, setup_people_catalog)
         .add_systems(
             Update,
             (
@@ -310,6 +313,10 @@ fn main() {
         .add_systems(Update, (setup_road_materials, update_road_colors))
         .add_systems(Update, update_detail_culling)
         .add_systems(Update, update_sign_blink)
+        .add_systems(
+            Update,
+            (stream_people, update_pedestrians, update_limbs).chain(),
+        )
         .run();
 }
 

@@ -706,7 +706,10 @@ pub fn spawn_signs(
                 outward = -outward;
             }
             let y0 = building.floor_height_m + 0.8;
-            let perpendicular = next_rand(&mut seed) < 0.5;
+            if building.height_m < y0 + 0.5 {
+                continue;
+            }
+            let kind = next_rand(&mut seed);
             let tile = (next_rand(&mut seed) * 64.0) as usize % 64;
             let col = (tile % 8) as f32;
             let row = (tile / 8) as f32;
@@ -726,7 +729,40 @@ pub fn spawn_signs(
                 2 + ((next_rand(&mut seed) * span as f32) as usize).min(span - 1)
             };
 
-            if perpendicular {
+            if kind < 0.12 {
+                // Vertical banner running up a building corner.
+                let count = building.perimeter.len();
+                let corner = (next_rand(&mut seed) * count as f32) as usize % count;
+                let p = Vec2::from(building.perimeter[corner]);
+                let prev = Vec2::from(building.perimeter[(corner + count - 1) % count]);
+                let next = Vec2::from(building.perimeter[(corner + 1) % count]);
+                let e1 = (p - prev).normalize_or_zero();
+                let e2 = (next - p).normalize_or_zero();
+                let n1 = Vec2::new(e1.y, -e1.x);
+                let n2 = Vec2::new(e2.y, -e2.x);
+                let mut miter = (n1 + n2).normalize_or_zero();
+                if miter.dot(p - Vec2::new(cx, cz)) < 0.0 {
+                    miter = -miter;
+                }
+                let tangent = Vec2::new(miter.y, -miter.x);
+                let width = 1.0 + next_rand(&mut seed) * 0.9;
+                let height =
+                    (building.height_m * (0.10 + next_rand(&mut seed) * 0.20)).clamp(3.0, 16.0);
+                let y1 = (y0 + height).min(building.height_m - 0.2);
+                if y1 <= y0 + 1.2 {
+                    continue;
+                }
+                let base = p + miter * 0.16;
+                let w = tangent * (width * 0.5);
+                add_sign_quad(
+                    &mut buckets[bucket],
+                    [base.x - w.x, y0, base.y - w.y],
+                    [base.x + w.x, y0, base.y + w.y],
+                    [base.x + w.x, y1, base.y + w.y],
+                    [base.x - w.x, y1, base.y - w.y],
+                    uv,
+                );
+            } else if kind < 0.62 {
                 let t = 0.20 + next_rand(&mut seed) * 0.60;
                 let wall = a + (b - a) * t + outward * 0.12;
                 let projection = 2.4 + next_rand(&mut seed) * 1.6;

@@ -8,6 +8,7 @@ pub mod collision;
 pub mod detail;
 pub mod details;
 pub mod environment;
+pub mod people;
 pub mod stationing;
 pub mod storefront;
 pub mod ui;
