@@ -48,9 +48,13 @@ const VEHICLE_GAP: f32 = 0.7;
 /// Spawn/despawn are amortised so a camera crossing a streaming boundary does
 /// not create a one-frame spike of hundreds of entities.
 #[cfg(target_arch = "wasm32")]
-const STREAM_SPAWN_BUDGET: usize = 36;
+const STREAM_VEHICLE_BUDGET: usize = 36;
 #[cfg(not(target_arch = "wasm32"))]
-const STREAM_SPAWN_BUDGET: usize = 72;
+const STREAM_VEHICLE_BUDGET: usize = 72;
+#[cfg(target_arch = "wasm32")]
+const STREAM_PROXY_BUDGET: usize = 48;
+#[cfg(not(target_arch = "wasm32"))]
+const STREAM_PROXY_BUDGET: usize = 96;
 const STREAM_LANE_BUDGET: usize = 8;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -1097,14 +1101,24 @@ pub fn stream_traffic(
         }
     }
 
+    let initial_fill = traffic.active.is_empty() && traffic.proxies.is_empty();
     let mut count: usize = traffic.active.values().map(|list| list.len()).sum();
-    let mut spawn_budget = STREAM_SPAWN_BUDGET;
+    let mut vehicle_budget = if initial_fill {
+        MAX_NEAR_VEHICLES
+    } else {
+        STREAM_VEHICLE_BUDGET
+    };
+    let mut proxy_budget = if initial_fill {
+        MAX_PROXIES
+    } else {
+        STREAM_PROXY_BUDGET
+    };
     let mut seed = (now * 1000.0) as u32 ^ 0x7A3F_5EED;
     for (distance, lane_id) in near {
-        if spawn_budget == 0 {
-            break;
-        }
         if distance <= NEAR_TRAFFIC_RADIUS {
+            if vehicle_budget == 0 {
+                continue;
+            }
             if let Some(entity) = traffic.proxies.remove(&lane_id) {
                 commands.entity(entity).despawn();
             }
@@ -1115,7 +1129,7 @@ pub fn stream_traffic(
             let mut entities = Vec::new();
             let mut cursor = 1.2;
             let limit = lane.length * OCCUPANCY;
-            while cursor < limit && count < MAX_NEAR_VEHICLES && spawn_budget > 0 {
+            while cursor < limit && count < MAX_NEAR_VEHICLES && vehicle_budget > 0 {
                 let mut variant = None;
                 for _ in 0..12 {
                     let kind = choose_kind(&mut seed);
@@ -1137,7 +1151,7 @@ pub fn stream_traffic(
                 {
                     entities.push(entity);
                     count += 1;
-                    spawn_budget -= 1;
+                    vehicle_budget -= 1;
                     cursor += length + VEHICLE_GAP;
                 } else {
                     break;
@@ -1148,7 +1162,7 @@ pub fn stream_traffic(
             }
         } else if !traffic.proxies.contains_key(&lane_id)
             && traffic.proxies.len() < MAX_PROXIES
-            && spawn_budget > 0
+            && proxy_budget > 0
             && let Some(entity) = spawn_proxy(
                 &mut commands,
                 &mut meshes,
@@ -1159,7 +1173,7 @@ pub fn stream_traffic(
             )
         {
             traffic.proxies.insert(lane_id, entity);
-            spawn_budget -= 1;
+            proxy_budget -= 1;
         }
     }
 }

@@ -823,7 +823,12 @@ pub fn stream_people(
 
     let mut walker_count: usize = crowd.active.values().map(|c| c.walkers.len()).sum();
     let mut homeless_count: usize = crowd.active.values().map(|c| c.homeless.len()).sum();
-    let mut spawn_budget: usize = 24;
+    let initial_fill = crowd.active.is_empty();
+    let mut spawn_budget: usize = if initial_fill {
+        MAX_WALKERS + MAX_HOMELESS
+    } else {
+        24
+    };
     let mut despawn_budget: usize = 60;
     let mut seed = run_seed() ^ (now * 1000.0) as u32;
 
