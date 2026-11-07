@@ -31,21 +31,43 @@ impl DetailCull {
     }
 
     pub fn distance_to(&self, p: Vec3) -> f32 {
+        self.distance_sq_to(p).sqrt()
+    }
+
+    pub fn distance_sq_to(&self, p: Vec3) -> f32 {
         let q = p.clamp(self.min, self.max);
-        p.distance(q)
+        p.distance_squared(q)
     }
 }
 
 pub fn update_detail_culling(
+    time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
     mut items: Query<(&DetailCull, &mut Visibility)>,
+    mut last: Local<Option<(f32, Vec3)>>,
 ) {
+    let now = time.elapsed_secs();
+    let position = camera.translation;
+    if let Some((last_time, last_position)) = *last {
+        let moved = position.distance_squared(last_position) > 25.0 * 25.0;
+        // While flying, 6-7 refreshes per second is plenty for a 1 km boundary;
+        // while stationary, the result only needs an occasional safety refresh.
+        if (moved && now - last_time < 0.15) || (!moved && now - last_time < 5.0) {
+            return;
+        }
+    }
+    *last = Some((now, position));
+
     for (bounds, mut visibility) in &mut items {
-        *visibility = if bounds.distance_to(camera.translation) > bounds.radius {
+        let radius_sq = bounds.radius * bounds.radius;
+        let desired = if bounds.distance_sq_to(position) > radius_sq {
             Visibility::Hidden
         } else {
             Visibility::Inherited
         };
+        if *visibility != desired {
+            *visibility = desired;
+        }
     }
 }
 

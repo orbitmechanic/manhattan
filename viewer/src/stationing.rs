@@ -12,7 +12,10 @@ use serde::Deserialize;
 use crate::camera::FlyCamera;
 
 pub const FEET_PER_METER: f32 = 3.280_84;
-const COORD_UPDATE_SECS: f32 = 0.15;
+const COORD_UPDATE_SECS: f32 = 0.25;
+/// The HUD shows the three nearest lines; retain a few extra so the panel can
+/// still choose the exact nearest three without keeping every line.
+pub const MAX_COORDS_PER_SET: usize = 8;
 
 static IMAGERY_DATA: &str = include_str!("../assets/models/station_lines_imagery.json");
 static FRONTS_DATA: &str = include_str!("../assets/models/station_lines_fronts.json");
@@ -244,7 +247,6 @@ pub struct StationingState {
     pub imagery: Vec<CivilCoordinate>,
     pub fronts: Vec<CivilCoordinate>,
     pub completed: Vec<CivilCoordinate>,
-    last_update: f32,
 }
 
 impl StationingState {
@@ -297,45 +299,84 @@ pub fn project_line(line: &StationLine, p: Vec2) -> (f32, f32, f32) {
 
 pub fn update_civil_coordinates(
     time: Res<Time>,
+    config: Res<StationingConfig>,
     camera: Single<&Transform, With<FlyCamera>>,
     stationing: Res<Stationing>,
     mut state: ResMut<StationingState>,
+    mut last: Local<Option<(f32, Vec3)>>,
 ) {
     let now = time.elapsed_secs();
-    if !state.imagery.is_empty() && now - state.last_update < COORD_UPDATE_SECS {
+    let camera_position = camera.translation;
+    let set = config.set;
+    let switched = config.is_changed() || state.coords(set).is_empty();
+    if !config.show_coords && !switched {
         return;
     }
-    state.last_update = now;
-    let p = Vec2::new(camera.translation.x, camera.translation.z);
-    let camera_elevation_ft = camera.translation.y * FEET_PER_METER;
+    if !switched && let Some((last_time, last_position)) = *last {
+        let moved = camera_position.distance_squared(last_position) > 25.0 * 25.0;
+        if (moved && now - last_time < COORD_UPDATE_SECS) || (!moved && now - last_time < 5.0) {
+            return;
+        }
+    }
+    *last = Some((now, camera_position));
 
-    let compute = |lines: &[StationLine]| {
-        let mut out = Vec::with_capacity(lines.len());
-        for (line_index, line) in lines.iter().enumerate() {
-            if line.points.len() < 2 {
-                continue;
-            }
-            let (station_ft, offset_ft, plan_distance_ft) = project_line(line, p);
-            let line_elevation = line.elevation_ft(station_ft);
-            let (tangent_station_ft, tangent_elevation_ft) = line.tangent_station(station_ft);
-            out.push(CivilCoordinate {
+    let p = Vec2::new(camera_position.x, camera_position.z);
+    let camera_elevation_ft = camera_position.y * FEET_PER_METER;
+    let lines = &stationing.set(set).lines;
+    let mut candidates: Vec<(f32, usize, f32, f32, f32, f32, f32)> =
+        Vec::with_capacity(lines.len());
+    for (line_index, line) in lines.iter().enumerate() {
+        if line.points.len() < 2 {
+            continue;
+        }
+        let (station_ft, offset_ft, plan_distance_ft) = project_line(line, p);
+        let line_elevation = line.elevation_ft(station_ft);
+        let (tangent_station_ft, tangent_elevation_ft) = line.tangent_station(station_ft);
+        candidates.push((
+            plan_distance_ft,
+            line_index,
+            station_ft,
+            offset_ft,
+            camera_elevation_ft - line_elevation,
+            tangent_station_ft,
+            tangent_elevation_ft,
+        ));
+    }
+    if candidates.len() > MAX_COORDS_PER_SET {
+        candidates.select_nth_unstable_by(MAX_COORDS_PER_SET, |a, b| a.0.total_cmp(&b.0));
+        candidates.truncate(MAX_COORDS_PER_SET);
+    }
+    candidates.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let out: Vec<CivilCoordinate> = candidates
+        .into_iter()
+        .map(
+            |(
+                plan_distance_ft,
                 line_index,
-                line_id: line.id.clone(),
                 station_ft,
                 offset_ft,
-                elevation_ft: camera_elevation_ft - line_elevation,
+                elevation_ft,
+                tangent_station_ft,
+                tangent_elevation_ft,
+            )| CivilCoordinate {
+                line_index,
+                line_id: lines[line_index].id.clone(),
+                station_ft,
+                offset_ft,
+                elevation_ft,
                 plan_distance_ft,
                 tangent_station_ft,
                 tangent_elevation_ft,
                 station_from_tangent_ft: station_ft - tangent_station_ft,
                 elevation_from_tangent_ft: camera_elevation_ft - tangent_elevation_ft,
-            });
-        }
-        out
-    };
-    state.imagery = compute(&stationing.imagery.lines);
-    state.fronts = compute(&stationing.fronts.lines);
-    state.completed = compute(&stationing.completed.lines);
+            },
+        )
+        .collect();
+    match set {
+        LineSet::Imagery => state.imagery = out,
+        LineSet::Fronts => state.fronts = out,
+        LineSet::Completed => state.completed = out,
+    }
 }
 
 /// Squared distance from `c` to the 2D segment a-b, used to draw only the

@@ -35,8 +35,8 @@ use manhattan_viewer::{
     blocks::{BlockLights, update_blocks},
     camera::{FlyCamera, MAX_PITCH, MIN_CAMERA_HEIGHT, MoveState, fly_camera_system, step_camera},
     city_material::{
-        BuildingChunk, CityMaterial, CityMaterialSetup, setup_city_materials, setup_road_materials,
-        update_city_materials, update_road_colors,
+        BuildingChunk, CityMaterial, CityMaterialSetup, RoadMaterials, setup_city_materials,
+        setup_road_materials, update_city_materials, update_road_colors,
     },
     clock::{ClockAction, SimClock},
     collision::{CAMERA_RADIUS, CollisionGrid},
@@ -50,8 +50,8 @@ use manhattan_viewer::{
     },
     people::{Crowd, setup_people_catalog, stream_people, update_limbs, update_pedestrians},
     stationing::{
-        LineSet, Stationing, StationingConfig, StationingState, configure_station_gizmos,
-        draw_stationing, handle_station_keys, update_civil_coordinates,
+        LineSet, MAX_COORDS_PER_SET, Stationing, StationingConfig, StationingState,
+        configure_station_gizmos, draw_stationing, handle_station_keys, update_civil_coordinates,
     },
     storefront::{StorefrontData, StorefrontState, spawn_storefronts},
     street_furniture::{
@@ -60,7 +60,7 @@ use manhattan_viewer::{
     },
     traffic::{
         Traffic, TrafficLanes, setup_vehicle_catalog, stream_traffic, update_traffic,
-        update_vehicle_lights,
+        update_vehicle_light_lod, update_vehicle_lights,
     },
     ui::{handle_calendar_keys, spawn_ui, update_station_text, update_status},
     weather::{
@@ -290,6 +290,7 @@ fn main() {
         .init_resource::<Traffic>()
         .init_resource::<Intersections>()
         .init_resource::<StreetFurniture>()
+        .init_resource::<RoadMaterials>()
         .insert_resource(args)
         .add_systems(
             Startup,
@@ -349,7 +350,13 @@ fn main() {
         )
         .add_systems(
             Update,
-            (stream_traffic, update_traffic, update_vehicle_lights).chain(),
+            (
+                stream_traffic,
+                update_traffic,
+                update_vehicle_lights,
+                update_vehicle_light_lod,
+            )
+                .chain(),
         )
         .add_systems(
             Update,
@@ -541,10 +548,20 @@ fn update_dof(
 /// replaced with a box proxy; the fog simply hides geometry beyond the point
 /// where it is no longer visible.
 fn update_fog_culling(
+    time: Res<Time>,
     env: Res<Environment>,
     mut chunks: Query<&mut VisibilityRange, With<BuildingChunk>>,
+    mut last: Local<Option<(f32, f32)>>,
 ) {
     let cull = fog_cull_distance(env.fog_visibility);
+    let now = time.elapsed_secs();
+    if let Some((last_time, last_cull)) = *last
+        && now - last_time < 0.25
+        && (cull - last_cull).abs() < 1.0
+    {
+        return;
+    }
+    *last = Some((now, cull));
     for mut range in &mut chunks {
         range.start_margin = 0.0..0.0;
         range.end_margin = cull..(cull + 600.0);
@@ -751,9 +768,13 @@ fn run_selftest(
                 test.station_lines > 1_000
                     && test.station_front_lines > 1_000
                     && test.station_completed_lines > 1_000
-                    && test.station_coords == test.station_lines
-                    && test.station_front_coords == test.station_front_lines
-                    && test.station_completed_coords == test.station_completed_lines
+                    && test.station_coords <= MAX_COORDS_PER_SET
+                    && test.station_front_coords <= MAX_COORDS_PER_SET
+                    && test.station_completed_coords <= MAX_COORDS_PER_SET
+                    && test.station_coords
+                        + test.station_front_coords
+                        + test.station_completed_coords
+                        > 0
             );
             let _ = std::fs::write(&path, &report);
             println!("SELFTEST REPORT {path}\n{report}");
@@ -776,9 +797,11 @@ fn run_selftest(
                 && test.station_lines > 1_000
                 && test.station_front_lines > 1_000
                 && test.station_completed_lines > 1_000
-                && test.station_coords == test.station_lines
-                && test.station_front_coords == test.station_front_lines
-                && test.station_completed_coords == test.station_completed_lines;
+                && test.station_coords <= MAX_COORDS_PER_SET
+                && test.station_front_coords <= MAX_COORDS_PER_SET
+                && test.station_completed_coords <= MAX_COORDS_PER_SET
+                && test.station_coords + test.station_front_coords + test.station_completed_coords
+                    > 0;
             if ok {
                 exit.write(AppExit::Success);
             } else {
@@ -808,20 +831,34 @@ fn hide_web_loading(setup: Res<CityMaterialSetup>, mut hidden: Local<bool>) {
 
 #[allow(unused_variables, unused_mut)]
 fn cull_web_buildings(
+    time: Res<Time>,
     env: Res<Environment>,
     camera: Single<&Transform, With<FlyCamera>>,
     mut chunks: Query<(&GlobalTransform, &mut Visibility), With<BuildingChunk>>,
+    mut last: Local<Option<(f32, f32, Vec3)>>,
 ) {
     #[cfg(target_arch = "wasm32")]
     {
         let cull = fog_cull_distance(env.fog_visibility);
+        let now = time.elapsed_secs();
+        if let Some((last_time, last_cull, last_position)) = *last {
+            let moved = last_position.distance_squared(camera.translation) > 25.0 * 25.0;
+            if now - last_time < 0.1 && !moved && (cull - last_cull).abs() < 1.0 {
+                return;
+            }
+        }
+        *last = Some((now, cull, camera.translation));
+        let cull_sq = cull * cull;
         for (transform, mut visibility) in &mut chunks {
-            let distance = transform.translation().distance(camera.translation);
-            *visibility = if distance.is_finite() && distance > cull {
+            let distance_sq = transform.translation().distance_squared(camera.translation);
+            let desired = if distance_sq.is_finite() && distance_sq > cull_sq {
                 Visibility::Hidden
             } else {
                 Visibility::Inherited
             };
+            if *visibility != desired {
+                *visibility = desired;
+            }
         }
     }
 }

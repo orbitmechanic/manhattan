@@ -26,8 +26,8 @@ Lane network
 
 Streaming
   - Traffic now covers the same 1,000 m radius as the roadway.
-  - Within 250 m native / 180 m web, lanes are populated with individually
-    animated vehicles (limits 1,200 / 600).
+  - Within 150 m native / 100 m web, lanes are populated with individually
+    animated vehicles (limits 600 / 300).
   - Beyond the near radius, each lane is filled with a merged far-proxy mesh
     of simple solid vehicle boxes to 85% occupancy, so every visible road is
     covered out to 1 km.  Proxies are despawned when the lane leaves range.

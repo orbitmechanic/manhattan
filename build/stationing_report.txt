@@ -55,10 +55,12 @@ Viewer
   station_lines_imagery.json / station_lines_fronts.json / station_lines_completed.json
   are compiled into the app.  src/stationing.rs:
     - draws the selected set (L), 100-ft vertical ticks from -3 m to +30 m (T);
-    - maintains separate camera coordinate arrays for both sets:
-      station_ft, offset_ft (negative left / positive right up-station),
-      elevation_ft, plan_distance_ft, nearest tangent station/elevation,
-      station_from_tangent_ft, elevation_from_tangent_ft;
+    - maintains one compact nearest-coordinate array for the active set
+      (up to 8 entries): station_ft, offset_ft (negative left / positive right
+      up-station), elevation_ft, plan_distance_ft, nearest tangent
+      station/elevation, station_from_tangent_ft, elevation_from_tangent_ft;
+    - refreshes ~4x/s while moving and 0.2x/s while stationary, and only for
+      the selected set; switching sets recomputes immediately;
     - shows the three nearest lines for the selected set in the panel;
     - G (or the set [G] button) cycles IMAGERY -> BUILDING FRONTS -> COMPLETED.
     COMPLETED is the default.

@@ -320,14 +320,66 @@ pub fn setup_city_materials(
     );
 }
 
+/// Unique road/sidewalk/material handles, resolved once so the per-frame
+/// daylight tint does not scan every glTF primitive or allocate strings.
+#[derive(Resource, Default)]
+pub struct RoadMaterials {
+    pub entries: Vec<(Handle<StandardMaterial>, Vec3)>,
+    pub done: bool,
+}
+
+fn road_base_color(name: &str) -> Option<Vec3> {
+    if !(name.contains("road")
+        || name.contains("sidewalk")
+        || name.contains("curb")
+        || name.contains("marking"))
+    {
+        return None;
+    }
+    if name.contains("marking") {
+        if name.contains("yellow") {
+            Some(Vec3::new(0.95, 0.72, 0.08))
+        } else {
+            Some(Vec3::new(0.93, 0.93, 0.89))
+        }
+    } else if name.contains("road") {
+        Some(Vec3::new(0.10, 0.10, 0.11))
+    } else {
+        Some(Vec3::new(0.78, 0.78, 0.75))
+    }
+}
+
 /// Copy the current block blends into every CityMaterial's uniform array.
+/// The uniform is only rewritten when a block blend, the twilight progress or
+/// the penumbra salt actually changes, and at most ~30 times per second during
+/// a dusk/dawn transition.
 pub fn update_city_materials(
+    time: Res<Time>,
     blocks: Res<BlockLights>,
     mut materials: ResMut<Assets<CityMaterial>>,
+    mut last: Local<Option<(u64, f32, usize)>>,
 ) {
     if blocks.states.is_empty() {
         return;
     }
+
+    let mut hash = 0xcbf2_9ce4_8422_2325u64;
+    for state in &blocks.states {
+        hash ^= u64::from(state.blend.to_bits());
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    hash ^= u64::from(blocks.progress.to_bits());
+    hash ^= blocks.penumbra_id as u64;
+    let material_count = materials.len();
+    let now = time.elapsed_secs();
+    if let Some((last_hash, last_time, last_count)) = *last
+        && (hash == last_hash || now - last_time < 0.033)
+        && material_count == last_count
+    {
+        return;
+    }
+    *last = Some((hash, now, material_count));
+
     let mut uniform = BlockUniform::default();
     for (i, state) in blocks.states.iter().take(MAX_BLOCKS).enumerate() {
         // x = block day/night blend, y = twilight progress,
@@ -340,34 +392,20 @@ pub fn update_city_materials(
 }
 
 pub fn setup_road_materials(
-    mut done: Local<bool>,
     query: Query<(&GltfMaterialName, &MeshMaterial3d<StandardMaterial>)>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut roads: ResMut<RoadMaterials>,
 ) {
-    if *done {
+    if roads.done {
         return;
     }
     for (name, handle) in &query {
         let lower = name.to_string().to_ascii_lowercase();
-        if !(lower.contains("road")
-            || lower.contains("sidewalk")
-            || lower.contains("curb")
-            || lower.contains("marking"))
-        {
+        let Some(base) = road_base_color(&lower) else {
             continue;
-        }
+        };
         if let Some(mut material) = materials.get_mut(&handle.0) {
-            material.base_color = if lower.contains("marking") {
-                if lower.contains("yellow") {
-                    Color::srgb(0.95, 0.72, 0.08)
-                } else {
-                    Color::srgb(0.93, 0.93, 0.89)
-                }
-            } else if lower.contains("road") {
-                Color::srgb(0.10, 0.10, 0.11)
-            } else {
-                Color::srgb(0.78, 0.78, 0.75)
-            };
+            material.base_color = Color::srgb(base.x, base.y, base.z);
             // The road mesh is intentionally unlit so the flat pavement stays
             // readable at grazing angles; update_road_colors tints it with the
             // time of day.
@@ -375,37 +413,33 @@ pub fn setup_road_materials(
             material.depth_bias = 50.0;
             material.cull_mode = None;
         }
-        *done = true;
+        if !roads.entries.iter().any(|(seen, _)| *seen == handle.0) {
+            roads.entries.push((handle.0.clone(), base));
+        }
+    }
+    if !roads.entries.is_empty() {
+        roads.done = true;
     }
 }
 
 pub fn update_road_colors(
+    time: Res<Time>,
     env: Res<crate::environment::Environment>,
-    query: Query<(&GltfMaterialName, &MeshMaterial3d<StandardMaterial>)>,
+    roads: Res<RoadMaterials>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut last: Local<(f32, f32)>,
 ) {
+    if roads.entries.is_empty() {
+        return;
+    }
     let day = 0.12 + 0.88 * env.daylight;
-    for (name, handle) in &query {
-        let lower = name.to_string().to_ascii_lowercase();
-        if !(lower.contains("road")
-            || lower.contains("sidewalk")
-            || lower.contains("curb")
-            || lower.contains("marking"))
-        {
-            continue;
-        }
-        if let Some(mut material) = materials.get_mut(&handle.0) {
-            let base = if lower.contains("marking") {
-                if lower.contains("yellow") {
-                    Vec3::new(0.95, 0.72, 0.08)
-                } else {
-                    Vec3::new(0.93, 0.93, 0.89)
-                }
-            } else if lower.contains("road") {
-                Vec3::new(0.10, 0.10, 0.11)
-            } else {
-                Vec3::new(0.78, 0.78, 0.75)
-            };
+    let now = time.elapsed_secs();
+    if last.0 > 0.0 && now - last.0 < 0.1 && (day - last.1).abs() < 0.002 {
+        return;
+    }
+    *last = (now, day);
+    for (handle, base) in &roads.entries {
+        if let Some(mut material) = materials.get_mut(handle) {
             material.base_color = Color::srgb(base.x * day, base.y * day, base.z * day);
         }
     }

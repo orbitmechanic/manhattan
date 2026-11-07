@@ -106,16 +106,15 @@ Each line stores 100-ft tick positions, plan tangents, circular/reverse curves
 (radius, direction) and a vertical tangent profile (currently grade 0 because
 the model ground is flat).  Points are already in viewer coordinates.
 
-`src/stationing.rs` draws the selected set as gizmos and maintains separate
-camera coordinate arrays in `StationingState.imagery`, `StationingState.fronts` and
-`StationingState.completed`: station, signed offset (negative left / positive
-right up-station), camera elevation relative to the line, nearest vertical
-tangent station/elevation, signed station/elevation from that tangent, and
-plan distance.  The panel shows the three nearest lines of the selected set.
-Press `G` (or the **set [G]** button) to cycle IMAGERY → BUILDING FRONTS →
-COMPLETED.
-The full arrays are intended for future pavement/gutter/sidewalk/crosswalk/
-signal placement.
+`src/stationing.rs` draws the selected set as gizmos and keeps one compact
+nearest-coordinate array for the active set in
+`StationingState.imagery` / `.fronts` / `.completed`: station, signed offset
+(negative left / positive right up-station), camera elevation relative to the
+line, nearest vertical tangent station/elevation, signed station/elevation from
+that tangent, and plan distance.  Up to eight entries are retained and the
+panel shows the three nearest lines; the array refreshes ~4×/s while moving and
+0.2×/s when stationary.  Switching sets recomputes immediately.  Press `G`
+(or the **set [G]** button) to cycle IMAGERY → BUILDING FRONTS → COMPLETED.
 
 ### Roadway geometry
 
@@ -193,13 +192,15 @@ vertical corner banners.
 `src/traffic.rs` streams 150 low-poly vehicle variants (30 each of
 tractor-trailer, cargo van, SUV, sedan and emergency) from the lane centrelines
 in `assets/models/traffic_lanes.json`.  Traffic covers the full 1,000 m roadway
-radius: individually animated vehicles within 250 m (180 m web) and merged
-solid far-proxy boxes beyond, all at 85% occupancy.  Vehicles are double-sided
-solids, align to the lane, keep clear of sidewalks, creep forward unevenly in
-gridlock, and use an AABB grid to avoid cross-lane overlaps.  A shared emissive
-night-light atlas (cabin windows, headlights, taillights, amber markers and
-emergency bars) turns on at night.  Body paint is preserved at night with an
-unlit, dimmed vertex-colour presentation rather than a uniform grey emissive.
+radius: individually animated vehicles within **150 m native / 100 m web** and
+merged solid far-proxy boxes beyond, all at 85% occupancy (max 600 / 300 near
+vehicles).  Individual vehicle light meshes are hidden past 130 m native /
+90 m web; proxy lights remain.  Vehicles are double-sided solids, align to the
+lane, keep clear of sidewalks, creep forward unevenly in gridlock, and use an
+AABB grid to avoid cross-lane overlaps.  A shared emissive night-light atlas
+(cabin windows, headlights, taillights, amber markers and emergency bars) turns
+on at night.  Body paint is preserved at night with an unlit, dimmed
+vertex-colour presentation rather than a uniform grey emissive.
 
 Building shadow maps are disabled.  `src/street_furniture.rs` streams
 streetlamps along building sidewalks and traffic signals at exported
@@ -229,6 +230,17 @@ curve, wind and lightning.  `V` cycles the front.
   lens down so the streaks remain readable.
 - No particles, shadow maps or extra render passes are used; the whole system
   is two cloud planes, one precipitation mesh and three small custom shaders.
+
+### Runtime throttling
+
+- City block uniforms and road tints are change-driven; steady day/night
+  frames do not rewrite material assets.
+- Detail and web building culling are throttled (6.7 Hz moving / 5 s idle for
+  details) and only write `Visibility` when the result changes.
+- Stationing keeps the nearest eight coordinates for the active set only and
+  skips work when the panel is hidden.
+- Traffic near radius is 150 m native / 100 m web, with individual vehicle
+  lights hidden beyond 130 m / 90 m.
 
 ### 1 km embellishment cull
 

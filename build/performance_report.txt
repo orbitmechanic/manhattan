@@ -1,0 +1,83 @@
+Runtime performance pass 1
+==========================
+
+Method
+  Native release build, 1440x900, AMD Ryzen 5 3500U / Radeon Vega 8.
+  Temporary Bevy RenderDiagnosticsPlugin GPU pass timestamps plus per-system
+  timers were used for attribution, then removed.  Frame times are quantized
+  by the 60 Hz compositor, so compare relative work rather than exact FPS.
+
+Measured before this pass (close view, fair weather)
+  Main opaque 3D pass                 ~14 ms GPU
+  Main transparent pass               ~2.4 ms GPU
+  Depth of field                      ~2.5 ms GPU
+  Bloom                               ~2.0 ms GPU
+  Tonemapping + upscaling + UI        ~2.1 ms GPU
+  Custom CPU systems                  ~6.3 ms/frame total:
+    civil coordinates                 ~1.6-2.0
+    pedestrian update                 ~1.3
+    traffic update                    ~1.2
+    detail culling                    ~0.9
+    station text                      ~0.37
+    road colours                      ~0.37
+    limbs                             ~0.13
+    city materials                    ~0.09
+  Disabling traffic                   49.5 -> 38.0 ms frame
+  Disabling city-material update      ~5 ms saved
+  Disabling road-colour update        ~4.5 ms saved
+  Disabling fog banks                 transparent pass 3.9 -> 0.7 ms (mid)
+
+Changes in this pass
+  1. City block uniforms (viewer/src/city_material.rs)
+     - Hash block blend, twilight progress and penumbra salt.
+     - Rewrite the 1536-entry uniform only when the hash changes, capped at
+       ~30 Hz during a dusk/dawn transition.
+     - Force a rewrite when the number of CityMaterial assets changes so newly
+       created materials receive the current uniform.
+
+  2. Road tinting (viewer/src/city_material.rs)
+     - setup_road_materials resolves each unique road/sidewalk/curb/marking
+       material handle and base colour once.
+     - update_road_colors iterates only those handles, only when daylight
+       changes by >0.002, at most 10 Hz.
+     - No per-frame glTF-name string allocation or full material query.
+
+  3. Detail culling (viewer/src/detail.rs)
+     - Squared-distance test instead of sqrt.
+     - Compare before writing Visibility.
+     - 6-7 refreshes/s while moving; once per 5 s while stationary.
+     - Same semantics: 1 km roads/facades, 1,000 ft near details.
+
+  4. Fog/building culling (viewer/src/main.rs)
+     - update_fog_culling runs at most 4 Hz / after a >1 m cull change.
+     - cull_web_buildings runs at most 10 Hz, or when the camera moves 25 m or
+       fog visibility changes; only writes changed Visibility values.
+
+  5. Stationing (viewer/src/stationing.rs)
+     - Computes only the active line set (not imagery + fronts + completed).
+     - Retains the nearest 8 coordinates (panel shows 3) instead of every line.
+     - Refreshes at 4 Hz while moving and 0.2 Hz when stationary.
+     - Skips computation entirely when the coordinate panel is hidden.
+     - Removes per-line String clones for thousands of discarded lines.
+
+  6. Traffic (viewer/src/traffic.rs)
+     - Near-animation radius: 250 -> 150 m native, 180 -> 100 m web.
+     - Near vehicle cap: 1,200 -> 600 native, 600 -> 300 web.
+     - Far proxies still cover every lane out to 1 km at 85% occupancy.
+     - New VehicleLight marker and update_vehicle_light_lod hides individual
+       headlight/taillight meshes beyond 130 m native / 90 m web; proxy lights
+       stay visible so distant traffic still reads at night.
+
+Result
+  Native close view, fair weather: ~49-50 ms -> ~43-47 ms average.
+  Native mid view:                 ~56-62 ms -> ~47-49 ms average.
+  Visual checks: day, night, rain and snow renders; traffic density preserved,
+  station panel still shows the nearest three lines, night lights preserved
+  near the camera and on distant proxies.
+
+Not changed in this pass (next candidates)
+  - Fog-bank count/overdraw (1.6-3.2 ms GPU).
+  - DOF/bloom optional quality mode (~4.5 ms GPU).
+  - Pedestrian O(n^2) neighbour pass.
+  - Far LOD meshes via Bevy VisibilityRange; occlusion culling with DepthPrepass.
+  - Embedded JSON/bin media in the wasm (~21 MB) and the 97 MB city GLB.

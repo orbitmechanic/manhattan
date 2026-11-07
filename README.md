@@ -128,6 +128,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/traffic_report.txt` | vehicle catalog, lane network, 85% occupancy, gridlock movement, collision grid and night lights. |
 | `build/lighting_report.txt` | streetlamp/signal streaming, night-light atlas and the removed shadow pass. |
 | `build/weather_report.txt` | weather state machine, procedural cloud/precipitation shaders and performance notes. |
+| `build/performance_report.txt` | measured frame/CPU hotspots and the first batch of runtime optimizations. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -354,12 +355,12 @@ be compared:
   +30 m through the ground), `C` for the civil-coordinate panel, and **`G` to
   cycle IMAGERY → BUILDING FRONTS → COMPLETED**.  The same toggles are buttons
   in the STATIONING panel.  **COMPLETED is the default set.**
-- The camera computes **one civil-coordinate array per set** (`imagery`,
-  `fronts`, `completed`) with `station_ft`, `offset_ft`, `elevation_ft`, nearest tangent
+- The camera keeps **one compact nearest-coordinate array for the active set**
+  (up to 8 entries, refreshed ~4×/s while moving and 0.2×/s when stationary).
+  Each entry carries `station_ft`, `offset_ft`, `elevation_ft`, nearest tangent
   station/elevation, signed station/elevation from that tangent and plan
-  distance.  The panel shows the three nearest lines for the selected set; the
-  full arrays live in `StationingState` for future pavement/gutter/sidewalk/
-  crosswalk/signal placement.
+  distance.  The panel shows the three nearest lines for the selected set;
+  switching sets with `G` recomputes the new set immediately.
 - `build/station_lines_imagery_overlay.png` and
   `station_lines_fronts_overlay.png` show the two networks on the satellite;
   `renders/viewer_station_*_street.png` / `_mid.png` show them in the viewer,
@@ -558,12 +559,13 @@ exported with the roadway:
   schemes.
 - Spawn shares: **10% tractor-trailer, 20% cargo van, 40% SUV, 20% sedan,
   10% emergency**.
-- Traffic covers the same **1,000 m radius as the roadway**.  Within 250 m
-  native / 180 m web, lanes use individually animated vehicles at **85%
-  occupancy** (1,200 / 600 active).  Beyond that, each lane gets a merged
+- Traffic covers the same **1,000 m radius as the roadway**.  Within **150 m
+  native / 100 m web**, lanes use individually animated vehicles at **85%
+  occupancy** (max 600 / 300 active).  Beyond that, each lane gets a merged
   far-proxy mesh of solid vehicle boxes at 85% occupancy, so every visible
   road is covered out to 1 km.  Proxies and near vehicles are despawned as
-  lanes leave range.
+  lanes leave range.  Individual vehicle light meshes are hidden beyond
+  130 m native / 90 m web; proxy lights stay visible.
 - Vehicles align to the lane tangent (parallel to the road, perpendicular to
   adjacent building faces), are rejected if they do not fit inside the lane,
   and therefore stay off the 12-ft sidewalk tracks.  Body and light materials
@@ -617,6 +619,31 @@ with smooth transitions over roughly half a minute.  `V` cycles the front and
   ~88%, thickens the fog (visibility 1.2–22 km), hides stars and the sun/moon
   discs, and drives the HUD weather line.  No particle simulation or extra
   shadow maps are used.
+
+### Runtime performance
+
+The first optimization pass targets per-frame work that was happening even when
+nothing changed:
+
+- **Block materials** are updated only when a block blend, twilight progress or
+  penumbra salt changes, capped at ~30 Hz during dusk/dawn.  Steady day/night
+  frames do no uniform upload.
+- **Road tinting** resolves each unique road/sidewalk/marking material once and
+  updates it only when daylight changes, at most 10 Hz.
+- **Detail culling** runs at ~6.7 Hz while the camera moves and once every 5 s
+  when stationary; it compares before writing `Visibility`.  Web chunk culling
+  is similarly throttled and only writes changed values.
+- **Stationing** retains the eight nearest coordinates for the active set only,
+  refreshes at ~4 Hz while moving, skips when the panel is hidden, and no
+  longer sorts every line.
+- **Traffic** uses a 150 m native / 100 m web near radius (max 600 / 300
+  animated vehicles) and hides individual vehicle light meshes beyond
+  130 m / 90 m.  Far-lane proxies still cover the roadway to 1 km.
+
+Measured on the native release build at the close view, fair weather, this pass
+moved the average frame from roughly 49–50 ms to ~43–47 ms and the mid view
+from ~56–62 ms to ~47–49 ms.  Frame times are quantized by the 60 Hz display, so
+the useful result is the reduced work per frame, not the exact FPS.
 
 ### 1 km embellishment cull
 

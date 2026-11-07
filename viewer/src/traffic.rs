@@ -24,14 +24,19 @@ const LANE_DATA: &str = include_str!("../assets/models/traffic_lanes.json");
 const TRAFFIC_RADIUS: f32 = 1_000.0;
 
 #[cfg(target_arch = "wasm32")]
-const NEAR_TRAFFIC_RADIUS: f32 = 180.0;
+const NEAR_TRAFFIC_RADIUS: f32 = 100.0;
 #[cfg(not(target_arch = "wasm32"))]
-const NEAR_TRAFFIC_RADIUS: f32 = 250.0;
+const NEAR_TRAFFIC_RADIUS: f32 = 150.0;
 
 #[cfg(target_arch = "wasm32")]
-const MAX_NEAR_VEHICLES: usize = 600;
+const MAX_NEAR_VEHICLES: usize = 300;
 #[cfg(not(target_arch = "wasm32"))]
-const MAX_NEAR_VEHICLES: usize = 1_200;
+const MAX_NEAR_VEHICLES: usize = 600;
+
+#[cfg(target_arch = "wasm32")]
+const VEHICLE_LIGHT_RADIUS: f32 = 90.0;
+#[cfg(not(target_arch = "wasm32"))]
+const VEHICLE_LIGHT_RADIUS: f32 = 130.0;
 
 #[cfg(target_arch = "wasm32")]
 const MAX_PROXIES: usize = 2_000;
@@ -163,6 +168,12 @@ pub struct Vehicle {
     width: f32,
     yaw_offset: f32,
 }
+
+/// Marks the emissive headlight/taillight mesh of an individual near vehicle.
+/// Proxy lights stay visible at every distance; individual lights are only
+/// needed close up, so the LOD system hides them beyond a short radius.
+#[derive(Component)]
+pub struct VehicleLight;
 
 fn next_rand(seed: &mut u32) -> f32 {
     *seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
@@ -767,6 +778,7 @@ fn spawn_vehicle(
     commands.entity(entity).with_children(|parent| {
         parent.spawn((
             NotShadowCaster,
+            VehicleLight,
             Mesh3d(variant.lights.clone()),
             MeshMaterial3d(catalog.lights_material.clone()),
             Transform::IDENTITY,
@@ -1240,6 +1252,31 @@ pub fn update_traffic(
             let (_, tangent) = lane_sample(lane, *s);
             let yaw = tangent[0].atan2(tangent[1]) + vehicle.yaw_offset;
             transform.rotation = Quat::from_rotation_y(yaw);
+        }
+    }
+}
+
+pub fn update_vehicle_light_lod(
+    time: Res<Time>,
+    camera: Single<&Transform, With<FlyCamera>>,
+    mut lights: Query<(&GlobalTransform, &mut Visibility), With<VehicleLight>>,
+    mut last: Local<f32>,
+) {
+    let now = time.elapsed_secs();
+    if now - *last < 0.2 {
+        return;
+    }
+    *last = now;
+    let radius_sq = VEHICLE_LIGHT_RADIUS * VEHICLE_LIGHT_RADIUS;
+    let camera_position = camera.translation;
+    for (transform, mut visibility) in &mut lights {
+        let desired = if transform.translation().distance_squared(camera_position) <= radius_sq {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+        if *visibility != desired {
+            *visibility = desired;
         }
     }
 }
