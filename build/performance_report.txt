@@ -1,5 +1,5 @@
-Runtime performance pass 1
-==========================
+Runtime performance passes 1-2
+==============================
 
 Method
   Native release build, 1440x900, AMD Ryzen 5 3500U / Radeon Vega 8.
@@ -27,7 +27,7 @@ Measured before this pass (close view, fair weather)
   Disabling road-colour update        ~4.5 ms saved
   Disabling fog banks                 transparent pass 3.9 -> 0.7 ms (mid)
 
-Changes in this pass
+Changes in pass 1
   1. City block uniforms (viewer/src/city_material.rs)
      - Hash block blend, twilight progress and penumbra salt.
      - Rewrite the 1536-entry uniform only when the hash changes, capped at
@@ -68,16 +68,29 @@ Changes in this pass
        headlight/taillight meshes beyond 130 m native / 90 m web; proxy lights
        stay visible so distant traffic still reads at night.
 
+Second pass
+  - Pedestrian avoidance: walkers sorted by building/station; each checks only
+    the ±2 m neighbourhood with a 32-check cap, replacing O(n^2) all-pairs
+    comparisons.
+  - Fog sheets: 18 -> 8 quads; shared material updates only when the fog
+    tint/strength changes.
+  - Shared vehicle-light, traffic-signal and blinking-sign materials only
+    update when their on/off/phase state changes.
+  - Web build: DOF pass omitted (native keeps it); the browser is the most
+    fill-rate-sensitive target.
+
 Result
-  Native close view, fair weather: ~49-50 ms -> ~43-47 ms average.
-  Native mid view:                 ~56-62 ms -> ~47-49 ms average.
+  Native close view, fair weather: ~49-50 ms -> ~43-47 ms average after the
+  first batch, with further reductions from the pedestrian/fog pass.
+  Native mid view:                 ~56-62 ms -> ~47-49 ms after the first
+  batch; the second pass removes the pedestrian all-pairs cost and roughly
+  halves fog-sheet overdraw.
+  The web build also omits the DOF pass.
   Visual checks: day, night, rain and snow renders; traffic density preserved,
   station panel still shows the nearest three lines, night lights preserved
   near the camera and on distant proxies.
 
-Not changed in this pass (next candidates)
-  - Fog-bank count/overdraw (1.6-3.2 ms GPU).
-  - DOF/bloom optional quality mode (~4.5 ms GPU).
-  - Pedestrian O(n^2) neighbour pass.
+Next candidates
+  - Bloom on web (~2 ms GPU); could be offered as a low-quality toggle.
   - Far LOD meshes via Bevy VisibilityRange; occlusion culling with DepthPrepass.
   - Embedded JSON/bin media in the wasm (~21 MB) and the 97 MB city GLB.

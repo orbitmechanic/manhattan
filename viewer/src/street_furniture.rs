@@ -430,8 +430,21 @@ pub fn update_street_lights(
     env: Res<Environment>,
     assets: Res<StreetAssets>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut last: Local<Option<(bool, u8)>>,
 ) {
     let night = env.night || env.daylight < 0.35;
+    let cycle = time.elapsed_secs() % 14.0;
+    let phase = if cycle < 6.0 {
+        0
+    } else if cycle < 11.0 {
+        1
+    } else {
+        2
+    };
+    if *last == Some((night, phase)) {
+        return;
+    }
+    *last = Some((night, phase));
     if let Some(mut material) = materials.get_mut(&assets.lamp_material) {
         material.emissive = if night {
             LinearRgba::rgb(4.2, 3.0, 1.35)
@@ -439,13 +452,10 @@ pub fn update_street_lights(
             LinearRgba::BLACK
         };
     }
-    let cycle = time.elapsed_secs() % 14.0;
-    let (red, amber, green) = if cycle < 6.0 {
-        (true, false, false)
-    } else if cycle < 11.0 {
-        (false, false, true)
-    } else {
-        (false, true, false)
+    let (red, amber, green) = match phase {
+        0 => (true, false, false),
+        1 => (false, false, true),
+        _ => (false, true, false),
     };
     let active = [
         (assets.red_material.clone(), red, (0.95, 0.06, 0.04)),

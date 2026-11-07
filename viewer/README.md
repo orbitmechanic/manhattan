@@ -241,6 +241,13 @@ curve, wind and lightning.  `V` cycles the front.
   skips work when the panel is hidden.
 - Traffic near radius is 150 m native / 100 m web, with individual vehicle
   lights hidden beyond 130 m / 90 m.
+- Pedestrian avoidance uses a sorted ±2 m station window (max 32 checks per
+  walker) instead of all-pairs comparison.
+- Fog sheets are reduced to 8 quads and their shared material updates only on
+  a tint/strength change.
+- Vehicle lights, traffic signals and blinking signs only update their shared
+  materials on a state change.
+- The web build omits the DOF pass; native keeps the cinematic blur.
 
 ### 1 km embellishment cull
 
@@ -254,11 +261,12 @@ planes stay at `1.0` / `45,000`.
   (`5 km + 2.2 m per unit`), night air (25% denser), cloud cover, precipitation
   and a slow weather wave, clamped to 1.2–22 km.  The HUD shows the current
   visibility.
-- 18 horizontal, soft mist quads drift over the city; they are tinted to the
+- 8 horizontal, soft mist quads drift over the city; they are tinted to the
   sky and fade with the haze.
 - Gaussian `DepthOfField` uses a 2.5 m sensor (a cinematic city-scale cheat),
   focus `clamp(y*1.35 + 70, 90..3200)`, aperture f/1.0→f/3.6 and CoC 18→9 px.
   `max_depth` equals fog visibility, so the blur saturates at the fog cutoff.
+  The web build omits the DOF pass.
 - `collision_grid.bin` (1685×1304 cells, 4 m, 528k solid cells) is baked from
   the block master by `../scripts/build_collision_grid.py`.  `src/collision.rs`
   sweeps camera motion and slides along impact normals; `push_out` is the

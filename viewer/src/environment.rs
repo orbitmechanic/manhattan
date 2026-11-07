@@ -466,7 +466,7 @@ pub fn spawn_fog_banks(
         seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
         (seed >> 8) as f32 / ((u32::MAX >> 8) as f32)
     };
-    for i in 0..18 {
+    for i in 0..8 {
         let x = -1_800.0 + rnd() * 6_300.0;
         let z = -2_400.0 + rnd() * 5_000.0;
         let y = 18.0 + rnd() * 55.0;
@@ -517,8 +517,13 @@ pub fn update_fog_bank_materials(
     env: Res<Environment>,
     banks: Res<FogBankMaterials>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut last: Local<(Vec3, f32)>,
 ) {
     let strength = 0.55 + 0.9 * env.fog_strength;
+    if env.fog_rgb.distance_squared(last.0) < 1e-6 && (strength - last.1).abs() < 0.002 {
+        return;
+    }
+    *last = (env.fog_rgb, strength);
     for (handle, base_alpha) in &banks.0 {
         if let Some(mut material) = materials.get_mut(handle) {
             material.base_color = Color::srgba(

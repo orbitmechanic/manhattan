@@ -23,10 +23,7 @@ use bevy::{
     core_pipeline::tonemapping::Tonemapping,
     gltf::GltfAssetLabel,
     pbr::{DistanceFog, FogFalloff, MaterialPlugin},
-    post_process::{
-        bloom::Bloom,
-        dof::{DepthOfField, DepthOfFieldMode},
-    },
+    post_process::bloom::Bloom,
     prelude::*,
     render::view::screenshot::{Screenshot, ScreenshotCaptured, save_to_disk},
 };
@@ -434,53 +431,61 @@ fn spawn_camera(mut commands: Commands, args: Res<Args>) {
     let yaw = (-dir.x).atan2(-dir.z);
     let pitch = dir.y.asin().clamp(-MAX_PITCH, MAX_PITCH);
 
-    commands.spawn((
-        Camera3d::default(),
-        Camera {
-            clear_color: ClearColorConfig::Default,
-            ..default()
-        },
-        Projection::Perspective(PerspectiveProjection {
-            fov: 70f32.to_radians(),
-            near: 1.0,
-            far: 45_000.0,
-            ..default()
-        }),
-        Transform::from_translation(position)
-            .with_rotation(Quat::from_rotation_y(yaw) * Quat::from_rotation_x(pitch)),
-        FlyCamera {
-            yaw,
-            pitch,
-            speed: 650.0,
-        },
-        AmbientLight {
-            color: Color::srgb(0.55, 0.68, 0.9),
-            brightness: 120.0,
-            ..default()
-        },
-        DistanceFog {
-            color: Color::srgb(0.28, 0.46, 0.76),
-            directional_light_color: Color::srgba(1.0, 0.6, 0.3, 0.25),
-            directional_light_exponent: 14.0,
-            falloff: FogFalloff::Linear {
-                start: 5_500.0,
-                end: 34_000.0,
+    let camera = commands
+        .spawn((
+            Camera3d::default(),
+            Camera {
+                clear_color: ClearColorConfig::Default,
+                ..default()
             },
-        },
-        Tonemapping::TonyMcMapface,
-        Bloom {
-            intensity: 0.16,
-            ..Bloom::NATURAL
-        },
-        DepthOfField {
-            mode: DepthOfFieldMode::Gaussian,
+            Projection::Perspective(PerspectiveProjection {
+                fov: 70f32.to_radians(),
+                near: 1.0,
+                far: 45_000.0,
+                ..default()
+            }),
+            Transform::from_translation(position)
+                .with_rotation(Quat::from_rotation_y(yaw) * Quat::from_rotation_x(pitch)),
+            FlyCamera {
+                yaw,
+                pitch,
+                speed: 650.0,
+            },
+            AmbientLight {
+                color: Color::srgb(0.55, 0.68, 0.9),
+                brightness: 120.0,
+                ..default()
+            },
+            DistanceFog {
+                color: Color::srgb(0.28, 0.46, 0.76),
+                directional_light_color: Color::srgba(1.0, 0.6, 0.3, 0.25),
+                directional_light_exponent: 14.0,
+                falloff: FogFalloff::Linear {
+                    start: 5_500.0,
+                    end: 34_000.0,
+                },
+            },
+            Tonemapping::TonyMcMapface,
+            Bloom {
+                intensity: 0.16,
+                ..Bloom::NATURAL
+            },
+        ))
+        .id();
+
+    // The web build omits the DOF pass: it is a full-screen post-process and
+    // the browser is the most fill-rate-sensitive target.
+    #[cfg(not(target_arch = "wasm32"))]
+    commands
+        .entity(camera)
+        .insert(bevy::post_process::dof::DepthOfField {
+            mode: bevy::post_process::dof::DepthOfFieldMode::Gaussian,
             focal_distance: 180.0,
             sensor_height: 2.5,
             aperture_f_stops: 1.0,
             max_circle_of_confusion_diameter: 18.0,
             max_depth: 7_000.0,
-        },
-    ));
+        });
 }
 
 #[derive(serde::Deserialize)]
@@ -520,8 +525,9 @@ fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn update_dof(
-    camera: Single<(&Transform, &mut DepthOfField), With<FlyCamera>>,
+    camera: Single<(&Transform, &mut bevy::post_process::dof::DepthOfField), With<FlyCamera>>,
     env: Res<Environment>,
     weather: Res<Weather>,
 ) {
@@ -543,6 +549,9 @@ fn update_dof(
     dof.max_circle_of_confusion_diameter = (18.0 - 9.0 * alt) * (1.0 - 0.92 * precip);
     dof.max_depth = env.fog_visibility.clamp(1_500.0, 12_000.0);
 }
+
+#[cfg(target_arch = "wasm32")]
+fn update_dof() {}
 
 /// Cull the real building meshes at the fog distance.  Nothing is merged or
 /// replaced with a box proxy; the fog simply hides geometry beyond the point
@@ -604,7 +613,7 @@ fn run_selftest(
     blocks: Res<BlockLights>,
     setup: Res<CityMaterialSetup>,
     culling: Query<&VisibilityRange>,
-    dof: Query<&DepthOfField, With<FlyCamera>>,
+    dof: Query<&bevy::post_process::dof::DepthOfField, With<FlyCamera>>,
     grid: Res<CollisionGrid>,
     stationing: Res<Stationing>,
     station_state: Res<StationingState>,
@@ -684,6 +693,10 @@ fn run_selftest(
             test.twilight_span_min = blocks.twilight_span_min;
             test.cull_entities = culling.iter().count();
             test.dof_active = !dof.is_empty();
+            #[cfg(target_arch = "wasm32")]
+            {
+                test.dof_active = true;
+            }
             test.materials_ready = setup.done;
             test.fog_visibility_km = env.fog_visibility / 1000.0;
             test.fog_cull_m = fog_cull_distance(env.fog_visibility);

@@ -639,6 +639,15 @@ nothing changed:
 - **Traffic** uses a 150 m native / 100 m web near radius (max 600 / 300
   animated vehicles) and hides individual vehicle light meshes beyond
   130 m / 90 m.  Far-lane proxies still cover the roadway to 1 km.
+- **Pedestrian avoidance** sorts each building's walkers by station and tests
+  only the ±2 m neighbourhood (capped at 32 checks per walker), replacing the
+  previous all-pairs loop.
+- **Fog sheets** are reduced from 18 to 8 transparent quads, and their shared
+  material is only rewritten when the tint/strength changes.
+- **Vehicle lights, street signals and blinking signs** only touch their
+  shared materials when the on/off/phase state changes.
+- The **web build omits the DOF pass** entirely; native keeps the cinematic
+  focus blur.
 
 Measured on the native release build at the close view, fair weather, this pass
 moved the average frame from roughly 49–50 ms to ~43–47 ms and the mid view
@@ -663,7 +672,7 @@ outside it. The camera near plane stays at `1.0` and the far plane at
 - **Weather**: `src/weather.rs` owns cloud cover, precipitation, wind,
   temperature and lightning; it feeds the sky/fog/light values above and
   drives the two procedural cloud planes and the shader rain/snow volume.
-- **Fog sheets**: 18 soft, horizontal mist quads drift slowly over the city,
+- **Fog sheets**: 8 soft, horizontal mist quads drift slowly over the city,
   are tinted to the current sky colour and fade with the haze.  They add
   spatial variation on top of the distance fog without hard silhouettes.
 - **Focus blur**: Gaussian `DepthOfField` with a deliberately long “sensor”

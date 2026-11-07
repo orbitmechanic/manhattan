@@ -1285,8 +1285,13 @@ pub fn update_vehicle_lights(
     env: Res<Environment>,
     catalog: Res<VehicleCatalog>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut last: Local<Option<bool>>,
 ) {
     let on = env.night || env.daylight < 0.35;
+    if *last == Some(on) {
+        return;
+    }
+    *last = Some(on);
     if let Some(mut material) = materials.get_mut(&catalog.lights_material) {
         material.emissive = if on {
             LinearRgba::rgb(2.2, 2.2, 2.2)

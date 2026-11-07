@@ -865,6 +865,28 @@ pub fn stream_people(
     }
 }
 
+fn apply_pedestrian_avoidance(
+    i: usize,
+    j: usize,
+    states: &[(Entity, usize, f32, f32, f32, f32)],
+    factors: &mut [f32],
+    laterals: &mut [f32],
+) {
+    if i == j {
+        return;
+    }
+    let same_direction = (states[i].4 > 0.0) == (states[j].4 > 0.0);
+    let ds = ((states[j].2 - states[i].2) * states[i].4).rem_euclid(states[i].5.max(1e-3));
+    let lane = (states[i].3 - states[j].3).abs();
+    if ds > 0.04 && ds < 1.6 && lane < 0.9 && same_direction {
+        factors[i] = 0.0;
+    }
+    if ds > 0.04 && ds < 2.0 && lane < 0.9 && !same_direction {
+        laterals[i] = 0.35;
+        laterals[j] = -0.35;
+    }
+}
+
 pub fn update_pedestrians(
     time: Res<Time>,
     mut query: Query<(Entity, &mut Pedestrian, &mut Transform)>,
@@ -874,40 +896,71 @@ pub fn update_pedestrians(
         .iter()
         .map(|(entity, p, _)| (entity, p.building_id, p.s, p.offset, p.direction, p.total))
         .collect();
-    let mut groups: HashMap<usize, Vec<usize>> = HashMap::new();
-    for (index, state) in states.iter().enumerate() {
-        groups.entry(state.1).or_default().push(index);
-    }
+
+    // Sort by building and then by station.  Each pedestrian only needs to
+    // test neighbours within 2 m along the perimeter, rather than every other
+    // pedestrian in the same building.  The cap bounds the worst-case crowd.
+    const MAX_CHECKS_PER_PEDESTRIAN: usize = 32;
+    let mut order: Vec<usize> = (0..states.len()).collect();
+    order.sort_unstable_by(|&a, &b| {
+        states[a]
+            .1
+            .cmp(&states[b].1)
+            .then(states[a].2.total_cmp(&states[b].2))
+    });
     let mut factors = vec![1.0f32; states.len()];
     let mut laterals = vec![0.0f32; states.len()];
-    for members in groups.values() {
-        for (a, &i) in members.iter().enumerate() {
-            for (b, &j) in members.iter().enumerate() {
-                if a == b {
-                    continue;
+
+    let mut group_start = 0usize;
+    while group_start < order.len() {
+        let building = states[order[group_start]].1;
+        let mut group_end = group_start + 1;
+        while group_end < order.len() && states[order[group_end]].1 == building {
+            group_end += 1;
+        }
+        let group = &order[group_start..group_end];
+        for (position, &i) in group.iter().enumerate() {
+            let station = states[i].2;
+            let total = states[i].5.max(1e-3);
+            let mut checks = 0usize;
+
+            for &j in &group[position + 1..] {
+                if states[j].2 - station > 2.0 || checks >= MAX_CHECKS_PER_PEDESTRIAN {
+                    break;
                 }
-                let same_direction = (states[i].4 > 0.0) == (states[j].4 > 0.0);
-                let ds =
-                    ((states[j].2 - states[i].2) * states[i].4).rem_euclid(states[i].5.max(1e-3));
-                let lane = (states[i].3 - states[j].3).abs();
-                if ds > 0.04 && ds < 1.6 && lane < 0.9 && same_direction {
-                    factors[i] = 0.0;
+                apply_pedestrian_avoidance(i, j, &states, &mut factors, &mut laterals);
+                checks += 1;
+            }
+            for &j in group[..position].iter().rev() {
+                if station - states[j].2 > 2.0 || checks >= MAX_CHECKS_PER_PEDESTRIAN {
+                    break;
                 }
-                if ds > 0.04 && ds < 2.0 && lane < 0.9 && !same_direction {
-                    laterals[i] = 0.35;
-                    laterals[j] = -0.35;
+                apply_pedestrian_avoidance(i, j, &states, &mut factors, &mut laterals);
+                checks += 1;
+            }
+            // The track wraps; test the first/last few metres across the seam.
+            for &j in group {
+                if states[j].2 + total - station > 2.0 || checks >= MAX_CHECKS_PER_PEDESTRIAN {
+                    break;
                 }
+                apply_pedestrian_avoidance(i, j, &states, &mut factors, &mut laterals);
+                checks += 1;
+            }
+            for &j in group.iter().rev() {
+                if station + total - states[j].2 > 2.0 || checks >= MAX_CHECKS_PER_PEDESTRIAN {
+                    break;
+                }
+                apply_pedestrian_avoidance(i, j, &states, &mut factors, &mut laterals);
+                checks += 1;
             }
         }
+        group_start = group_end;
     }
-    let index_by_entity: HashMap<Entity, usize> = states
-        .iter()
-        .enumerate()
-        .map(|(index, state)| (state.0, index))
-        .collect();
+
     let now = time.elapsed_secs();
-    for (entity, mut pedestrian, mut transform) in &mut query {
-        let Some(index) = index_by_entity.get(&entity).copied() else {
+    for &index in &order {
+        let entity = states[index].0;
+        let Ok((_, mut pedestrian, mut transform)) = query.get_mut(entity) else {
             continue;
         };
         let factor = factors[index];

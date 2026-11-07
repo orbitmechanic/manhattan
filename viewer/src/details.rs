@@ -834,10 +834,19 @@ pub fn update_sign_blink(
     time: Res<Time>,
     sign_materials: Res<SignMaterials>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut last: Local<Option<Vec<bool>>>,
 ) {
-    for (index, handle) in sign_materials.blinking.iter().enumerate() {
+    let mut states = Vec::with_capacity(sign_materials.blinking.len());
+    for index in 0..sign_materials.blinking.len() {
         let phase = sign_materials.phases.get(index).copied().unwrap_or(0.0);
-        let on = (time.elapsed_secs() * 1.15 + phase) % 1.0 < 0.64;
+        states.push((time.elapsed_secs() * 1.15 + phase) % 1.0 < 0.64);
+    }
+    if last.as_ref() == Some(&states) {
+        return;
+    }
+    *last = Some(states.clone());
+    for (index, handle) in sign_materials.blinking.iter().enumerate() {
+        let on = states[index];
         if let Some(mut material) = materials.get_mut(handle) {
             material.emissive = if on {
                 LinearRgba::rgb(2.6, 2.6, 2.6)
