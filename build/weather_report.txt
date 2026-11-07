@@ -1,0 +1,101 @@
+Weather system
+==============
+
+Scope
+  viewer/src/weather.rs, assets/shaders/clouds.wesl,
+  assets/shaders/precipitation.wesl and the weather inputs in
+  viewer/src/environment.rs / viewer/src/main.rs / viewer/src/ui.rs.
+
+Design
+  A front-based state machine instead of per-frame procedural noise:
+
+    Clear -> Fair -> Overcast -> Rain -> Thunderstorm
+
+  Winter replaces Rain with Snow in the cycle.  Each front has target cloud
+  cover, precipitation, storm strength and wind speed; the current values
+  approach those targets with exponential smoothing (roughly 30 s for a full
+  transition).  The state machine changes front every 150-320 s when `auto` is
+  enabled.  `V` cycles manually; `--weather <front>` and `?weather=<front>`
+  start at a fixed front (useful for screenshots and for the web URL).
+
+  Temperature is a New York seasonal/diurnal curve:
+    annual = 13 + 13 cos(2 pi (day_of_year - 205) / 365)
+    diurnal = 4.5 sin(2 pi (hour - 9) / 24)
+  Each front applies a small cooling offset.  When precipitation is active and
+  the temperature is below 1.5 C, the precipitation blend becomes snow; the
+  explicit "snow" preset forces -1.5 C.
+
+Clouds
+  Two camera-following horizontal planes at 1.18 km and 2.05 km, 15 km and
+  23 km across.  assets/shaders/clouds.wesl evaluates three octaves of value
+  noise in world space.  Uniforms:
+    data  = time, cover, wind x, wind z
+    lit   = sunlit colour + layer opacity
+    shade = shadow colour
+    extra = lightning flash, noise scale
+  Because the noise is sampled in world space, the clouds stay put as the
+  planes follow the camera; only the wind uniform scrolls the pattern.  Cover
+  maps to a soft threshold, so a 5% clear sky through 96% storm deck uses the
+  same shader.  The planes are double-sided transparent geometry with no depth
+  write; from the overview altitude their opacity is reduced to 30% so they
+  do not hide the city.
+
+Precipitation
+  One open-ended cylinder (radius 65 m, 140 m tall, no caps) follows the
+  camera.  assets/shaders/precipitation.wesl generates every streak/flake per
+  fragment:
+    - rain: thin world-space columns scrolled downwards, slanted by the wind
+      and gapped along their fall cycle; two offset samples increase density
+    - snow: larger drifting flakes with a short vertical life
+  The material disables the prepass, sets depth compare to Always and turns
+  depth writes off, so precipitation falls in front of the whole scene
+  (including foreground vehicles) without extra draw passes.  The volume is
+  hidden above 750 m and when precipitation is below 2%.
+
+  Since the volume is a single transparent surface, it is cheap: one draw call
+  and a handful of ALU operations per covered pixel.
+
+Lighting / atmosphere integration
+  environment.rs reads Weather and:
+    - blends the clear-sky colour toward a grey cloud deck (darker in storms)
+    - attenuates the sun by up to ~88% and the moon by cloud cover
+    - raises ambient diffuse fill on overcast days
+    - adds lightning to sky and ambient for a few frames
+    - shrinks fog visibility: base 5 km + 2.2 m per world-unit altitude,
+      then (1 - 0.52 cover - 0.30 precip - 0.10 storm), clamped 1.2-22 km
+    - hides stars above 55% cloud, the sun disc above 72%, the moon above 55%
+  update_dof stops the lens down as precipitation rises (f/1 -> f/17, CoC
+  18 -> 0.7 px) so streaks stay legible instead of being blurred away.
+
+Lightning
+  A storm front above 42% schedules isolated flashes every 2.4-15 s.  The
+  flash decays at 2.8/s and is fed to the sky, ambient and cloud shader.  No
+  light entities or shadow maps are spawned.
+
+HUD / controls
+  The top-left panel adds:
+    Weather <front>  cloud NN%  precip NN%  wind NN km/h  NN.N C
+  The bottom-left help adds `WEATHER: V cycles ...`.
+  `--weather clear|fair|overcast|rain|storm|snow`
+  `?weather=clear|fair|overcast|rain|storm|snow`
+
+Performance
+  Native and web use the same path:
+    - 2 cloud plane draws (6 triangles total)
+    - 1 precipitation cylinder draw (128 triangles, no caps)
+    - 2 custom material updates per frame
+    - no particle buffers, no per-drop entities, no shadow maps
+  Shader cost is three noise octaves on the cloud planes and a few hash calls
+  on the precipitation shell.  The cloud planes are skipped only by their own
+  transparent pass; they remain below/above the camera and are not culled.
+
+Verification
+  cargo test                     55 tests pass
+  cargo clippy --all-targets -D warnings
+  ./manhattan-viewer --selftest  passes
+  Renders captured with --weather presets:
+    renders/viewer_weather_clear.png
+    renders/viewer_weather_rain.png
+    renders/viewer_weather_snow.png
+    renders/viewer_weather_storm_night.png
+  Web build stages clouds.wesl and precipitation.wesl via tools/build_web.sh.

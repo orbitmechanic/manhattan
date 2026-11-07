@@ -36,6 +36,10 @@ variants, including `floors/` for the building floors.
   coordinates, `G` switches IMAGERY ↔ BUILDING FRONTS.  The same toggles are
   buttons in the STATIONING panel.  `--lines`, `--ticks`, `--set fronts` and
   web `?lines=1&ticks=1&set=fronts` start with them enabled.
+- **Weather**: `V` cycles clear / fair / overcast / rain / thunderstorm (snow
+  replaces rain in cold months).  `--weather rain` or web `?weather=rain`
+  starts at a fixed front; the HUD shows cloud cover, precipitation, wind and
+  temperature.
 
 ## Day/night
 
@@ -202,6 +206,30 @@ streetlamps along building sidewalks and traffic signals at exported
 intersections within a 330 m native / 240 m web radius; both turn on at night
 and are despawned as the camera moves.
 
+### Weather
+
+`src/weather.rs` owns a front-based state machine (clear, fair, overcast, rain,
+thunderstorm, snow) with ~30 s transitions, a seasonal/diurnal temperature
+curve, wind and lightning.  `V` cycles the front.
+
+- **Clouds**: two camera-following planes at 1.18 km and 2.05 km use
+  `assets/shaders/clouds.wesl`.  The shader evaluates three octaves of
+  world-space value noise; cover, wind, sky colour, sunlit/shadow colour and
+  lightning are uniforms, so the two layers cost only a few material writes.
+- **Precipitation**: one open cylinder around the camera uses
+  `assets/shaders/precipitation.wesl` to generate wind-slanted rain streaks or
+  drifting snow flakes per fragment.  It is a lens-style overlay (no depth
+  test/write, no prepass) and is hidden above 750 m.  Below freezing the rain
+  automatically becomes snow.
+- **Lightning**: storm fronts produce short flashes that add to the sky,
+  ambient light and cloud colour.
+- **Atmosphere**: cloud cover replaces the clear-sky gradient with a grey deck,
+  attenuates the sun, thickens the fog (1.2–22 km visibility), hides stars and
+  the sun/moon discs, and shifts the ambient fill.  Rain/snow stops the camera
+  lens down so the streaks remain readable.
+- No particles, shadow maps or extra render passes are used; the whole system
+  is two cloud planes, one precipitation mesh and three small custom shaders.
+
 ### 1 km embellishment cull
 
 `src/detail.rs` (`EMBELLISHMENT_RADIUS = 1_000 m`) hides roadway tiles, facade
@@ -211,8 +239,9 @@ planes stay at `1.0` / `45,000`.
 ### Atmosphere, focus and collision
 
 - `DistanceFog` is exponential-squared, with visibility from camera altitude
-  (`6 km + 3 m per unit`), night air (25% denser) and a slow weather wave,
-  clamped to 2.5–24 km.  The HUD shows the current visibility.
+  (`5 km + 2.2 m per unit`), night air (25% denser), cloud cover, precipitation
+  and a slow weather wave, clamped to 1.2–22 km.  The HUD shows the current
+  visibility.
 - 18 horizontal, soft mist quads drift over the city; they are tinted to the
   sky and fade with the haze.
 - Gaussian `DepthOfField` uses a 2.5 m sensor (a cinematic city-scale cheat),
@@ -249,6 +278,7 @@ src/clock.rs        SimClock resource + calendar actions (unit tests)
 src/camera.rs       FlyCamera, ground clamp, collision-aware movement (tests)
 src/collision.rs    baked height grid, swept collision + wall sliding (tests)
 src/environment.rs  lighting, sky, fog, focus, sun/moon discs, stars
+src/weather.rs      fronts, clouds, precipitation, wind, lightning
 src/stationing.rs   centrelines, 100-ft ticks, station/offset/elevation array
 src/blocks.rs       block metadata, twilight wave, mixed flicker/fade (tests)
 src/city_material.rs custom PBR extension + fog culling + per-floor uniforms

@@ -63,6 +63,9 @@ use manhattan_viewer::{
         update_vehicle_lights,
     },
     ui::{handle_calendar_keys, spawn_ui, update_station_text, update_status},
+    weather::{
+        Weather, WeatherPlugin, handle_weather_keys, update_weather, update_weather_visuals,
+    },
 };
 
 #[derive(Resource, Clone)]
@@ -134,6 +137,7 @@ struct Args {
     show_lines: bool,
     show_ticks: bool,
     line_set: LineSet,
+    weather: Option<String>,
 }
 
 impl Default for Args {
@@ -149,6 +153,7 @@ impl Default for Args {
             show_lines: false,
             show_ticks: false,
             line_set: LineSet::Completed,
+            weather: None,
         }
     }
 }
@@ -176,6 +181,7 @@ fn parse_args() -> Args {
                 }
             }
             "--report" => args.report = it.next(),
+            "--weather" => args.weather = it.next(),
             "--view" => {
                 args.view = match it.next().as_deref() {
                     Some("street") => ViewPreset::Street,
@@ -224,6 +230,7 @@ fn main() {
         target_frame: args.frames,
         done: false,
     };
+    let weather = Weather::from_preset(args.weather.as_deref(), &clock);
     let selftest = SelfTest {
         path: args.report.clone().or_else(|| {
             if args.selftest {
@@ -255,12 +262,14 @@ fn main() {
                 }),
         )
         .add_plugins(MaterialPlugin::<CityMaterial>::default())
+        .add_plugins(WeatherPlugin)
         .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
         .insert_resource(clock)
         .insert_resource(capture)
         .insert_resource(FrameCounter::default())
         .insert_resource(selftest)
         .insert_resource(Environment::default())
+        .insert_resource(weather)
         .insert_resource(BlockLights::default())
         .insert_resource(CityMaterialSetup::default())
         .insert_resource(CollisionGrid::default())
@@ -325,6 +334,13 @@ fn main() {
                 .chain(),
         )
         .add_systems(Update, (setup_road_materials, update_road_colors))
+        .add_systems(
+            Update,
+            (handle_weather_keys, update_weather)
+                .chain()
+                .before(update_environment),
+        )
+        .add_systems(Update, update_weather_visuals.after(update_environment))
         .add_systems(Update, update_detail_culling)
         .add_systems(Update, update_sign_blink)
         .add_systems(
@@ -375,6 +391,7 @@ fn apply_web_args(args: &mut Args) {
             }
             "lines" => args.show_lines = value == "1" || value == "true",
             "ticks" => args.show_ticks = value == "1" || value == "true",
+            "weather" => args.weather = Some(value.to_string()),
             "set" => {
                 args.line_set = match value {
                     "imagery" => LineSet::Imagery,
@@ -499,6 +516,7 @@ fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn update_dof(
     camera: Single<(&Transform, &mut DepthOfField), With<FlyCamera>>,
     env: Res<Environment>,
+    weather: Res<Weather>,
 ) {
     let (transform, mut dof) = camera.into_inner();
     // Focus a little ahead of the camera, but deepen the field at altitude so
@@ -511,8 +529,11 @@ fn update_dof(
     // sensor produces a sub-pixel circle of confusion, which is why the
     // original f/16 settings looked like no depth of field at all.
     dof.sensor_height = 2.5;
-    dof.aperture_f_stops = 1.0 + 2.6 * alt;
-    dof.max_circle_of_confusion_diameter = 18.0 - 9.0 * alt;
+    // Rain and snow scatter the scene; stopping down also keeps the
+    // precipitation streaks legible instead of blurring them away.
+    let precip = weather.precipitation.clamp(0.0, 1.0);
+    dof.aperture_f_stops = (1.0 + 2.6 * alt) * (1.0 + 16.0 * precip);
+    dof.max_circle_of_confusion_diameter = (18.0 - 9.0 * alt) * (1.0 - 0.92 * precip);
     dof.max_depth = env.fog_visibility.clamp(1_500.0, 12_000.0);
 }
 

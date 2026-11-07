@@ -14,3 +14,4 @@ pub mod storefront;
 pub mod street_furniture;
 pub mod traffic;
 pub mod ui;
+pub mod weather;

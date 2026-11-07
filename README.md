@@ -127,6 +127,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/people_report.txt` | pedestrian catalog, density, walk cycle, avoidance, homeless figures, corner ads and streaming limits. |
 | `build/traffic_report.txt` | vehicle catalog, lane network, 85% occupancy, gridlock movement, collision grid and night lights. |
 | `build/lighting_report.txt` | streetlamp/signal streaming, night-light atlas and the removed shadow pass. |
+| `build/weather_report.txt` | weather state machine, procedural cloud/precipitation shaders and performance notes. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -593,6 +594,30 @@ despawns it again as the camera moves:
   intersections outside it are despawned, so the city does not keep furniture
   for the whole map.
 
+### Weather
+
+`viewer/src/weather.rs` runs a small front-based weather state machine
+(**clear → fair → overcast → rain → thunderstorm**, and snow in cold months)
+with smooth transitions over roughly half a minute.  `V` cycles the front and
+`?weather=rain` / `--weather rain` starts at a fixed one.
+
+- **Clouds**: two camera-following planes at 1.18 km and 2.05 km use
+  `assets/shaders/clouds.wesl`, a three-octave world-space noise shader.  Cover,
+  wind drift, sun/sky colours and lightning flashes are plain uniforms, so the
+  CPU cost is two transforms and a few material writes per frame.
+- **Rain and snow**: one open cylinder around the camera uses
+  `assets/shaders/precipitation.wesl` to draw wind-slanted streaks or drifting
+  flakes per fragment.  It overlays the scene without depth testing, and the
+  depth of field stops down while precipitation is active so the streaks stay
+  readable.  A temperature curve for New York turns rain into snow below
+  freezing.
+- **Lightning**: storms fire isolated flashes that brighten the sky, ambient
+  light and cloud shader for a few frames.
+- **Integration**: cloud cover darkens the sky, attenuates the sun by up to
+  ~88%, thickens the fog (visibility 1.2–22 km), hides stars and the sun/moon
+  discs, and drives the HUD weather line.  No particle simulation or extra
+  shadow maps are used.
+
 ### 1 km embellishment cull
 
 `viewer/src/detail.rs` defines `EMBELLISHMENT_RADIUS = 1_000 m`. Roadway
@@ -605,9 +630,12 @@ outside it. The camera near plane stays at `1.0` and the far plane at
 
 - **Variable haze**: `DistanceFog` uses an exponential-squared falloff whose
   visibility derives from camera altitude
-  (`base = 6 km + 3 m per world unit of height`), night air (25% thicker) and a
-  slow weather wave.  Visibility is clamped to 2.5–24 km.  The status panel
-  shows the current fog visibility.
+  (`base = 5 km + 2.2 m per world unit of height`), night air (25% thicker),
+  cloud cover, precipitation and a slow weather wave.  Visibility is clamped
+  to 1.2–22 km.  The status panel shows the current fog visibility.
+- **Weather**: `src/weather.rs` owns cloud cover, precipitation, wind,
+  temperature and lightning; it feeds the sky/fog/light values above and
+  drives the two procedural cloud planes and the shader rain/snow volume.
 - **Fog sheets**: 18 soft, horizontal mist quads drift slowly over the city,
   are tinted to the current sky colour and fade with the haze.  They add
   spatial variation on top of the distance fog without hard silhouettes.
@@ -616,7 +644,8 @@ outside it. The camera near plane stays at `1.0` and the far plane at
   `clamp(y × 1.35 + 70, 90..3200)`, aperture opens from f/1.0 at street level
   to f/3.6 at altitude, and the circle of confusion goes from 18 px to 9 px.
   `max_depth` is the fog visibility, so blur saturates exactly where the fog
-  takes over.
+  takes over.  Rain/snow stops the lens down (up to f/17, CoC ~0.7 px) so
+  precipitation streaks remain legible.
 - **Camera collision**: `scripts/build_collision_grid.py` bakes a 4 m
   building-height grid (1685 × 1304 cells, 528k solid cells, 4.4 MB) from the
   block master.  Every frame the camera movement is swept against it; a wall
@@ -747,6 +776,9 @@ affected presentation and is already reflected in the script.
 - `renders/viewer_day.png`, `viewer_day_street.png` — Bevy daylight.
 - `renders/viewer_night.png`, `viewer_night_street.png` — Bevy night with all
   blocks switched to the night material set at 22:00.
+- `renders/viewer_weather_clear.png`, `viewer_weather_rain.png`,
+  `viewer_weather_snow.png`, `viewer_weather_storm_night.png` — clear, rain,
+  snow and thunderstorm fronts from the weather presets.
 - `renders/blocks_day.png` — irregular block-master render.
 - `renders/blocks_overlay.png` — geometry-derived blocks over the satellite.
 - `renders/blocks_ground_voronoi.png` — mid-street Voronoi ground partition.

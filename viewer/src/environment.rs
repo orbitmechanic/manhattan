@@ -11,6 +11,7 @@ use bevy::{
 use crate::astro::{NYC_LAT, NYC_LON, SkyPosition, moon_position, sun_position};
 use crate::camera::FlyCamera;
 use crate::clock::SimClock;
+use crate::weather::Weather;
 
 const SKY_DISTANCE: f32 = 16_000.0;
 
@@ -30,6 +31,8 @@ pub struct Environment {
     pub fog_strength: f32,
     /// Fog/sky tint used to keep the mist sheets consistent with the sky.
     pub fog_rgb: Vec3,
+    /// Final blended sky colour (after weather), 0..1 linear.
+    pub sky_rgb: Vec3,
 }
 
 impl Default for Environment {
@@ -45,6 +48,7 @@ impl Default for Environment {
             fog_visibility: 7_000.0,
             fog_strength: 0.35,
             fog_rgb: Vec3::new(0.55, 0.68, 0.85),
+            sky_rgb: Vec3::new(0.30, 0.50, 0.82),
         }
     }
 }
@@ -189,6 +193,7 @@ pub fn setup_lighting(
 pub fn update_environment(
     time: Res<Time>,
     clock: Res<SimClock>,
+    weather: Res<Weather>,
     mut env: ResMut<Environment>,
     mut clear_color: ResMut<ClearColor>,
     camera: Single<
@@ -305,38 +310,57 @@ pub fn update_environment(
     let mut sky = night_sky.lerp(day_sky, t);
     let sunset_glow = (-(sun_pos.altitude_deg / 5.5).powi(2)).exp()
         * (1.0 - smoothstep(4.0, 22.0, sun_pos.altitude_deg));
-    sky += sunset * sunset_glow * 0.55;
+    let cover = weather.cloud_cover.clamp(0.0, 1.0);
+    let storm = weather.storm.clamp(0.0, 1.0);
+    sky += sunset * sunset_glow * 0.55 * (1.0 - cover * 0.82);
+
+    // Cloud cover replaces the clear-sky gradient with a grey deck; a storm
+    // pushes it darker and the lightning flash lifts it for a frame or two.
+    let cloud_grey = Vec3::new(0.58, 0.62, 0.69).lerp(Vec3::new(0.20, 0.23, 0.28), storm);
+    let cloud_sky = cloud_grey * (0.10 + 0.90 * t);
+    sky = sky.lerp(cloud_sky, cover * 0.82);
+    sky += Vec3::splat(weather.flash * 0.55);
     let sky_color = Color::srgb(sky.x, sky.y, sky.z);
     clear_color.0 = sky_color;
+    env.sky_rgb = sky;
 
     // Variably dense city haze: lower altitude and night air are thicker, and
     // a slow weather wave opens and closes the sightline over a few minutes.
     // The same visibility value drives fog culling and the DOF depth, so
     // real geometry beyond the haze is not rendered.
     let altitude = camera_pos.y.max(0.0);
-    let weather = (time.elapsed_secs() * 0.012 + 1.3).sin() * 0.5 + 0.5;
-    let visibility =
-        ((5_000.0 + altitude * 2.2) * (1.0 - 0.28 * env.daylight) * (0.72 + 0.42 * weather))
-            .clamp(2_000.0, 22_000.0);
+    let weather_wave = (time.elapsed_secs() * 0.012 + 1.3).sin() * 0.5 + 0.5;
+    let clear_factor =
+        (1.0 - 0.52 * cover - 0.30 * weather.precipitation - 0.10 * storm).clamp(0.10, 1.0);
+    let visibility = ((5_000.0 + altitude * 2.2)
+        * (1.0 - 0.28 * env.daylight)
+        * (0.72 + 0.42 * weather_wave)
+        * clear_factor)
+        .clamp(1_200.0, 22_000.0);
     env.fog_visibility = visibility;
-    env.fog_strength = (1.0 - (visibility - 2_500.0) / 21_500.0).clamp(0.0, 1.0);
+    env.fog_strength = (1.0 - (visibility - 1_500.0) / 20_500.0).clamp(0.0, 1.0);
     env.fog_rgb = Vec3::new(sky.x * 0.92, sky.y * 0.94, sky.z * 1.02);
     fog.color = Color::srgb(env.fog_rgb.x, env.fog_rgb.y, env.fog_rgb.z);
     fog.falloff = FogFalloff::from_visibility_squared(visibility);
 
     // ---- ambient --------------------------------------------------------
-    let ambient_color = Color::srgb(
+    // Overcast skies scatter light, so keep the ambient fill up even as the
+    // direct sun is attenuated; lightning adds a brief hemispheric flash.
+    let grey_mix = cover * 0.55;
+    let ambient_rgb = Vec3::new(
         0.14 + 0.40 * env.daylight,
         0.18 + 0.50 * env.daylight,
         0.30 + 0.58 * env.daylight,
-    );
-    ambient.color = ambient_color;
-    ambient.brightness = 55.0 + 75.0 * env.daylight;
+    )
+    .lerp(Vec3::splat(0.16 + 0.42 * env.daylight), grey_mix);
+    ambient.color = Color::srgb(ambient_rgb.x, ambient_rgb.y, ambient_rgb.z);
+    ambient.brightness = 55.0 + 75.0 * env.daylight + 24.0 * cover + 320.0 * weather.flash;
 
     // ---- lights ---------------------------------------------------------
     let sun_up = sun_pos.altitude_deg.to_radians().sin().max(0.0);
     let sun_warmth = (1.0 - smoothstep(2.0, 24.0, sun_pos.altitude_deg)).clamp(0.0, 1.0);
     let moon_up = moon_pos.altitude_deg.to_radians().sin().max(0.0);
+    let sun_attenuation = (1.0 - 0.72 * cover - 0.16 * storm).clamp(0.05, 1.0);
     #[cfg(target_arch = "wasm32")]
     {
         // One directional light only: use the sun when it is up, otherwise
@@ -344,7 +368,7 @@ pub fn update_environment(
         let (direction, illuminance, color) = if sun_up > 0.005 {
             (
                 -env.sun_dir,
-                16_000.0 * sun_up.powf(0.65),
+                16_000.0 * sun_up.powf(0.65) * sun_attenuation,
                 Color::srgb(
                     1.0,
                     0.58 + 0.38 * (1.0 - sun_warmth),
@@ -354,7 +378,7 @@ pub fn update_environment(
         } else {
             (
                 -env.moon_dir,
-                160.0 * moon_illum * moon_up.sqrt(),
+                160.0 * moon_illum * moon_up.sqrt() * (1.0 - 0.6 * cover),
                 Color::srgb(0.62, 0.72, 1.0),
             )
         };
@@ -367,7 +391,7 @@ pub fn update_environment(
     #[cfg(not(target_arch = "wasm32"))]
     {
         for (mut light, mut transform) in &mut sun {
-            light.illuminance = 16_000.0 * sun_up.powf(0.65);
+            light.illuminance = 16_000.0 * sun_up.powf(0.65) * sun_attenuation;
             light.color = Color::srgb(
                 1.0,
                 0.58 + 0.38 * (1.0 - sun_warmth),
@@ -376,7 +400,7 @@ pub fn update_environment(
             transform.rotation = Quat::from_rotation_arc(Vec3::NEG_Z, -env.sun_dir);
         }
         for (mut light, mut transform) in &mut moon {
-            light.illuminance = 160.0 * moon_illum * moon_up.sqrt();
+            light.illuminance = 160.0 * moon_illum * moon_up.sqrt() * (1.0 - 0.6 * cover);
             transform.rotation = Quat::from_rotation_arc(Vec3::NEG_Z, -env.moon_dir);
         }
     }
@@ -387,7 +411,7 @@ pub fn update_environment(
     }
     if let Ok((mut transform, mut vis)) = sun_disc.single_mut() {
         transform.translation = env.sun_dir * SKY_DISTANCE;
-        *vis = if sun_pos.altitude_deg > -1.5 {
+        *vis = if sun_pos.altitude_deg > -1.5 && cover < 0.72 {
             Visibility::Visible
         } else {
             Visibility::Hidden
@@ -395,14 +419,14 @@ pub fn update_environment(
     }
     if let Ok((mut transform, mut vis)) = moon_disc.single_mut() {
         transform.translation = env.moon_dir * SKY_DISTANCE;
-        *vis = if moon_pos.altitude_deg > -1.0 && moon_illum > 0.02 {
+        *vis = if moon_pos.altitude_deg > -1.0 && moon_illum > 0.02 && cover < 0.55 {
             Visibility::Visible
         } else {
             Visibility::Hidden
         };
     }
     for mut vis in &mut stars {
-        *vis = if env.night {
+        *vis = if env.night && cover < 0.55 {
             Visibility::Visible
         } else {
             Visibility::Hidden

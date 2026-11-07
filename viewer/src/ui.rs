@@ -13,6 +13,7 @@ use crate::environment::{Environment, fog_cull_distance};
 use crate::stationing::{
     CivilCoordinate, StationToggle, Stationing, StationingConfig, StationingState, toggle_station,
 };
+use crate::weather::Weather;
 
 #[derive(Component)]
 pub struct StatusText;
@@ -233,7 +234,8 @@ pub fn spawn_ui(mut commands: Commands) {
         Text::new(
             "FLY: W A S D  |  Q/E down/up  |  hold RMB to look  |  Shift boost  |  wheel speed  |  arrows look\n\
              TIME: [ / ] day  |  - / = hour  |  ; / ' minute  |  , / . month  |  Space play/pause  |  B reverse  |  R reset\n\
-             STATIONING: L lines  |  T 100-ft ticks  |  C coordinates  |  G cycles imagery / fronts / completed",
+             STATIONING: L lines  |  T 100-ft ticks  |  C coordinates  |  G cycles imagery / fronts / completed\n\
+             WEATHER: V cycles clear / fair / overcast / rain / storm",
         ),
         TextFont {
             font_size: FontSize::Px(13.0),
@@ -291,6 +293,7 @@ pub fn handle_calendar_keys(keys: Res<ButtonInput<KeyCode>>, mut clock: ResMut<S
 pub fn update_status(
     clock: Res<SimClock>,
     env: Res<Environment>,
+    weather: Res<Weather>,
     blocks: Res<BlockLights>,
     camera: Single<(&Transform, &FlyCamera), With<FlyCamera>>,
     mut status: Query<&mut Text, With<StatusText>>,
@@ -319,6 +322,7 @@ pub fn update_status(
          Penumbra #{}   {} flicker / {} fade\n\
          FULL FLOOR GEOMETRY  1.53M tris   cull {:.1} km\n\
          Fog vis {:.1} km   Camera  x {:.0}  y {:.0}  z {:.0}   (floor {:.1})\n\
+         Weather {:<12} cloud {:>3.0}%  precip {:>3.0}%  wind {:>3.0} km/h  {:>5.1} C\n\
          {} x{:.0}   speed {:.0} u/s",
         if env.night { "NIGHT" } else { "DAY" },
         clock.date_label(),
@@ -342,6 +346,11 @@ pub fn update_status(
         pos.y,
         pos.z,
         MIN_CAMERA_HEIGHT,
+        weather.target.label(),
+        weather.cloud_cover * 100.0,
+        weather.precipitation * 100.0,
+        weather.wind_kmh,
+        weather.temperature_c,
         if clock.playing {
             if clock.speed < 0.0 {
                 "PLAY REV"
