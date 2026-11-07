@@ -29,6 +29,7 @@ use bevy::{
 };
 use manhattan_viewer::{
     astro::{Date, NYC_LAT, NYC_LON, moon_position, sun_position},
+    audio::CityAudioPlugin,
     blocks::{BlockLights, update_blocks},
     camera::{FlyCamera, MAX_PITCH, MIN_CAMERA_HEIGHT, MoveState, fly_camera_system, step_camera},
     city_material::{
@@ -45,6 +46,7 @@ use manhattan_viewer::{
         Environment, fog_cull_distance, setup_lighting, spawn_fog_banks, update_environment,
         update_fog_bank_materials, update_fog_banks,
     },
+    motion::{MotionPlugin, accessories_active},
     people::{Crowd, setup_people_catalog, stream_people, update_limbs, update_pedestrians},
     stationing::{
         LineSet, MAX_COORDS_PER_SET, Stationing, StationingConfig, StationingState,
@@ -260,6 +262,8 @@ fn main() {
         )
         .add_plugins(MaterialPlugin::<CityMaterial>::default())
         .add_plugins(WeatherPlugin)
+        .add_plugins(MotionPlugin)
+        .add_plugins(CityAudioPlugin)
         .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
         .insert_resource(clock)
         .insert_resource(capture)
@@ -343,7 +347,9 @@ fn main() {
         .add_systems(Update, update_sign_blink)
         .add_systems(
             Update,
-            (stream_people, update_pedestrians, update_limbs).chain(),
+            (stream_people, update_pedestrians, update_limbs)
+                .chain()
+                .run_if(accessories_active),
         )
         .add_systems(
             Update,
@@ -353,11 +359,14 @@ fn main() {
                 update_vehicle_lights,
                 update_vehicle_light_lod,
             )
-                .chain(),
+                .chain()
+                .run_if(accessories_active),
         )
         .add_systems(
             Update,
-            (stream_street_furniture, update_street_lights).chain(),
+            (stream_street_furniture, update_street_lights)
+                .chain()
+                .run_if(accessories_active),
         )
         .run();
 }

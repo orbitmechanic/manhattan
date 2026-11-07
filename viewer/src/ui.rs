@@ -235,7 +235,9 @@ pub fn spawn_ui(mut commands: Commands) {
             "FLY: W A S D  |  Q/E down/up  |  hold RMB to look  |  Shift boost  |  wheel speed  |  arrows look\n\
              TIME: [ / ] day  |  - / = hour  |  ; / ' minute  |  , / . month  |  Space play/pause  |  B reverse  |  R reset\n\
              STATIONING: L lines  |  T 100-ft ticks  |  C coordinates  |  G cycles imagery / fronts / completed\n\
-             WEATHER: V cycles clear / fair / overcast / rain / storm",
+             WEATHER: V cycles clear / fair / overcast / rain / storm\n\
+             GAMEPAD: LStick move  |  RStick look  |  RT boost  |  LT descend  |  A ascend  |  D-pad speed\n\
+             FAST: accessories suspend above 520 u/s, speed lines show  |  AUDIO: click/key enables sound on web",
         ),
         TextFont {
             font_size: FontSize::Px(13.0),

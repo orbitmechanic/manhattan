@@ -26,6 +26,8 @@ Pedestrian behaviour
     speed.
   - Avoidance: same-direction walkers slow/stop within 1.6 m of the walker
     ahead; oncoming walkers shift laterally by 0.35 m to pass each other.
+    Walkers are sorted by building/station and only the ±2 m neighbourhood is
+    checked (max 32 checks per walker), replacing the all-pairs loop.
   - Density: 1 person per 5 ft of perimeter nominally (0.2/ft), rising to
     1 person per 1 ft at the morning and evening rush-hour peaks (Gaussian
     around 08:00 and 17:30).
@@ -47,6 +49,8 @@ Streaming
     that radius, and the catalogue remains in memory.
   - Global visible limits: 1,000 walkers / 300 homeless native;
     500 / 150 web.  Per-building limits: 100 walkers / 20 homeless.
+  - Streaming uses a 0.65 s cadence with a 24-spawn / 60-despawn budget and at
+    most two building transitions per call.
   - No crowd or accessory data is retained for distant buildings.
 
 Verification

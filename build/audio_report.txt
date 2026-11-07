@@ -1,0 +1,45 @@
+Spatial city audio
+==================
+
+Assets
+  viewer/assets/sounds/*.ogg are synthesized by scripts/generate_audio.py
+  (numpy + ffmpeg/libvorbis), avoiding sampled/licensed material.
+
+    ambient_city.ogg  14 s stereo loop: low city rumble, air, 55/110 Hz hum
+    wind.ogg           9 s stereo loop: filtered rush with slow gusts
+    traffic.ogg        8 s stereo loop: tyre/engine rumble
+    rain.ogg           9 s stereo loop: hiss, body, random droplet ticks
+    thunder.ogg        7 s one-shot: low rumble plus several cracks
+    horn1/2/3.ogg      short synthesized two-tone horns
+
+Spatial design
+  Bevy's audio backend provides stereo panning (not HRTF), so:
+    - ambient city, wind and rain are non-spatial stereo beds around the
+      listener;
+    - four traffic loops are spatial emitters repositioned every 0.15 s to the
+      four nearest animated vehicles; volume falls off with distance;
+    - distant horns spawn every 4-20 s at random 90-610 m positions;
+    - thunder spawns at a random 450-2100 m position after a lightning flash,
+      delayed by 0.35 s + distance / 343 m/s;
+    - distance attenuation is applied explicitly via Volume before playback.
+
+Mix
+  ambient city  0.16
+  wind          0.02 .. 0.32, scaled by actual camera speed
+  rain          0 .. 0.30, scaled by precipitation (softer in snow)
+  traffic       0 .. 0.20, nearest four vehicles within 170 m
+  horns         0.02 .. 0.11
+  thunder       0.08 .. 0.48
+
+  Volumes are smoothed with exponential approach to avoid clicks.  Traffic
+  audio fades out while high-speed accessory suspension is active.
+
+Web policy
+  Browsers block autoplay.  The web build starts loop sinks paused and the
+  AudioGate unlocks on the first key press or left click.  Native starts
+  immediately.  All one-shot sounds are gated until audio is enabled.
+
+Files
+  viewer/src/audio.rs          handles, levels, traffic/horn/thunder logic
+  scripts/generate_audio.py    asset synthesis
+  viewer/tools/build_web.sh    stages assets/sounds into web/dist

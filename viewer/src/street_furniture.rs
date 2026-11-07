@@ -26,6 +26,10 @@ const FURNITURE_RADIUS: f32 = 330.0;
 const LAMP_SPACING: f32 = 24.0;
 const LAMP_OFFSET: f32 = 2.8;
 
+/// Marks a streamed lamp or traffic-signal root for high-speed LOD.
+#[derive(Component)]
+pub struct StreetFurnitureRoot;
+
 #[derive(Deserialize, Clone, Copy)]
 struct IntersectionRecord {
     x: f32,
@@ -255,6 +259,7 @@ fn spawn_lamp(
     let root = commands
         .spawn((
             Name::new("StreetLamp"),
+            StreetFurnitureRoot,
             Mesh3d(assets.lamp_pole.clone()),
             MeshMaterial3d(assets.pole_material.clone()),
             Transform::from_xyz(point[0], 0.06, point[1]).with_rotation(Quat::from_rotation_y(yaw)),
@@ -280,6 +285,7 @@ fn spawn_signal(
     let root = commands
         .spawn((
             Name::new("TrafficSignal"),
+            StreetFurnitureRoot,
             Mesh3d(assets.signal_pole.clone()),
             MeshMaterial3d(assets.pole_material.clone()),
             Transform::from_xyz(point[0], 0.06, point[1]).with_rotation(Quat::from_rotation_y(yaw)),
@@ -315,7 +321,7 @@ pub fn stream_street_furniture(
     mut furniture: ResMut<StreetFurniture>,
 ) {
     let now = time.elapsed_secs();
-    if now - furniture.last_check < 0.5 {
+    if now - furniture.last_check < 0.85 {
         return;
     }
     furniture.last_check = now;
@@ -336,14 +342,18 @@ pub fn stream_street_furniture(
         .copied()
         .filter(|id| !near_set.contains(id))
         .collect();
-    for id in far {
+    for id in far.into_iter().take(2) {
         if let Some(entities) = furniture.lamp_buildings.remove(&id) {
             for entity in entities {
                 commands.entity(entity).despawn();
             }
         }
     }
+    let mut new_buildings = 0usize;
     for id in near_buildings {
+        if new_buildings >= 2 {
+            break;
+        }
         if furniture.lamp_buildings.contains_key(&id) {
             continue;
         }
@@ -372,6 +382,7 @@ pub fn stream_street_furniture(
         }
         if !entities.is_empty() {
             furniture.lamp_buildings.insert(id, entities);
+            new_buildings += 1;
         }
     }
 
@@ -390,14 +401,18 @@ pub fn stream_street_furniture(
         .copied()
         .filter(|id| !signal_set.contains(id))
         .collect();
-    for id in far_signals {
+    for id in far_signals.into_iter().take(4) {
         if let Some(entities) = furniture.signals.remove(&id) {
             for entity in entities {
                 commands.entity(entity).despawn();
             }
         }
     }
+    let mut new_signals = 0usize;
     for index in near_signals {
+        if new_signals >= 2 {
+            break;
+        }
         if furniture.signals.contains_key(&index) {
             continue;
         }
@@ -422,6 +437,7 @@ pub fn stream_street_furniture(
             ));
         }
         furniture.signals.insert(index, entities);
+        new_signals += 1;
     }
 }
 

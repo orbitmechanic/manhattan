@@ -28,6 +28,9 @@ Streaming
   - Traffic now covers the same 1,000 m radius as the roadway.
   - Within 150 m native / 100 m web, lanes are populated with individually
     animated vehicles (limits 600 / 300).
+  - Streaming is amortised: 0.5 s cadence, per-call spawn/despawn budgets and
+    at most 8 lane transitions per call, so boundary crossings no longer cause
+    a one-frame spawn burst.  High-speed LOD pauses streaming above 520 u/s.
   - Beyond the near radius, each lane is filled with a merged far-proxy mesh
     of simple solid vehicle boxes to 85% occupancy, so every visible road is
     covered out to 1 km.  Proxies are despawned when the lane leaves range.

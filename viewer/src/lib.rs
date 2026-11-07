@@ -1,5 +1,6 @@
 #![allow(clippy::type_complexity)]
 pub mod astro;
+pub mod audio;
 pub mod blocks;
 pub mod camera;
 pub mod city_material;
@@ -8,6 +9,7 @@ pub mod collision;
 pub mod detail;
 pub mod details;
 pub mod environment;
+pub mod motion;
 pub mod people;
 pub mod stationing;
 pub mod storefront;

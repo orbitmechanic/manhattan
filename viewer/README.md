@@ -40,6 +40,9 @@ variants, including `floors/` for the building floors.
   replaces rain in cold months).  `--weather rain` or web `?weather=rain`
   starts at a fixed front; the HUD shows cloud cover, precipitation, wind and
   temperature.
+- **Gamepad**: left stick moves, right stick looks, right trigger boosts, left
+  trigger descends, South (A) ascends, and D-pad up/down changes fly speed.
+  A connected pad is additive with keyboard/mouse.
 
 ## Day/night
 
@@ -219,9 +222,10 @@ curve, wind and lightning.  `V` cycles the front.
   lightning are uniforms, so the two layers cost only a few material writes.
 - **Precipitation**: one open cylinder around the camera uses
   `assets/shaders/precipitation.wesl` to generate wind-slanted rain streaks or
-  drifting snow flakes per fragment.  It is a lens-style overlay (no depth
-  test/write, no prepass) and is hidden above 750 m.  Below freezing the rain
-  automatically becomes snow.
+  drifting snow flakes per fragment.  Rain combines two rotated, jittered
+  world-space layers with a slow fall rate to avoid the old raster-grid look.
+  It is a lens-style overlay (no depth test/write, no prepass) and is hidden
+  above 750 m.  Below freezing the rain automatically becomes snow.
 - **Lightning**: storm fronts produce short flashes that add to the sky,
   ambient light and cloud colour.
 - **Atmosphere**: cloud cover replaces the clear-sky gradient with a grey deck,
@@ -247,7 +251,22 @@ curve, wind and lightning.  `V` cycles the front.
   a tint/strength change.
 - Vehicle lights, traffic signals and blinking signs only update their shared
   materials on a state change.
+- Traffic/people/street-furniture streaming is staggered at 0.5 / 0.65 / 0.85 s
+  with spawn/despawn budgets, removing the old simultaneous twice-per-second
+  boundary burst.
+- Above 520 u/s the streamed accessories are hidden and paused, and a radial
+  speed-line shader is shown; they resume below 300 u/s.
 - The web build omits the DOF pass; native keeps the cinematic blur.
+
+### Audio
+
+`src/audio.rs` loads synthesized OGG loops from `assets/sounds/` (see
+`../scripts/generate_audio.py`).  Ambient city, wind and rain are stereo loops
+around the listener; four traffic loops follow the nearest vehicles and use
+spatial panning; distant horns and thunder are spatial one-shots.  Wind volume
+tracks camera speed, traffic volume tracks proximity, rain volume tracks
+precipitation, and thunder is delayed by distance / 343 after a lightning
+flash.  Native starts immediately; web audio unlocks on the first key/click.
 
 ### 1 km embellishment cull
 

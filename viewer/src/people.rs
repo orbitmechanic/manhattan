@@ -780,7 +780,7 @@ pub fn stream_people(
     mut crowd: ResMut<Crowd>,
 ) {
     let now = time.elapsed_secs();
-    if now - crowd.last_check < 0.5 {
+    if now - crowd.last_check < 0.65 {
         return;
     }
     crowd.last_check = now;
@@ -813,7 +813,7 @@ pub fn stream_people(
         .copied()
         .filter(|id| !near_ids.contains(id))
         .collect();
-    for id in far {
+    for id in far.into_iter().take(2) {
         if let Some(active) = crowd.active.remove(&id) {
             for entity in active.walkers.into_iter().chain(active.homeless) {
                 commands.entity(entity).despawn();
@@ -823,9 +823,14 @@ pub fn stream_people(
 
     let mut walker_count: usize = crowd.active.values().map(|c| c.walkers.len()).sum();
     let mut homeless_count: usize = crowd.active.values().map(|c| c.homeless.len()).sum();
+    let mut spawn_budget: usize = 24;
+    let mut despawn_budget: usize = 60;
     let mut seed = run_seed() ^ (now * 1000.0) as u32;
 
     for (_, id) in near {
+        if spawn_budget == 0 {
+            break;
+        }
         let building = &data.buildings()[id];
         let perimeter_ft = perimeter_m(&building.perimeter) * FT_PER_M;
         let target_walkers =
@@ -834,30 +839,38 @@ pub fn stream_people(
         let target_homeless = target_homeless.min(MAX_HOMELESS_PER_BUILDING);
         let entry = crowd.active.entry(id).or_default();
 
-        while entry.walkers.len() > target_walkers {
+        while entry.walkers.len() > target_walkers && despawn_budget > 0 {
             if let Some(entity) = entry.walkers.pop() {
                 commands.entity(entity).despawn();
                 walker_count = walker_count.saturating_sub(1);
+                despawn_budget -= 1;
             }
         }
-        while entry.homeless.len() > target_homeless {
+        while entry.homeless.len() > target_homeless && despawn_budget > 0 {
             if let Some(entity) = entry.homeless.pop() {
                 commands.entity(entity).despawn();
                 homeless_count = homeless_count.saturating_sub(1);
+                despawn_budget -= 1;
             }
         }
-        while entry.walkers.len() < target_walkers && walker_count < MAX_WALKERS {
+        while entry.walkers.len() < target_walkers && walker_count < MAX_WALKERS && spawn_budget > 0
+        {
             if let Some(entity) = spawn_walker(&mut commands, &catalog, building, &mut seed) {
                 entry.walkers.push(entity);
                 walker_count += 1;
+                spawn_budget -= 1;
             } else {
                 break;
             }
         }
-        while entry.homeless.len() < target_homeless && homeless_count < MAX_HOMELESS {
+        while entry.homeless.len() < target_homeless
+            && homeless_count < MAX_HOMELESS
+            && spawn_budget > 0
+        {
             if let Some(entity) = spawn_homeless(&mut commands, &catalog, building, &mut seed) {
                 entry.homeless.push(entity);
                 homeless_count += 1;
+                spawn_budget -= 1;
             } else {
                 break;
             }

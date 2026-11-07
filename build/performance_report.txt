@@ -1,4 +1,4 @@
-Runtime performance passes 1-2
+Runtime performance passes 1-3
 ==============================
 
 Method
@@ -78,6 +78,23 @@ Second pass
     update when their on/off/phase state changes.
   - Web build: DOF pass omitted (native keeps it); the browser is the most
     fill-rate-sensitive target.
+
+Third pass
+  - Streaming: traffic/people/street-furniture cadences are staggered at
+    0.5/0.65/0.85 s and each call has spawn/despawn budgets plus limits on
+    lanes/buildings processed.  This removes the ~2 Hz burst when all three
+    streams crossed a boundary together.
+  - High-speed fallback: above 520 u/s actual camera speed, stream updates and
+    accessory animation pause, accessory roots are hidden, and a radial
+    speed-line overlay is drawn.  They resume below 300 u/s.
+  - Gamepad: left/right sticks, triggers, South and D-pad are wired into the
+    same movement/collision path as keyboard/mouse.
+  - Rain: two rotated/jittered layers and a slower fall; no more visible
+    lattice against facades.
+  - Audio: synthesized ambient city, speed-scaled wind, four vehicle-tracking
+    spatial traffic loops, random spatial horns, rain loop and distance-delayed
+    thunder.  Adds ~0.15 ms/frame of CPU (traffic scan every 0.15 s) and no
+    render pass.
 
 Result
   Native close view, fair weather: ~49-50 ms -> ~43-47 ms average after the

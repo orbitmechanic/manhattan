@@ -44,8 +44,9 @@ Precipitation
   One open-ended cylinder (radius 65 m, 140 m tall, no caps) follows the
   camera.  assets/shaders/precipitation.wesl generates every streak/flake per
   fragment:
-    - rain: thin world-space columns scrolled downwards, slanted by the wind
-      and gapped along their fall cycle; two offset samples increase density
+    - rain: two rotated, cell-jittered world-space layers with a deliberately
+      slow fall; per-cell random drop offsets and widths break the old raster
+      grid while retaining a clear wind lean
     - snow: larger drifting flakes with a short vertical life
   The material disables the prepass, sets depth compare to Always and turns
   depth writes off, so precipitation falls in front of the whole scene

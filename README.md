@@ -40,11 +40,19 @@ load.  A 1440×900 window opens on the overview camera.
 | `L` | show/hide street centreline stationing |
 | `T` | show/hide the vertical 100-ft station ticks |
 | `C` | show/hide the camera civil-coordinate panel |
+| gamepad left / right stick | move / look |
+| gamepad right / left trigger | boost / descend |
+| gamepad South (A) | ascend |
+| gamepad D-pad up / down | change fly speed |
 
 The top-right panel has clickable buttons for the same calendar/clock actions.
 The camera is hard-clamped to `y >= 3.0` (the city ground line is `y = 0`) and
 swept against the building height grid: it slides along facades instead of
 flying through them, and can land on a roof but never enter a building.
+
+Above **520 u/s** streamed crowd/traffic/furniture updates are suspended and a
+radial speed-line overlay appears; they resume below **300 u/s**.  Browser audio
+starts after the first key press or click (autoplay policy).
 
 ### Browser build / GitHub Pages
 
@@ -61,7 +69,7 @@ touch ../docs/.nojekyll
 
 The Pages site is served from `docs/` on `main`:
 
-- `docs/manhattan_bg.wasm` — wasm release build (27 MB after `wasm-opt -Oz`)
+- `docs/manhattan_bg.wasm` — wasm release build (~44 MB after `wasm-opt -Oz`)
 - `docs/assets/models/manhattan_city.glb` — 93 MB (< GitHub Pages' 100 MB
   per-file limit), plus ground, night textures and the city shader
 - `docs/index.html` — loading screen + canvas host
@@ -129,6 +137,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `build/lighting_report.txt` | streetlamp/signal streaming, night-light atlas and the removed shadow pass. |
 | `build/weather_report.txt` | weather state machine, procedural cloud/precipitation shaders and performance notes. |
 | `build/performance_report.txt` | measured frame/CPU hotspots and the first batch of runtime optimizations. |
+| `build/audio_report.txt` | synthesized city/wind/traffic/rain/thunder assets and spatial audio design. |
 | `build/blocks.json`, `blocks_labels.npy`, `ground_cells.npz` | segmentation output: block metadata, per-pixel labels, Voronoi ground polygons. |
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
@@ -145,6 +154,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/textures/signage/` | 64-design abstract projecting-sign atlas. |
 | `viewer/assets/textures/people/` | 8 x 8 clothing-pattern atlas for pedestrian outfits. |
 | `viewer/assets/textures/vehicles/` | emissive vehicle night-light atlas (cabins, headlights, taillights, markers, emergency bars). |
+| `viewer/assets/sounds/` | synthesized OGG ambience: city, wind, traffic, rain, thunder and three horns. |
 | `viewer/assets/models/clothing_catalog.json` | clothing tile ranges (shirts, pants, skirts, jackets, hats, bags). |
 | `viewer/assets/models/trees.json` | 3,000 park/open-ground tree placements. |
 | `viewer/assets/models/traffic_lanes.json` | 24,175 lane centrelines exported by the roadway builder. |
@@ -609,16 +619,38 @@ with smooth transitions over roughly half a minute.  `V` cycles the front and
   CPU cost is two transforms and a few material writes per frame.
 - **Rain and snow**: one open cylinder around the camera uses
   `assets/shaders/precipitation.wesl` to draw wind-slanted streaks or drifting
-  flakes per fragment.  It overlays the scene without depth testing, and the
-  depth of field stops down while precipitation is active so the streaks stay
-  readable.  A temperature curve for New York turns rain into snow below
-  freezing.
+  flakes per fragment.  Rain uses two rotated, cell-jittered layers with a
+  deliberately slow fall, so it reads as moving drops rather than a raster
+  grid.  It overlays the scene without depth testing, and the depth of field
+  stops down while precipitation is active so the streaks stay readable.  A
+  temperature curve for New York turns rain into snow below freezing.
 - **Lightning**: storms fire isolated flashes that brighten the sky, ambient
   light and cloud shader for a few frames.
 - **Integration**: cloud cover darkens the sky, attenuates the sun by up to
   ~88%, thickens the fog (visibility 1.2–22 km), hides stars and the sun/moon
   discs, and drives the HUD weather line.  No particle simulation or extra
   shadow maps are used.
+
+### Audio
+
+`viewer/src/audio.rs` builds a small spatial soundscape from synthesized OGG
+loops in `viewer/assets/sounds/` (regenerate with
+`python3 scripts/generate_audio.py`):
+
+- **Ambient city** — a low stereo city hum/distant-traffic bed.
+- **Wind** — volume follows actual camera speed; strongest during fast flight.
+- **Traffic** — four spatial loop emitters follow the nearest vehicles, so
+  passing traffic pans left/right relative to the camera.
+- **Horns** — one of three synthesized horns is spawned every 4–20 s at a
+  random 90–610 m distant position and pans spatially.
+- **Rain** — loop volume follows precipitation (softer in snow).
+- **Thunder** — lightning flashes schedule a thunder one-shot with a
+  distance-based delay (`0.35 s + distance / 343`) and a random 450–2100 m
+  position, so the rumble follows the flash.
+
+Bevy’s audio backend provides stereo panning rather than HRTF; distance
+attenuation is applied explicitly. Native audio starts immediately; the web
+build defers loops until the first key/click to satisfy autoplay policy.
 
 ### Runtime performance
 
@@ -646,6 +678,13 @@ nothing changed:
   material is only rewritten when the tint/strength changes.
 - **Vehicle lights, street signals and blinking signs** only touch their
   shared materials when the on/off/phase state changes.
+- **Streaming is amortised:** traffic runs on a 0.5 s cadence, people 0.65 s
+  and street furniture 0.85 s, each with per-call spawn/despawn budgets and
+  limits on buildings/lanes processed.  This removes the old ~2 Hz burst where
+  all three streams crossed a boundary in the same frame.
+- **High-speed LOD:** above 520 u/s actual camera speed, crowd/traffic/furniture
+  streaming and animation pause, their roots are hidden, and a radial speed-line
+  shader is shown.  Full accessories resume below 300 u/s.
 - The **web build omits the DOF pass** entirely; native keeps the cinematic
   focus blur.
 

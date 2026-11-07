@@ -2,7 +2,10 @@
 //! collision against the building height grid.
 
 use bevy::{
-    input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
+    input::{
+        gamepad::{Gamepad, GamepadAxis, GamepadButton},
+        mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
+    },
     prelude::*,
 };
 
@@ -110,12 +113,23 @@ pub fn step_camera_colliding(
     clamp_above_ground(transform);
 }
 
+fn stick_deadzone(value: f32) -> f32 {
+    const DEADZONE: f32 = 0.15;
+    if value.abs() <= DEADZONE {
+        0.0
+    } else {
+        value.signum() * ((value.abs() - DEADZONE) / (1.0 - DEADZONE))
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
 pub fn fly_camera_system(
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
     buttons: Res<ButtonInput<MouseButton>>,
     mouse_motion: Res<AccumulatedMouseMotion>,
     scroll: Res<AccumulatedMouseScroll>,
+    gamepads: Query<&Gamepad>,
     grid: Option<Res<CollisionGrid>>,
     mut query: Query<(&mut Transform, &mut FlyCamera)>,
 ) {
@@ -175,6 +189,44 @@ pub fn fly_camera_system(
             1.0
         };
 
+        if let Some(pad) = gamepads.iter().next() {
+            let left_x = stick_deadzone(pad.get(GamepadAxis::LeftStickX).unwrap_or(0.0));
+            let left_y = stick_deadzone(pad.get(GamepadAxis::LeftStickY).unwrap_or(0.0));
+            let right_x = stick_deadzone(pad.get(GamepadAxis::RightStickX).unwrap_or(0.0));
+            let right_y = stick_deadzone(pad.get(GamepadAxis::RightStickY).unwrap_or(0.0));
+
+            // Left stick moves; the Y axis is negative when pushed up.
+            state.forward -= left_y;
+            state.right += left_x;
+            let left_trigger = pad
+                .get(GamepadButton::LeftTrigger2)
+                .unwrap_or(0.0)
+                .clamp(0.0, 1.0);
+            let right_trigger = pad
+                .get(GamepadButton::RightTrigger2)
+                .unwrap_or(0.0)
+                .clamp(0.0, 1.0);
+            state.up -= left_trigger;
+            if pad.pressed(GamepadButton::South) {
+                state.up += 1.0;
+            }
+            if right_trigger > 0.05 {
+                state.boost = state.boost.max(1.0 + 4.0 * right_trigger);
+            }
+
+            let look = 2.0 * dt;
+            camera.yaw -= right_x * look;
+            camera.pitch = (camera.pitch - right_y * look).clamp(-MAX_PITCH, MAX_PITCH);
+
+            let speed_step = 1.0 + 0.9 * dt;
+            if pad.pressed(GamepadButton::DPadUp) {
+                camera.speed = (camera.speed * speed_step).clamp(20.0, 8_000.0);
+            }
+            if pad.pressed(GamepadButton::DPadDown) {
+                camera.speed = (camera.speed / speed_step).clamp(20.0, 8_000.0);
+            }
+        }
+
         if let Some(grid) = &grid {
             step_camera_colliding(&mut transform, &mut camera, state, dt, grid);
         } else {
@@ -186,6 +238,14 @@ pub fn fly_camera_system(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn gamepad_deadzone_is_centred() {
+        assert_eq!(stick_deadzone(0.0), 0.0);
+        assert_eq!(stick_deadzone(0.1), 0.0);
+        assert!(stick_deadzone(0.8) > 0.7);
+        assert!(stick_deadzone(-0.8) < -0.7);
+    }
 
     #[test]
     fn forward_matches_yaw_convention() {
