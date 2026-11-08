@@ -366,8 +366,8 @@ available for comparison:
 - Offset is **negative left / positive right** when looking up-station.
 - Press `L` for centrelines, `T` for the 100-ft vertical ticks (from −3 m to
   +30 m through the ground), `C` for the civil-coordinate panel, and **`G` to
-  cycle IMAGERY → BUILDING FRONTS → COMPLETED**.  The same toggles are buttons
-  in the STATIONING panel.  **COMPLETED is the default set.**
+  cycle IMAGERY → BUILDING FRONTS → OSM STREETS**.  The same toggles are
+  buttons in the STATIONING panel.  **OSM STREETS is the default set.**
 - The camera keeps **one compact nearest-coordinate array for the active set**
   (up to 8 entries, refreshed ~4×/s while moving and 0.2×/s when stationary).
   Each entry carries `station_ft`, `offset_ft`, `elevation_ft`, nearest tangent
