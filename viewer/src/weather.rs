@@ -1,10 +1,10 @@
 //! Lightweight dynamic weather: a slowly changing front, procedural cloud
 //! layers, shader-driven rain/snow around the camera, wind and lightning.
 //!
-//! The system is deliberately cheap.  Clouds are two camera-following planes
-//! drawn with a three-octave noise shader; precipitation is a single open
-//! cylinder around the camera whose streaks are generated per fragment.  No
-//! particle simulation or per-drop geometry is involved.
+//! The system is deliberately cheap.  Clouds are four camera-following
+//! circular decks drawn with a three-octave noise shader; precipitation is a
+//! single open cylinder around the camera whose streaks are generated per
+//! fragment.  No particle simulation or per-drop geometry is involved.
 
 use std::f32::consts::TAU;
 
@@ -451,6 +451,39 @@ fn precipitation_mesh(radius: f32, half_height: f32, segments: usize) -> Mesh {
     .with_inserted_indices(Indices::U32(indices))
 }
 
+/// Circular cloud deck.  A triangle fan with a full set of UVs so the shader
+/// can fade the rim out; the square plane it replaces used to betray its edge
+/// when the camera flew high above the city.
+fn cloud_disc_mesh(radius: f32, segments: usize) -> Mesh {
+    let mut positions = Vec::with_capacity(segments + 2);
+    let mut normals = Vec::with_capacity(segments + 2);
+    let mut uvs = Vec::with_capacity(segments + 2);
+    let mut indices = Vec::with_capacity(segments * 3);
+    positions.push([0.0, 0.0, 0.0]);
+    normals.push([0.0, 1.0, 0.0]);
+    uvs.push([0.5, 0.5]);
+    for i in 0..=segments {
+        let angle = i as f32 / segments as f32 * TAU;
+        let (sin, cos) = angle.sin_cos();
+        positions.push([cos * radius, 0.0, sin * radius]);
+        normals.push([0.0, 1.0, 0.0]);
+        uvs.push([0.5 + 0.5 * cos, 0.5 + 0.5 * sin]);
+    }
+    for i in 0..segments {
+        let a = 1 + i as u32;
+        let b = 1 + (i + 1) as u32;
+        indices.extend([0, a, b]);
+    }
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs)
+    .with_inserted_indices(Indices::U32(indices))
+}
+
 pub fn setup_weather(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -504,7 +537,7 @@ pub fn setup_weather(
                 drift,
                 material: material.clone(),
             },
-            Mesh3d(meshes.add(Plane3d::default().mesh().size(size, size))),
+            Mesh3d(meshes.add(cloud_disc_mesh(size * 0.5, 72))),
             MeshMaterial3d(material),
             Transform::from_xyz(0.0, altitude, 0.0),
         ));

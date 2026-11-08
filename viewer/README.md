@@ -216,11 +216,13 @@ and are despawned as the camera moves.
 thunderstorm, snow) with ~30 s transitions, a seasonal/diurnal temperature
 curve, wind and lightning.  `V` cycles the front.
 
-- **Clouds**: four independently drifting camera-following planes at 0.96,
-  1.34, 1.74 and 2.18 km use `assets/shaders/clouds.wesl`.  The shader evaluates
-  three octaves of world-space value noise; cover, wind, sky colour,
-  sunlit/shadow colour and lightning are uniforms.  Every layer is capped at
-  30% opacity.
+- **Clouds**: four independently drifting camera-following **circular discs**
+  at 0.96, 1.34, 1.74 and 2.18 km use `assets/shaders/clouds.wesl`.  Each disc
+  is a 72-segment triangle fan 15–27 km across (radii 7.5–13.5 km, well over
+  twice the map) and the shader fades the outer 28% using the mesh UVs, so no
+  plane edge is visible.  The shader evaluates three octaves of world-space
+  value noise; cover, wind, sky colour, sunlit/shadow colour and lightning are
+  uniforms.  Every layer is capped at 30% opacity.
 - **Precipitation**: one open cylinder around the camera uses
   `assets/shaders/precipitation.wesl` to generate wind-slanted rain streaks or
   drifting snow flakes per fragment.  Rain combines two rotated, jittered
@@ -236,15 +238,28 @@ curve, wind and lightning.  `V` cycles the front.
   the sun/moon discs, and shifts the ambient fill.  Rain/snow stops the camera
   lens down so the streaks remain readable.
 - No particles, shadow maps or extra render passes are used; the whole system
-  is two cloud planes, one precipitation mesh and three small custom shaders.
+  is four cloud discs, one precipitation mesh and three small custom shaders.
 
 ### Minimap
 
 `src/minimap.rs` renders a 360 px round lower-right map from the building
-perimeters into a CPU map texture (4 Hz) and a transparent instrument texture
-(10 Hz): black streets, grey outlines, green player/FOV, a 7-o'clock-zero
-velocity thermometer and triangle, an outer red acceleration rim and G, plus
-X/Y/Z, mph, km/h, Mach and digital lat/lon.
+perimeters and the real OpenStreetMap street network into a CPU map texture
+(regenerated only when the player moves at least 4 m, at most 4 Hz) and a
+transparent instrument texture (10 Hz).  The map texture is north-up and a
+`UiTransform` rotation makes the displayed map **heading-up**, while the FOV
+rays, dials and telemetry stay fixed; the rays always point up.  It draws black
+OSM streets with their names kept as metadata, grey building outlines, a green
+player dot, a 7-o'clock-zero velocity thermometer whose maximum Mach 2 is at
+5 o'clock, an outer red acceleration rim, the nearest street name, and
+X/Y/Z, mph, km/h, Mach and digital lat/lon.  The lat/lon uses the BlenderGIS
+Web Mercator anchor from `manhattan.blend` (`EPSG:3857`, zoom 15), so it is the
+model's real geographic position.
+
+`../scripts/build_street_network.py` regenerates
+`assets/models/street_network.json` from an OpenStreetMap extract.  It keeps
+18,910 drivable/pedestrian ways, converts each vertex from WGS84 to the same
+Web Mercator frame, and stores the way name and highway class alongside the
+geometry.
 
 ### Runtime throttling
 
@@ -330,7 +345,7 @@ src/collision.rs    baked height grid, swept collision + wall sliding (tests)
 src/environment.rs  lighting, sky, fog, focus, sun/moon discs, stars
 src/weather.rs      fronts, clouds, precipitation, wind, lightning
 src/lightning.rs    forward-view bolt meshes + strike queue for thunder
-src/minimap.rs      CPU map textures, FOV rays, dials, telemetry
+src/minimap.rs      CPU map/street textures, FOV rays, dials, telemetry
 src/stationing.rs   centrelines, 100-ft ticks, station/offset/elevation array
 src/blocks.rs       block metadata, twilight wave, mixed flicker/fade (tests)
 src/city_material.rs custom PBR extension + fog culling + per-floor uniforms

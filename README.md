@@ -158,6 +158,7 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/clothing_catalog.json` | clothing tile ranges (shirts, pants, skirts, jackets, hats, bags). |
 | `viewer/assets/models/trees.json` | 3,000 park/open-ground tree placements. |
 | `viewer/assets/models/traffic_lanes.json` | 24,175 lane centrelines exported by the roadway builder. |
+| `viewer/assets/models/street_network.json` | 18,910 real OSM streets (15,935 named) in viewer mercator coordinates, used by the minimap. |
 | `viewer/assets/models/intersections.json` | 5,908 intersections with position, yaw and road half-width for signal placement. |
 | `viewer/assets/models/upper_facade_catalog.json` | facade/roof atlas grids, category ranges and neighbourhood mapping. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
@@ -613,11 +614,15 @@ despawns it again as the camera moves:
 with smooth transitions over roughly half a minute.  `V` cycles the front and
 `?weather=rain` / `--weather rain` starts at a fixed one.
 
-- **Clouds**: four camera-following planes at 0.96, 1.34, 1.74 and 2.18 km use
-  `assets/shaders/clouds.wesl`, a three-octave world-space noise shader.  Each
-  layer has independent drift/scale and is capped at **30% opacity**.  Cover,
-  wind drift, sun/sky colours and lightning flashes are plain uniforms, so the
-  CPU cost is four transforms and a few material writes per frame.
+- **Clouds**: four camera-following **circular discs** at 0.96, 1.34, 1.74 and
+  2.18 km use `assets/shaders/clouds.wesl`, a three-octave world-space noise
+  shader.  The discs are 15/19/23/27 km across (radii 7.5–13.5 km, more than
+  twice the map) and are built as 72-segment triangle fans.  The shader fades
+  the outer 28% of each disc using the mesh UVs, so no square or circular edge
+  is visible at the horizon.  Each layer has independent drift/scale and is
+  capped at **30% opacity**.  Cover, wind drift, sun/sky colours and lightning
+  flashes are plain uniforms, so the CPU cost is four transforms and a few
+  material writes per frame.
 - **Rain and snow**: one open cylinder around the camera uses
   `assets/shaders/precipitation.wesl` to draw wind-slanted streaks or drifting
   flakes per fragment.  Rain uses two rotated, cell-jittered layers with a
@@ -702,16 +707,27 @@ A round 360 px map sits in the lower-right corner.  It is generated on the CPU
 into two UI textures (refreshed at 4 Hz for the building footprints and 10 Hz
 for the instruments), so it adds no render pass or custom material:
 
-- **Map**: 650 m radius, north-up, black streets and grey building-footprint
-  outlines derived from the same 11k building perimeters.
-- **Player**: green centre dot and two green field-of-view rays at the current
-  camera yaw.
+- **Map**: 650 m radius and **heading-up**.  The north-up map texture is
+  rotated by a `UiTransform` on its image node (the camera yaw), so the FOV
+  rays always point straight up.  Streets are the real OpenStreetMap geometry
+  (black) drawn over a dark slate ground, with the building footprints still
+  outlined in grey.
+- **Street names**: `viewer/assets/models/street_network.json` stores 18,910
+  OSM ways (15,935 named) with their names and highway classes as per-route
+  metadata.  The nearest named street is displayed under the telemetry.
+- **Player**: green centre dot and two green field-of-view rays fixed pointing
+  up the instrument rim.
 - **Velocity**: a single cyan triangle on the graded inner rim.  The scale zero
-  is at **7 o'clock**; a filled thermometer runs clockwise from zero to the
-  triangle.  Text lists mph, km/h and Mach.
-- **Acceleration**: a red outer-rim arc and dot, with G listed in the telemetry.
+  is at **7 o'clock** and the maximum, **Mach 2**, lands at **5 o'clock** (a
+  300° sweep); a filled thermometer runs clockwise from zero to the triangle.
+  Text lists mph, km/h and Mach.
+- **Acceleration**: a red outer-rim arc and dot on the same 7→5 o'clock scale,
+  with G listed in the telemetry.
 - **Telemetry**: X/Y/Z, mph, km/h, Mach and G at the upper left; five-decimal
-  latitude/longitude in the map's lower-right corner.
+  latitude/longitude in the map's lower-right corner.  The coordinates use the
+  BlenderGIS scene anchor (`EPSG:3857`, zoom 15) stored in `manhattan.blend`,
+  so they are the model's real Manhattan location rather than a nominal
+  Midtown origin.
 
 ### 1 km embellishment cull
 
@@ -730,7 +746,7 @@ outside it. The camera near plane stays at `1.0` and the far plane at
   to 1.2–22 km.  The status panel shows the current fog visibility.
 - **Weather**: `src/weather.rs` owns cloud cover, precipitation, wind,
   temperature and lightning; it feeds the sky/fog/light values above and
-  drives the two procedural cloud planes and the shader rain/snow volume.
+  drives the four circular cloud decks and the shader rain/snow volume.
 - **Fog sheets**: 8 soft, horizontal mist quads drift slowly over the city,
   are tinted to the current sky colour and fade with the haze.  They add
   spatial variation on top of the distance fog without hard silhouettes.

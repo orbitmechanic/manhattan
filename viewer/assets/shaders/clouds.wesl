@@ -51,7 +51,13 @@ fn fragment(in: VertexOutput) -> FragmentOutput {
         * (0.20 + 0.55 * cover)
         * lit.a;
 
-    if alpha < 0.008 {
+    // The deck is a disc; fade its rim so the cloud sheet never shows a hard
+    // circular or square border at the horizon.
+    let radial = length(in.uv - vec2<f32>(0.5, 0.5)) * 2.0;
+    let rim_fade = 1.0 - smoothstep(0.72, 0.98, radial);
+    let faded_alpha = alpha * rim_fade;
+
+    if faded_alpha < 0.008 {
         discard;
     }
 
@@ -62,6 +68,6 @@ fn fragment(in: VertexOutput) -> FragmentOutput {
     colour += vec3<f32>(extra.x * 0.85);
 
     var out: FragmentOutput;
-    out.color = vec4<f32>(colour, alpha);
+    out.color = vec4<f32>(colour, faded_alpha);
     return out;
 }

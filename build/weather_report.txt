@@ -26,15 +26,17 @@ Design
   explicit "snow" preset forces -1.5 C.
 
 Clouds
-  Four camera-following horizontal planes at 0.96, 1.34, 1.74 and 2.18 km,
-  15/19/23/27 km across.  assets/shaders/clouds.wesl evaluates three octaves of value
-  noise in world space.  Uniforms:
+  Four camera-following circular discs at 0.96, 1.34, 1.74 and 2.18 km,
+  15/19/23/27 km across (radii 7.5 to 13.5 km).  Each disc is a 72-segment
+  triangle fan with UVs; the shader fades the outer 28% radially so no square
+  or circular deck edge is visible.  assets/shaders/clouds.wesl evaluates three
+  octaves of value noise in world space.  Uniforms:
     data  = time, cover, wind x, wind z
     lit   = sunlit colour + layer opacity
     shade = shadow colour
     extra = lightning flash, noise scale
   Because the noise is sampled in world space, the clouds stay put as the
-  planes follow the camera; each layer has independent drift/scale and the
+  discs follow the camera; each layer has independent drift/scale and the
   material opacity is capped at 30%.  Cover
   maps to a soft threshold, so a 5% clear sky through 96% storm deck uses the
   same shader.  The planes are double-sided transparent geometry with no depth
@@ -85,13 +87,14 @@ HUD / controls
 
 Performance
   Native and web use the same path:
-    - 2 cloud plane draws (6 triangles total)
+    - 4 cloud disc draws (288 triangles total)
     - 1 precipitation cylinder draw (128 triangles, no caps)
     - 2 custom material updates per frame
     - no particle buffers, no per-drop entities, no shadow maps
-  Shader cost is three noise octaves on the cloud planes and a few hash calls
-  on the precipitation shell.  The cloud planes are skipped only by their own
-  transparent pass; they remain below/above the camera and are not culled.
+  Shader cost is three noise octaves and one UV radial fade on the cloud discs
+  and a few hash calls on the precipitation shell.  The discs are skipped only
+  by their own transparent pass; they remain below/above the camera and are not
+  culled.
 
 Verification
   cargo test                     55 tests pass
