@@ -29,6 +29,10 @@ pub const ACCESSORY_RESUME_SPEED: f32 = 300.0;
 pub struct MotionState {
     pub velocity: Vec3,
     pub speed: f32,
+    /// Magnitude of the frame-to-frame velocity change, in m/s².
+    pub acceleration: f32,
+    /// Acceleration in standard gravities.
+    pub accel_g: f32,
     /// 0..1 visual strength for the speed-line overlay.
     pub intensity: f32,
     pub suspended: bool,
@@ -95,8 +99,11 @@ pub fn update_motion_state(
     *previous = Some(position);
     let dt = time.delta_secs().max(1e-4);
     let velocity = (position - last) / dt;
+    let acceleration = (velocity - motion.velocity) / dt;
     motion.velocity = velocity;
     motion.speed = velocity.length();
+    motion.acceleration = acceleration.length();
+    motion.accel_g = (motion.acceleration / 9.80665).min(50.0);
 
     if motion.suspended {
         if motion.speed < ACCESSORY_RESUME_SPEED {

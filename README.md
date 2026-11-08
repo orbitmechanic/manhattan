@@ -613,10 +613,11 @@ despawns it again as the camera moves:
 with smooth transitions over roughly half a minute.  `V` cycles the front and
 `?weather=rain` / `--weather rain` starts at a fixed one.
 
-- **Clouds**: two camera-following planes at 1.18 km and 2.05 km use
-  `assets/shaders/clouds.wesl`, a three-octave world-space noise shader.  Cover,
+- **Clouds**: four camera-following planes at 0.96, 1.34, 1.74 and 2.18 km use
+  `assets/shaders/clouds.wesl`, a three-octave world-space noise shader.  Each
+  layer has independent drift/scale and is capped at **30% opacity**.  Cover,
   wind drift, sun/sky colours and lightning flashes are plain uniforms, so the
-  CPU cost is two transforms and a few material writes per frame.
+  CPU cost is four transforms and a few material writes per frame.
 - **Rain and snow**: one open cylinder around the camera uses
   `assets/shaders/precipitation.wesl` to draw wind-slanted streaks or drifting
   flakes per fragment.  Rain uses two rotated, cell-jittered layers with a
@@ -694,6 +695,23 @@ Measured on the native release build at the close view, fair weather, this pass
 moved the average frame from roughly 49–50 ms to ~43–47 ms and the mid view
 from ~56–62 ms to ~47–49 ms.  Frame times are quantized by the 60 Hz display, so
 the useful result is the reduced work per frame, not the exact FPS.
+
+### Minimap
+
+A round 360 px map sits in the lower-right corner.  It is generated on the CPU
+into two UI textures (refreshed at 4 Hz for the building footprints and 10 Hz
+for the instruments), so it adds no render pass or custom material:
+
+- **Map**: 650 m radius, north-up, black streets and grey building-footprint
+  outlines derived from the same 11k building perimeters.
+- **Player**: green centre dot and two green field-of-view rays at the current
+  camera yaw.
+- **Velocity**: a single cyan triangle on the graded inner rim.  The scale zero
+  is at **7 o'clock**; a filled thermometer runs clockwise from zero to the
+  triangle.  Text lists mph, km/h and Mach.
+- **Acceleration**: a red outer-rim arc and dot, with G listed in the telemetry.
+- **Telemetry**: X/Y/Z, mph, km/h, Mach and G at the upper left; five-decimal
+  latitude/longitude in the map's lower-right corner.
 
 ### 1 km embellishment cull
 
@@ -856,6 +874,10 @@ affected presentation and is already reflected in the script.
 - `renders/viewer_weather_clear.png`, `viewer_weather_rain.png`,
   `viewer_weather_snow.png`, `viewer_weather_storm_night.png` — clear, rain,
   snow and thunderstorm fronts from the weather presets.
+- `renders/viewer_minimap.png` — round minimap with map, FOV rays, velocity
+  thermometer/triangle, acceleration rim and telemetry.
+- `renders/viewer_clouds_four_layers.png` — four independently drifting cloud
+  decks above the city.
 - `renders/blocks_day.png` — irregular block-master render.
 - `renders/blocks_overlay.png` — geometry-derived blocks over the satellite.
 - `renders/blocks_ground_voronoi.png` — mid-street Voronoi ground partition.

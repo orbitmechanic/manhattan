@@ -248,6 +248,7 @@ pub fn spawn_ui(mut commands: Commands) {
             position_type: PositionType::Absolute,
             bottom: px(12),
             left: px(14),
+            width: px(500),
             padding: UiRect::all(px(8)),
             border_radius: BorderRadius::all(px(6)),
             ..default()

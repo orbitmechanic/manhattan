@@ -10,6 +10,7 @@ pub mod detail;
 pub mod details;
 pub mod environment;
 pub mod lightning;
+pub mod minimap;
 pub mod motion;
 pub mod people;
 pub mod stationing;

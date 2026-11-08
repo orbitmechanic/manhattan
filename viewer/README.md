@@ -216,10 +216,11 @@ and are despawned as the camera moves.
 thunderstorm, snow) with ~30 s transitions, a seasonal/diurnal temperature
 curve, wind and lightning.  `V` cycles the front.
 
-- **Clouds**: two camera-following planes at 1.18 km and 2.05 km use
-  `assets/shaders/clouds.wesl`.  The shader evaluates three octaves of
-  world-space value noise; cover, wind, sky colour, sunlit/shadow colour and
-  lightning are uniforms, so the two layers cost only a few material writes.
+- **Clouds**: four independently drifting camera-following planes at 0.96,
+  1.34, 1.74 and 2.18 km use `assets/shaders/clouds.wesl`.  The shader evaluates
+  three octaves of world-space value noise; cover, wind, sky colour,
+  sunlit/shadow colour and lightning are uniforms.  Every layer is capped at
+  30% opacity.
 - **Precipitation**: one open cylinder around the camera uses
   `assets/shaders/precipitation.wesl` to generate wind-slanted rain streaks or
   drifting snow flakes per fragment.  Rain combines two rotated, jittered
@@ -236,6 +237,14 @@ curve, wind and lightning.  `V` cycles the front.
   lens down so the streaks remain readable.
 - No particles, shadow maps or extra render passes are used; the whole system
   is two cloud planes, one precipitation mesh and three small custom shaders.
+
+### Minimap
+
+`src/minimap.rs` renders a 360 px round lower-right map from the building
+perimeters into a CPU map texture (4 Hz) and a transparent instrument texture
+(10 Hz): black streets, grey outlines, green player/FOV, a 7-o'clock-zero
+velocity thermometer and triangle, an outer red acceleration rim and G, plus
+X/Y/Z, mph, km/h, Mach and digital lat/lon.
 
 ### Runtime throttling
 
@@ -320,6 +329,8 @@ src/camera.rs       FlyCamera, ground clamp, collision-aware movement (tests)
 src/collision.rs    baked height grid, swept collision + wall sliding (tests)
 src/environment.rs  lighting, sky, fog, focus, sun/moon discs, stars
 src/weather.rs      fronts, clouds, precipitation, wind, lightning
+src/lightning.rs    forward-view bolt meshes + strike queue for thunder
+src/minimap.rs      CPU map textures, FOV rays, dials, telemetry
 src/stationing.rs   centrelines, 100-ft ticks, station/offset/elevation array
 src/blocks.rs       block metadata, twilight wave, mixed flicker/fade (tests)
 src/city_material.rs custom PBR extension + fog culling + per-floor uniforms

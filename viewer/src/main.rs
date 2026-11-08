@@ -47,6 +47,7 @@ use manhattan_viewer::{
         update_fog_bank_materials, update_fog_banks,
     },
     lightning::LightningPlugin,
+    minimap::MinimapPlugin,
     motion::{MotionPlugin, accessories_active},
     people::{Crowd, setup_people_catalog, stream_people, update_limbs, update_pedestrians},
     stationing::{
@@ -265,6 +266,7 @@ fn main() {
         .add_plugins(WeatherPlugin)
         .add_plugins(MotionPlugin)
         .add_plugins(LightningPlugin)
+        .add_plugins(MinimapPlugin)
         .add_plugins(CityAudioPlugin)
         .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
         .insert_resource(clock)

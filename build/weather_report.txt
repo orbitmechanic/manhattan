@@ -26,15 +26,16 @@ Design
   explicit "snow" preset forces -1.5 C.
 
 Clouds
-  Two camera-following horizontal planes at 1.18 km and 2.05 km, 15 km and
-  23 km across.  assets/shaders/clouds.wesl evaluates three octaves of value
+  Four camera-following horizontal planes at 0.96, 1.34, 1.74 and 2.18 km,
+  15/19/23/27 km across.  assets/shaders/clouds.wesl evaluates three octaves of value
   noise in world space.  Uniforms:
     data  = time, cover, wind x, wind z
     lit   = sunlit colour + layer opacity
     shade = shadow colour
     extra = lightning flash, noise scale
   Because the noise is sampled in world space, the clouds stay put as the
-  planes follow the camera; only the wind uniform scrolls the pattern.  Cover
+  planes follow the camera; each layer has independent drift/scale and the
+  material opacity is capped at 30%.  Cover
   maps to a soft threshold, so a 5% clear sky through 96% storm deck uses the
   same shader.  The planes are double-sided transparent geometry with no depth
   write; from the overview altitude their opacity is reduced to 30% so they

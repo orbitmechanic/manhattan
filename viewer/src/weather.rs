@@ -412,6 +412,8 @@ impl Material for PrecipMaterial {
 pub struct CloudLayer {
     altitude: f32,
     scale: f32,
+    /// Extra shader-space drift for this layer, independent of the weather wind.
+    drift: Vec2,
     material: Handle<CloudMaterial>,
 }
 
@@ -455,12 +457,38 @@ pub fn setup_weather(
     mut materials: ResMut<Assets<CloudMaterial>>,
     mut precip_materials: ResMut<Assets<PrecipMaterial>>,
 ) {
-    // Low broken cloud deck and a higher, thinner layer.  Both follow the
-    // camera horizontally so their edges are never visible; the noise itself
-    // stays fixed in world space so the clouds do not swim.
-    for (name, altitude, size, scale) in [
-        ("CloudDeckLow", 1_180.0_f32, 15_000.0_f32, 430.0_f32),
-        ("CloudDeckHigh", 2_050.0_f32, 23_000.0_f32, 760.0_f32),
+    // Four independently drifting decks.  Each one is capped at 30% opacity
+    // in the material; the layers are distinct altitudes/scales so they do
+    // not read as one flat sheet.
+    for (name, altitude, size, scale, drift) in [
+        (
+            "CloudDeckLow",
+            960.0_f32,
+            15_000.0_f32,
+            380.0_f32,
+            Vec2::new(12.0, -4.0),
+        ),
+        (
+            "CloudDeckMidLow",
+            1_340.0_f32,
+            19_000.0_f32,
+            520.0_f32,
+            Vec2::new(-9.0, 7.0),
+        ),
+        (
+            "CloudDeckMidHigh",
+            1_740.0_f32,
+            23_000.0_f32,
+            680.0_f32,
+            Vec2::new(6.0, 12.0),
+        ),
+        (
+            "CloudDeckHigh",
+            2_180.0_f32,
+            27_000.0_f32,
+            820.0_f32,
+            Vec2::new(-3.0, -15.0),
+        ),
     ] {
         let material = materials.add(CloudMaterial {
             data: Vec4::new(0.0, 0.3, 0.0, 0.0),
@@ -473,6 +501,7 @@ pub fn setup_weather(
             CloudLayer {
                 altitude,
                 scale,
+                drift,
                 material: material.clone(),
             },
             Mesh3d(meshes.add(Plane3d::default().mesh().size(size, size))),
@@ -549,10 +578,12 @@ pub fn update_weather_visuals(
             material.data = Vec4::new(
                 seconds,
                 cover,
-                weather.wind.x * weather.wind_kmh * 0.02,
-                weather.wind.y * weather.wind_kmh * 0.02,
+                weather.wind.x * weather.wind_kmh * 0.02 + layer.drift.x,
+                weather.wind.y * weather.wind_kmh * 0.02 + layer.drift.y,
             );
-            material.lit = Vec4::new(lit.x, lit.y, lit.z, (0.62 + 0.38 * cover) * altitude_fade);
+            // Hard ceiling: no individual cloud deck may exceed 30% opacity.
+            let layer_opacity = ((0.70 + 0.30 * cover) * altitude_fade).min(0.30);
+            material.lit = Vec4::new(lit.x, lit.y, lit.z, layer_opacity);
             material.shade = Vec4::new(shade.x, shade.y, shade.z, 1.0);
             material.extra = Vec4::new(flash, layer.scale, 0.0, 0.0);
         }
