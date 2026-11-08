@@ -398,11 +398,9 @@ fn setup_minimap(
                 ZIndex(10),
                 Node {
                     position_type: PositionType::Absolute,
-                    left: px(42),
-                    top: px(42),
-                    width: px(280),
-                    padding: UiRect::all(px(4)),
-                    border_radius: BorderRadius::all(px(4)),
+                    left: px(55),
+                    top: px(74),
+                    width: px(250),
                     ..default()
                 },
             ));
@@ -420,11 +418,9 @@ fn setup_minimap(
                 ZIndex(10),
                 Node {
                     position_type: PositionType::Absolute,
-                    right: px(30),
-                    bottom: px(26),
-                    width: px(150),
-                    padding: UiRect::all(px(4)),
-                    border_radius: BorderRadius::all(px(4)),
+                    right: px(62),
+                    bottom: px(54),
+                    width: px(108),
                     ..default()
                 },
             ));
