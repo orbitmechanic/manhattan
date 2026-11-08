@@ -126,6 +126,12 @@ fn stick_deadzone(value: f32) -> f32 {
     }
 }
 
+/// This controller reports the Y axes inverted (positive = up) while X is
+/// standard.  Return an X/Y pair in the keyboard/mouse convention.
+fn normalize_gamepad_stick(x: f32, y: f32) -> Vec2 {
+    Vec2::new(x, -y)
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn fly_camera_system(
     time: Res<Time>,
@@ -194,13 +200,22 @@ pub fn fly_camera_system(
         };
 
         if let Some(pad) = gamepads.iter().next() {
-            // This controller reports both stick axes inverted (positive =
-            // up / left).  Normalise them first so deadzone, movement and
-            // look match the keyboard/mouse conventions below.
-            let left_x = stick_deadzone(-pad.get(GamepadAxis::LeftStickX).unwrap_or(0.0));
-            let left_y = stick_deadzone(-pad.get(GamepadAxis::LeftStickY).unwrap_or(0.0));
-            let right_x = stick_deadzone(-pad.get(GamepadAxis::RightStickX).unwrap_or(0.0));
-            let right_y = stick_deadzone(-pad.get(GamepadAxis::RightStickY).unwrap_or(0.0));
+            // This controller reports the Y axes inverted (positive = up)
+            // while X is standard.  Normalise only Y so forward/back and
+            // pitch match the keyboard/mouse conventions, and leave X alone
+            // so right-stick yaw keeps its normal direction.
+            let left = normalize_gamepad_stick(
+                pad.get(GamepadAxis::LeftStickX).unwrap_or(0.0),
+                pad.get(GamepadAxis::LeftStickY).unwrap_or(0.0),
+            );
+            let right = normalize_gamepad_stick(
+                pad.get(GamepadAxis::RightStickX).unwrap_or(0.0),
+                pad.get(GamepadAxis::RightStickY).unwrap_or(0.0),
+            );
+            let left_x = stick_deadzone(left.x);
+            let left_y = stick_deadzone(left.y);
+            let right_x = stick_deadzone(right.x);
+            let right_y = stick_deadzone(right.y);
             let stick_magnitude = (left_x * left_x + left_y * left_y).sqrt().min(1.0);
 
             // Left stick moves; up is negative Y after normalisation.
@@ -285,6 +300,16 @@ mod tests {
         assert_eq!(stick_deadzone(0.1), 0.0);
         assert!(stick_deadzone(0.8) > 0.7);
         assert!(stick_deadzone(-0.8) < -0.7);
+    }
+
+    #[test]
+    fn gamepad_x_is_standard_and_y_is_inverted() {
+        let up = normalize_gamepad_stick(0.0, 1.0);
+        assert_eq!(up.x, 0.0);
+        assert!(up.y < 0.0, "up should become negative Y");
+        let right = normalize_gamepad_stick(1.0, 0.0);
+        assert!(right.x > 0.0, "right should stay positive X");
+        assert_eq!(right.y, 0.0);
     }
 
     #[test]
