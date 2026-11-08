@@ -1,9 +1,13 @@
 //! Visible lightning bolts that use the same strike position as the delayed
 //! thunder audio in `audio.rs`.
 
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 
-use crate::{camera::FlyCamera, weather::Weather, weather::update_weather};
+use crate::{
+    camera::FlyCamera, storefront::StorefrontData, weather::Weather, weather::update_weather,
+};
 
 #[derive(Default, Reflect, GizmoConfigGroup)]
 pub struct LightningGizmoGroup;
@@ -52,14 +56,14 @@ fn configure_lightning_gizmos(mut store: ResMut<GizmoConfigStore>) {
 }
 
 fn make_bolt(impact: Vec3, rng: &mut LightningRng) -> Bolt {
-    let top = 760.0 + rng.next() * 420.0;
+    let top = impact.y + 500.0 + rng.next() * 420.0;
     let mut points = Vec::with_capacity(18);
     for i in 0..=16 {
         let t = i as f32 / 16.0;
         let spread = 18.0 * (1.0 - t) + 3.0;
         points.push(Vec3::new(
             impact.x + (rng.next() - 0.5) * spread,
-            top * (1.0 - t),
+            top - (top - impact.y) * t,
             impact.z + (rng.next() - 0.5) * spread,
         ));
     }
@@ -94,10 +98,12 @@ fn make_bolt(impact: Vec3, rng: &mut LightningRng) -> Bolt {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn update_lightning(
     time: Res<Time>,
     weather: Res<Weather>,
-    camera: Single<&Transform, With<FlyCamera>>,
+    buildings: Res<StorefrontData>,
+    camera: Single<(&Transform, &FlyCamera), With<FlyCamera>>,
     mut state: ResMut<LightningState>,
     mut rng: ResMut<LightningRng>,
     mut last_flash: Local<bool>,
@@ -105,22 +111,49 @@ pub fn update_lightning(
 ) {
     let now = time.elapsed_secs();
     let flash = weather.flash > 0.30;
+    let (camera_transform, fly_camera) = camera.into_inner();
     if flash && !*last_flash {
-        let forward = camera.rotation * Vec3::NEG_Z;
-        let base_angle = forward.x.atan2(forward.z);
-        // Keep strikes mostly in the forward view so the delayed thunder can
-        // be matched to a visible bolt, while still allowing some spread.
+        let forward = Vec2::new(-fly_camera.yaw.sin(), -fly_camera.yaw.cos());
+        let base_angle = fly_camera.yaw + PI;
+        // Aim at a building roof in the forward view, not at the street.
         let angle = base_angle + (rng.next() - 0.5) * 1.4;
-        let distance = 280.0 + rng.next() * 900.0;
-        let impact = Vec3::new(
-            camera.translation.x + angle.sin() * distance,
-            0.0,
-            camera.translation.z + angle.cos() * distance,
+        let distance = 300.0 + rng.next() * 750.0;
+        let target = Vec2::new(
+            camera_transform.translation.x + angle.sin() * distance,
+            camera_transform.translation.z + angle.cos() * distance,
         );
-        let mut bolt = make_bolt(impact, &mut rng);
-        bolt.start = now;
-        state.pending_audio.push(impact);
-        state.bolts.push(bolt);
+
+        let mut best: Option<(f32, Vec3)> = None;
+        let mut fallback: Option<(f32, Vec3)> = None;
+        for building in buildings.buildings() {
+            let to = Vec2::new(
+                building.centroid[0] - camera_transform.translation.x,
+                building.centroid[1] - camera_transform.translation.z,
+            );
+            let building_distance = to.length();
+            if !(150.0..=1_100.0).contains(&building_distance) {
+                continue;
+            }
+            if to.normalize_or_zero().dot(forward) < 0.70 {
+                continue;
+            }
+            let roof_height = building.height_m.max(6.0);
+            let roof = Vec3::new(building.centroid[0], roof_height, building.centroid[1]);
+            let score = to.distance_squared(target);
+            if best.is_none_or(|(best_score, _)| score < best_score) {
+                best = Some((score, roof));
+            }
+            if fallback.is_none_or(|(best_score, _)| building_distance < best_score) {
+                fallback = Some((building_distance, roof));
+            }
+        }
+
+        if let Some((_, impact)) = best.or(fallback) {
+            let mut bolt = make_bolt(impact, &mut rng);
+            bolt.start = now;
+            state.pending_audio.push(impact);
+            state.bolts.push(bolt);
+        }
     }
     *last_flash = flash;
 

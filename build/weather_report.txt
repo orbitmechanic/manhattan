@@ -71,9 +71,9 @@ Lighting / atmosphere integration
 Lightning
   A storm front above 42% schedules isolated flashes every 2.4-15 s.  The
   flash decays at 2.8/s and is fed to the sky, ambient and cloud shader.  Each
-  flash also creates a jagged gizmo bolt from cloud height to the ground,
-  biased into the forward view; the delayed thunder audio reads that exact
-  strike position.  No light entities or shadow maps are spawned.
+  flash also creates a jagged gizmo bolt from cloud height down to a building
+  roof in the forward view (never the street); the delayed thunder audio reads
+  that exact roof position.  No light entities or shadow maps are spawned.
 
 HUD / controls
   The top-left panel adds:

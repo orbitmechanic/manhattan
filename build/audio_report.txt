@@ -19,8 +19,8 @@ Spatial design
     - four traffic loops are spatial emitters repositioned every 0.15 s to the
       four nearest animated vehicles; volume falls off with distance;
     - distant horns spawn every 4-20 s at random 90-610 m positions;
-    - thunder spawns at the same world position as the visible lightning bolt,
-      delayed by 0.35 s + distance / 343 m/s;
+    - thunder spawns at the same rooftop position as the visible lightning
+      bolt, delayed by 0.35 s + distance / 343 m/s;
     - distance attenuation is applied explicitly via Volume before playback.
 
 Mix

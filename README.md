@@ -625,9 +625,9 @@ with smooth transitions over roughly half a minute.  `V` cycles the front and
   stops down while precipitation is active so the streaks stay readable.  A
   temperature curve for New York turns rain into snow below freezing.
 - **Lightning**: storms fire isolated flashes that brighten the sky, ambient
-  light and cloud shader.  A jagged bolt is drawn at the actual strike position
-  (biased into the forward view), and the delayed thunder uses that same world
-  position so the sound and flash line up.
+  light and cloud shader.  A jagged bolt is drawn from the cloud deck down to a
+  **building rooftop** in the forward view (never the street), and the delayed
+  thunder uses that same world position so the sound and flash line up.
 - **Integration**: cloud cover darkens the sky, attenuates the sun by up to
   ~88%, thickens the fog (visibility 1.2–22 km), hides stars and the sun/moon
   discs, and drives the HUD weather line.  No particle simulation or extra

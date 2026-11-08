@@ -227,8 +227,9 @@ curve, wind and lightning.  `V` cycles the front.
   It is a lens-style overlay (no depth test/write, no prepass) and is hidden
   above 750 m.  Below freezing the rain automatically becomes snow.
 - **Lightning**: storm fronts produce short flashes that add to the sky,
-  ambient light and cloud colour, plus a jagged gizmo bolt drawn at the strike
-  position; thunder uses that same position.
+  ambient light and cloud colour, plus a jagged gizmo bolt drawn from the cloud
+  deck to a building rooftop in the forward view; thunder uses that same roof
+  position.
 - **Atmosphere**: cloud cover replaces the clear-sky gradient with a grey deck,
   attenuates the sun, thickens the fog (1.2–22 km visibility), hides stars and
   the sun/moon discs, and shifts the ambient fill.  Rain/snow stops the camera
