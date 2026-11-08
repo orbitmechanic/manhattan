@@ -10,7 +10,7 @@ fn hash21(p: vec2<f32>) -> f32 {
 @fragment
 fn fragment(in: VertexOutput) -> FragmentOutput {
     let uv = in.uv * 2.0 - vec2<f32>(1.0, 1.0);
-    let center = vec2<f32>(data.z, data.w) * 0.35;
+    let center = vec2<f32>(data.z * 0.35, -data.w * 0.35 - 0.18);
     let p = uv - center;
     let r = length(p);
     if r < 0.04 {

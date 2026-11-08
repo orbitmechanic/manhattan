@@ -19,7 +19,7 @@ Spatial design
     - four traffic loops are spatial emitters repositioned every 0.15 s to the
       four nearest animated vehicles; volume falls off with distance;
     - distant horns spawn every 4-20 s at random 90-610 m positions;
-    - thunder spawns at a random 450-2100 m position after a lightning flash,
+    - thunder spawns at the same world position as the visible lightning bolt,
       delayed by 0.35 s + distance / 343 m/s;
     - distance attenuation is applied explicitly via Volume before playback.
 
@@ -34,10 +34,13 @@ Mix
   Volumes are smoothed with exponential approach to avoid clicks.  Traffic
   audio fades out while high-speed accessory suspension is active.
 
-Web policy
+Web policy / quit
   Browsers block autoplay.  The web build starts loop sinks paused and the
   AudioGate unlocks on the first key press or left click.  Native starts
   immediately.  All one-shot sounds are gated until audio is enabled.
+  AppExit pauses all native sinks; a pagehide/beforeunload handler closes the
+  browser AudioContexts so ambience does not continue after the tab/window
+  closes.
 
 Files
   viewer/src/audio.rs          handles, levels, traffic/horn/thunder logic

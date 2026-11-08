@@ -625,7 +625,9 @@ with smooth transitions over roughly half a minute.  `V` cycles the front and
   stops down while precipitation is active so the streaks stay readable.  A
   temperature curve for New York turns rain into snow below freezing.
 - **Lightning**: storms fire isolated flashes that brighten the sky, ambient
-  light and cloud shader for a few frames.
+  light and cloud shader.  A jagged bolt is drawn at the actual strike position
+  (biased into the forward view), and the delayed thunder uses that same world
+  position so the sound and flash line up.
 - **Integration**: cloud cover darkens the sky, attenuates the sun by up to
   ~88%, thickens the fog (visibility 1.2–22 km), hides stars and the sun/moon
   discs, and drives the HUD weather line.  No particle simulation or extra
@@ -644,9 +646,9 @@ loops in `viewer/assets/sounds/` (regenerate with
 - **Horns** — one of three synthesized horns is spawned every 4–20 s at a
   random 90–610 m distant position and pans spatially.
 - **Rain** — loop volume follows precipitation (softer in snow).
-- **Thunder** — lightning flashes schedule a thunder one-shot with a
-  distance-based delay (`0.35 s + distance / 343`) and a random 450–2100 m
-  position, so the rumble follows the flash.
+- **Thunder** — each visible lightning strike schedules a thunder one-shot at
+  the same world position, delayed by `0.35 s + distance / 343`, so the rumble
+  follows both the flash and the bolt.
 
 Bevy’s audio backend provides stereo panning rather than HRTF; distance
 attenuation is applied explicitly. Native audio starts immediately; the web

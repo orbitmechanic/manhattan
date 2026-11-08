@@ -18,6 +18,7 @@ use std::f32::consts::TAU;
 
 use crate::{
     camera::FlyCamera,
+    lightning::{LightningState, update_lightning},
     motion::MotionState,
     traffic::Vehicle,
     weather::{Weather, update_weather},
@@ -325,31 +326,26 @@ fn update_thunder(
     time: Res<Time>,
     gate: Res<AudioGate>,
     handles: Option<Res<AudioHandles>>,
-    weather: Res<Weather>,
     camera: Single<&Transform, With<FlyCamera>>,
+    mut lightning: ResMut<LightningState>,
     mut queue: ResMut<ThunderQueue>,
     mut rng: ResMut<AudioRng>,
     mut commands: Commands,
-    mut flash_active: Local<bool>,
 ) {
-    let active = weather.flash > 0.30;
-    if gate.enabled && active && !*flash_active {
-        let distance = 450.0 + rng.next() * 1_650.0;
-        let angle = rng.next() * TAU;
-        let position = camera.translation
-            + Vec3::new(
-                angle.cos() * distance,
-                90.0 + rng.next() * 260.0,
-                angle.sin() * distance,
-            );
-        let volume = 0.48 * (1.0 - distance / 2_300.0).clamp(0.08, 1.0);
+    if !gate.enabled {
+        lightning.pending_audio.clear();
+        return;
+    }
+    for impact in lightning.pending_audio.drain(..) {
+        let distance = impact.distance(camera.translation);
+        let position = impact + Vec3::Y * (110.0 + rng.next() * 120.0);
+        let volume = 0.60 * (1.0 - distance / 2_300.0_f32).clamp(0.08_f32, 1.0);
         queue.pending.push(PendingThunder {
             delay: 0.35 + distance / 343.0 + rng.next() * 0.5,
             position,
             volume,
         });
     }
-    *flash_active = active;
 
     let dt = time.delta_secs();
     for pending in &mut queue.pending {
@@ -380,6 +376,38 @@ fn update_thunder(
     }
 }
 
+#[allow(unused_variables, unused_mut)]
+fn stop_audio_on_exit(
+    mut exits: MessageReader<AppExit>,
+    mut ambient: Query<
+        &mut AudioSink,
+        (With<AmbientAudio>, Without<WindAudio>, Without<RainAudio>),
+    >,
+    mut wind: Query<&mut AudioSink, (With<WindAudio>, Without<AmbientAudio>, Without<RainAudio>)>,
+    mut rain: Query<&mut AudioSink, (With<RainAudio>, Without<AmbientAudio>, Without<WindAudio>)>,
+    mut traffic: Query<&mut SpatialAudioSink, With<TrafficAudio>>,
+) {
+    if exits.read().next().is_none() {
+        return;
+    }
+    for mut sink in &mut ambient {
+        sink.pause();
+        sink.set_volume(Volume::SILENT);
+    }
+    for mut sink in &mut wind {
+        sink.pause();
+        sink.set_volume(Volume::SILENT);
+    }
+    for mut sink in &mut rain {
+        sink.pause();
+        sink.set_volume(Volume::SILENT);
+    }
+    for mut sink in &mut traffic {
+        sink.pause();
+        sink.set_volume(Volume::SILENT);
+    }
+}
+
 pub struct CityAudioPlugin;
 
 impl Plugin for CityAudioPlugin {
@@ -396,9 +424,10 @@ impl Plugin for CityAudioPlugin {
                     update_audio_levels,
                     update_traffic_audio,
                     update_horns,
-                    update_thunder,
                 )
                     .after(update_weather),
-            );
+            )
+            .add_systems(Update, update_thunder.after(update_lightning))
+            .add_systems(Last, stop_audio_on_exit);
     }
 }

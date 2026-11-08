@@ -41,6 +41,8 @@ pub struct MoveState {
     pub right: f32,
     pub up: f32,
     pub boost: f32,
+    /// 0..1 analog scale; keyboard uses 1.0, a gamepad stick uses its radius.
+    pub analog: f32,
 }
 
 impl Default for MoveState {
@@ -50,6 +52,7 @@ impl Default for MoveState {
             right: 0.0,
             up: 0.0,
             boost: 1.0,
+            analog: 1.0,
         }
     }
 }
@@ -81,10 +84,11 @@ fn movement_delta(camera: &FlyCamera, state: MoveState, dt: f32) -> Vec3 {
     let right = Vec3::new(-flat_forward.z, 0.0, flat_forward.x);
 
     let mut direction = flat_forward * state.forward + right * state.right + Vec3::Y * state.up;
-    if direction.length_squared() > 1.0 {
-        direction = direction.normalize();
+    let length = direction.length();
+    if length > 1e-4 {
+        direction /= length;
     }
-    let speed = camera.speed * state.boost;
+    let speed = camera.speed * state.boost * state.analog;
     direction * speed * dt
 }
 
@@ -194,10 +198,20 @@ pub fn fly_camera_system(
             let left_y = stick_deadzone(pad.get(GamepadAxis::LeftStickY).unwrap_or(0.0));
             let right_x = stick_deadzone(pad.get(GamepadAxis::RightStickX).unwrap_or(0.0));
             let right_y = stick_deadzone(pad.get(GamepadAxis::RightStickY).unwrap_or(0.0));
+            let stick_magnitude = (left_x * left_x + left_y * left_y).sqrt().min(1.0);
 
             // Left stick moves; the Y axis is negative when pushed up.
             state.forward -= left_y;
             state.right += left_x;
+            let keyboard_move = keys.pressed(KeyCode::KeyW)
+                || keys.pressed(KeyCode::KeyS)
+                || keys.pressed(KeyCode::KeyA)
+                || keys.pressed(KeyCode::KeyD)
+                || keys.pressed(KeyCode::KeyQ)
+                || keys.pressed(KeyCode::KeyE);
+            if stick_magnitude > 0.01 && !keyboard_move {
+                state.analog = stick_magnitude;
+            }
             let left_trigger = pad
                 .get(GamepadButton::LeftTrigger2)
                 .unwrap_or(0.0)
@@ -238,6 +252,29 @@ pub fn fly_camera_system(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn analog_input_scales_speed_linearly() {
+        let camera = FlyCamera::default();
+        let full = movement_delta(
+            &camera,
+            MoveState {
+                forward: 1.0,
+                ..default()
+            },
+            0.1,
+        );
+        let half = movement_delta(
+            &camera,
+            MoveState {
+                forward: 1.0,
+                analog: 0.5,
+                ..default()
+            },
+            0.1,
+        );
+        assert!((half.length() - full.length() * 0.5).abs() < 1e-3);
+    }
 
     #[test]
     fn gamepad_deadzone_is_centred() {

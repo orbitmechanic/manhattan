@@ -46,6 +46,7 @@ use manhattan_viewer::{
         Environment, fog_cull_distance, setup_lighting, spawn_fog_banks, update_environment,
         update_fog_bank_materials, update_fog_banks,
     },
+    lightning::LightningPlugin,
     motion::{MotionPlugin, accessories_active},
     people::{Crowd, setup_people_catalog, stream_people, update_limbs, update_pedestrians},
     stationing::{
@@ -263,6 +264,7 @@ fn main() {
         .add_plugins(MaterialPlugin::<CityMaterial>::default())
         .add_plugins(WeatherPlugin)
         .add_plugins(MotionPlugin)
+        .add_plugins(LightningPlugin)
         .add_plugins(CityAudioPlugin)
         .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
         .insert_resource(clock)
