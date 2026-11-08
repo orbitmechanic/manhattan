@@ -194,13 +194,16 @@ pub fn fly_camera_system(
         };
 
         if let Some(pad) = gamepads.iter().next() {
-            let left_x = stick_deadzone(pad.get(GamepadAxis::LeftStickX).unwrap_or(0.0));
-            let left_y = stick_deadzone(pad.get(GamepadAxis::LeftStickY).unwrap_or(0.0));
-            let right_x = stick_deadzone(pad.get(GamepadAxis::RightStickX).unwrap_or(0.0));
-            let right_y = stick_deadzone(pad.get(GamepadAxis::RightStickY).unwrap_or(0.0));
+            // This controller reports both stick axes inverted (positive =
+            // up / left).  Normalise them first so deadzone, movement and
+            // look match the keyboard/mouse conventions below.
+            let left_x = stick_deadzone(-pad.get(GamepadAxis::LeftStickX).unwrap_or(0.0));
+            let left_y = stick_deadzone(-pad.get(GamepadAxis::LeftStickY).unwrap_or(0.0));
+            let right_x = stick_deadzone(-pad.get(GamepadAxis::RightStickX).unwrap_or(0.0));
+            let right_y = stick_deadzone(-pad.get(GamepadAxis::RightStickY).unwrap_or(0.0));
             let stick_magnitude = (left_x * left_x + left_y * left_y).sqrt().min(1.0);
 
-            // Left stick moves; the Y axis is negative when pushed up.
+            // Left stick moves; up is negative Y after normalisation.
             state.forward -= left_y;
             state.right += left_x;
             let keyboard_move = keys.pressed(KeyCode::KeyW)

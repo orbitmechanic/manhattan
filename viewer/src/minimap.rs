@@ -700,13 +700,19 @@ fn setup_minimap(
         });
 }
 
+fn minimap_rotation(yaw: f32) -> Rot2 {
+    // Camera yaw is positive to the left.  Facing west (yaw +90°) needs the
+    // map's north rotated clockwise so west is at the top; UiTransform's
+    // positive rotation is clockwise, so the yaw can be used directly.
+    Rot2::radians(yaw)
+}
+
 fn update_minimap_heading(
     camera: Single<&FlyCamera, With<FlyCamera>>,
     map: Single<&mut UiTransform, With<MinimapMapImage>>,
 ) {
     let mut map = map.into_inner();
-    // UiTransform rotates clockwise; the camera yaw turns counter-clockwise.
-    map.rotation = Rot2::radians(-camera.yaw);
+    map.rotation = minimap_rotation(camera.yaw);
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -818,6 +824,20 @@ mod tests {
         let (lon, lat) = world_to_lon_lat(0.0, 0.0);
         assert!((lon - -74.000_875_910_036_54).abs() < 1e-9, "lon {lon}");
         assert!((lat - 40.713_460_624_392_276).abs() < 1e-9, "lat {lat}");
+    }
+
+    #[test]
+    fn map_rotation_puts_the_heading_at_the_top() {
+        use std::f32::consts::FRAC_PI_2;
+        // Facing west should rotate the map clockwise so west is up.
+        let west = minimap_rotation(FRAC_PI_2);
+        assert!(west.sin > 0.99, "west heading should rotate clockwise");
+        // Facing east should rotate it counter-clockwise so east is up.
+        let east = minimap_rotation(-FRAC_PI_2);
+        assert!(
+            east.sin < -0.99,
+            "east heading should rotate counter-clockwise"
+        );
     }
 
     #[test]
