@@ -1,8 +1,9 @@
 //! Street-centreline stationing and civil coordinates.
 //!
-//! `station_lines.json` is generated from the block geometry + satellite road
-//! hints by `scripts/build_station_lines.py`.  Each line carries station ticks
-//! every 100 ft, plan tangent/arc/reverse-curve metadata, and a vertical tangent
+//! The default `COMPLETED` set is now generated from the real OSM street
+//! centrelines by `scripts/build_station_osm.py`; the older imagery/fronts
+//! sets remain available for comparison.  Each line carries station ticks every
+//! 100 ft, plan tangent/arc/reverse-curve metadata, and a vertical tangent
 //! profile.  The viewer draws the lines/ticks on demand and computes a civil
 //! coordinate array for the camera against every line.
 
@@ -19,7 +20,7 @@ pub const MAX_COORDS_PER_SET: usize = 8;
 
 static IMAGERY_DATA: &str = include_str!("../assets/models/station_lines_imagery.json");
 static FRONTS_DATA: &str = include_str!("../assets/models/station_lines_fronts.json");
-static COMPLETED_DATA: &str = include_str!("../assets/models/station_lines_completed.json");
+static COMPLETED_DATA: &str = include_str!("../assets/models/station_lines_osm.json");
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Deserialize)]
@@ -130,7 +131,7 @@ impl LineSet {
         match self {
             LineSet::Imagery => "IMAGERY",
             LineSet::Fronts => "BUILDING FRONTS",
-            LineSet::Completed => "COMPLETED",
+            LineSet::Completed => "OSM STREETS",
         }
     }
 
@@ -519,7 +520,10 @@ mod tests {
             let data = s.set(set);
             assert!(data.lines.len() > 1_000, "{:?} line count", set);
             assert!(data.lines.iter().all(|l| l.points.len() >= 2));
-            assert!(data.lines.iter().any(|l| !l.plan_curves.is_empty()));
         }
+        // The legacy sets carry curve metadata; the OSM set is flat.
+        assert!(s.imagery.lines.iter().any(|l| !l.plan_curves.is_empty()));
+        assert!(s.fronts.lines.iter().any(|l| !l.plan_curves.is_empty()));
+        assert!(s.completed.lines.iter().all(|l| l.plan_curves.is_empty()));
     }
 }

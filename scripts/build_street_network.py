@@ -64,12 +64,57 @@ def lon_lat_to_world(lon: float, lat: float) -> tuple[float, float]:
 
 
 def intersects(bbox: tuple[float, float, float, float]) -> bool:
+    """bbox is a viewer-world (mercator metre) x/z bounding box."""
     return not (
         bbox[2] < MIN_X - MARGIN
         or bbox[0] > MAX_X + MARGIN
         or bbox[3] < MIN_Z - MARGIN
         or bbox[1] > MAX_Z + MARGIN
     )
+
+
+def parse_int(value: str) -> int:
+    """OSM ``lanes`` can be '2', '2;3' or '2 lanes'."""
+    if not value:
+        return 0
+    digits = ""
+    for char in str(value):
+        if char.isdigit():
+            digits += char
+        elif digits:
+            break
+    return int(digits) if digits else 0
+
+
+def parse_float(value: str) -> float:
+    if not value:
+        return 0.0
+    number = ""
+    for char in str(value):
+        if char.isdigit() or char == ".":
+            number += char
+        elif number:
+            break
+    try:
+        return float(number)
+    except ValueError:
+        return 0.0
+
+
+def normalize_oneway(tags: dict) -> int:
+    if tags.get("junction") == "roundabout":
+        return 1
+    value = str(tags.get("oneway", "")).lower()
+    if value in ("yes", "true", "1"):
+        return 1
+    if value in ("-1", "reverse"):
+        return -1
+    return 0
+
+
+def storey_flag(tags: dict, key: str) -> bool:
+    value = str(tags.get(key, "")).lower()
+    return value not in ("", "no", "false", "0")
 
 
 def main() -> int:
@@ -90,14 +135,14 @@ def main() -> int:
         points = way.get("points", [])
         if len(points) < 2:
             continue
-        xs = [p[0] for p in points]
-        ys = [p[1] for p in points]
-        if not intersects((min(xs), min(ys), max(xs), max(ys))):
+        world = [lon_lat_to_world(lon, lat) for lon, lat in points]
+        xs = [p[0] for p in world]
+        zs = [p[1] for p in world]
+        if not intersects((min(xs), min(zs), max(xs), max(zs))):
             continue
         flat = []
         last = None
-        for lon, lat in points:
-            x, z = lon_lat_to_world(lon, lat)
+        for x, z in world:
             pair = (round(x), round(z))
             if pair != last:
                 flat.extend(pair)
@@ -108,6 +153,12 @@ def main() -> int:
             {
                 "name": name,
                 "highway": highway,
+                "oneway": normalize_oneway(tags),
+                "lanes": parse_int(tags.get("lanes", "")),
+                "width": round(parse_float(tags.get("width", "")), 1),
+                "bridge": storey_flag(tags, "bridge"),
+                "tunnel": storey_flag(tags, "tunnel"),
+                "ref": tags.get("ref", "").strip(),
                 "points": flat,
             }
         )

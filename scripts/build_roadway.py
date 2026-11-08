@@ -23,7 +23,7 @@ from PIL import Image
 
 ROOT = "/home/orbit9/Work/games/Manhattan"
 BUILD = os.path.join(ROOT, "build")
-STATIONS = os.path.join(ROOT, "viewer", "assets", "models", "station_lines_completed.json")
+STATIONS = os.path.join(ROOT, "viewer", "assets", "models", "street_centrelines.json")
 MASK = os.path.join(BUILD, "building_mask.png")
 OUT_DIR = os.path.join(ROOT, "viewer", "assets", "models", "roadway_chunks")
 OUT_MANIFEST = os.path.join(ROOT, "viewer", "assets", "models", "roadway_manifest.json")
@@ -318,8 +318,11 @@ MIN_ROAD_HALF = LANE_M * 0.5
 for line_index, line in enumerate(stations):
     points = [(float(p[0]), float(p[1])) for p in line["points"]]
     points = [p for i, p in enumerate(points) if i == 0 or math.dist(p, points[i - 1]) > 0.05]
-    points = rdp(points, 0.5)
-    points = smooth(points, passes=1)
+    # OSM geometry is already smooth; only drop collinear noise.
+    points = rdp(points, 0.2)
+    oneway = int(line.get("oneway", 0) or 0)
+    lane_hint = int(line.get("lanes", 0) or 0)
+    is_pedestrian = line.get("highway") == "pedestrian"
     free_runs = split_free_runs(points)
     for run in free_runs:
         run = rdp(run, 0.6)
@@ -388,12 +391,23 @@ for line_index, line in enumerate(stations):
 
         widths = [section["road_w"] for section in sections]
         median_width = percentile(widths, 0.5)
-        # Even lane count so the double-yellow line is a true centreline.
-        lanes = int(2.0 * round(median_width / (2.0 * LANE_M)))
-        lanes = max(2, min(6, lanes))
+        # Lane count: use the OSM tag when it fits, otherwise the measured
+        # corridor.  Two-way roads keep an even count so the double yellow is
+        # a true centreline; one-way roads may be a single lane.
+        width_lanes = int(2.0 * round(median_width / (2.0 * LANE_M)))
+        if is_pedestrian:
+            lanes = 0
+        elif oneway:
+            lanes = lane_hint if lane_hint >= 1 else max(2, width_lanes)
+            lanes = max(1, min(6, lanes))
+        else:
+            lanes = lane_hint if lane_hint >= 2 else width_lanes
+            lanes = max(2, min(6, lanes))
+            if lanes % 2:
+                lanes += 1
         for section in sections:
             section["lanes"] = lanes
-            section["lane_w"] = section["road_w"] / lanes
+            section["lane_w"] = section["road_w"] / lanes if lanes else 0.0
 
         cumulative = [0.0]
         for j in range(len(run) - 1):
@@ -426,25 +440,26 @@ for line_index, line in enumerate(stations):
             distance = cumulative[i] + seg_len * 0.5
 
             # Solid white edge lines just inside the curbs.
-            add_line_quad(
-                mark_v, mark_f,
-                point_at(a, a["road_l_off"] + 0.18),
-                point_at(b, b["road_l_off"] + 0.18),
-                0.09, y0 + 0.0045,
-            )
-            add_line_quad(
-                mark_v, mark_f,
-                point_at(a, a["road_r_off"] - 0.18),
-                point_at(b, b["road_r_off"] - 0.18),
-                0.09, y0 + 0.0045,
-            )
+            if not is_pedestrian:
+                add_line_quad(
+                    mark_v, mark_f,
+                    point_at(a, a["road_l_off"] + 0.18),
+                    point_at(b, b["road_l_off"] + 0.18),
+                    0.09, y0 + 0.0045,
+                )
+                add_line_quad(
+                    mark_v, mark_f,
+                    point_at(a, a["road_r_off"] - 0.18),
+                    point_at(b, b["road_r_off"] - 0.18),
+                    0.09, y0 + 0.0045,
+                )
 
-            centre = lanes // 2
-            for boundary in range(1, lanes):
+            centre = lanes // 2 if not oneway else -1
+            for boundary in range(1, lanes if not is_pedestrian else 0):
                 left_i = a["road_l_off"] + boundary * a["lane_w"]
                 left_j = b["road_l_off"] + boundary * b["lane_w"]
                 if boundary == centre:
-                    # Double yellow down the middle of the traffic area.
+                    # Double yellow down the middle of a two-way street.
                     for shift in (-0.12, 0.12):
                         add_line_quad(
                             mark_y_v, mark_y_f,
@@ -460,30 +475,34 @@ for line_index, line in enumerate(stations):
                         0.09, y0 + 0.0045,
                     )
 
-        # Lane centreline catalogue for the vehicle traffic system.
-        for lane in range(lanes):
-            lane_points = []
-            for section in sections:
-                offset = section["road_l_off"] + (lane + 0.5) * section["lane_w"]
-                lane_points.append(point_at(section, offset))
-            if lane < lanes // 2:
-                lane_points.reverse()
-            if len(lane_points) < 2:
-                continue
-            lane_length = sum(
-                math.dist(lane_points[i], lane_points[i + 1])
-                for i in range(len(lane_points) - 1)
-            )
-            if lane_length < 5.0:
-                continue
-            traffic_lanes.append({
-                "points": [[round(x, 2), round(z, 2)] for x, z in lane_points],
-                "width": round(percentile([section["lane_w"] for section in sections], 0.5), 2),
-                "length": round(lane_length, 1),
-            })
+        # Lane centreline catalogue for the vehicle traffic system.  One-way
+        # roads run every lane in the OSM direction; two-way roads reverse the
+        # left half.
+        if not is_pedestrian and lanes >= 1:
+            for lane in range(lanes):
+                lane_points = []
+                for section in sections:
+                    offset = section["road_l_off"] + (lane + 0.5) * section["lane_w"]
+                    lane_points.append(point_at(section, offset))
+                if not oneway and lane < lanes // 2:
+                    lane_points.reverse()
+                if len(lane_points) < 2:
+                    continue
+                lane_length = sum(
+                    math.dist(lane_points[i], lane_points[i + 1])
+                    for i in range(len(lane_points) - 1)
+                )
+                if lane_length < 5.0:
+                    continue
+                traffic_lanes.append({
+                    "points": [[round(x, 2), round(z, 2)] for x, z in lane_points],
+                    "width": round(percentile([section["lane_w"] for section in sections], 0.5), 2),
+                    "length": round(lane_length, 1),
+                })
 
         max_half = max(section["road_w"] for section in sections) * 0.5
-        runs.append((run, max_half))
+        if not is_pedestrian:
+            runs.append((run, max_half))
         built_runs += 1
     built_lines += 1
 

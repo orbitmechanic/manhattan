@@ -832,13 +832,13 @@ mod tests {
     #[test]
     fn street_network_has_names_and_geometry() {
         let network = StreetNetwork::load();
-        assert!(network.streets.len() > 10_000);
+        assert!(network.streets.len() > 4_000);
         let named = network
             .streets
             .iter()
             .filter(|street| !street.name.is_empty())
             .count();
-        assert!(named > 8_000, "named streets: {named}");
+        assert!(named > 3_000, "named streets: {named}");
         assert!(
             network
                 .streets

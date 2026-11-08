@@ -142,10 +142,12 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/models/blocks.json` | block metadata embedded into the viewer binary at compile time. |
 | `viewer/assets/models/manhattan_city.glb`, `manhattan_ground.glb` | the real per-block floor geometry and the ground; no LOD proxies. |
 | `viewer/assets/models/collision_grid.bin` | 4 m building-height grid baked from the 1223 blocks, used for camera collision. |
-| `viewer/assets/models/station_lines_imagery.json` | 2041 satellite/road-derived centrelines, 92.1 miles. |
-| `viewer/assets/models/station_lines_fronts.json` | 2460 building-expansion-front centrelines, 185.5 miles. |
-| `viewer/assets/models/station_lines_completed.json` | 4,445 connected, smoothed building-front + connector centrelines, 189.1 miles (default). |
-| `viewer/assets/models/roadway_chunks/` | 129 x 500 m asphalt + sidewalk tiles generated from the completed baselines. |
+| `viewer/assets/models/station_lines_osm.json` | 1,814 real OSM street centrelines, 268.1 miles, 16,873 100-ft ticks (default). |
+| `viewer/assets/models/station_lines_imagery.json` | 2041 satellite/road-derived centrelines, 92.1 miles (legacy comparison set). |
+| `viewer/assets/models/station_lines_fronts.json` | 2460 building-expansion-front centrelines, 185.5 miles (legacy comparison set). |
+| `viewer/assets/models/street_network.json` | 5,593 real OSM ways (4,231 named) in viewer mercator coordinates, used by the minimap. |
+| `viewer/assets/models/street_centrelines.json` | 1,814 merged OSM chains, 431.5 km, used by the roadway and stationing builders. |
+| `viewer/assets/models/roadway_chunks/` | 136 x 500 m asphalt + sidewalk tiles generated from the OSM centrelines. |
 | `viewer/assets/models/roadway_manifest.json` | chunk list with world-space AABBs for the 1 km detail cull. |
 | `viewer/assets/models/building_perimeters.json` | 11,032 building first-floor wall loops, heights, floor heights and facade categories. |
 | `viewer/assets/models/facade_catalog.json` | 600-image facade catalog (150 per category) with atlas tile coordinates. |
@@ -157,9 +159,8 @@ cargo run --release -- --selftest --report selftest_report.json
 | `viewer/assets/sounds/` | synthesized OGG ambience: city, wind, traffic, rain, thunder and three horns. |
 | `viewer/assets/models/clothing_catalog.json` | clothing tile ranges (shirts, pants, skirts, jackets, hats, bags). |
 | `viewer/assets/models/trees.json` | 3,000 park/open-ground tree placements. |
-| `viewer/assets/models/traffic_lanes.json` | 24,175 lane centrelines exported by the roadway builder. |
-| `viewer/assets/models/street_network.json` | 18,910 real OSM streets (15,935 named) in viewer mercator coordinates, used by the minimap. |
-| `viewer/assets/models/intersections.json` | 5,908 intersections with position, yaw and road half-width for signal placement. |
+| `viewer/assets/models/traffic_lanes.json` | 2,422 real-street lane centrelines exported by the roadway builder. |
+| `viewer/assets/models/intersections.json` | 1,473 real intersections with position, yaw and road half-width for signal placement. |
 | `viewer/assets/models/upper_facade_catalog.json` | facade/roof atlas grids, category ranges and neighbourhood mapping. |
 | `build/station_lines_imagery_overlay.png`, `station_lines_fronts_overlay.png` | validation overlays on the satellite. |
 | `viewer/assets/textures/fog_bank.png` | soft mist texture for the drifting ground-fog sheets. |
@@ -340,16 +341,17 @@ buildings.
 - `--view street`, `--view mid` and `--view overview` only change the camera
   position; they all show the same full-detail geometry.
 
-### Street centreline stationing — two sets
+### Street centreline stationing — OSM default + legacy sets
 
-`scripts/build_station_lines.py` produces two independent networks so they can
-be compared:
+The default set is now built from the real OSM street centrelines by
+`scripts/build_station_osm.py`.  The two older heuristic networks remain
+available for comparison:
 
 | Set | Source | Lines | Length | 100-ft ticks |
 |---|---|---:|---:|---:|
-| **IMAGERY** | grey road pixels in the low-resolution satellite, thinned on the free-space skeleton | 2041 | 92.1 mi | 8003 |
-| **BUILDING FRONTS** | simultaneous expansion fronts from every building; the meeting locus is the road centreline | 2460 | 185.5 mi | 13513 |
-| **COMPLETED** | building fronts + free-space connectors, smoothed with corner preservation; default | 4445 | 189.1 mi | 16894 |
+| **OSM STREETS** | real OpenStreetMap centrelines, merged by name/continuity and clipped to the model ground; default | 1814 | 268.1 mi | 16873 |
+| **IMAGERY** | grey road pixels in the low-resolution satellite, thinned on the free-space skeleton (legacy) | 2041 | 92.1 mi | 8003 |
+| **BUILDING FRONTS** | simultaneous expansion fronts from every building (legacy) | 2460 | 185.5 mi | 13513 |
 
 - **IMAGERY** is filtered by road colour, a 4–30 m distance from building
   footprints, and continues straight through junctions.
@@ -383,19 +385,21 @@ checked before construction.
 ### Roadway geometry — pavement and sidewalks
 
 `scripts/build_roadway.py` generates 500 m tiles in
-`viewer/assets/models/roadway_chunks/` from the **COMPLETED** street baselines
-(plus an AABB manifest), so the viewer can hide pavement beyond the 1 km
-embellishment radius:
+`viewer/assets/models/roadway_chunks/` from the real OSM street centrelines in
+`street_centrelines.json` (plus an AABB manifest), so the viewer can hide
+pavement beyond the 1 km embellishment radius:
 
-- **12-ft nominal lane width**; the remaining traffic area is divided into an
-  even 2–6 lanes, with a double yellow centreline.
+- **12-ft nominal lane width**; OSM `lanes` is used when tagged, otherwise the
+  measured corridor gives 2–6 lanes.  Two-way roads keep a double yellow
+  centreline; one-way roads use white dividers and may be a single lane.
 - **12-ft concrete sidewalks** aligned to the building faces; they stop at
   open intersections where no building is within the corridor cap.
 - Asphalt is dark grey, sidewalk concrete light grey, with a 0.14 m curb face.
 - Pavement extends to the measured building perimeters instead of using a
   constant ribbon width.
-- 4,445 baselines split into 4,472 free street runs; only 18 runs shorter
-  than 4 m are omitted.
+- 1,814 merged OSM chains split into 1,908 free street runs; only 24 runs
+  shorter than 4 m are omitted.  Bridges and tunnels are skipped because the
+  city mesh has no deck geometry.
 - Pavement now fills the **full building-to-building corridor**: the actual
   clearance is measured on each side of every centreline vertex (capped at
   15 m half-width in open intersections/plazas).
@@ -403,13 +407,13 @@ embellishment radius:
   the remaining space is divided into an even number of traffic lanes
   (2–6), each close to 12 ft.  Where the clearance hits the cap there is no
   building, so the sidewalk stops and the intersection stays asphalt.
-- Markings: solid white edge lines, white dashed lane dividers, and a
-  **double yellow centreline** with a 0.24 m gap.
-- Mitred joins keep bends crack-free; 5,908 asphalt junction patches fill
+- Markings: solid white edge lines and white dashed lane dividers; a
+  **double yellow centreline** is drawn only on two-way roads.
+- Mitred joins keep bends crack-free; 1,473 asphalt junction patches fill
   crossings and T-junctions.
-- Geometry: 104,898 asphalt triangles, 60,220 sidewalk triangles, 122,892
-  white markings and 68,004 yellow markings.
-- 130 tiles of 500 m (25.8 MB); each scene root gets a `DetailCull` AABB and
+- Geometry: 42,604 asphalt triangles, 11,160 sidewalk triangles, 26,502
+  white markings and 3,864 yellow markings.
+- 136 tiles of 500 m (6.6 MB); each scene root gets a `DetailCull` AABB and
   is hidden once the camera is more than 1,000 m from it.
 - `--view close` provides a low street-level inspection camera.
 - `renders/viewer_roadway_close.png` shows the result.
@@ -569,7 +573,8 @@ exported with the roadway:
   muted; emergency vehicles use white/red, fire-red and police dark/white
   schemes.
 - Spawn shares: **10% tractor-trailer, 20% cargo van, 40% SUV, 20% sedan,
-  10% emergency**.
+  10% emergency**.  The 2,422 lane centrelines are generated from the real OSM
+  streets; one-way roads run every lane in the OSM direction.
 - Traffic covers the same **1,000 m radius as the roadway**.  Within **150 m
   native / 100 m web**, lanes use individually animated vehicles at **85%
   occupancy** (max 600 / 300 active).  Beyond that, each lane gets a merged
@@ -599,7 +604,7 @@ despawns it again as the camera moves:
 - **Streetlamps** every 24 m along each building's first-floor perimeter,
   offset 2.8 m onto the sidewalk.  Each has a 6.25 m pole/arm, a lamp head and
   a shared emissive panel that turns on at night.
-- **Traffic signals** at the 5,908 exported intersections, two poles per
+- **Traffic signals** at the 1,473 exported real intersections, two poles per
   intersection on opposite corners.  Each has red/amber/green lenses on a
   shared 14-second cycle (6 s red, 5 s green, 3 s amber); the active lens is
   bright by day and emissive at night.
@@ -712,9 +717,9 @@ for the instruments), so it adds no render pass or custom material:
   rays always point straight up.  Streets are the real OpenStreetMap geometry
   (black) drawn over a dark slate ground, with the building footprints still
   outlined in grey.
-- **Street names**: `viewer/assets/models/street_network.json` stores 18,910
-  OSM ways (15,935 named) with their names and highway classes as per-route
-  metadata.  The nearest named street is displayed under the telemetry.
+- **Street names**: `viewer/assets/models/street_network.json` stores 5,593
+  OSM ways (4,231 named) inside the model area with their names and highway
+  classes as per-route metadata.  The nearest named street is displayed under the telemetry.
 - **Player**: green centre dot and two green field-of-view rays fixed pointing
   up the instrument rim.
 - **Velocity**: a single cyan triangle on the graded inner rim.  The scale zero
@@ -844,10 +849,13 @@ blender -b manhattan_blocks.blend --python scripts/build_floors.py
 python3 scripts/make_fog_texture.py
 blender -b manhattan_blocks.blend --python scripts/build_collision_grid.py
 
-# 6b3. street centrelines + stationing data
-/tmp/opencode/geoenv/bin/python scripts/build_station_lines.py
+# 6b3. real OSM streets → merged centrelines → stationing
+python3 scripts/build_street_network.py /tmp/opencode/osm_highways.json \
+    viewer/assets/models/street_network.json
+python3 scripts/build_street_centrelines.py
+python3 scripts/build_station_osm.py
 
-# 6b4. asphalt + sidewalk roadway tiles (500 m)
+# 6b4. asphalt + sidewalk roadway tiles (500 m), traffic lanes, intersections
 /tmp/opencode/roadenv/bin/python scripts/build_roadway.py
 
 # 6b5. ground-floor facade catalog (600 images, four atlases)
@@ -907,8 +915,10 @@ affected presentation and is already reflected in the script.
   `viewer_station_fronts_street.png`,
   `viewer_station_completed_street.png`, and the matching `_mid.png` frames —
   the three centreline sets with vertical 100-ft ticks and civil coordinates.
-- `renders/viewer_roadway_close.png` — asphalt pavement, 12-ft sidewalks and
-  curb faces at street level.
+- `renders/viewer_roadway_close.png` — real OSM street pavement, sidewalks,
+  curb faces and lane markings at street level.
+- `renders/viewer_roadway_aerial.png` — top-down check of the OSM pavement
+  following the satellite street grid.
 - `renders/viewer_upper_facades.png` and
   `renders/viewer_upper_facades_night.png` — per-building upper-floor facades
   in daylight and with lit windows at 22:00.
@@ -940,9 +950,9 @@ affected presentation and is already reflected in the script.
   19 park), noon targets 0, night targets 1242, randomised flicker/fade split
   (one run 702/540), 3,861 visibility-range entities, fog cull 4.3 km, focus
   blur active, collision grid loaded and resolved, stationing imagery 2041 /
-  fronts 2460 / completed 4445 lines with matching camera arrays, camera clamp
+  fronts 2460 / OSM 1814 lines with matching camera arrays, camera clamp
   at y=3, hour-wrap date correct.
-- `viewer` tests: **50 passed**, including station/offset sign projection and
+- `viewer` tests: **61 passed**, including station/offset sign projection and
   station data loading, camera collision/slide maths, one-floor texture paths,
   fog-cull distance, the actual Bevy fly camera system, calendar keys, mixed
   flicker/fade re-randomisation, Gaussian thresholds and per-date twilight
@@ -972,10 +982,11 @@ affected presentation and is already reflected in the script.
   is the full-detail floor city.  Fog culling hides real meshes beyond the
   visibility distance; no geometry is replaced or simplified.  The ground is
   always visible and the DOF softens the far field.
-- Street centrelines are heuristic: Voronoi block boundaries + satellite road
-  colour + building distance.  They are a coordinate framework for future
-  graphics, not a legal survey; re-run `build_station_lines.py` after block
-  edits.
+- The roadway, traffic and default stationing now use real OpenStreetMap
+  centrelines (ODbL), merged by name/continuity and clipped to the model.
+  The legacy imagery/building-front stationing sets remain only for
+  comparison.  Re-run `build_street_network.py`, `build_street_centrelines.py`
+  and `build_roadway.py` after a model edit or OSM refresh.
 - The vertical profiles are flat (grade 0) because the source city ground is
   flat; the data schema already supports tangent points, grades and vertical
   curves for future elevation work.
