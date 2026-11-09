@@ -10,6 +10,7 @@ Assets
     traffic.ogg        8 s stereo loop: tyre/engine rumble
     rain.ogg           9 s stereo loop: hiss, body, random droplet ticks
     thunder.ogg        7 s one-shot: low rumble plus several cracks
+    sonic_boom.ogg     2.4 s one-shot: double crack plus low rumble
     horn1/2/3.ogg      short synthesized two-tone horns
 
 Spatial design
@@ -21,15 +22,18 @@ Spatial design
     - distant horns spawn every 4-20 s at random 90-610 m positions;
     - thunder spawns at the same rooftop position as the visible lightning
       bolt, delayed by 0.35 s + distance / 343 m/s;
+    - the sonic boom is a non-spatial one-shot at the listener, fired once
+      when the camera crosses Mach 1 upward;
     - distance attenuation is applied explicitly via Volume before playback.
 
 Mix
   ambient city  0.16
   wind          0.02 .. 0.32, scaled by actual camera speed
-  rain          0 .. 0.30, scaled by precipitation (softer in snow)
+  rain          0 .. 0.12, scaled by precipitation (20% of thunder's peak)
   traffic       0 .. 0.20, nearest four vehicles within 170 m
   horns         0.02 .. 0.11
-  thunder       0.08 .. 0.48
+  thunder       0.048 .. 0.60
+  sonic boom    0.90, one-shot on the upward Mach 1 crossing
 
   Volumes are smoothed with exponential approach to avoid clicks.  Traffic
   audio fades out while high-speed accessory suspension is active.
@@ -43,6 +47,6 @@ Web policy / quit
   closes.
 
 Files
-  viewer/src/audio.rs          handles, levels, traffic/horn/thunder logic
+  viewer/src/audio.rs          handles, levels, traffic/horn/thunder/boom logic
   scripts/generate_audio.py    asset synthesis
   viewer/tools/build_web.sh    stages assets/sounds into web/dist

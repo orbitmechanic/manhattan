@@ -40,7 +40,8 @@ load.  A 1440×900 window opens on the overview camera.
 | `L` | show/hide street centreline stationing |
 | `T` | show/hide the vertical 100-ft station ticks |
 | `C` | show/hide the camera civil-coordinate panel |
-| gamepad left / right stick | move / look |
+| gamepad left / right stick | VIDEO: move / look · DRONE: yaw+throttle / pitch+roll |
+| gamepad Back (Select) or `M` | toggle video-game / drone-remote layout |
 | gamepad right / left trigger | boost / descend |
 | gamepad South (A) | ascend |
 | gamepad D-pad up / down | change fly speed |
@@ -51,8 +52,10 @@ swept against the building height grid: it slides along facades instead of
 flying through them, and can land on a roof but never enter a building.
 
 Above **520 u/s** streamed crowd/traffic/furniture updates are suspended and a
-radial speed-line overlay appears; they resume below **300 u/s**.  Browser audio
-starts after the first key press or click (autoplay policy).
+radial speed-line overlay appears; they resume below **300 u/s**.  Crossing
+**Mach 1** upward plays a sonic-boom one-shot and a shockwave ring, and a faint
+shock-cone/edge glow remains while supersonic.  Browser audio starts after the
+first key press or click (autoplay policy).
 
 ### Browser build / GitHub Pages
 
@@ -656,7 +659,10 @@ loops in `viewer/assets/sounds/` (regenerate with
   passing traffic pans left/right relative to the camera.
 - **Horns** — one of three synthesized horns is spawned every 4–20 s at a
   random 90–610 m distant position and pans spatially.
-- **Rain** — loop volume follows precipitation (softer in snow).
+- **Rain** — loop volume follows precipitation at ~20% of thunder's peak
+  amplitude (softer in snow).
+- **Sonic boom** — an upward Mach 1 crossing fires a one-shot boom and drives
+  the shockwave shader.
 - **Thunder** — each visible lightning strike schedules a thunder one-shot at
   the same world position, delayed by `0.35 s + distance / 343`, so the rumble
   follows both the flash and the bolt.
@@ -725,7 +731,8 @@ for the instruments), so it adds no render pass or custom material:
 - **Velocity**: a single cyan triangle on the graded inner rim.  The scale zero
   is at **7 o'clock** and the maximum, **Mach 2**, lands at **5 o'clock** (a
   300° sweep); a filled thermometer runs clockwise from zero to the triangle.
-  Text lists mph, km/h and Mach.
+  Fine **0.05-Mach ticks** ring the velocity rim, with long ticks every
+  0.5 Mach.  Text lists mph, km/h and Mach.
 - **Acceleration**: a red outer-rim arc and dot on the same 7→5 o'clock scale,
   with G listed in the telemetry.
 - **Telemetry**: X/Y/Z, mph, km/h, Mach and G at the upper left; five-decimal
@@ -919,6 +926,8 @@ affected presentation and is already reflected in the script.
   curb faces and lane markings at street level.
 - `renders/viewer_roadway_aerial.png` — top-down check of the OSM pavement
   following the satellite street grid.
+- `renders/viewer_sonic_boom.png` — supersonic shock cone/edge glow, with the
+  drone-remote control layout active.
 - `renders/viewer_upper_facades.png` and
   `renders/viewer_upper_facades_night.png` — per-building upper-floor facades
   in daylight and with lit windows at 22:00.
@@ -952,7 +961,7 @@ affected presentation and is already reflected in the script.
   blur active, collision grid loaded and resolved, stationing imagery 2041 /
   fronts 2460 / OSM 1814 lines with matching camera arrays, camera clamp
   at y=3, hour-wrap date correct.
-- `viewer` tests: **63 passed**, including station/offset sign projection and
+- `viewer` tests: **65 passed**, including station/offset sign projection and
   station data loading, camera collision/slide maths, one-floor texture paths,
   fog-cull distance, the actual Bevy fly camera system, calendar keys, mixed
   flicker/fade re-randomisation, Gaussian thresholds and per-date twilight

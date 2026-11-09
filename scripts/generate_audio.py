@@ -176,6 +176,26 @@ def thunder() -> np.ndarray:
     return stereo(n, left, right)
 
 
+def sonic_boom() -> np.ndarray:
+    """Sharp double crack over a low rumble for the Mach 1 crossing."""
+    n = int(2.4 * SR)
+    t = np.arange(n) / SR
+    crack_l = coloured_noise(n, 55, 9000, 0.55) * np.exp(-t / 0.055)
+    crack_r = coloured_noise(n, 65, 9500, 0.55) * np.exp(-t / 0.05)
+    # A second, softer crack from the ground reflection.
+    shift = int(0.11 * SR)
+    echo = np.zeros(n, dtype=np.float32)
+    echo[shift:] = (
+        coloured_noise(n - shift, 50, 7000, 0.55)
+        * np.exp(-np.maximum(t[shift:] - 0.11, 0.0) / 0.07)
+    )
+    rumble = coloured_noise(n, 18, 150, 1.35) * np.exp(-t / 0.6)
+    rumble *= 1.0 - np.exp(-t / 0.015)
+    left = crack_l * 0.75 + echo * 0.42 + rumble * 0.90
+    right = crack_r * 0.72 + np.roll(echo, 23) * 0.40 + rumble * 0.85
+    return stereo(n, left, right)
+
+
 def horn(f1: float, f2: float, duration: float) -> np.ndarray:
     n = int(duration * SR)
     t = np.arange(n) / SR
@@ -199,6 +219,7 @@ def main() -> None:
     write_ogg("horn1", horn(420.0, 520.0, 0.9))
     write_ogg("horn2", horn(350.0, 455.0, 0.7))
     write_ogg("horn3", horn(500.0, 620.0, 1.1))
+    write_ogg("sonic_boom", sonic_boom())
 
 
 if __name__ == "__main__":

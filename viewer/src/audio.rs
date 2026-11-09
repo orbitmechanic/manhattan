@@ -19,7 +19,7 @@ use std::f32::consts::TAU;
 use crate::{
     camera::FlyCamera,
     lightning::{LightningState, update_lightning},
-    motion::MotionState,
+    motion::{MotionState, update_motion_state},
     traffic::Vehicle,
     weather::{Weather, update_weather},
 };
@@ -31,6 +31,7 @@ struct AudioHandles {
     rain: Handle<AudioSource>,
     traffic: Handle<AudioSource>,
     thunder: Handle<AudioSource>,
+    sonic_boom: Handle<AudioSource>,
     horns: Vec<Handle<AudioSource>>,
 }
 
@@ -115,6 +116,7 @@ fn setup_audio(
         rain: asset_server.load("sounds/rain.ogg"),
         traffic: asset_server.load("sounds/traffic.ogg"),
         thunder: asset_server.load("sounds/thunder.ogg"),
+        sonic_boom: asset_server.load("sounds/sonic_boom.ogg"),
         horns: vec![
             asset_server.load("sounds/horn1.ogg"),
             asset_server.load("sounds/horn2.ogg"),
@@ -223,8 +225,9 @@ fn update_audio_levels(
     let dt = time.delta_secs().clamp(0.0, 0.1);
     let target_ambient = 0.16;
     let target_wind = 0.02 + (motion.speed / 900.0).clamp(0.0, 1.0) * 0.30;
+    // Rain sits at 20% of thunder's 0.60 peak amplitude.
     let target_rain =
-        weather.precipitation.clamp(0.0, 1.0) * 0.30 * (1.0 - 0.55 * weather.snow.clamp(0.0, 1.0));
+        weather.precipitation.clamp(0.0, 1.0) * 0.12 * (1.0 - 0.55 * weather.snow.clamp(0.0, 1.0));
     levels.0 = approach(levels.0, target_ambient, dt, 0.35);
     levels.1 = approach(levels.1, target_wind, dt, 0.20);
     levels.2 = approach(levels.2, target_rain, dt, 0.35);
@@ -278,6 +281,29 @@ fn update_traffic_audio(
             sink.set_volume(Volume::Linear(0.0));
         }
     }
+}
+
+fn update_sonic_boom(
+    gate: Res<AudioGate>,
+    handles: Option<Res<AudioHandles>>,
+    motion: Res<MotionState>,
+    mut last: Local<u32>,
+    mut commands: Commands,
+) {
+    if motion.boom_serial == *last {
+        return;
+    }
+    *last = motion.boom_serial;
+    if !gate.enabled {
+        return;
+    }
+    let Some(handles) = handles else {
+        return;
+    };
+    commands.spawn((
+        AudioPlayer::new(handles.sonic_boom.clone()),
+        PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.9)),
+    ));
 }
 
 fn update_horns(
@@ -428,6 +454,7 @@ impl Plugin for CityAudioPlugin {
                     .after(update_weather),
             )
             .add_systems(Update, update_thunder.after(update_lightning))
+            .add_systems(Update, update_sonic_boom.after(update_motion_state))
             .add_systems(Last, stop_audio_on_exit);
     }
 }

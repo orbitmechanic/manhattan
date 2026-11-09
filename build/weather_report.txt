@@ -78,6 +78,13 @@ Lightning
   roof in the forward view (never the street); the delayed thunder audio reads
   that exact roof position.  No light entities or shadow maps are spawned.
 
+Sonic boom / audio levels
+  - Rain loop volume peaks at 0.12, 20% of thunder's 0.60 maximum amplitude.
+  - Crossing Mach 1 upward spawns sounds/sonic_boom.ogg once and increments the
+    motion boom serial.  The speed-line shader expands a shockwave ring from the
+    crossing and keeps a faint shock cone / edge glow while supersonic.
+  - The boom is non-spatial (the camera is the source); thunder remains spatial.
+
 HUD / controls
   The top-left panel adds:
     Weather <front>  cloud NN%  precip NN%  wind NN km/h  NN.N C
@@ -97,7 +104,7 @@ Performance
   culled.
 
 Verification
-  cargo test                     55 tests pass
+  cargo test                     65 tests pass
   cargo clippy --all-targets -D warnings
   ./manhattan-viewer --selftest  passes
   Renders captured with --weather presets:
@@ -105,4 +112,5 @@ Verification
     renders/viewer_weather_rain.png
     renders/viewer_weather_snow.png
     renders/viewer_weather_storm_night.png
-  Web build stages clouds.wesl and precipitation.wesl via tools/build_web.sh.
+  Web build stages clouds.wesl, precipitation.wesl and speed_lines.wesl via
+  tools/build_web.sh, plus the synthesized sounds directory.

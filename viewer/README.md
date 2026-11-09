@@ -255,7 +255,8 @@ transparent instrument texture (10 Hz).  The map texture is north-up and a
 rays, dials and telemetry stay fixed; the rays always point up.  It draws black
 OSM streets with their names kept as metadata, grey building outlines, a green
 player dot, a 7-o'clock-zero velocity thermometer whose maximum Mach 2 is at
-5 o'clock, an outer red acceleration rim, the nearest street name, and
+5 o'clock with fine 0.05-Mach ticks around the inner velocity rim, an outer red
+acceleration rim, the nearest street name, and
 X/Y/Z, mph, km/h, Mach and digital lat/lon.  The lat/lon uses the BlenderGIS
 Web Mercator anchor from `manhattan.blend` (`EPSG:3857`, zoom 15), so it is the
 model's real geographic position.
@@ -287,7 +288,13 @@ geometry.
   with spawn/despawn budgets, removing the old simultaneous twice-per-second
   boundary burst.
 - Above 520 u/s the streamed accessories are hidden and paused, and a radial
-  speed-line shader is shown; they resume below 300 u/s.
+  speed-line shader is shown; they resume below 300 u/s.  Crossing Mach 1
+  upward also plays a sonic-boom one-shot and expands a shockwave ring; a faint
+  shock-cone/edge glow remains above Mach 1.
+- Controller layout: **VIDEO** (left stick move, right stick look) and
+  **DRONE** (left stick yaw/throttle, right stick pitch/roll) toggle with the
+  controller Back/Select button or `M`; the bottom-left help panel shows the
+  active mode.
 - The web build omits the DOF pass; native keeps the cinematic blur.
 
 ### Audio
@@ -296,9 +303,10 @@ geometry.
 `../scripts/generate_audio.py`).  Ambient city, wind and rain are stereo loops
 around the listener; four traffic loops follow the nearest vehicles and use
 spatial panning; distant horns and thunder are spatial one-shots.  Wind volume
-tracks camera speed, traffic volume tracks proximity, rain volume tracks
-precipitation, and thunder is delayed by distance / 343 after a lightning
-flash.  Native starts immediately; web audio unlocks on the first key/click.
+tracks camera speed, traffic volume tracks proximity, rain volume is ~20% of
+thunder's peak amplitude and tracks precipitation, and thunder is delayed by
+distance / 343 after a lightning flash.  An upward Mach 1 crossing fires a
+non-spatial sonic-boom one-shot.  Native starts immediately; web audio unlocks on the first key/click.
 
 ### 1 km embellishment cull
 

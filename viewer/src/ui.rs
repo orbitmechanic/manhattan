@@ -7,7 +7,7 @@ use bevy::{
 };
 
 use crate::blocks::BlockLights;
-use crate::camera::{FlyCamera, MIN_CAMERA_HEIGHT};
+use crate::camera::{ControlLayout, FlyCamera, MIN_CAMERA_HEIGHT};
 use crate::clock::{ClockAction, SimClock};
 use crate::environment::{Environment, fog_cull_distance};
 use crate::stationing::{
@@ -96,6 +96,39 @@ fn station_button(base: &mut ChildSpawnerCommands, label: &str, toggle: StationT
             toggle_station(&mut config, toggle);
         },
     );
+}
+
+fn controls_text(layout: ControlLayout) -> String {
+    let gamepad = match layout {
+        ControlLayout::VideoGame => {
+            "GAMEPAD [VIDEO]: LStick move  |  RStick look  |  Back/M layout  |  RT boost  |  LT descend  |  A ascend"
+        }
+        ControlLayout::Drone => {
+            "GAMEPAD [DRONE]: LStick yaw/throttle  |  RStick pitch/roll  |  Back/M layout  |  RT boost  |  LT descend  |  A ascend"
+        }
+    };
+    format!(
+        "FLY: W A S D  |  Q/E down/up  |  hold RMB to look  |  Shift boost  |  wheel speed  |  arrows look\n\
+         TIME: [ / ] day  |  - / = hour  |  ; / ' minute  |  , / . month  |  Space play/pause  |  B reverse  |  R reset\n\
+         STATIONING: L lines  |  T 100-ft ticks  |  C coordinates  |  G cycles imagery / fronts / osm\n\
+         WEATHER: V cycles clear / fair / overcast / rain / storm\n\
+         {gamepad}\n\
+         FAST: accessories suspend above 520 u/s, speed lines show  |  AUDIO: click/key enables sound on web"
+    )
+}
+
+pub fn update_controls_text(
+    layout: Res<ControlLayout>,
+    mut last: Local<Option<ControlLayout>>,
+    mut text: Query<&mut Text, With<ControlsText>>,
+) {
+    if *last == Some(*layout) {
+        return;
+    }
+    *last = Some(*layout);
+    for mut line in &mut text {
+        line.0 = controls_text(*layout);
+    }
 }
 
 pub fn spawn_ui(mut commands: Commands) {
@@ -231,14 +264,7 @@ pub fn spawn_ui(mut commands: Commands) {
     // bottom-left help
     commands.spawn((
         ControlsText,
-        Text::new(
-            "FLY: W A S D  |  Q/E down/up  |  hold RMB to look  |  Shift boost  |  wheel speed  |  arrows look\n\
-             TIME: [ / ] day  |  - / = hour  |  ; / ' minute  |  , / . month  |  Space play/pause  |  B reverse  |  R reset\n\
-             STATIONING: L lines  |  T 100-ft ticks  |  C coordinates  |  G cycles imagery / fronts / completed\n\
-             WEATHER: V cycles clear / fair / overcast / rain / storm\n\
-             GAMEPAD: LStick move  |  RStick look  |  RT boost  |  LT descend  |  A ascend  |  D-pad speed\n\
-             FAST: accessories suspend above 520 u/s, speed lines show  |  AUDIO: click/key enables sound on web",
-        ),
+        Text::new(controls_text(ControlLayout::VideoGame)),
         TextFont {
             font_size: FontSize::Px(13.0),
             ..default()

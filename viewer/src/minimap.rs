@@ -445,6 +445,28 @@ fn render_overlay_layer(data: &mut [u8], velocity_mph: f32, accel_g: f32) {
         draw_line(data, center + dir * r0, center + dir * r1, color, 0);
     }
 
+    // Finer Mach ticks around the inner velocity rim: 0.05 Mach minor,
+    // 0.25 Mach medium and 0.50 Mach long.
+    let speed_ticks = 40;
+    for index in 0..=speed_ticks {
+        let fraction = index as f32 / speed_ticks as f32;
+        let angle = ZERO_ANGLE + fraction * DIAL_SWEEP;
+        let long = index % 10 == 0;
+        let medium = index % 5 == 0;
+        let length = if long {
+            9.0
+        } else if medium {
+            6.0
+        } else {
+            3.0
+        };
+        let r0 = VELOCITY_RADIUS + 2.0;
+        let r1 = r0 + length;
+        let color = if long { major } else { minor };
+        let dir = Vec2::new(angle.cos(), angle.sin());
+        draw_line(data, center + dir * r0, center + dir * r1, color, 0);
+    }
+
     // Field of view rays: the map rotates with the camera, so the rays are
     // fixed pointing up.
     let half_fov = 35.0_f32.to_radians();

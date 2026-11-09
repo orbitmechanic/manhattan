@@ -31,7 +31,10 @@ use manhattan_viewer::{
     astro::{Date, NYC_LAT, NYC_LON, moon_position, sun_position},
     audio::CityAudioPlugin,
     blocks::{BlockLights, update_blocks},
-    camera::{FlyCamera, MAX_PITCH, MIN_CAMERA_HEIGHT, MoveState, fly_camera_system, step_camera},
+    camera::{
+        ControlLayout, FlyCamera, MAX_PITCH, MIN_CAMERA_HEIGHT, MoveState, fly_camera_system,
+        step_camera,
+    },
     city_material::{
         BuildingChunk, CityMaterial, CityMaterialSetup, RoadMaterials, setup_city_materials,
         setup_road_materials, update_city_materials, update_road_colors,
@@ -63,7 +66,9 @@ use manhattan_viewer::{
         Traffic, TrafficLanes, setup_vehicle_catalog, stream_traffic, update_traffic,
         update_vehicle_light_lod, update_vehicle_lights,
     },
-    ui::{handle_calendar_keys, spawn_ui, update_station_text, update_status},
+    ui::{
+        handle_calendar_keys, spawn_ui, update_controls_text, update_station_text, update_status,
+    },
     weather::{
         Weather, WeatherPlugin, handle_weather_keys, update_weather, update_weather_visuals,
     },
@@ -296,6 +301,7 @@ fn main() {
         .init_resource::<Intersections>()
         .init_resource::<StreetFurniture>()
         .init_resource::<RoadMaterials>()
+        .init_resource::<ControlLayout>()
         .insert_resource(args)
         .add_systems(
             Startup,
@@ -339,6 +345,7 @@ fn main() {
             )
                 .chain(),
         )
+        .add_systems(Update, update_controls_text.after(fly_camera_system))
         .add_systems(Update, (setup_road_materials, update_road_colors))
         .add_systems(
             Update,

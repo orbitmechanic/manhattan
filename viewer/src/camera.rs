@@ -45,6 +45,32 @@ pub struct MoveState {
     pub analog: f32,
 }
 
+/// Gamepad control scheme.  Video-game style uses the left stick to move and
+/// the right stick to look; drone-remote style uses the left stick for
+/// yaw/throttle and the right stick for pitch/roll movement.
+#[derive(Resource, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ControlLayout {
+    #[default]
+    VideoGame,
+    Drone,
+}
+
+impl ControlLayout {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::VideoGame => "VIDEO",
+            Self::Drone => "DRONE",
+        }
+    }
+
+    pub fn toggle(&mut self) {
+        *self = match *self {
+            Self::VideoGame => Self::Drone,
+            Self::Drone => Self::VideoGame,
+        };
+    }
+}
+
 impl Default for MoveState {
     fn default() -> Self {
         Self {
@@ -140,10 +166,14 @@ pub fn fly_camera_system(
     mouse_motion: Res<AccumulatedMouseMotion>,
     scroll: Res<AccumulatedMouseScroll>,
     gamepads: Query<&Gamepad>,
+    mut layout: ResMut<ControlLayout>,
     grid: Option<Res<CollisionGrid>>,
     mut query: Query<(&mut Transform, &mut FlyCamera)>,
 ) {
     let dt = time.delta_secs();
+    if keys.just_pressed(KeyCode::KeyM) {
+        layout.toggle();
+    }
     for (mut transform, mut camera) in &mut query {
         // Right mouse button (or middle button) drags the view.
         if buttons.pressed(MouseButton::Right) || buttons.pressed(MouseButton::Middle) {
@@ -216,11 +246,16 @@ pub fn fly_camera_system(
             let left_y = stick_deadzone(left.y);
             let right_x = stick_deadzone(right.x);
             let right_y = stick_deadzone(right.y);
-            let stick_magnitude = (left_x * left_x + left_y * left_y).sqrt().min(1.0);
+            let stick_magnitude = match *layout {
+                ControlLayout::VideoGame => (left_x * left_x + left_y * left_y).sqrt(),
+                ControlLayout::Drone => (right_x * right_x + right_y * right_y).sqrt(),
+            }
+            .min(1.0);
 
-            // Left stick moves; up is negative Y after normalisation.
-            state.forward -= left_y;
-            state.right += left_x;
+            if pad.just_pressed(GamepadButton::Select) {
+                layout.toggle();
+            }
+
             let keyboard_move = keys.pressed(KeyCode::KeyW)
                 || keys.pressed(KeyCode::KeyS)
                 || keys.pressed(KeyCode::KeyA)
@@ -247,8 +282,24 @@ pub fn fly_camera_system(
             }
 
             let look = 2.0 * dt;
-            camera.yaw -= right_x * look;
-            camera.pitch = (camera.pitch - right_y * look).clamp(-MAX_PITCH, MAX_PITCH);
+            match *layout {
+                ControlLayout::VideoGame => {
+                    // Left stick moves, right stick looks.
+                    state.forward -= left_y;
+                    state.right += left_x;
+                    camera.yaw -= right_x * look;
+                    camera.pitch = (camera.pitch - right_y * look).clamp(-MAX_PITCH, MAX_PITCH);
+                }
+                ControlLayout::Drone => {
+                    // Mode-2 remote: left stick yaw/throttle, right stick
+                    // pitch/roll movement.  Camera pitch stays on the mouse
+                    // and arrow keys.
+                    camera.yaw -= left_x * look;
+                    state.up -= left_y;
+                    state.right += right_x;
+                    state.forward -= right_y;
+                }
+            }
 
             let speed_step = 1.0 + 0.9 * dt;
             if pad.pressed(GamepadButton::DPadUp) {
@@ -310,6 +361,16 @@ mod tests {
         let right = normalize_gamepad_stick(1.0, 0.0);
         assert!(right.x > 0.0, "right should stay positive X");
         assert_eq!(right.y, 0.0);
+    }
+
+    #[test]
+    fn control_layout_toggles_between_video_and_drone() {
+        let mut layout = ControlLayout::default();
+        assert_eq!(layout, ControlLayout::VideoGame);
+        layout.toggle();
+        assert_eq!(layout, ControlLayout::Drone);
+        layout.toggle();
+        assert_eq!(layout, ControlLayout::VideoGame);
     }
 
     #[test]
@@ -384,6 +445,7 @@ mod app_tests {
         app.insert_resource(ButtonInput::<MouseButton>::default());
         app.insert_resource(AccumulatedMouseMotion { delta: Vec2::ZERO });
         app.insert_resource(AccumulatedMouseScroll::default());
+        app.init_resource::<ControlLayout>();
         app.add_systems(Update, fly_camera_system);
         app
     }
@@ -429,6 +491,21 @@ mod app_tests {
             t.translation.y >= GROUND_Y + MIN_CAMERA_HEIGHT - 1e-4,
             "camera y {}",
             t.translation.y
+        );
+    }
+
+    #[test]
+    fn m_key_toggles_control_layout() {
+        let mut app = test_app();
+        app.world_mut()
+            .spawn((Transform::default(), FlyCamera::default()));
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .press(KeyCode::KeyM);
+        app.update();
+        assert_eq!(
+            *app.world().resource::<ControlLayout>(),
+            ControlLayout::Drone
         );
     }
 

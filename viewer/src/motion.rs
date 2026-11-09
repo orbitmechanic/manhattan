@@ -24,8 +24,10 @@ use crate::{
 pub const ACCESSORY_SUSPEND_SPEED: f32 = 520.0;
 /// The camera must fall below this speed before accessories resume.
 pub const ACCESSORY_RESUME_SPEED: f32 = 300.0;
+/// Sea-level speed of sound in m/s.
+pub const MACH_1_MPS: f32 = 343.0;
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct MotionState {
     pub velocity: Vec3,
     pub speed: f32,
@@ -33,9 +35,31 @@ pub struct MotionState {
     pub acceleration: f32,
     /// Acceleration in standard gravities.
     pub accel_g: f32,
+    /// Current speed divided by sea-level Mach 1.
+    pub mach: f32,
+    /// Seconds since the last upward Mach 1 crossing (10 when idle).
+    pub boom_age: f32,
+    /// Increments on each upward Mach 1 crossing for one-shot audio.
+    pub boom_serial: u32,
     /// 0..1 visual strength for the speed-line overlay.
     pub intensity: f32,
     pub suspended: bool,
+}
+
+impl Default for MotionState {
+    fn default() -> Self {
+        Self {
+            velocity: Vec3::ZERO,
+            speed: 0.0,
+            acceleration: 0.0,
+            accel_g: 0.0,
+            mach: 0.0,
+            boom_age: 10.0,
+            boom_serial: 0,
+            intensity: 0.0,
+            suspended: false,
+        }
+    }
 }
 
 pub fn accessories_active(motion: Res<MotionState>) -> bool {
@@ -50,6 +74,9 @@ pub struct SpeedLinesMaterial {
     /// rgb = tint, a = opacity
     #[uniform(1)]
     pub tint: Vec4,
+    /// x = seconds since the boom, y = boom strength, z = mach, w unused
+    #[uniform(2)]
+    pub boom: Vec4,
 }
 
 impl Material for SpeedLinesMaterial {
@@ -104,6 +131,15 @@ pub fn update_motion_state(
     motion.speed = velocity.length();
     motion.acceleration = acceleration.length();
     motion.accel_g = (motion.acceleration / 9.80665).min(50.0);
+
+    let mach = motion.speed / MACH_1_MPS;
+    if motion.mach < 1.0 && mach >= 1.0 {
+        motion.boom_age = 0.0;
+        motion.boom_serial = motion.boom_serial.wrapping_add(1);
+    } else {
+        motion.boom_age = (motion.boom_age + dt).min(10.0);
+    }
+    motion.mach = mach;
 
     if motion.suspended {
         if motion.speed < ACCESSORY_RESUME_SPEED {
@@ -160,6 +196,7 @@ pub fn setup_speed_lines(
     let material = materials.add(SpeedLinesMaterial {
         data: Vec4::ZERO,
         tint: Vec4::new(0.74, 0.82, 1.0, 0.0),
+        boom: Vec4::new(10.0, 1.0, 0.0, 0.0),
     });
     commands.entity(*camera).with_children(|parent| {
         parent.spawn((
@@ -189,8 +226,9 @@ pub fn update_speed_lines(
         if let Some(mut material) = materials.get_mut(&line.material) {
             material.data = Vec4::new(time.elapsed_secs(), intensity, direction.x, direction.y);
             material.tint.w = 0.45;
+            material.boom = Vec4::new(motion.boom_age, 1.0, motion.mach, 0.0);
         }
-        *visibility = if intensity > 0.01 {
+        *visibility = if intensity > 0.01 || motion.mach >= 1.0 {
             Visibility::Inherited
         } else {
             Visibility::Hidden
