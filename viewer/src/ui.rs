@@ -7,7 +7,7 @@ use bevy::{
 };
 
 use crate::blocks::BlockLights;
-use crate::camera::{ControlLayout, FlyCamera, MIN_CAMERA_HEIGHT};
+use crate::camera::{ControlLayout, FlyCamera, MIN_CAMERA_HEIGHT, SpeedMode};
 use crate::clock::{ClockAction, SimClock};
 use crate::environment::{Environment, fog_cull_distance};
 use crate::stationing::{
@@ -98,7 +98,7 @@ fn station_button(base: &mut ChildSpawnerCommands, label: &str, toggle: StationT
     );
 }
 
-fn controls_text(layout: ControlLayout) -> String {
+fn controls_text(layout: ControlLayout, mode: SpeedMode) -> String {
     let gamepad = match layout {
         ControlLayout::VideoGame => {
             "GAMEPAD [VIDEO]: LStick move  |  RStick look  |  Back/M layout  |  RT boost  |  LT descend  |  A ascend"
@@ -107,27 +107,35 @@ fn controls_text(layout: ControlLayout) -> String {
             "GAMEPAD [DRONE]: LStick yaw/throttle  |  RStick pitch/roll  |  Back/M layout  |  RT boost  |  LT descend  |  A ascend"
         }
     };
+    let speed = format!(
+        "SPEED MODE [{}] top {}: F / D-pad L/R cycles",
+        mode.label(),
+        mode.detail()
+    );
     format!(
         "FLY: W A S D  |  Q/E down/up  |  hold RMB to look  |  Shift boost  |  wheel speed  |  arrows look\n\
          TIME: [ / ] day  |  - / = hour  |  ; / ' minute  |  , / . month  |  Space play/pause  |  B reverse  |  R reset\n\
          STATIONING: L lines  |  T 100-ft ticks  |  C coordinates  |  G cycles imagery / fronts / osm\n\
          WEATHER: V cycles clear / fair / overcast / rain / storm\n\
          {gamepad}\n\
+         {speed}\n\
          FAST: accessories suspend above 520 u/s, speed lines show  |  AUDIO: click/key enables sound on web"
     )
 }
 
 pub fn update_controls_text(
     layout: Res<ControlLayout>,
-    mut last: Local<Option<ControlLayout>>,
+    mode: Res<SpeedMode>,
+    mut last: Local<Option<(ControlLayout, SpeedMode)>>,
     mut text: Query<&mut Text, With<ControlsText>>,
 ) {
-    if *last == Some(*layout) {
+    let state = (*layout, *mode);
+    if *last == Some(state) {
         return;
     }
-    *last = Some(*layout);
+    *last = Some(state);
     for mut line in &mut text {
-        line.0 = controls_text(*layout);
+        line.0 = controls_text(*layout, *mode);
     }
 }
 
@@ -264,7 +272,10 @@ pub fn spawn_ui(mut commands: Commands) {
     // bottom-left help
     commands.spawn((
         ControlsText,
-        Text::new(controls_text(ControlLayout::VideoGame)),
+        Text::new(controls_text(
+            ControlLayout::VideoGame,
+            SpeedMode::default(),
+        )),
         TextFont {
             font_size: FontSize::Px(13.0),
             ..default()
@@ -324,6 +335,7 @@ pub fn update_status(
     env: Res<Environment>,
     weather: Res<Weather>,
     blocks: Res<BlockLights>,
+    mode: Res<SpeedMode>,
     camera: Single<(&Transform, &FlyCamera), With<FlyCamera>>,
     mut status: Query<&mut Text, With<StatusText>>,
 ) {
@@ -352,7 +364,7 @@ pub fn update_status(
          FULL FLOOR GEOMETRY  1.53M tris   cull {:.1} km\n\
          Fog vis {:.1} km   Camera  x {:.0}  y {:.0}  z {:.0}   (floor {:.1})\n\
          Weather {:<12} cloud {:>3.0}%  precip {:>3.0}%  wind {:>3.0} km/h  {:>5.1} C\n\
-         {} x{:.0}   speed {:.0} u/s",
+         {} x{:.0}   speed {:.0} u/s   mode {}",
         if env.night { "NIGHT" } else { "DAY" },
         clock.date_label(),
         clock.time_label(),
@@ -393,6 +405,7 @@ pub fn update_status(
         },
         clock.speed.abs(),
         fly.speed,
+        mode.label(),
     );
 }
 

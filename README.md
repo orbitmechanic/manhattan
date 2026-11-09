@@ -45,6 +45,7 @@ load.  A 1440×900 window opens on the overview camera.
 | gamepad right / left trigger | boost / descend |
 | gamepad South (A) | ascend |
 | gamepad D-pad up / down | change fly speed |
+| `F` or gamepad D-pad left / right | cycle speed mode: Supersonic → Subsonic → Prop → Bird |
 
 The top-right panel has clickable buttons for the same calendar/clock actions.
 The camera is hard-clamped to `y >= 3.0` (the city ground line is `y = 0`) and
@@ -56,6 +57,19 @@ radial speed-line overlay appears; they resume below **300 u/s**.  Crossing
 **Mach 1** upward plays a sonic-boom one-shot and a shockwave ring, and a faint
 shock-cone/edge glow remains while supersonic.  Browser audio starts after the
 first key press or click (autoplay policy).
+
+**Speed modes** (`F` or gamepad D-pad left/right):
+
+| Mode | Final speed cap |
+|---|---|
+| **SUPERSONIC** | 8,000 u/s (the existing unrestricted flight mode) |
+| **SUBSONIC** | **Mach 0.99** (~760 mph) |
+| **PROP** | **400 mph** |
+| **BIRD** | **100 mph** |
+
+The cap is applied after boost/analog scaling, so no mode can exceed its stated
+top speed.  Selecting a mode selects its base speed; the top-left status and
+bottom-left help panels show the active mode and cap.
 
 ### Browser build / GitHub Pages
 
@@ -961,7 +975,7 @@ affected presentation and is already reflected in the script.
   blur active, collision grid loaded and resolved, stationing imagery 2041 /
   fronts 2460 / OSM 1814 lines with matching camera arrays, camera clamp
   at y=3, hour-wrap date correct.
-- `viewer` tests: **65 passed**, including station/offset sign projection and
+- `viewer` tests: **68 passed**, including station/offset sign projection and
   station data loading, camera collision/slide maths, one-floor texture paths,
   fog-cull distance, the actual Bevy fly camera system, calendar keys, mixed
   flicker/fade re-randomisation, Gaussian thresholds and per-date twilight

@@ -295,6 +295,10 @@ geometry.
   **DRONE** (left stick yaw/throttle, right stick pitch/roll) toggle with the
   controller Back/Select button or `M`; the bottom-left help panel shows the
   active mode.
+- Speed modes cycle with `F` or the controller D-pad left/right:
+  **SUPERSONIC** (8,000 u/s cap), **SUBSONIC** (Mach 0.99), **PROP**
+  (400 mph) and **BIRD** (100 mph).  The final speed is clamped after
+  boost/analog scaling, and the status/help panels report the active mode.
 - The web build omits the DOF pass; native keeps the cinematic blur.
 
 ### Audio

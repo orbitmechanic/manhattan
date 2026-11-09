@@ -76,7 +76,7 @@ Validation
   renders/viewer_station_fronts_street.png
   native selftest: imagery 2041 / 2041, fronts 2460 / 2460,
                    OSM 1814 / 1814, stationing_ok true
-  tests: 65 passed
+  tests: 68 passed
 
 Caveat
   The OSM set is real street geometry (ODbL) rather than a heuristic, but it

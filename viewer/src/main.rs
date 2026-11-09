@@ -32,8 +32,8 @@ use manhattan_viewer::{
     audio::CityAudioPlugin,
     blocks::{BlockLights, update_blocks},
     camera::{
-        ControlLayout, FlyCamera, MAX_PITCH, MIN_CAMERA_HEIGHT, MoveState, fly_camera_system,
-        step_camera,
+        ControlLayout, FlyCamera, MAX_PITCH, MIN_CAMERA_HEIGHT, MoveState, SpeedMode,
+        fly_camera_system, step_camera,
     },
     city_material::{
         BuildingChunk, CityMaterial, CityMaterialSetup, RoadMaterials, setup_city_materials,
@@ -302,6 +302,7 @@ fn main() {
         .init_resource::<StreetFurniture>()
         .init_resource::<RoadMaterials>()
         .init_resource::<ControlLayout>()
+        .init_resource::<SpeedMode>()
         .insert_resource(args)
         .add_systems(
             Startup,
@@ -470,6 +471,7 @@ fn spawn_camera(mut commands: Commands, args: Res<Args>) {
                 yaw,
                 pitch,
                 speed: 650.0,
+                max_speed: 8_000.0,
             },
             AmbientLight {
                 color: Color::srgb(0.55, 0.68, 0.9),
@@ -654,6 +656,7 @@ fn run_selftest(
                 yaw: 0.0,
                 pitch: -0.6,
                 speed: 650.0,
+                max_speed: 8_000.0,
             };
             let mut t = Transform::from_translation(camera.translation)
                 .with_rotation(camera.rotation)

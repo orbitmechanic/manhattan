@@ -23,6 +23,9 @@ pub struct FlyCamera {
     pub pitch: f32,
     /// Base fly speed in world units per second.
     pub speed: f32,
+    /// Hard cap on the final speed after boost/analog scaling, in world
+    /// units per second.
+    pub max_speed: f32,
 }
 
 impl Default for FlyCamera {
@@ -31,6 +34,7 @@ impl Default for FlyCamera {
             yaw: 0.0,
             pitch: 0.0,
             speed: 650.0,
+            max_speed: SpeedMode::default().top_speed(),
         }
     }
 }
@@ -68,6 +72,78 @@ impl ControlLayout {
             Self::VideoGame => Self::Drone,
             Self::Drone => Self::VideoGame,
         };
+    }
+}
+
+/// Camera speed envelope.  The cap applies to the final speed after boost and
+/// analog scaling, so a mode can never exceed its stated top speed.
+#[derive(Resource, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SpeedMode {
+    #[default]
+    Supersonic,
+    Subsonic,
+    Prop,
+    Bird,
+}
+
+/// Miles per hour per metre per second.
+pub const MPH_PER_MPS: f32 = 2.236_936;
+
+impl SpeedMode {
+    pub const ORDER: [Self; 4] = [Self::Supersonic, Self::Subsonic, Self::Prop, Self::Bird];
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Supersonic => "SUPERSONIC",
+            Self::Subsonic => "SUBSONIC",
+            Self::Prop => "PROP",
+            Self::Bird => "BIRD",
+        }
+    }
+
+    pub fn detail(self) -> &'static str {
+        match self {
+            Self::Supersonic => "8000 u/s",
+            Self::Subsonic => "Mach 0.99",
+            Self::Prop => "400 mph",
+            Self::Bird => "100 mph",
+        }
+    }
+
+    /// Final speed cap in world units (metres) per second.
+    pub fn top_speed(self) -> f32 {
+        match self {
+            Self::Supersonic => 8_000.0,
+            Self::Subsonic => 0.99 * crate::motion::MACH_1_MPS,
+            Self::Prop => 400.0 / MPH_PER_MPS,
+            Self::Bird => 100.0 / MPH_PER_MPS,
+        }
+    }
+
+    /// Base speed selected when the mode is chosen.
+    pub fn default_speed(self) -> f32 {
+        match self {
+            Self::Supersonic => 650.0,
+            Self::Subsonic => 320.0,
+            Self::Prop => 150.0,
+            Self::Bird => 38.0,
+        }
+    }
+
+    pub fn next(self) -> Self {
+        let index = Self::ORDER
+            .iter()
+            .position(|mode| *mode == self)
+            .unwrap_or(0);
+        Self::ORDER[(index + 1) % Self::ORDER.len()]
+    }
+
+    pub fn prev(self) -> Self {
+        let index = Self::ORDER
+            .iter()
+            .position(|mode| *mode == self)
+            .unwrap_or(0);
+        Self::ORDER[(index + Self::ORDER.len() - 1) % Self::ORDER.len()]
     }
 }
 
@@ -114,7 +190,7 @@ fn movement_delta(camera: &FlyCamera, state: MoveState, dt: f32) -> Vec3 {
     if length > 1e-4 {
         direction /= length;
     }
-    let speed = camera.speed * state.boost * state.analog;
+    let speed = (camera.speed * state.boost * state.analog).min(camera.max_speed);
     direction * speed * dt
 }
 
@@ -167,6 +243,7 @@ pub fn fly_camera_system(
     scroll: Res<AccumulatedMouseScroll>,
     gamepads: Query<&Gamepad>,
     mut layout: ResMut<ControlLayout>,
+    mut mode: ResMut<SpeedMode>,
     grid: Option<Res<CollisionGrid>>,
     mut query: Query<(&mut Transform, &mut FlyCamera)>,
 ) {
@@ -174,7 +251,27 @@ pub fn fly_camera_system(
     if keys.just_pressed(KeyCode::KeyM) {
         layout.toggle();
     }
+    // Flight-mode selection: F or the controller D-pad left/right.
+    let mut mode_changed = keys.just_pressed(KeyCode::KeyF);
+    if mode_changed {
+        *mode = mode.next();
+    }
+    let pad = gamepads.iter().next();
+    if let Some(pad) = pad {
+        if pad.just_pressed(GamepadButton::DPadLeft) {
+            *mode = mode.prev();
+            mode_changed = true;
+        }
+        if pad.just_pressed(GamepadButton::DPadRight) {
+            *mode = mode.next();
+            mode_changed = true;
+        }
+    }
     for (mut transform, mut camera) in &mut query {
+        camera.max_speed = mode.top_speed();
+        if mode_changed {
+            camera.speed = mode.default_speed();
+        }
         // Right mouse button (or middle button) drags the view.
         if buttons.pressed(MouseButton::Right) || buttons.pressed(MouseButton::Middle) {
             let delta = mouse_motion.delta;
@@ -199,7 +296,9 @@ pub fn fly_camera_system(
 
         // Wheel changes the base speed exponentially.
         if scroll.delta.y.abs() > 0.01 {
-            camera.speed = (camera.speed * (1.0 + scroll.delta.y * 0.12)).clamp(20.0, 8000.0);
+            camera.speed = (camera.speed * (1.0 + scroll.delta.y * 0.12))
+                .clamp(20.0, 8_000.0)
+                .min(camera.max_speed);
         }
 
         let mut state = MoveState::default();
@@ -229,7 +328,7 @@ pub fn fly_camera_system(
             1.0
         };
 
-        if let Some(pad) = gamepads.iter().next() {
+        if let Some(pad) = pad {
             // This controller reports the Y axes inverted (positive = up)
             // while X is standard.  Normalise only Y so forward/back and
             // pitch match the keyboard/mouse conventions, and leave X alone
@@ -303,10 +402,14 @@ pub fn fly_camera_system(
 
             let speed_step = 1.0 + 0.9 * dt;
             if pad.pressed(GamepadButton::DPadUp) {
-                camera.speed = (camera.speed * speed_step).clamp(20.0, 8_000.0);
+                camera.speed = (camera.speed * speed_step)
+                    .clamp(20.0, 8_000.0)
+                    .min(camera.max_speed);
             }
             if pad.pressed(GamepadButton::DPadDown) {
-                camera.speed = (camera.speed / speed_step).clamp(20.0, 8_000.0);
+                camera.speed = (camera.speed / speed_step)
+                    .clamp(20.0, 8_000.0)
+                    .min(camera.max_speed);
             }
         }
 
@@ -364,6 +467,45 @@ mod tests {
     }
 
     #[test]
+    fn speed_modes_have_expected_caps() {
+        assert_eq!(SpeedMode::default(), SpeedMode::Supersonic);
+        assert!((SpeedMode::Subsonic.top_speed() - 0.99 * 343.0).abs() < 0.01);
+        assert!((SpeedMode::Prop.top_speed() * MPH_PER_MPS - 400.0).abs() < 0.1);
+        assert!((SpeedMode::Bird.top_speed() * MPH_PER_MPS - 100.0).abs() < 0.1);
+        assert!(SpeedMode::Bird.top_speed() < SpeedMode::Prop.top_speed());
+        assert!(SpeedMode::Prop.top_speed() < SpeedMode::Subsonic.top_speed());
+        assert!(SpeedMode::Subsonic.top_speed() < SpeedMode::Supersonic.top_speed());
+    }
+
+    #[test]
+    fn speed_modes_cycle() {
+        assert_eq!(SpeedMode::Supersonic.next(), SpeedMode::Subsonic);
+        assert_eq!(SpeedMode::Subsonic.next(), SpeedMode::Prop);
+        assert_eq!(SpeedMode::Prop.next(), SpeedMode::Bird);
+        assert_eq!(SpeedMode::Bird.next(), SpeedMode::Supersonic);
+        assert_eq!(SpeedMode::Supersonic.prev(), SpeedMode::Bird);
+    }
+
+    #[test]
+    fn movement_is_capped_by_the_speed_mode() {
+        let camera = FlyCamera {
+            yaw: 0.0,
+            pitch: 0.0,
+            speed: 1_000.0,
+            max_speed: SpeedMode::Bird.top_speed(),
+        };
+        let delta = movement_delta(
+            &camera,
+            MoveState {
+                forward: 1.0,
+                ..default()
+            },
+            1.0,
+        );
+        assert!(delta.length() <= SpeedMode::Bird.top_speed() * 0.1 + 0.001);
+    }
+
+    #[test]
     fn control_layout_toggles_between_video_and_drone() {
         let mut layout = ControlLayout::default();
         assert_eq!(layout, ControlLayout::VideoGame);
@@ -400,6 +542,7 @@ mod tests {
             yaw: 0.0,
             pitch: -1.5, // looking almost straight down
             speed: 650.0,
+            max_speed: 8_000.0,
         };
         let start = t.translation;
         step_camera(
@@ -446,6 +589,7 @@ mod app_tests {
         app.insert_resource(AccumulatedMouseMotion { delta: Vec2::ZERO });
         app.insert_resource(AccumulatedMouseScroll::default());
         app.init_resource::<ControlLayout>();
+        app.init_resource::<SpeedMode>();
         app.add_systems(Update, fly_camera_system);
         app
     }
@@ -461,6 +605,7 @@ mod app_tests {
                     yaw: 0.0,
                     pitch: 0.0,
                     speed: 650.0,
+                    max_speed: 8_000.0,
                 },
             ))
             .id();
