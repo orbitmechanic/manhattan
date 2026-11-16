@@ -10,6 +10,7 @@ use std::f32::consts::TAU;
 
 use bevy::{
     asset::RenderAssetUsages,
+    light::NotShadowCaster,
     mesh::{Indices, MeshVertexBufferLayoutRef, PrimitiveTopology},
     pbr::{MaterialPipeline, MaterialPipelineKey},
     prelude::*,
@@ -549,6 +550,10 @@ pub fn setup_weather(
             Mesh3d(meshes.add(cloud_disc_mesh(size * 0.5, 72))),
             MeshMaterial3d(material),
             Transform::from_xyz(0.0, altitude, 0.0),
+            // Camera-following decks must never cast a directional shadow:
+            // with sun shadows enabled that reads as a dark disc around the
+            // camera (the iteration-21 traveling shadow).
+            NotShadowCaster,
         ));
     }
 
@@ -573,6 +578,7 @@ pub fn setup_weather(
         Mesh3d(meshes.add(cloud_disc_mesh(13_000.0 * 0.5, 72))),
         MeshMaterial3d(material),
         Transform::from_xyz(0.0, 360.0, 0.0),
+        NotShadowCaster,
     ));
 
     let material = precip_materials.add(PrecipMaterial {

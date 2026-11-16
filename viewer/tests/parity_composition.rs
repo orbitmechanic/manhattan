@@ -69,7 +69,10 @@ fn glass_core_is_high_but_never_certain_and_brick_survives() {
         }
     }
     assert!(near_glassy > 0, "core should have glass");
-    assert!(near_brick > 0, "holdout brick must survive at the epicentre");
+    assert!(
+        near_brick > 0,
+        "holdout brick must survive at the epicentre"
+    );
     assert!(city_rhythm::glass_probability(core.x, core.y, 2024) < 0.95);
 }
 
@@ -77,10 +80,7 @@ fn glass_core_is_high_but_never_certain_and_brick_survives() {
 fn radial_fields_and_daily_curve_match_the_contract() {
     let core = city_rhythm::TIMES_SQUARE;
     assert_eq!(city_rhythm::ad_density(core.x, core.y), 1.0);
-    assert_eq!(
-        city_rhythm::ad_density(core.x, core.y + 4_000.0),
-        0.0
-    );
+    assert_eq!(city_rhythm::ad_density(core.x, core.y + 4_000.0), 0.0);
     assert!(city_rhythm::daily_pace(3.0) <= 0.06);
     assert!(city_rhythm::daily_pace(8.5) > 0.8);
     assert!(city_rhythm::daily_pace(17.0) > 0.8);
