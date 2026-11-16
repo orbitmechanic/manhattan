@@ -1,0 +1,1254 @@
+2026-11-16T13:21:21.888964Z  INFO bevy_diagnostic::system_information_diagnostics_plugin::internal: SystemInfo { os: "Linux (Omarchy 4.5.0)", kernel: "7.2.15-1-omarchy", cpu: "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx", core_count: "4", memory: "17.5 GiB" }
+2026-11-16T13:21:21.972378Z  INFO bevy_render::renderer: AdapterInfo { name: "AMD Radeon Vega 8 Graphics (RADV RAVEN)", vendor: 4098, device: 5592, device_type: IntegratedGpu, device_pci_bus_id: "0000:03:00.0", driver: "radv", driver_info: "Mesa 26.2.5-arch1.1", backend: Vulkan, subgroup_min_size: 64, subgroup_max_size: 64, transient_saves_memory: Some(false), limit_bucket: None }
+2026-11-16T13:21:22.125911Z  INFO bevy_pbr::cluster: GPU clustering is supported on this device.
+2026-11-16T13:21:22.125953Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+2026-11-16T13:21:22.126703Z  INFO bevy_hanabi::plugin: Initializing Hanabi for GPU adapter AMD Radeon Vega 8 Graphics (RADV RAVEN)
+2026-11-16T13:21:22.131464Z  INFO bevy_winit::system: Creating new window Manhattan — day/night fly-through (67v0)
+2026-11-16T13:21:22.135103Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 23 orthogonal masonry chunks per structural cell
+2026-11-16T13:21:22.135834Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 30 crystalline glass chunks per structural cell
+2026-11-16T13:21:22.141643Z  INFO manhattan_viewer::details: Trees: 3000
+2026-11-16T13:21:22.142269Z  INFO manhattan_viewer::people: People catalog ready
+2026-11-16T13:21:22.143252Z  INFO destructibles_bevy::audio: AUDIO DEVICE: host=Alsa device='Default Audio Device' config=F32 44100 Hz 2 ch (Bevy/rodio default output)
+2026-11-16T13:21:22.147721Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD: feeder/index ready, mask 1024² @ 1200 m
+2026-11-16T13:21:22.250125Z  INFO manhattan_viewer::details: Antennas: 63720 on 10815 buildings
+2026-11-16T13:21:22.571068Z  INFO manhattan_viewer::details: Signs: 254301 on 10723 buildings
+2026-11-16T13:21:22.753718Z  INFO manhattan_viewer::storefront: Storefronts: 11032 buildings, 4 categories, 0 repeat warnings, seed 17ff8306
+2026-11-16T13:21:22.760076Z  INFO manhattan_viewer::traffic: Vehicle catalog: 150 variants
+2026-11-16T13:21:22.968679Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: glass_break.ogg (31276 bytes)
+2026-11-16T13:21:22.968716Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: impact.ogg (7792 bytes)
+2026-11-16T13:21:22.968719Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: shard_chatter.ogg (39114 bytes)
+2026-11-16T13:21:22.968722Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: chime.wav (79424 bytes)
+2026-11-16T13:21:22.968725Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: rewind_whoosh.wav (141164 bytes)
+2026-11-16T13:21:22.968728Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: explosion.wav (229364 bytes)
+2026-11-16T13:21:22.968731Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: klaxon.wav (176444 bytes)
+2026-11-16T13:21:22.968733Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: sprinkler_hiss.wav (176444 bytes)
+2026-11-16T13:21:22.968736Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: masonry_thud.wav (48554 bytes)
+2026-11-16T13:21:22.968739Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: collapse_rumble.wav (458684 bytes)
+2026-11-16T13:21:22.968769Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: structural_groan.wav (264644 bytes)
+2026-11-16T13:21:22.968772Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: concrete_crack.wav (19448 bytes)
+2026-11-16T13:21:22.968775Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: gas_hiss.wav (176444 bytes)
+2026-11-16T13:21:22.968778Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: fire_crackle.wav (176444 bytes)
+2026-11-16T13:21:22.968781Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: cascade_crackle.wav (352844 bytes)
+2026-11-16T13:21:22.968783Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: dust_hiss.wav (352844 bytes)
+2026-11-16T13:21:22.968786Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: breaker_pop.wav (39734 bytes)
+2026-11-16T13:21:22.968789Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: electric_crackle.wav (79424 bytes)
+2026-11-16T13:21:22.968792Z  INFO destructibles_bevy::audio: AUDIO CHAIN READY: device=Some("Default Audio Device") assets=18 master_volume=0.80
+2026-11-16T13:21:23.812381Z  INFO destructibles_bevy::audio: AUDIO startup chime requested
+2026-11-16T13:21:24.892628Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=chime pitch=0.900 vol=0.48 paused=false empty=true
+2026-11-16T13:21:25.850226Z  INFO manhattan_viewer::city_material: City materials ready: 12 materials / 4353 primitives
+2026-11-16T13:21:26.616477Z  INFO manhattan_viewer::neighborhood: WAVE DEMO: center Vec3(1350.0, 0.0, -1050.0), target 5 buildings
+2026-11-16T13:21:26.673741Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6498 (8.13 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:26.802814Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6499 (1.61 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:26.804852Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6506 (1.88 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:26.997764Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6157 (0.94 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.000061Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6158 (2.20 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.101945Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD footprint FAIL b6159; returned to plain map
+2026-11-16T13:21:27.103898Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6160 (1.86 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.105718Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6161 (1.69 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.218170Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6162 (2.24 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.220136Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6494 (1.75 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.220872Z  INFO manhattan_viewer::neighborhood: DETAIL b6498: Tier 1 ready at 50.6 m
+2026-11-16T13:21:27.222055Z  INFO manhattan_viewer::neighborhood: DETAIL b6499: Tier 1 ready at 54.8 m
+2026-11-16T13:21:27.286171Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6495 (1.73 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.287898Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6500 (1.66 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.352217Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6504 (2.01 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.356708Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6505 (4.39 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.419530Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6507 (2.34 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.421397Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6508 (1.83 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.421959Z  INFO manhattan_viewer::neighborhood: DETAIL b6506: Tier 1 ready at 59.5 m
+2026-11-16T13:21:27.505564Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6509: window (sill 1 + height 1.43) does not fit in floor height 2.4
+2026-11-16T13:21:27.508756Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6522 (3.01 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.510775Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6523 (1.85 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.514844Z  INFO manhattan_viewer::neighborhood: DETAIL b6505: Tier 1 ready at 74.7 m
+2026-11-16T13:21:27.577250Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6524: window (sill 0.55 + height 2.3) does not fit in floor height 2.8285713
+2026-11-16T13:21:27.579947Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6525 (2.64 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.583821Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6496 (3.47 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.663229Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6497 (2.92 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.667571Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6501 (4.07 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.742808Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6502 (2.48 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.745343Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6503 (2.30 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.818131Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6511 (0.91 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.819870Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6512 (1.69 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.903290Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6513 (2.67 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.908203Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6514 (4.63 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.911807Z  INFO manhattan_viewer::neighborhood: DETAIL b6511: Tier 1 ready at 43.7 m
+2026-11-16T13:21:27.982729Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6515 (0.76 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:27.986190Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6518 (3.18 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:27.989124Z  INFO manhattan_viewer::neighborhood: DETAIL b6515: Tier 1 ready at 35.2 m
+2026-11-16T13:21:27.991028Z  INFO manhattan_viewer::neighborhood: DETAIL b6501: Tier 1 ready at 47.9 m
+2026-11-16T13:21:28.050352Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6519 (2.35 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:28.052547Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6520 (2.15 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:28.127879Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6521 (3.58 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:28.129554Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6526 (1.61 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:28.229404Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6528 (6.54 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:28.385835Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6529 (3.68 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:28.388718Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6531 (2.81 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:28.553900Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6533 (7.38 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:28.718927Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6535 (2.52 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:28.719026Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6536: window (sill 0.55 + height 2.3) does not fit in floor height 2.8142858
+2026-11-16T13:21:28.722944Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6537 (3.76 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:28.924971Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6538 (5.59 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:28.928204Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6539 (3.13 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:29.126067Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6540 (1.23 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:29.135447Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5890 (9.24 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:29.316073Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5892 (4.24 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:29.321693Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5893 (5.42 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:29.588446Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5896 (10.40 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:29.882017Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5897 (7.17 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:30.142238Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6510 (2.99 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:30.147571Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6516 (5.17 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:30.149796Z  INFO manhattan_viewer::neighborhood: DETAIL b6535: Tier 1 ready at 1.3 m
+2026-11-16T13:21:30.151286Z  INFO manhattan_viewer::neighborhood: DETAIL b6533: Tier 1 ready at 11.2 m
+2026-11-16T13:21:30.157109Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6535
+2026-11-16T13:21:30.157153Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6533
+2026-11-16T13:21:30.157159Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6531
+2026-11-16T13:21:30.157164Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6529
+2026-11-16T13:21:30.157170Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6521
+2026-11-16T13:21:30.424257Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6517 (4.08 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:30.429385Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6527 (4.71 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:30.437211Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006535 (1355.4,2.2,-1051.8)
+2026-11-16T13:21:30.743853Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=0.984 vol=0.76 paused=false empty=false
+2026-11-16T13:21:30.756649Z  INFO destructibles_bevy::impact: IMPACT building 1006535: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T13:21:30.757089Z  INFO destructibles_bevy::impact: IMPACT: 8 breach cells (radius 8.4 m), 60 panes overpressure (radius 17.0 m)
+2026-11-16T13:21:30.757169Z  INFO destructibles_bevy::damage: damage #0000 [collapse] FireIgnite(b1006535 l0 at (1359.2,2.1,-1051.6) seed=1809946904)
+2026-11-16T13:21:30.758166Z  INFO destructibles_bevy::hazards: FIRE ignited building 1006535 floor 0 seed 1809946904
+2026-11-16T13:21:30.758249Z  INFO destructibles_bevy::damage: damage #0001 [collapse] LeakStart(b1006535 water active=true at (1359.2,4.0,-1051.6) seed=2940174617)
+2026-11-16T13:21:30.758593Z  INFO destructibles_bevy::hazards: LEAK water started building 1006535 seed 2940174617
+2026-11-16T13:21:30.758645Z  INFO destructibles_bevy::damage: damage #0002 [collapse] FireIgnite(b1006535 l2 at (1359.2,7.9,-1051.6) seed=3799361788)
+2026-11-16T13:21:30.758793Z  INFO destructibles_bevy::hazards: FIRE ignited building 1006535 floor 2 seed 3799361788
+2026-11-16T13:21:30.758806Z  INFO destructibles_bevy::damage: damage #0003 [collapse] Shudder(b1006535 seed=4175006835 E=22.2 MJ)
+2026-11-16T13:21:30.760360Z  INFO destructibles_bevy::shudder: SHUDDER building 1006535: 0.02 shake strength, 84 pane rats, 2 dust vents
+2026-11-16T13:21:30.760458Z  INFO destructibles_bevy::damage: damage #0004 [collapse] Alarm(b1006535 active=true floor=0 seed=4175006835)
+2026-11-16T13:21:30.760679Z  INFO destructibles_bevy::alarm: ALARM building 1006535: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T13:21:30.760708Z  INFO destructibles_bevy::damage: damage #0005 [shard] BreachCell(b1006535 f2·l0·x1 r=8.4 partial=false seed=1726936522 E=22.2 MJ)
+2026-11-16T13:21:30.766360Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f2·l0·x1: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:30.766530Z  INFO destructibles_bevy::damage: damage #0007 [collapse] PowerLoss(b1006535 seed=869803867)
+2026-11-16T13:21:30.766591Z  INFO destructibles_bevy::power: POWER loss building 1006535
+2026-11-16T13:21:30.777508Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6541 (7.21 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:30.783284Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006533 (1353.4,2.2,-1052.5)
+2026-11-16T13:21:30.784720Z  INFO manhattan_viewer::neighborhood: PERSIST b6535: damaged building frozen at 160 m hidden=false
+2026-11-16T13:21:31.271136Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=1.068 vol=0.28 paused=false empty=false
+2026-11-16T13:21:31.271257Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=0.945 vol=0.76 paused=false empty=false
+2026-11-16T13:21:31.283109Z  INFO destructibles_bevy::damage: damage #0008 [collapse] LeakStop(b1006535 seed=2940174617 water)
+2026-11-16T13:21:31.283388Z  INFO destructibles_bevy::impact: IMPACT building 1006533: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T13:21:31.283674Z  INFO destructibles_bevy::impact: IMPACT: 3 breach cells (radius 8.4 m), 65 panes overpressure (radius 17.0 m)
+2026-11-16T13:21:31.283719Z  INFO destructibles_bevy::damage: damage #0009 [collapse] Shudder(b1006533 seed=33309149 E=22.2 MJ)
+2026-11-16T13:21:31.286958Z  INFO destructibles_bevy::shudder: SHUDDER building 1006533: 0.02 shake strength, 120 pane rats, 2 dust vents
+2026-11-16T13:21:31.287072Z  INFO destructibles_bevy::damage: damage #0010 [collapse] Alarm(b1006533 active=true floor=0 seed=33309149)
+2026-11-16T13:21:31.287179Z  INFO destructibles_bevy::alarm: ALARM building 1006533: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T13:21:31.287215Z  INFO destructibles_bevy::damage: damage #0011 [shard] BreachCell(b1006535 f2·l0·x2 r=8.4 partial=false seed=3300359937 E=22.2 MJ)
+2026-11-16T13:21:31.288527Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f2·l0·x2: 8 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:31.289693Z  INFO destructibles_bevy::damage: damage #0013 [shard] BreachCell(b1006535 f2·l1·x1 r=8.4 partial=false seed=1726936522 E=22.2 MJ)
+2026-11-16T13:21:31.292243Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f2·l1·x1: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:31.302352Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6164 (8.24 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:31.310716Z  INFO manhattan_viewer::neighborhood: PERSIST b6533: damaged building frozen at 160 m hidden=false
+2026-11-16T13:21:31.732479Z  INFO destructibles_bevy::alarm: ALARM audio: klaxon loop started
+2026-11-16T13:21:31.732528Z  INFO destructibles_bevy::alarm: ALARM audio: sprinkler hiss started
+2026-11-16T13:21:31.732576Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.623 vol=0.34 paused=false empty=false
+2026-11-16T13:21:31.749447Z  INFO destructibles_bevy::damage: damage #0015 [shard] BreachCell(b1006535 f2·l1·x2 r=8.4 partial=false seed=3300359937 E=22.2 MJ)
+2026-11-16T13:21:31.751187Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f2·l1·x2: 8 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:31.751313Z  INFO destructibles_bevy::damage: damage #0017 [shard] BreachCell(b1006535 f2·l2·x1 r=8.4 partial=true seed=1726936522 E=22.2 MJ)
+2026-11-16T13:21:31.752340Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f2·l2·x1: 11 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:31.752443Z  INFO destructibles_bevy::damage: damage #0019 [shard] BreachCell(b1006535 f2·l2·x2 r=8.4 partial=true seed=3300359937 E=22.2 MJ)
+2026-11-16T13:21:31.753202Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f2·l2·x2: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:31.753300Z  INFO destructibles_bevy::damage: damage #0021 [shard] BreachCell(b1006535 f3·l0·x0 r=8.4 partial=true seed=4175006835 E=22.2 MJ)
+2026-11-16T13:21:31.754236Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f3·l0·x0: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:31.754348Z  INFO destructibles_bevy::damage: damage #0023 [shard] BreachCell(b1006535 f3·l1·x0 r=8.4 partial=true seed=4175006835 E=22.2 MJ)
+2026-11-16T13:21:31.755205Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f3·l1·x0: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:31.755297Z  INFO destructibles_bevy::damage: damage #0025 [pane] ShatterPane(b1006535 f0·l0·c0)
+2026-11-16T13:21:31.765185Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6168 (6.66 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:32.223372Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.074 vol=0.68 paused=false empty=false
+2026-11-16T13:21:32.223432Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.586 vol=0.34 paused=false empty=false
+2026-11-16T13:21:32.238700Z  INFO destructibles_bevy::damage: damage #0026 [structural] SagSlab(b1006535 slab l1·s7 depth=0.03 dir=(0.0,1.0) seed=1006533)
+2026-11-16T13:21:32.239118Z  INFO destructibles_bevy::damage: damage #0027 [pane] ShatterPane(b1006535 f0·l0·c1)
+2026-11-16T13:21:32.240249Z  INFO destructibles_bevy::damage: damage #0028 [pane] ShatterPane(b1006535 f0·l0·c2)
+2026-11-16T13:21:32.241342Z  INFO destructibles_bevy::damage: damage #0029 [pane] ShatterPane(b1006535 f0·l0·c3)
+2026-11-16T13:21:32.242087Z  INFO destructibles_bevy::damage: damage #0030 [pane] ShatterPane(b1006535 f0·l1·c0)
+2026-11-16T13:21:32.242660Z  INFO destructibles_bevy::damage: damage #0031 [pane] ShatterPane(b1006535 f0·l1·c1)
+2026-11-16T13:21:32.243468Z  INFO destructibles_bevy::damage: damage #0032 [pane] ShatterPane(b1006535 f0·l1·c2)
+2026-11-16T13:21:32.244194Z  INFO destructibles_bevy::damage: damage #0033 [pane] ShatterPane(b1006535 f0·l1·c3)
+2026-11-16T13:21:32.252162Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6174 (4.07 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:32.257229Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6176 (4.80 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:32.582729Z ERROR rodio::stream: audio stream error: Buffer underrun/overrun occurred.
+2026-11-16T13:21:32.859091Z  INFO destructibles_bevy::structure: STRUCTURE audio: groan loop started
+2026-11-16T13:21:32.859319Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.003 vol=0.68 paused=false empty=false
+2026-11-16T13:21:32.859340Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.976 vol=0.68 paused=false empty=false
+2026-11-16T13:21:32.859346Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.908 vol=0.68 paused=false empty=false
+2026-11-16T13:21:32.859354Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.049 vol=0.68 paused=false empty=false
+2026-11-16T13:21:32.859366Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.012 vol=0.68 paused=false empty=false
+2026-11-16T13:21:32.859373Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.914 vol=0.68 paused=false empty=false
+2026-11-16T13:21:32.859378Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.977 vol=0.68 paused=false empty=false
+2026-11-16T13:21:32.859383Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.543 vol=0.34 paused=false empty=false
+2026-11-16T13:21:32.876123Z  INFO destructibles_bevy::damage: damage #0034 [pane] ShatterPane(b1006535 f0·l2·c0)
+2026-11-16T13:21:32.878708Z  INFO destructibles_bevy::damage: damage #0035 [pane] ShatterPane(b1006535 f0·l2·c1)
+2026-11-16T13:21:32.879788Z  INFO destructibles_bevy::damage: damage #0036 [pane] ShatterPane(b1006535 f0·l2·c2)
+2026-11-16T13:21:32.880453Z  INFO destructibles_bevy::damage: damage #0037 [pane] ShatterPane(b1006535 f0·l2·c3)
+2026-11-16T13:21:32.880731Z  INFO destructibles_bevy::damage: damage #0038 [pane] ShatterPane(b1006535 f0·l3·c0)
+2026-11-16T13:21:32.880933Z  INFO destructibles_bevy::damage: damage #0039 [pane] ShatterPane(b1006535 f0·l3·c1)
+2026-11-16T13:21:32.881201Z  INFO destructibles_bevy::damage: damage #0040 [pane] ShatterPane(b1006535 f0·l3·c2)
+2026-11-16T13:21:32.881389Z  INFO destructibles_bevy::damage: damage #0041 [pane] ShatterPane(b1006535 f0·l3·c3)
+2026-11-16T13:21:32.881533Z  INFO destructibles_bevy::damage: damage #0042 [pane] ShatterPane(b1006535 f0·l4·c0)
+2026-11-16T13:21:32.893382Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6178 (7.91 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:33.332745Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.924 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.332830Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.052 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.332840Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.911 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.332845Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.954 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.332851Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.092 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.332927Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.997 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.332934Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.053 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.332939Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.040 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.332944Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.612 vol=0.34 paused=false empty=false
+2026-11-16T13:21:33.332957Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.982 vol=0.16 paused=false empty=false
+2026-11-16T13:21:33.347303Z  INFO destructibles_bevy::damage: damage #0043 [pane] ShatterPane(b1006535 f0·l4·c1)
+2026-11-16T13:21:33.347945Z  INFO destructibles_bevy::damage: damage #0044 [pane] ShatterPane(b1006535 f0·l4·c2)
+2026-11-16T13:21:33.348177Z  INFO destructibles_bevy::damage: damage #0045 [pane] ShatterPane(b1006535 f0·l5·c1)
+2026-11-16T13:21:33.348543Z  INFO destructibles_bevy::damage: damage #0046 [pane] ShatterPane(b1006535 f1·l0·c1)
+2026-11-16T13:21:33.348784Z  INFO destructibles_bevy::damage: damage #0047 [pane] ShatterPane(b1006535 f1·l1·c1)
+2026-11-16T13:21:33.349009Z  INFO destructibles_bevy::damage: damage #0048 [pane] ShatterPane(b1006535 f2·l0·c0)
+2026-11-16T13:21:33.349208Z  INFO destructibles_bevy::damage: damage #0049 [pane] ShatterPane(b1006535 f2·l0·c1)
+2026-11-16T13:21:33.349368Z  INFO destructibles_bevy::damage: damage #0050 [pane] ShatterPane(b1006535 f2·l0·c2)
+2026-11-16T13:21:33.349525Z  INFO destructibles_bevy::damage: damage #0051 [pane] ShatterPane(b1006535 f2·l0·c3)
+2026-11-16T13:21:33.349858Z  INFO destructibles_bevy::damage: damage #0052 [pane] ShatterPane(b1006535 f2·l0·c4)
+2026-11-16T13:21:33.350113Z  INFO destructibles_bevy::damage: damage #0053 [pane] ShatterPane(b1006535 f2·l1·c0)
+2026-11-16T13:21:33.350278Z  INFO destructibles_bevy::damage: damage #0054 [pane] ShatterPane(b1006535 f2·l1·c1)
+2026-11-16T13:21:33.350511Z  INFO destructibles_bevy::damage: damage #0055 [pane] ShatterPane(b1006535 f2·l1·c2)
+2026-11-16T13:21:33.350739Z  INFO destructibles_bevy::damage: damage #0056 [pane] ShatterPane(b1006535 f2·l1·c3)
+2026-11-16T13:21:33.350892Z  INFO destructibles_bevy::damage: damage #0057 [pane] ShatterPane(b1006535 f2·l1·c4)
+2026-11-16T13:21:33.351026Z  INFO destructibles_bevy::damage: damage #0058 [pane] ShatterPane(b1006535 f2·l2·c0)
+2026-11-16T13:21:33.351272Z  INFO destructibles_bevy::damage: damage #0059 [pane] ShatterPane(b1006535 f2·l2·c1)
+2026-11-16T13:21:33.351496Z  INFO destructibles_bevy::damage: damage #0060 [pane] ShatterPane(b1006535 f2·l2·c2)
+2026-11-16T13:21:33.360097Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6180 (5.01 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:33.363926Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6182 (3.60 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:33.366386Z  INFO manhattan_viewer::neighborhood: DETAIL b6531: Tier 1 ready at 20.3 m
+2026-11-16T13:21:33.369014Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006531 (1358.3,2.2,-1060.5)
+2026-11-16T13:21:33.807907Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.094 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.807979Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.936 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.807989Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.006 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.807996Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.934 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.808001Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.045 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.808005Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.052 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.808010Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.974 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.808015Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.903 vol=0.68 paused=false empty=false
+2026-11-16T13:21:33.808019Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=1.039 vol=0.76 paused=false empty=false
+2026-11-16T13:21:33.808024Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.651 vol=0.34 paused=false empty=false
+2026-11-16T13:21:33.808029Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.979 vol=0.16 paused=false empty=false
+2026-11-16T13:21:33.820311Z  INFO destructibles_bevy::damage: damage #0061 [structural] SagSlab(b1006535 slab l1·s7 depth=0.45 dir=(0.0,1.0) seed=1006533)
+2026-11-16T13:21:33.820520Z  INFO destructibles_bevy::damage: damage #0062 [structural] ShedChunks(b1006535 slab l1·s7 n=2 seed=1006533)
+2026-11-16T13:21:33.821143Z  INFO destructibles_bevy::damage: damage #0063 [shard] BreachCell(b1006535 f3·l2·x0 r=2.2 partial=false seed=1006533 E=0.0 MJ)
+2026-11-16T13:21:33.824584Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f3·l2·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:33.824745Z  INFO destructibles_bevy::impact: IMPACT building 1006531: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T13:21:33.824989Z  INFO destructibles_bevy::impact: IMPACT: 5 breach cells (radius 8.4 m), 60 panes overpressure (radius 17.0 m)
+2026-11-16T13:21:33.825006Z  INFO destructibles_bevy::damage: damage #0065 [collapse] Shudder(b1006531 seed=3617640768 E=22.2 MJ)
+2026-11-16T13:21:33.826354Z  INFO destructibles_bevy::shudder: SHUDDER building 1006531: 0.02 shake strength, 120 pane rats, 2 dust vents
+2026-11-16T13:21:33.826423Z  INFO destructibles_bevy::damage: damage #0066 [collapse] Alarm(b1006531 active=true floor=0 seed=3617640768)
+2026-11-16T13:21:33.826489Z  INFO destructibles_bevy::alarm: ALARM building 1006531: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T13:21:33.826508Z  INFO destructibles_bevy::damage: damage #0067 [pane] ShatterPane(b1006535 f2·l2·c3)
+2026-11-16T13:21:33.827299Z  INFO destructibles_bevy::damage: damage #0068 [pane] ShatterPane(b1006535 f2·l2·c4)
+2026-11-16T13:21:33.827823Z  INFO destructibles_bevy::damage: damage #0069 [pane] ShatterPane(b1006535 f2·l3·c0)
+2026-11-16T13:21:33.827978Z  INFO destructibles_bevy::damage: damage #0070 [pane] ShatterPane(b1006535 f2·l3·c1)
+2026-11-16T13:21:33.828101Z  INFO destructibles_bevy::damage: damage #0071 [pane] ShatterPane(b1006535 f2·l3·c2)
+2026-11-16T13:21:33.828220Z  INFO destructibles_bevy::damage: damage #0072 [pane] ShatterPane(b1006535 f2·l3·c3)
+2026-11-16T13:21:33.828399Z  INFO destructibles_bevy::damage: damage #0073 [pane] ShatterPane(b1006535 f2·l3·c4)
+2026-11-16T13:21:33.828521Z  INFO destructibles_bevy::damage: damage #0074 [pane] ShatterPane(b1006535 f2·l4·c1)
+2026-11-16T13:21:33.831749Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6184: window (sill 0.55 + height 2.3) does not fit in floor height 2.85
+2026-11-16T13:21:33.840526Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6187 (8.50 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:33.846371Z  INFO manhattan_viewer::neighborhood: PERSIST b6531: damaged building frozen at 161 m hidden=false
+2026-11-16T13:21:34.283840Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=concrete_crack pitch=1.014 vol=0.34 paused=false empty=true
+2026-11-16T13:21:34.283893Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.942 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.283898Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.910 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.283904Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.927 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.283908Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.936 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.283913Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.006 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.283918Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.020 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.283923Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.926 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.283928Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.962 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.283933Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.642 vol=0.34 paused=false empty=false
+2026-11-16T13:21:34.283937Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.932 vol=0.16 paused=false empty=false
+2026-11-16T13:21:34.294441Z  INFO destructibles_bevy::damage: damage #0075 [pane] ShatterPane(b1006535 f2·l4·c2)
+2026-11-16T13:21:34.295380Z  INFO destructibles_bevy::damage: damage #0076 [pane] ShatterPane(b1006535 f2·l4·c3)
+2026-11-16T13:21:34.295799Z  INFO destructibles_bevy::damage: damage #0077 [pane] ShatterPane(b1006535 f2·l4·c4)
+2026-11-16T13:21:34.296010Z  INFO destructibles_bevy::damage: damage #0078 [pane] ShatterPane(b1006535 f2·l5·c2)
+2026-11-16T13:21:34.296139Z  INFO destructibles_bevy::damage: damage #0079 [pane] ShatterPane(b1006535 f2·l5·c3)
+2026-11-16T13:21:34.296388Z  INFO destructibles_bevy::damage: damage #0080 [pane] ShatterPane(b1006535 f2·l5·c4)
+2026-11-16T13:21:34.296567Z  INFO destructibles_bevy::damage: damage #0081 [pane] ShatterPane(b1006535 f3·l0·c0)
+2026-11-16T13:21:34.296729Z  INFO destructibles_bevy::damage: damage #0082 [pane] ShatterPane(b1006535 f3·l0·c1)
+2026-11-16T13:21:34.296880Z  INFO destructibles_bevy::damage: damage #0083 [pane] ShatterPane(b1006535 f3·l1·c0)
+2026-11-16T13:21:34.297022Z  INFO destructibles_bevy::damage: damage #0084 [pane] ShatterPane(b1006535 f3·l1·c1)
+2026-11-16T13:21:34.297148Z  INFO destructibles_bevy::damage: damage #0085 [pane] ShatterPane(b1006535 f3·l2·c0)
+2026-11-16T13:21:34.297279Z  INFO destructibles_bevy::damage: damage #0086 [pane] ShatterPane(b1006535 f3·l2·c1)
+2026-11-16T13:21:34.297435Z  INFO destructibles_bevy::damage: damage #0087 [pane] ShatterPane(b1006535 f3·l3·c0)
+2026-11-16T13:21:34.297585Z  INFO destructibles_bevy::damage: damage #0088 [pane] ShatterPane(b1006535 f3·l3·c1)
+2026-11-16T13:21:34.297870Z  INFO destructibles_bevy::damage: damage #0089 [pane] ShatterPane(b1006535 f3·l4·c0)
+2026-11-16T13:21:34.298043Z  INFO destructibles_bevy::damage: damage #0090 [pane] ShatterPane(b1006535 f3·l4·c1)
+2026-11-16T13:21:34.298165Z  INFO destructibles_bevy::damage: damage #0091 [pane] ShatterPane(b1006535 f3·l5·c0)
+2026-11-16T13:21:34.298308Z  INFO destructibles_bevy::damage: damage #0092 [shard] BreachCell(b1006533 f0·l0·x2 r=8.4 partial=false seed=1033024175 E=22.2 MJ)
+2026-11-16T13:21:34.299780Z  INFO destructibles_bevy::breach: BREACH building 1006533 cell f0·l0·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:34.299825Z  INFO destructibles_bevy::damage: damage #0094 [collapse] PowerLoss(b1006533 seed=1945575799)
+2026-11-16T13:21:34.299844Z  INFO destructibles_bevy::power: POWER loss building 1006533
+2026-11-16T13:21:34.299852Z  INFO destructibles_bevy::damage: damage #0095 [shard] BreachCell(b1006533 f0·l1·x2 r=8.4 partial=false seed=1033024175 E=22.2 MJ)
+2026-11-16T13:21:34.300543Z  INFO destructibles_bevy::breach: BREACH building 1006533 cell f0·l1·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:34.307485Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6189 (6.40 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:34.753742Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.968 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.753809Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.065 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.753815Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.935 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.753820Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.041 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.753824Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.916 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.753828Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.062 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.753872Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.010 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.753883Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.990 vol=0.68 paused=false empty=false
+2026-11-16T13:21:34.753887Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=1.017 vol=0.28 paused=false empty=false
+2026-11-16T13:21:34.753893Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.640 vol=0.34 paused=false empty=false
+2026-11-16T13:21:34.753899Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.951 vol=0.16 paused=false empty=false
+2026-11-16T13:21:34.765900Z  INFO destructibles_bevy::damage: damage #0097 [shard] BreachCell(b1006535 f3·l3·x0 r=2.2 partial=false seed=1006533 E=0.0 MJ)
+2026-11-16T13:21:34.768227Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f3·l3·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:34.768287Z  INFO destructibles_bevy::damage: damage #0099 [structural] SagSlab(b1006535 slab l2·s7 depth=0.03 dir=(0.0,1.0) seed=1006533)
+2026-11-16T13:21:34.768415Z  INFO destructibles_bevy::damage: damage #0100 [shard] BreachCell(b1006533 f0·l2·x2 r=8.4 partial=true seed=1033024175 E=22.2 MJ)
+2026-11-16T13:21:34.769297Z  INFO destructibles_bevy::breach: BREACH building 1006533 cell f0·l2·x2: 13 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:34.769351Z  INFO destructibles_bevy::damage: damage #0102 [pane] ShatterPane(b1006533 f0·l0·c1)
+2026-11-16T13:21:34.769775Z  INFO destructibles_bevy::damage: damage #0103 [pane] ShatterPane(b1006533 f0·l0·c2)
+2026-11-16T13:21:34.770195Z  INFO destructibles_bevy::damage: damage #0104 [pane] ShatterPane(b1006533 f0·l0·c3)
+2026-11-16T13:21:34.770465Z  INFO destructibles_bevy::damage: damage #0105 [pane] ShatterPane(b1006533 f0·l0·c4)
+2026-11-16T13:21:34.770785Z  INFO destructibles_bevy::damage: damage #0106 [pane] ShatterPane(b1006533 f0·l0·c5)
+2026-11-16T13:21:34.771284Z  INFO destructibles_bevy::damage: damage #0107 [pane] ShatterPane(b1006533 f0·l0·c6)
+2026-11-16T13:21:34.771557Z  INFO destructibles_bevy::damage: damage #0108 [pane] ShatterPane(b1006533 f0·l0·c7)
+2026-11-16T13:21:34.771755Z  INFO destructibles_bevy::damage: damage #0109 [pane] ShatterPane(b1006533 f0·l1·c1)
+2026-11-16T13:21:34.771890Z  INFO destructibles_bevy::damage: damage #0110 [pane] ShatterPane(b1006533 f0·l1·c2)
+2026-11-16T13:21:34.772052Z  INFO destructibles_bevy::damage: damage #0111 [pane] ShatterPane(b1006533 f0·l1·c3)
+2026-11-16T13:21:34.772197Z  INFO destructibles_bevy::damage: damage #0112 [pane] ShatterPane(b1006533 f0·l1·c4)
+2026-11-16T13:21:34.772367Z  INFO destructibles_bevy::damage: damage #0113 [pane] ShatterPane(b1006533 f0·l1·c5)
+2026-11-16T13:21:34.772532Z  INFO destructibles_bevy::damage: damage #0114 [pane] ShatterPane(b1006533 f0·l1·c6)
+2026-11-16T13:21:34.773627Z  INFO destructibles_bevy::damage: damage #0115 [pane] ShatterPane(b1006533 f0·l1·c7)
+2026-11-16T13:21:34.784737Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6530 (7.22 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:34.785858Z  INFO manhattan_viewer::neighborhood: DETAIL b6529: Tier 1 ready at 29.5 m
+2026-11-16T13:21:34.790258Z  INFO manhattan_viewer::neighborhood: DETAIL b6514: Tier 1 ready at 33.1 m
+2026-11-16T13:21:34.790656Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006529 (1357.3,2.2,-1071.2)
+2026-11-16T13:21:35.324225Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=concrete_crack pitch=1.048 vol=0.34 paused=false empty=true
+2026-11-16T13:21:35.324263Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.905 vol=0.68 paused=false empty=false
+2026-11-16T13:21:35.324268Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.907 vol=0.68 paused=false empty=false
+2026-11-16T13:21:35.324273Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.993 vol=0.68 paused=false empty=false
+2026-11-16T13:21:35.324684Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.034 vol=0.68 paused=false empty=false
+2026-11-16T13:21:35.324698Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.021 vol=0.68 paused=false empty=false
+2026-11-16T13:21:35.324703Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.986 vol=0.68 paused=false empty=false
+2026-11-16T13:21:35.324707Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.100 vol=0.68 paused=false empty=false
+2026-11-16T13:21:35.324713Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.059 vol=0.68 paused=false empty=false
+2026-11-16T13:21:35.324717Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=0.993 vol=0.76 paused=false empty=false
+2026-11-16T13:21:35.324721Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.638 vol=0.34 paused=false empty=false
+2026-11-16T13:21:35.324725Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.037 vol=0.16 paused=false empty=false
+2026-11-16T13:21:35.333799Z  INFO destructibles_bevy::impact: IMPACT building 1006529: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T13:21:35.334158Z  INFO destructibles_bevy::impact: IMPACT: 5 breach cells (radius 8.4 m), 65 panes overpressure (radius 17.0 m)
+2026-11-16T13:21:35.334218Z  INFO destructibles_bevy::damage: damage #0116 [collapse] FireIgnite(b1006529 l0 at (1355.5,2.1,-1073.4) seed=1983576843)
+2026-11-16T13:21:35.334442Z  INFO destructibles_bevy::hazards: FIRE ignited building 1006529 floor 0 seed 1983576843
+2026-11-16T13:21:35.334479Z  INFO destructibles_bevy::damage: damage #0117 [collapse] FireIgnite(b1006529 l1 at (1355.5,5.1,-1073.4) seed=854647801)
+2026-11-16T13:21:35.334512Z  INFO destructibles_bevy::hazards: FIRE ignited building 1006529 floor 1 seed 854647801
+2026-11-16T13:21:35.334522Z  INFO destructibles_bevy::damage: damage #0118 [collapse] FireIgnite(b1006529 l2 at (1355.5,8.0,-1073.4) seed=3450260439)
+2026-11-16T13:21:35.334602Z  INFO destructibles_bevy::hazards: FIRE ignited building 1006529 floor 2 seed 3450260439
+2026-11-16T13:21:35.334664Z  INFO destructibles_bevy::damage: damage #0119 [collapse] LeakStart(b1006529 gas active=true at (1355.5,7.0,-1073.4) seed=3450260452)
+2026-11-16T13:21:35.334772Z  INFO destructibles_bevy::hazards: LEAK gas started building 1006529 seed 3450260452
+2026-11-16T13:21:35.334786Z  INFO destructibles_bevy::damage: damage #0120 [collapse] Shudder(b1006529 seed=571035362 E=22.2 MJ)
+2026-11-16T13:21:35.338367Z  INFO destructibles_bevy::shudder: SHUDDER building 1006529: 0.02 shake strength, 112 pane rats, 2 dust vents
+2026-11-16T13:21:35.338426Z  INFO destructibles_bevy::damage: damage #0121 [collapse] Alarm(b1006529 active=true floor=0 seed=571035362)
+2026-11-16T13:21:35.338475Z  INFO destructibles_bevy::alarm: ALARM building 1006529: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T13:21:35.338491Z  INFO destructibles_bevy::damage: damage #0122 [pane] ShatterPane(b1006533 f0·l2·c1)
+2026-11-16T13:21:35.347379Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6532 (3.70 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:35.352906Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6534 (5.44 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:35.359580Z  INFO manhattan_viewer::neighborhood: PERSIST b6529: damaged building frozen at 163 m hidden=false
+2026-11-16T13:21:35.716334Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.989 vol=0.68 paused=false empty=false
+2026-11-16T13:21:35.716388Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.600 vol=0.34 paused=false empty=false
+2026-11-16T13:21:35.716397Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.921 vol=0.16 paused=false empty=false
+2026-11-16T13:21:35.728400Z  INFO destructibles_bevy::damage: damage #0123 [structural] FailNode(b1006535 slab l1·s7 seed=1006533)
+2026-11-16T13:21:35.729880Z  INFO destructibles_bevy::damage: damage #0124 [pane] ShatterPane(b1006535 f2·l3·c3)
+2026-11-16T13:21:35.730048Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f2·l3·c3 in building 1006535
+2026-11-16T13:21:35.730058Z  INFO destructibles_bevy::damage: damage #0125 [pane] ShatterPane(b1006535 f3·l2·c1)
+2026-11-16T13:21:35.730086Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f3·l2·c1 in building 1006535
+2026-11-16T13:21:35.730091Z  INFO destructibles_bevy::damage: damage #0126 [pane] ShatterPane(b1006535 f3·l3·c1)
+2026-11-16T13:21:35.730108Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f3·l3·c1 in building 1006535
+2026-11-16T13:21:35.730112Z  INFO destructibles_bevy::damage: damage #0127 [pane] ShatterPane(b1006535 f2·l2·c2)
+2026-11-16T13:21:35.730129Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f2·l2·c2 in building 1006535
+2026-11-16T13:21:35.730165Z  INFO destructibles_bevy::damage: damage #0128 [pane] ShatterPane(b1006533 f0·l2·c2)
+2026-11-16T13:21:35.732502Z  INFO destructibles_bevy::damage: damage #0129 [pane] ShatterPane(b1006533 f0·l2·c3)
+2026-11-16T13:21:35.732921Z  INFO destructibles_bevy::damage: damage #0130 [pane] ShatterPane(b1006533 f0·l2·c4)
+2026-11-16T13:21:35.733204Z  INFO destructibles_bevy::damage: damage #0131 [pane] ShatterPane(b1006533 f0·l2·c5)
+2026-11-16T13:21:35.733436Z  INFO destructibles_bevy::damage: damage #0132 [pane] ShatterPane(b1006533 f0·l2·c6)
+2026-11-16T13:21:35.733630Z  INFO destructibles_bevy::damage: damage #0133 [pane] ShatterPane(b1006533 f0·l2·c7)
+2026-11-16T13:21:35.733802Z  INFO destructibles_bevy::damage: damage #0134 [pane] ShatterPane(b1006533 f0·l3·c2)
+2026-11-16T13:21:35.733956Z  INFO destructibles_bevy::damage: damage #0135 [pane] ShatterPane(b1006533 f0·l3·c3)
+2026-11-16T13:21:35.734083Z  INFO destructibles_bevy::damage: damage #0136 [pane] ShatterPane(b1006533 f0·l3·c4)
+2026-11-16T13:21:35.734205Z  INFO destructibles_bevy::damage: damage #0137 [pane] ShatterPane(b1006533 f0·l3·c5)
+2026-11-16T13:21:35.734342Z  INFO destructibles_bevy::damage: damage #0138 [pane] ShatterPane(b1006533 f0·l3·c6)
+2026-11-16T13:21:35.734503Z  INFO destructibles_bevy::damage: damage #0139 [pane] ShatterPane(b1006533 f0·l3·c7)
+2026-11-16T13:21:35.734664Z  INFO destructibles_bevy::damage: damage #0140 [pane] ShatterPane(b1006533 f0·l4·c2)
+2026-11-16T13:21:35.734903Z  INFO destructibles_bevy::damage: damage #0141 [pane] ShatterPane(b1006533 f0·l4·c3)
+2026-11-16T13:21:35.735110Z  INFO destructibles_bevy::damage: damage #0142 [pane] ShatterPane(b1006533 f0·l4·c4)
+2026-11-16T13:21:35.735328Z  INFO destructibles_bevy::damage: damage #0143 [pane] ShatterPane(b1006533 f0·l4·c5)
+2026-11-16T13:21:35.735503Z  INFO destructibles_bevy::damage: damage #0144 [pane] ShatterPane(b1006533 f0·l4·c6)
+2026-11-16T13:21:35.735663Z  INFO destructibles_bevy::damage: damage #0145 [pane] ShatterPane(b1006533 f0·l5·c3)
+2026-11-16T13:21:35.735813Z  INFO destructibles_bevy::damage: damage #0146 [pane] ShatterPane(b1006533 f0·l5·c4)
+2026-11-16T13:21:35.735975Z  INFO destructibles_bevy::damage: damage #0147 [pane] ShatterPane(b1006533 f0·l5·c5)
+2026-11-16T13:21:35.736153Z  INFO destructibles_bevy::damage: damage #0148 [pane] ShatterPane(b1006533 f0·l5·c6)
+2026-11-16T13:21:35.744292Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6163 (7.35 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:36.107460Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.919 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.107490Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.986 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.107494Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.021 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.107498Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.097 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.107502Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.955 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.107510Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.072 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.107515Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.040 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.107519Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.027 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.107523Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.650 vol=0.34 paused=false empty=false
+2026-11-16T13:21:36.107540Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.997 vol=0.16 paused=false empty=false
+2026-11-16T13:21:36.117145Z  INFO destructibles_bevy::damage: damage #0149 [structural] SagSlab(b1006535 slab l2·s7 depth=0.45 dir=(0.0,1.0) seed=1006533)
+2026-11-16T13:21:36.117408Z  INFO destructibles_bevy::damage: damage #0150 [structural] ShedChunks(b1006535 slab l2·s7 n=2 seed=1006533)
+2026-11-16T13:21:36.117863Z  INFO destructibles_bevy::damage: damage #0151 [pane] ShatterPane(b1006533 f1·l0·c0)
+2026-11-16T13:21:36.118299Z  INFO destructibles_bevy::damage: damage #0152 [pane] ShatterPane(b1006533 f1·l0·c1)
+2026-11-16T13:21:36.118587Z  INFO destructibles_bevy::damage: damage #0153 [pane] ShatterPane(b1006533 f1·l1·c0)
+2026-11-16T13:21:36.118843Z  INFO destructibles_bevy::damage: damage #0154 [pane] ShatterPane(b1006533 f1·l2·c0)
+2026-11-16T13:21:36.119103Z  INFO destructibles_bevy::damage: damage #0155 [pane] ShatterPane(b1006533 f1·l3·c0)
+2026-11-16T13:21:36.119266Z  INFO destructibles_bevy::damage: damage #0156 [pane] ShatterPane(b1006533 f2·l0·c0)
+2026-11-16T13:21:36.119445Z  INFO destructibles_bevy::damage: damage #0157 [pane] ShatterPane(b1006533 f2·l0·c1)
+2026-11-16T13:21:36.119684Z  INFO destructibles_bevy::damage: damage #0158 [pane] ShatterPane(b1006533 f2·l0·c2)
+2026-11-16T13:21:36.120074Z  INFO destructibles_bevy::damage: damage #0159 [pane] ShatterPane(b1006533 f2·l0·c3)
+2026-11-16T13:21:36.120391Z  INFO destructibles_bevy::damage: damage #0160 [pane] ShatterPane(b1006533 f2·l0·c4)
+2026-11-16T13:21:36.120784Z  INFO destructibles_bevy::damage: damage #0161 [pane] ShatterPane(b1006533 f2·l0·c5)
+2026-11-16T13:21:36.121174Z  INFO destructibles_bevy::damage: damage #0162 [pane] ShatterPane(b1006533 f2·l1·c0)
+2026-11-16T13:21:36.121449Z  INFO destructibles_bevy::damage: damage #0163 [pane] ShatterPane(b1006533 f2·l1·c1)
+2026-11-16T13:21:36.121749Z  INFO destructibles_bevy::damage: damage #0164 [pane] ShatterPane(b1006533 f2·l1·c2)
+2026-11-16T13:21:36.122045Z  INFO destructibles_bevy::damage: damage #0165 [pane] ShatterPane(b1006533 f2·l1·c3)
+2026-11-16T13:21:36.122253Z  INFO destructibles_bevy::damage: damage #0166 [pane] ShatterPane(b1006533 f2·l1·c4)
+2026-11-16T13:21:36.122471Z  INFO destructibles_bevy::damage: damage #0167 [pane] ShatterPane(b1006533 f2·l1·c5)
+2026-11-16T13:21:36.122702Z  INFO destructibles_bevy::damage: damage #0168 [pane] ShatterPane(b1006533 f2·l2·c1)
+2026-11-16T13:21:36.122965Z  INFO destructibles_bevy::damage: damage #0169 [pane] ShatterPane(b1006533 f2·l2·c2)
+2026-11-16T13:21:36.123394Z  INFO destructibles_bevy::damage: damage #0170 [pane] ShatterPane(b1006533 f2·l2·c3)
+2026-11-16T13:21:36.123717Z  INFO destructibles_bevy::damage: damage #0171 [pane] ShatterPane(b1006533 f2·l2·c4)
+2026-11-16T13:21:36.127318Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6195 (2.83 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:36.129339Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6196 (1.96 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:36.130421Z  INFO manhattan_viewer::neighborhood: DETAIL b6521: Tier 1 ready at 31.5 m
+2026-11-16T13:21:36.134824Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006521 (1343.6,2.2,-1026.3)
+2026-11-16T13:21:36.500722Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=concrete_crack pitch=1.085 vol=0.34 paused=false empty=true
+2026-11-16T13:21:36.500767Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.071 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.500772Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.932 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.500777Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.073 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.500782Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.975 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.500787Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.078 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.500794Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.018 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.500798Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.982 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.500802Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.960 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.500806Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=1.037 vol=0.76 paused=false empty=false
+2026-11-16T13:21:36.500810Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.581 vol=0.34 paused=false empty=false
+2026-11-16T13:21:36.500814Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.918 vol=0.16 paused=false empty=false
+2026-11-16T13:21:36.507930Z  INFO destructibles_bevy::damage: damage #0172 [shard] BreachCell(b1006533 f0·l3·x2 r=2.2 partial=false seed=1006535 E=0.0 MJ)
+2026-11-16T13:21:36.509091Z  INFO destructibles_bevy::breach: BREACH building 1006533 cell f0·l3·x2: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:36.509137Z  INFO destructibles_bevy::impact: IMPACT building 1006521: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T13:21:36.509261Z  INFO destructibles_bevy::impact: IMPACT: 9 breach cells (radius 8.4 m), 70 panes overpressure (radius 17.0 m)
+2026-11-16T13:21:36.509276Z  INFO destructibles_bevy::damage: damage #0174 [collapse] Shudder(b1006521 seed=4063130701 E=22.2 MJ)
+2026-11-16T13:21:36.509882Z  INFO destructibles_bevy::shudder: SHUDDER building 1006521: 0.02 shake strength, 108 pane rats, 2 dust vents
+2026-11-16T13:21:36.509910Z  INFO destructibles_bevy::damage: damage #0175 [collapse] Alarm(b1006521 active=true floor=0 seed=4063130701)
+2026-11-16T13:21:36.509953Z  INFO destructibles_bevy::alarm: ALARM building 1006521: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T13:21:36.509965Z  INFO destructibles_bevy::damage: damage #0176 [pane] ShatterPane(b1006533 f2·l2·c5)
+2026-11-16T13:21:36.510397Z  INFO destructibles_bevy::damage: damage #0177 [pane] ShatterPane(b1006533 f2·l3·c1)
+2026-11-16T13:21:36.511782Z  INFO destructibles_bevy::damage: damage #0178 [pane] ShatterPane(b1006533 f2·l3·c2)
+2026-11-16T13:21:36.512179Z  INFO destructibles_bevy::damage: damage #0179 [pane] ShatterPane(b1006533 f2·l3·c3)
+2026-11-16T13:21:36.512426Z  INFO destructibles_bevy::damage: damage #0180 [pane] ShatterPane(b1006533 f2·l3·c4)
+2026-11-16T13:21:36.512798Z  INFO destructibles_bevy::damage: damage #0181 [pane] ShatterPane(b1006533 f2·l4·c2)
+2026-11-16T13:21:36.513123Z  INFO destructibles_bevy::damage: damage #0182 [pane] ShatterPane(b1006533 f2·l4·c3)
+2026-11-16T13:21:36.513371Z  INFO destructibles_bevy::damage: damage #0183 [pane] ShatterPane(b1006533 f2·l4·c4)
+2026-11-16T13:21:36.513544Z  INFO destructibles_bevy::damage: damage #0184 [shard] BreachCell(b1006531 f1·l0·x1 r=8.4 partial=true seed=1234675961 E=22.2 MJ)
+2026-11-16T13:21:36.514085Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l0·x1: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:36.514112Z  INFO destructibles_bevy::damage: damage #0186 [collapse] PowerLoss(b1006531 seed=3077653927)
+2026-11-16T13:21:36.514129Z  INFO destructibles_bevy::power: POWER loss building 1006531
+2026-11-16T13:21:36.514136Z  INFO destructibles_bevy::damage: damage #0187 [shard] BreachCell(b1006531 f1·l0·x2 r=8.4 partial=false seed=3956154930 E=22.2 MJ)
+2026-11-16T13:21:36.515030Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l0·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:36.515077Z  INFO destructibles_bevy::damage: damage #0189 [shard] BreachCell(b1006531 f1·l1·x1 r=8.4 partial=true seed=1234675961 E=22.2 MJ)
+2026-11-16T13:21:36.515508Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l1·x1: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:36.524152Z  INFO manhattan_viewer::neighborhood: PERSIST b6521: damaged building frozen at 163 m hidden=false
+2026-11-16T13:21:36.524650Z  INFO manhattan_viewer::neighborhood: WAVE DEMO: 5/5 buildings damaged
+2026-11-16T13:21:36.524680Z  INFO manhattan_viewer::neighborhood: WAVE DEMO: radius 150 m
+2026-11-16T13:21:36.912453Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.980 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.912500Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.089 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.912504Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.995 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.912509Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.933 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.912513Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.084 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.912523Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.034 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.912528Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.922 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.912532Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.064 vol=0.68 paused=false empty=false
+2026-11-16T13:21:36.912564Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=0.999 vol=0.28 paused=false empty=false
+2026-11-16T13:21:36.912568Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.598 vol=0.34 paused=false empty=false
+2026-11-16T13:21:36.912571Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.068 vol=0.16 paused=false empty=false
+2026-11-16T13:21:36.919584Z  INFO destructibles_bevy::damage: damage #0191 [shard] BreachCell(b1006535 f3·l4·x0 r=2.2 partial=false seed=1006533 E=0.0 MJ)
+2026-11-16T13:21:36.920692Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f3·l4·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:36.920738Z  INFO destructibles_bevy::damage: damage #0193 [structural] FailNode(b1006535 column l1·c10 seed=1006533)
+2026-11-16T13:21:36.921189Z  INFO destructibles_bevy::damage: damage #0194 [pane] ShatterPane(b1006535 f3·l3·c1)
+2026-11-16T13:21:36.921306Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f3·l3·c1 in building 1006535
+2026-11-16T13:21:36.921313Z  INFO destructibles_bevy::damage: damage #0195 [pane] ShatterPane(b1006535 f3·l2·c0)
+2026-11-16T13:21:36.921332Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f3·l2·c0 in building 1006535
+2026-11-16T13:21:36.921337Z  INFO destructibles_bevy::damage: damage #0196 [pane] ShatterPane(b1006535 f3·l3·c0)
+2026-11-16T13:21:36.921355Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f3·l3·c0 in building 1006535
+2026-11-16T13:21:36.921360Z  INFO destructibles_bevy::damage: damage #0197 [pane] ShatterPane(b1006535 f2·l2·c4)
+2026-11-16T13:21:36.921378Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f2·l2·c4 in building 1006535
+2026-11-16T13:21:36.921411Z  INFO destructibles_bevy::damage: damage #0198 [shard] BreachCell(b1006531 f1·l1·x2 r=8.4 partial=false seed=3956154930 E=22.2 MJ)
+2026-11-16T13:21:36.922860Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l1·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:36.922911Z  INFO destructibles_bevy::damage: damage #0200 [shard] BreachCell(b1006531 f1·l2·x2 r=8.4 partial=true seed=3956154930 E=22.2 MJ)
+2026-11-16T13:21:36.923513Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l2·x2: 10 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:36.923541Z  INFO destructibles_bevy::damage: damage #0202 [pane] ShatterPane(b1006531 f1·l0·c1)
+2026-11-16T13:21:36.923808Z  INFO destructibles_bevy::damage: damage #0203 [pane] ShatterPane(b1006531 f1·l0·c2)
+2026-11-16T13:21:36.923960Z  INFO destructibles_bevy::damage: damage #0204 [pane] ShatterPane(b1006531 f1·l0·c3)
+2026-11-16T13:21:36.924111Z  INFO destructibles_bevy::damage: damage #0205 [pane] ShatterPane(b1006531 f1·l0·c4)
+2026-11-16T13:21:36.924258Z  INFO destructibles_bevy::damage: damage #0206 [pane] ShatterPane(b1006531 f1·l0·c5)
+2026-11-16T13:21:36.924410Z  INFO destructibles_bevy::damage: damage #0207 [pane] ShatterPane(b1006531 f1·l0·c6)
+2026-11-16T13:21:36.924524Z  INFO destructibles_bevy::damage: damage #0208 [pane] ShatterPane(b1006531 f1·l0·c7)
+2026-11-16T13:21:36.924699Z  INFO destructibles_bevy::damage: damage #0209 [pane] ShatterPane(b1006531 f1·l1·c1)
+2026-11-16T13:21:36.924823Z  INFO destructibles_bevy::damage: damage #0210 [pane] ShatterPane(b1006531 f1·l1·c2)
+2026-11-16T13:21:36.924929Z  INFO destructibles_bevy::damage: damage #0211 [pane] ShatterPane(b1006531 f1·l1·c3)
+2026-11-16T13:21:36.925028Z  INFO destructibles_bevy::damage: damage #0212 [pane] ShatterPane(b1006531 f1·l1·c4)
+2026-11-16T13:21:36.925129Z  INFO destructibles_bevy::damage: damage #0213 [pane] ShatterPane(b1006531 f1·l1·c5)
+2026-11-16T13:21:36.925228Z  INFO destructibles_bevy::damage: damage #0214 [pane] ShatterPane(b1006531 f1·l1·c6)
+2026-11-16T13:21:36.925330Z  INFO destructibles_bevy::damage: damage #0215 [pane] ShatterPane(b1006531 f1·l1·c7)
+2026-11-16T13:21:36.925428Z  INFO destructibles_bevy::damage: damage #0216 [pane] ShatterPane(b1006531 f1·l2·c1)
+2026-11-16T13:21:36.925533Z  INFO destructibles_bevy::damage: damage #0217 [pane] ShatterPane(b1006531 f1·l2·c2)
+2026-11-16T13:21:36.925665Z  INFO destructibles_bevy::damage: damage #0218 [pane] ShatterPane(b1006531 f1·l2·c3)
+2026-11-16T13:21:36.925766Z  INFO destructibles_bevy::damage: damage #0219 [pane] ShatterPane(b1006531 f1·l2·c4)
+2026-11-16T13:21:36.925873Z  INFO destructibles_bevy::damage: damage #0220 [pane] ShatterPane(b1006531 f1·l2·c5)
+2026-11-16T13:21:36.925969Z  INFO destructibles_bevy::damage: damage #0221 [pane] ShatterPane(b1006531 f1·l2·c6)
+2026-11-16T13:21:36.926069Z  INFO destructibles_bevy::damage: damage #0222 [pane] ShatterPane(b1006531 f1·l2·c7)
+2026-11-16T13:21:36.926165Z  INFO destructibles_bevy::damage: damage #0223 [pane] ShatterPane(b1006531 f1·l3·c1)
+2026-11-16T13:21:36.926268Z  INFO destructibles_bevy::damage: damage #0224 [pane] ShatterPane(b1006531 f1·l3·c2)
+2026-11-16T13:21:36.926368Z  INFO destructibles_bevy::damage: damage #0225 [pane] ShatterPane(b1006531 f1·l3·c3)
+2026-11-16T13:21:36.926470Z  INFO destructibles_bevy::damage: damage #0226 [pane] ShatterPane(b1006531 f1·l3·c4)
+2026-11-16T13:21:36.926568Z  INFO destructibles_bevy::damage: damage #0227 [pane] ShatterPane(b1006531 f1·l3·c5)
+2026-11-16T13:21:36.926693Z  INFO destructibles_bevy::damage: damage #0228 [pane] ShatterPane(b1006531 f1·l3·c6)
+2026-11-16T13:21:36.926802Z  INFO destructibles_bevy::damage: damage #0229 [pane] ShatterPane(b1006531 f1·l3·c7)
+2026-11-16T13:21:36.926906Z  INFO destructibles_bevy::damage: damage #0230 [pane] ShatterPane(b1006531 f1·l4·c2)
+2026-11-16T13:21:36.927015Z  INFO destructibles_bevy::damage: damage #0231 [pane] ShatterPane(b1006531 f1·l4·c3)
+2026-11-16T13:21:36.927112Z  INFO destructibles_bevy::damage: damage #0232 [pane] ShatterPane(b1006531 f1·l4·c4)
+2026-11-16T13:21:36.927211Z  INFO destructibles_bevy::damage: damage #0233 [pane] ShatterPane(b1006531 f1·l4·c5)
+2026-11-16T13:21:36.927309Z  INFO destructibles_bevy::damage: damage #0234 [pane] ShatterPane(b1006531 f1·l4·c6)
+2026-11-16T13:21:37.283648Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=concrete_crack pitch=1.064 vol=0.34 paused=false empty=true
+2026-11-16T13:21:37.283707Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.022 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.283713Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.026 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.283717Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.091 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.283721Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.973 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.283726Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.017 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.283730Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.948 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.283734Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.011 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.283738Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.935 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.283743Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.638 vol=0.34 paused=false empty=false
+2026-11-16T13:21:37.283747Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.938 vol=0.16 paused=false empty=false
+2026-11-16T13:21:37.294927Z  INFO destructibles_bevy::damage: damage #0235 [shard] BreachCell(b1006535 f0·l1·x0 r=2.2 partial=false seed=1006533 E=0.0 MJ)
+2026-11-16T13:21:37.296290Z  INFO destructibles_bevy::breach: BREACH building 1006535 cell f0·l1·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:37.296366Z  INFO destructibles_bevy::damage: damage #0237 [pane] ShatterPane(b1006531 f1·l5·c3)
+2026-11-16T13:21:37.296816Z  INFO destructibles_bevy::damage: damage #0238 [pane] ShatterPane(b1006531 f1·l5·c4)
+2026-11-16T13:21:37.296989Z  INFO destructibles_bevy::damage: damage #0239 [pane] ShatterPane(b1006531 f1·l5·c5)
+2026-11-16T13:21:37.297150Z  INFO destructibles_bevy::damage: damage #0240 [pane] ShatterPane(b1006531 f2·l0·c0)
+2026-11-16T13:21:37.297349Z  INFO destructibles_bevy::damage: damage #0241 [pane] ShatterPane(b1006531 f2·l1·c0)
+2026-11-16T13:21:37.297595Z  INFO destructibles_bevy::damage: damage #0242 [pane] ShatterPane(b1006531 f3·l0·c1)
+2026-11-16T13:21:37.297991Z  INFO destructibles_bevy::damage: damage #0243 [pane] ShatterPane(b1006531 f3·l0·c2)
+2026-11-16T13:21:37.298146Z  INFO destructibles_bevy::damage: damage #0244 [pane] ShatterPane(b1006531 f3·l0·c3)
+2026-11-16T13:21:37.298299Z  INFO destructibles_bevy::damage: damage #0245 [pane] ShatterPane(b1006531 f3·l0·c4)
+2026-11-16T13:21:37.298459Z  INFO destructibles_bevy::damage: damage #0246 [pane] ShatterPane(b1006531 f3·l0·c5)
+2026-11-16T13:21:37.298599Z  INFO destructibles_bevy::damage: damage #0247 [pane] ShatterPane(b1006531 f3·l1·c1)
+2026-11-16T13:21:37.298807Z  INFO destructibles_bevy::damage: damage #0248 [pane] ShatterPane(b1006531 f3·l1·c2)
+2026-11-16T13:21:37.298974Z  INFO destructibles_bevy::damage: damage #0249 [pane] ShatterPane(b1006531 f3·l1·c3)
+2026-11-16T13:21:37.299208Z  INFO destructibles_bevy::damage: damage #0250 [pane] ShatterPane(b1006531 f3·l1·c4)
+2026-11-16T13:21:37.299640Z  INFO destructibles_bevy::damage: damage #0251 [pane] ShatterPane(b1006531 f3·l1·c5)
+2026-11-16T13:21:37.299985Z  INFO destructibles_bevy::damage: damage #0252 [pane] ShatterPane(b1006531 f3·l2·c1)
+2026-11-16T13:21:37.300190Z  INFO destructibles_bevy::damage: damage #0253 [pane] ShatterPane(b1006531 f3·l2·c2)
+2026-11-16T13:21:37.300394Z  INFO destructibles_bevy::damage: damage #0254 [pane] ShatterPane(b1006531 f3·l2·c3)
+2026-11-16T13:21:37.300592Z  INFO destructibles_bevy::damage: damage #0255 [pane] ShatterPane(b1006531 f3·l2·c4)
+2026-11-16T13:21:37.300879Z  INFO destructibles_bevy::damage: damage #0256 [pane] ShatterPane(b1006531 f3·l2·c5)
+2026-11-16T13:21:37.301007Z  INFO destructibles_bevy::damage: damage #0257 [pane] ShatterPane(b1006531 f3·l3·c2)
+2026-11-16T13:21:37.301109Z  INFO destructibles_bevy::damage: damage #0258 [pane] ShatterPane(b1006531 f3·l3·c3)
+2026-11-16T13:21:37.301204Z  INFO destructibles_bevy::damage: damage #0259 [pane] ShatterPane(b1006531 f3·l3·c4)
+2026-11-16T13:21:37.301294Z  INFO destructibles_bevy::damage: damage #0260 [pane] ShatterPane(b1006531 f3·l3·c5)
+2026-11-16T13:21:37.301385Z  INFO destructibles_bevy::damage: damage #0261 [pane] ShatterPane(b1006531 f3·l4·c2)
+2026-11-16T13:21:37.301484Z  INFO destructibles_bevy::damage: damage #0262 [pane] ShatterPane(b1006531 f3·l4·c3)
+2026-11-16T13:21:37.301645Z  INFO destructibles_bevy::damage: damage #0263 [pane] ShatterPane(b1006531 f3·l4·c4)
+2026-11-16T13:21:37.301819Z  INFO destructibles_bevy::damage: damage #0264 [shard] BreachCell(b1006529 f1·l0·x0 r=8.4 partial=true seed=571035362 E=22.2 MJ)
+2026-11-16T13:21:37.302249Z  INFO destructibles_bevy::breach: BREACH building 1006529 cell f1·l0·x0: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:37.302270Z  INFO destructibles_bevy::damage: damage #0266 [collapse] PowerLoss(b1006529 seed=3275091385)
+2026-11-16T13:21:37.302283Z  INFO destructibles_bevy::power: POWER loss building 1006529
+2026-11-16T13:21:37.302289Z  INFO destructibles_bevy::damage: damage #0267 [shard] BreachCell(b1006529 f1·l0·x1 r=8.4 partial=false seed=3158194011 E=22.2 MJ)
+2026-11-16T13:21:37.303597Z  INFO destructibles_bevy::breach: BREACH building 1006529 cell f1·l0·x1: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:37.303739Z  INFO destructibles_bevy::damage: damage #0269 [structural] MassImpact(b1006535 l0 900 kg)
+2026-11-16T13:21:37.303752Z  INFO destructibles_bevy::structure: FALLING MASS: 900 kg onto building 1006535 slab slab l0·s7
+2026-11-16T13:21:37.308078Z  INFO manhattan_viewer::neighborhood: DETAIL b6520: Tier 1 ready at 38.1 m
+2026-11-16T13:21:37.616759Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.022 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.616785Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.930 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.616790Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.954 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.616807Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.080 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.616811Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.033 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.616815Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.051 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.616819Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.967 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.616822Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.943 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.616826Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=0.970 vol=0.28 paused=false empty=false
+2026-11-16T13:21:37.616830Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.553 vol=0.34 paused=false empty=false
+2026-11-16T13:21:37.616834Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.046 vol=0.16 paused=false empty=false
+2026-11-16T13:21:37.621983Z  INFO destructibles_bevy::damage: damage #0270 [collapse] LeakRelocate(b1006529 seed=3450260452 -> (1361.5,1.0,-1089.6))
+2026-11-16T13:21:37.624659Z  INFO destructibles_bevy::damage: damage #0271 [shard] BreachCell(b1006533 f0·l4·x2 r=2.2 partial=false seed=1006535 E=0.0 MJ)
+2026-11-16T13:21:37.626233Z  INFO destructibles_bevy::breach: BREACH building 1006533 cell f0·l4·x2: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:37.626273Z  INFO destructibles_bevy::damage: damage #0273 [structural] FailNode(b1006535 slab l2·s7 seed=1006533)
+2026-11-16T13:21:37.626976Z  INFO destructibles_bevy::damage: damage #0274 [pane] ShatterPane(b1006535 f2·l4·c3)
+2026-11-16T13:21:37.627151Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f2·l4·c3 in building 1006535
+2026-11-16T13:21:37.627160Z  INFO destructibles_bevy::damage: damage #0275 [pane] ShatterPane(b1006535 f3·l3·c1)
+2026-11-16T13:21:37.627182Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f3·l3·c1 in building 1006535
+2026-11-16T13:21:37.627187Z  INFO destructibles_bevy::damage: damage #0276 [pane] ShatterPane(b1006535 f3·l4·c1)
+2026-11-16T13:21:37.627204Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f3·l4·c1 in building 1006535
+2026-11-16T13:21:37.627209Z  INFO destructibles_bevy::damage: damage #0277 [pane] ShatterPane(b1006535 f2·l3·c2)
+2026-11-16T13:21:37.627226Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f2·l3·c2 in building 1006535
+2026-11-16T13:21:37.627231Z  INFO destructibles_bevy::damage: damage #0278 [structural] FailNode(b1006535 column l1·c9 seed=1006533)
+2026-11-16T13:21:37.627467Z  INFO destructibles_bevy::damage: damage #0279 [pane] ShatterPane(b1006535 f2·l3·c2)
+2026-11-16T13:21:37.627640Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f2·l3·c2 in building 1006535
+2026-11-16T13:21:37.627659Z  INFO destructibles_bevy::damage: damage #0280 [pane] ShatterPane(b1006535 f2·l2·c4)
+2026-11-16T13:21:37.627693Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f2·l2·c4 in building 1006535
+2026-11-16T13:21:37.627737Z  INFO destructibles_bevy::damage: damage #0281 [pane] ShatterPane(b1006535 f2·l3·c4)
+2026-11-16T13:21:37.627763Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f2·l3·c4 in building 1006535
+2026-11-16T13:21:37.627769Z  INFO destructibles_bevy::damage: damage #0282 [pane] ShatterPane(b1006535 f2·l2·c1)
+2026-11-16T13:21:37.627791Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f2·l2·c1 in building 1006535
+2026-11-16T13:21:37.627802Z  INFO destructibles_bevy::damage: damage #0283 [shard] BreachCell(b1006531 f1·l2·x1 r=2.2 partial=false seed=1006530 E=0.0 MJ)
+2026-11-16T13:21:37.629155Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l2·x1: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:37.629270Z  INFO destructibles_bevy::damage: damage #0285 [shard] BreachCell(b1006529 f1·l1·x0 r=8.4 partial=true seed=571035362 E=22.2 MJ)
+2026-11-16T13:21:37.630021Z  INFO destructibles_bevy::breach: BREACH building 1006529 cell f1·l1·x0: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:37.630065Z  INFO destructibles_bevy::damage: damage #0287 [shard] BreachCell(b1006529 f1·l1·x1 r=8.4 partial=false seed=3158194011 E=22.2 MJ)
+2026-11-16T13:21:37.631201Z  INFO destructibles_bevy::breach: BREACH building 1006529 cell f1·l1·x1: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:37.631261Z  INFO destructibles_bevy::damage: damage #0289 [shard] BreachCell(b1006529 f1·l2·x1 r=8.4 partial=true seed=3158194011 E=22.2 MJ)
+2026-11-16T13:21:37.632204Z  INFO destructibles_bevy::breach: BREACH building 1006529 cell f1·l2·x1: 10 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:37.632257Z  INFO destructibles_bevy::damage: damage #0291 [pane] ShatterPane(b1006529 f0·l0·c0)
+2026-11-16T13:21:37.632589Z  INFO destructibles_bevy::damage: damage #0292 [pane] ShatterPane(b1006529 f0·l0·c1)
+2026-11-16T13:21:37.632902Z  INFO destructibles_bevy::damage: damage #0293 [pane] ShatterPane(b1006529 f0·l1·c0)
+2026-11-16T13:21:37.633166Z  INFO destructibles_bevy::damage: damage #0294 [pane] ShatterPane(b1006529 f0·l1·c1)
+2026-11-16T13:21:37.633434Z  INFO destructibles_bevy::damage: damage #0295 [pane] ShatterPane(b1006529 f0·l2·c0)
+2026-11-16T13:21:37.633788Z  INFO destructibles_bevy::damage: damage #0296 [pane] ShatterPane(b1006529 f0·l2·c1)
+2026-11-16T13:21:37.634044Z  INFO destructibles_bevy::damage: damage #0297 [pane] ShatterPane(b1006529 f0·l3·c0)
+2026-11-16T13:21:37.634276Z  INFO destructibles_bevy::damage: damage #0298 [pane] ShatterPane(b1006529 f0·l3·c1)
+2026-11-16T13:21:37.634440Z  INFO destructibles_bevy::damage: damage #0299 [pane] ShatterPane(b1006529 f0·l4·c1)
+2026-11-16T13:21:37.634627Z  INFO destructibles_bevy::damage: damage #0300 [pane] ShatterPane(b1006529 f1·l0·c0)
+2026-11-16T13:21:37.634876Z  INFO destructibles_bevy::damage: damage #0301 [pane] ShatterPane(b1006529 f1·l0·c1)
+2026-11-16T13:21:37.636347Z  INFO manhattan_viewer::neighborhood: DETAIL b6519: Tier 1 ready at 36.2 m
+2026-11-16T13:21:37.885384Z  INFO destructibles_bevy::structure: STRUCTURE audio: groan loop stopped
+2026-11-16T13:21:37.885551Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.989 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.885567Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.054 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.885572Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.000 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.885576Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.072 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.885580Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.071 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.885588Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.987 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.885592Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.933 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.885596Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.009 vol=0.68 paused=false empty=false
+2026-11-16T13:21:37.885600Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.654 vol=0.34 paused=false empty=false
+2026-11-16T13:21:37.885605Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.045 vol=0.16 paused=false empty=false
+2026-11-16T13:21:37.889814Z  INFO destructibles_bevy::damage: damage #0302 [collapse] FireRelocate(b1006535 seed=3799361788 l2 -> (1348.0,3.0,-1047.7))
+2026-11-16T13:21:37.892276Z  INFO destructibles_bevy::damage: damage #0303 [shard] BreachCell(b1006531 f1·l1·x3 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:37.893660Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l1·x3: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:37.893698Z  INFO destructibles_bevy::damage: damage #0305 [shard] BreachCell(b1006531 f1·l3·x2 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:37.894688Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l3·x2: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:37.894733Z  INFO destructibles_bevy::damage: damage #0307 [pane] ShatterPane(b1006529 f1·l0·c2)
+2026-11-16T13:21:37.894972Z  INFO destructibles_bevy::damage: damage #0308 [pane] ShatterPane(b1006529 f1·l0·c3)
+2026-11-16T13:21:37.895098Z  INFO destructibles_bevy::damage: damage #0309 [pane] ShatterPane(b1006529 f1·l0·c4)
+2026-11-16T13:21:37.895251Z  INFO destructibles_bevy::damage: damage #0310 [pane] ShatterPane(b1006529 f1·l1·c0)
+2026-11-16T13:21:37.895374Z  INFO destructibles_bevy::damage: damage #0311 [pane] ShatterPane(b1006529 f1·l1·c1)
+2026-11-16T13:21:37.895485Z  INFO destructibles_bevy::damage: damage #0312 [pane] ShatterPane(b1006529 f1·l1·c2)
+2026-11-16T13:21:37.895657Z  INFO destructibles_bevy::damage: damage #0313 [pane] ShatterPane(b1006529 f1·l1·c3)
+2026-11-16T13:21:37.895798Z  INFO destructibles_bevy::damage: damage #0314 [pane] ShatterPane(b1006529 f1·l1·c4)
+2026-11-16T13:21:37.895953Z  INFO destructibles_bevy::damage: damage #0315 [pane] ShatterPane(b1006529 f1·l2·c0)
+2026-11-16T13:21:37.896129Z  INFO destructibles_bevy::damage: damage #0316 [pane] ShatterPane(b1006529 f1·l2·c1)
+2026-11-16T13:21:37.896244Z  INFO destructibles_bevy::damage: damage #0317 [pane] ShatterPane(b1006529 f1·l2·c2)
+2026-11-16T13:21:37.896332Z  INFO destructibles_bevy::damage: damage #0318 [pane] ShatterPane(b1006529 f1·l2·c3)
+2026-11-16T13:21:37.896444Z  INFO destructibles_bevy::damage: damage #0319 [pane] ShatterPane(b1006529 f1·l2·c4)
+2026-11-16T13:21:37.896534Z  INFO destructibles_bevy::damage: damage #0320 [pane] ShatterPane(b1006529 f1·l3·c0)
+2026-11-16T13:21:37.896643Z  INFO destructibles_bevy::damage: damage #0321 [pane] ShatterPane(b1006529 f1·l3·c1)
+2026-11-16T13:21:37.896740Z  INFO destructibles_bevy::damage: damage #0322 [pane] ShatterPane(b1006529 f1·l3·c2)
+2026-11-16T13:21:37.896821Z  INFO destructibles_bevy::damage: damage #0323 [pane] ShatterPane(b1006529 f1·l3·c3)
+2026-11-16T13:21:37.896911Z  INFO destructibles_bevy::damage: damage #0324 [pane] ShatterPane(b1006529 f1·l3·c4)
+2026-11-16T13:21:37.896995Z  INFO destructibles_bevy::damage: damage #0325 [pane] ShatterPane(b1006529 f1·l4·c0)
+2026-11-16T13:21:37.897104Z  INFO destructibles_bevy::damage: damage #0326 [pane] ShatterPane(b1006529 f1·l4·c1)
+2026-11-16T13:21:37.897187Z  INFO destructibles_bevy::damage: damage #0327 [pane] ShatterPane(b1006529 f1·l4·c2)
+2026-11-16T13:21:37.897290Z  INFO destructibles_bevy::damage: damage #0328 [pane] ShatterPane(b1006529 f1·l4·c3)
+2026-11-16T13:21:37.897377Z  INFO destructibles_bevy::damage: damage #0329 [pane] ShatterPane(b1006529 f1·l4·c4)
+2026-11-16T13:21:37.897465Z  INFO destructibles_bevy::damage: damage #0330 [pane] ShatterPane(b1006529 f1·l5·c0)
+2026-11-16T13:21:37.897577Z  INFO destructibles_bevy::damage: damage #0331 [pane] ShatterPane(b1006529 f1·l5·c1)
+2026-11-16T13:21:37.897685Z  INFO destructibles_bevy::damage: damage #0332 [pane] ShatterPane(b1006529 f1·l5·c2)
+2026-11-16T13:21:37.897774Z  INFO destructibles_bevy::damage: damage #0333 [pane] ShatterPane(b1006529 f1·l5·c3)
+2026-11-16T13:21:37.897860Z  INFO destructibles_bevy::damage: damage #0334 [pane] ShatterPane(b1006529 f2·l0·c0)
+2026-11-16T13:21:37.897944Z  INFO destructibles_bevy::damage: damage #0335 [pane] ShatterPane(b1006529 f2·l0·c1)
+2026-11-16T13:21:37.898033Z  INFO destructibles_bevy::damage: damage #0336 [pane] ShatterPane(b1006529 f2·l1·c0)
+2026-11-16T13:21:37.898116Z  INFO destructibles_bevy::damage: damage #0337 [pane] ShatterPane(b1006529 f2·l1·c1)
+2026-11-16T13:21:37.898199Z  INFO destructibles_bevy::damage: damage #0338 [pane] ShatterPane(b1006529 f2·l2·c0)
+2026-11-16T13:21:37.898286Z  INFO destructibles_bevy::damage: damage #0339 [pane] ShatterPane(b1006529 f2·l2·c1)
+2026-11-16T13:21:37.898369Z  INFO destructibles_bevy::damage: damage #0340 [pane] ShatterPane(b1006529 f2·l3·c0)
+2026-11-16T13:21:37.898452Z  INFO destructibles_bevy::damage: damage #0341 [pane] ShatterPane(b1006529 f2·l4·c0)
+2026-11-16T13:21:37.898536Z  INFO destructibles_bevy::damage: damage #0342 [pane] ShatterPane(b1006529 f3·l0·c0)
+2026-11-16T13:21:37.898663Z  INFO destructibles_bevy::damage: damage #0343 [pane] ShatterPane(b1006529 f3·l0·c1)
+2026-11-16T13:21:37.898755Z  INFO destructibles_bevy::damage: damage #0344 [pane] ShatterPane(b1006529 f3·l0·c2)
+2026-11-16T13:21:37.898837Z  INFO destructibles_bevy::damage: damage #0345 [pane] ShatterPane(b1006529 f3·l0·c3)
+2026-11-16T13:21:37.898937Z  INFO destructibles_bevy::damage: damage #0346 [pane] ShatterPane(b1006529 f3·l0·c4)
+2026-11-16T13:21:37.899021Z  INFO destructibles_bevy::damage: damage #0347 [pane] ShatterPane(b1006529 f3·l1·c0)
+2026-11-16T13:21:37.899104Z  INFO destructibles_bevy::damage: damage #0348 [pane] ShatterPane(b1006529 f3·l1·c1)
+2026-11-16T13:21:37.899192Z  INFO destructibles_bevy::damage: damage #0349 [pane] ShatterPane(b1006529 f3·l1·c2)
+2026-11-16T13:21:37.899306Z  INFO destructibles_bevy::damage: damage #0350 [pane] ShatterPane(b1006529 f3·l1·c3)
+2026-11-16T13:21:37.899390Z  INFO destructibles_bevy::damage: damage #0351 [pane] ShatterPane(b1006529 f3·l1·c4)
+2026-11-16T13:21:37.899472Z  INFO destructibles_bevy::damage: damage #0352 [pane] ShatterPane(b1006529 f3·l2·c0)
+2026-11-16T13:21:37.899558Z  INFO destructibles_bevy::damage: damage #0353 [pane] ShatterPane(b1006529 f3·l2·c1)
+2026-11-16T13:21:37.899667Z  INFO destructibles_bevy::damage: damage #0354 [pane] ShatterPane(b1006529 f3·l2·c2)
+2026-11-16T13:21:37.899767Z  INFO destructibles_bevy::damage: damage #0355 [pane] ShatterPane(b1006529 f3·l2·c3)
+2026-11-16T13:21:37.899872Z  INFO destructibles_bevy::damage: damage #0356 [pane] ShatterPane(b1006529 f3·l2·c4)
+2026-11-16T13:21:37.899965Z  INFO destructibles_bevy::damage: damage #0357 [pane] ShatterPane(b1006529 f3·l3·c1)
+2026-11-16T13:21:37.900054Z  INFO destructibles_bevy::damage: damage #0358 [pane] ShatterPane(b1006529 f3·l3·c2)
+2026-11-16T13:21:37.900138Z  INFO destructibles_bevy::damage: damage #0359 [pane] ShatterPane(b1006529 f3·l3·c3)
+2026-11-16T13:21:37.900227Z  INFO destructibles_bevy::damage: damage #0360 [pane] ShatterPane(b1006529 f3·l4·c2)
+2026-11-16T13:21:37.900327Z  INFO destructibles_bevy::damage: damage #0361 [shard] BreachCell(b1006521 f1·l0·x2 r=8.4 partial=false seed=3460335423 E=22.2 MJ)
+2026-11-16T13:21:37.901500Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f1·l0·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:37.901572Z  INFO destructibles_bevy::damage: damage #0363 [collapse] PowerLoss(b1006521 seed=3609112133)
+2026-11-16T13:21:37.901604Z  INFO destructibles_bevy::power: POWER loss building 1006521
+2026-11-16T13:21:37.906723Z  INFO destructibles_bevy::damage: damage #0364 [collapse] FireStage(b1006535 seed=1809946904 Ignited->Spread)
+2026-11-16T13:21:37.906753Z  INFO destructibles_bevy::damage: damage #0365 [collapse] FireStage(b1006535 seed=3799361788 Ignited->Spread)
+2026-11-16T13:21:38.173017Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.020 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.173116Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.075 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.173121Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.973 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.173171Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.929 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.173177Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.976 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.173183Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.932 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.173188Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.919 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.173192Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.908 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.173197Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=1.012 vol=0.28 paused=false empty=false
+2026-11-16T13:21:38.173202Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.562 vol=0.34 paused=false empty=false
+2026-11-16T13:21:38.173208Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.083 vol=0.16 paused=false empty=false
+2026-11-16T13:21:38.177506Z  INFO destructibles_bevy::damage: damage #0366 [shard] BreachCell(b1006531 f1·l2·x3 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:38.178489Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l2·x3: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:38.178518Z  INFO destructibles_bevy::damage: damage #0368 [shard] BreachCell(b1006531 f1·l3·x1 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:38.179294Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l3·x1: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:38.179351Z  INFO destructibles_bevy::damage: damage #0370 [shard] BreachCell(b1006521 f1·l0·x3 r=8.4 partial=true seed=680008038 E=22.2 MJ)
+2026-11-16T13:21:38.179741Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f1·l0·x3: 5 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:38.179758Z  INFO destructibles_bevy::damage: damage #0372 [shard] BreachCell(b1006521 f1·l1·x2 r=8.4 partial=false seed=3460335423 E=22.2 MJ)
+2026-11-16T13:21:38.180372Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f1·l1·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:38.180402Z  INFO destructibles_bevy::damage: damage #0374 [shard] BreachCell(b1006521 f1·l1·x3 r=8.4 partial=true seed=680008038 E=22.2 MJ)
+2026-11-16T13:21:38.180775Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f1·l1·x3: 4 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:38.180793Z  INFO destructibles_bevy::damage: damage #0376 [shard] BreachCell(b1006521 f1·l2·x2 r=8.4 partial=true seed=3460335423 E=22.2 MJ)
+2026-11-16T13:21:38.181079Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f1·l2·x2: 11 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:38.181092Z  INFO destructibles_bevy::damage: damage #0378 [shard] BreachCell(b1006521 f3·l0·x0 r=8.4 partial=true seed=4063130701 E=22.2 MJ)
+2026-11-16T13:21:38.181382Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f3·l0·x0: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:38.181396Z  INFO destructibles_bevy::damage: damage #0380 [shard] BreachCell(b1006521 f3·l0·x1 r=8.4 partial=true seed=1813581300 E=22.2 MJ)
+2026-11-16T13:21:38.181688Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f3·l0·x1: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:38.181701Z  INFO destructibles_bevy::damage: damage #0382 [shard] BreachCell(b1006521 f3·l1·x0 r=8.4 partial=true seed=4063130701 E=22.2 MJ)
+2026-11-16T13:21:38.181984Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f3·l1·x0: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:38.182003Z  INFO destructibles_bevy::damage: damage #0384 [shard] BreachCell(b1006521 f3·l1·x1 r=8.4 partial=true seed=1813581300 E=22.2 MJ)
+2026-11-16T13:21:38.182243Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f3·l1·x1: 8 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:38.182252Z  INFO destructibles_bevy::damage: damage #0386 [pane] ShatterPane(b1006521 f1·l0·c1)
+2026-11-16T13:21:38.182377Z  INFO destructibles_bevy::damage: damage #0387 [pane] ShatterPane(b1006521 f1·l0·c2)
+2026-11-16T13:21:38.182461Z  INFO destructibles_bevy::damage: damage #0388 [pane] ShatterPane(b1006521 f1·l0·c3)
+2026-11-16T13:21:38.182546Z  INFO destructibles_bevy::damage: damage #0389 [pane] ShatterPane(b1006521 f1·l0·c4)
+2026-11-16T13:21:38.182695Z  INFO destructibles_bevy::damage: damage #0390 [pane] ShatterPane(b1006521 f1·l0·c5)
+2026-11-16T13:21:38.182787Z  INFO destructibles_bevy::damage: damage #0391 [pane] ShatterPane(b1006521 f1·l0·c6)
+2026-11-16T13:21:38.182862Z  INFO destructibles_bevy::damage: damage #0392 [pane] ShatterPane(b1006521 f1·l1·c1)
+2026-11-16T13:21:38.182945Z  INFO destructibles_bevy::damage: damage #0393 [pane] ShatterPane(b1006521 f1·l1·c2)
+2026-11-16T13:21:38.183020Z  INFO destructibles_bevy::damage: damage #0394 [pane] ShatterPane(b1006521 f1·l1·c3)
+2026-11-16T13:21:38.183100Z  INFO destructibles_bevy::damage: damage #0395 [pane] ShatterPane(b1006521 f1·l1·c4)
+2026-11-16T13:21:38.183174Z  INFO destructibles_bevy::damage: damage #0396 [pane] ShatterPane(b1006521 f1·l1·c5)
+2026-11-16T13:21:38.183251Z  INFO destructibles_bevy::damage: damage #0397 [pane] ShatterPane(b1006521 f1·l1·c6)
+2026-11-16T13:21:38.183321Z  INFO destructibles_bevy::damage: damage #0398 [pane] ShatterPane(b1006521 f1·l2·c2)
+2026-11-16T13:21:38.183392Z  INFO destructibles_bevy::damage: damage #0399 [pane] ShatterPane(b1006521 f1·l2·c3)
+2026-11-16T13:21:38.183463Z  INFO destructibles_bevy::damage: damage #0400 [pane] ShatterPane(b1006521 f1·l2·c4)
+2026-11-16T13:21:38.183559Z  INFO destructibles_bevy::damage: damage #0401 [pane] ShatterPane(b1006521 f1·l2·c5)
+2026-11-16T13:21:38.183707Z  INFO destructibles_bevy::damage: damage #0402 [pane] ShatterPane(b1006521 f1·l2·c6)
+2026-11-16T13:21:38.183820Z  INFO destructibles_bevy::damage: damage #0403 [pane] ShatterPane(b1006521 f1·l3·c2)
+2026-11-16T13:21:38.184003Z  INFO destructibles_bevy::damage: damage #0404 [pane] ShatterPane(b1006521 f1·l3·c3)
+2026-11-16T13:21:38.184205Z  INFO destructibles_bevy::damage: damage #0405 [pane] ShatterPane(b1006521 f1·l3·c4)
+2026-11-16T13:21:38.184341Z  INFO destructibles_bevy::damage: damage #0406 [pane] ShatterPane(b1006521 f1·l3·c5)
+2026-11-16T13:21:38.184467Z  INFO destructibles_bevy::damage: damage #0407 [pane] ShatterPane(b1006521 f1·l3·c6)
+2026-11-16T13:21:38.184600Z  INFO destructibles_bevy::damage: damage #0408 [pane] ShatterPane(b1006521 f1·l4·c2)
+2026-11-16T13:21:38.184713Z  INFO destructibles_bevy::damage: damage #0409 [pane] ShatterPane(b1006521 f1·l4·c3)
+2026-11-16T13:21:38.184866Z  INFO destructibles_bevy::damage: damage #0410 [pane] ShatterPane(b1006521 f1·l4·c4)
+2026-11-16T13:21:38.184982Z  INFO destructibles_bevy::damage: damage #0411 [pane] ShatterPane(b1006521 f1·l4·c5)
+2026-11-16T13:21:38.185076Z  INFO destructibles_bevy::damage: damage #0412 [pane] ShatterPane(b1006521 f1·l4·c6)
+2026-11-16T13:21:38.185165Z  INFO destructibles_bevy::damage: damage #0413 [pane] ShatterPane(b1006521 f1·l5·c3)
+2026-11-16T13:21:38.185290Z  INFO destructibles_bevy::damage: damage #0414 [pane] ShatterPane(b1006521 f1·l5·c4)
+2026-11-16T13:21:38.188259Z  INFO manhattan_viewer::neighborhood: DETAIL b6528: Tier 1 ready at 39.9 m
+2026-11-16T13:21:38.483292Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.957 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.483398Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.049 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.483410Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.072 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.483416Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.924 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.483420Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.947 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.483425Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.085 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.483430Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.941 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.483435Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.017 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.483441Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.581 vol=0.34 paused=false empty=false
+2026-11-16T13:21:38.483446Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.031 vol=0.16 paused=false empty=false
+2026-11-16T13:21:38.490093Z  INFO destructibles_bevy::damage: damage #0415 [shard] BreachCell(b1006529 f1·l2·x0 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:38.491977Z  INFO destructibles_bevy::breach: BREACH building 1006529 cell f1·l2·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:38.492018Z  INFO destructibles_bevy::damage: damage #0417 [shard] BreachCell(b1006533 f0·l5·x2 r=2.2 partial=false seed=1006535 E=0.0 MJ)
+2026-11-16T13:21:38.493203Z  INFO destructibles_bevy::breach: BREACH building 1006533 cell f0·l5·x2: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:38.493230Z  INFO destructibles_bevy::damage: damage #0419 [shard] BreachCell(b1006531 f1·l1·x0 r=2.2 partial=false seed=1006530 E=0.0 MJ)
+2026-11-16T13:21:38.494076Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l1·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:38.494106Z  INFO destructibles_bevy::damage: damage #0421 [pane] ShatterPane(b1006521 f1·l5·c5)
+2026-11-16T13:21:38.494266Z  INFO destructibles_bevy::damage: damage #0422 [pane] ShatterPane(b1006521 f1·l5·c6)
+2026-11-16T13:21:38.494378Z  INFO destructibles_bevy::damage: damage #0423 [pane] ShatterPane(b1006521 f2·l0·c0)
+2026-11-16T13:21:38.494472Z  INFO destructibles_bevy::damage: damage #0424 [pane] ShatterPane(b1006521 f2·l0·c1)
+2026-11-16T13:21:38.494549Z  INFO destructibles_bevy::damage: damage #0425 [pane] ShatterPane(b1006521 f2·l1·c0)
+2026-11-16T13:21:38.494639Z  INFO destructibles_bevy::damage: damage #0426 [pane] ShatterPane(b1006521 f2·l1·c1)
+2026-11-16T13:21:38.494738Z  INFO destructibles_bevy::damage: damage #0427 [pane] ShatterPane(b1006521 f2·l2·c0)
+2026-11-16T13:21:38.494836Z  INFO destructibles_bevy::damage: damage #0428 [pane] ShatterPane(b1006521 f2·l2·c1)
+2026-11-16T13:21:38.494923Z  INFO destructibles_bevy::damage: damage #0429 [pane] ShatterPane(b1006521 f2·l3·c0)
+2026-11-16T13:21:38.495017Z  INFO destructibles_bevy::damage: damage #0430 [pane] ShatterPane(b1006521 f2·l3·c1)
+2026-11-16T13:21:38.495101Z  INFO destructibles_bevy::damage: damage #0431 [pane] ShatterPane(b1006521 f2·l4·c0)
+2026-11-16T13:21:38.495170Z  INFO destructibles_bevy::damage: damage #0432 [pane] ShatterPane(b1006521 f2·l4·c1)
+2026-11-16T13:21:38.495241Z  INFO destructibles_bevy::damage: damage #0433 [pane] ShatterPane(b1006521 f2·l5·c0)
+2026-11-16T13:21:38.495311Z  INFO destructibles_bevy::damage: damage #0434 [pane] ShatterPane(b1006521 f3·l0·c0)
+2026-11-16T13:21:38.495381Z  INFO destructibles_bevy::damage: damage #0435 [pane] ShatterPane(b1006521 f3·l0·c1)
+2026-11-16T13:21:38.495451Z  INFO destructibles_bevy::damage: damage #0436 [pane] ShatterPane(b1006521 f3·l0·c2)
+2026-11-16T13:21:38.495538Z  INFO destructibles_bevy::damage: damage #0437 [pane] ShatterPane(b1006521 f3·l0·c3)
+2026-11-16T13:21:38.495636Z  INFO destructibles_bevy::damage: damage #0438 [pane] ShatterPane(b1006521 f3·l0·c4)
+2026-11-16T13:21:38.495715Z  INFO destructibles_bevy::damage: damage #0439 [pane] ShatterPane(b1006521 f3·l0·c5)
+2026-11-16T13:21:38.495797Z  INFO destructibles_bevy::damage: damage #0440 [pane] ShatterPane(b1006521 f3·l1·c0)
+2026-11-16T13:21:38.495867Z  INFO destructibles_bevy::damage: damage #0441 [pane] ShatterPane(b1006521 f3·l1·c1)
+2026-11-16T13:21:38.495943Z  INFO destructibles_bevy::damage: damage #0442 [pane] ShatterPane(b1006521 f3·l1·c2)
+2026-11-16T13:21:38.496013Z  INFO destructibles_bevy::damage: damage #0443 [pane] ShatterPane(b1006521 f3·l1·c3)
+2026-11-16T13:21:38.496094Z  INFO destructibles_bevy::damage: damage #0444 [pane] ShatterPane(b1006521 f3·l1·c4)
+2026-11-16T13:21:38.496180Z  INFO destructibles_bevy::damage: damage #0445 [pane] ShatterPane(b1006521 f3·l2·c0)
+2026-11-16T13:21:38.496249Z  INFO destructibles_bevy::damage: damage #0446 [pane] ShatterPane(b1006521 f3·l2·c1)
+2026-11-16T13:21:38.496317Z  INFO destructibles_bevy::damage: damage #0447 [pane] ShatterPane(b1006521 f3·l2·c2)
+2026-11-16T13:21:38.496384Z  INFO destructibles_bevy::damage: damage #0448 [pane] ShatterPane(b1006521 f3·l2·c3)
+2026-11-16T13:21:38.496454Z  INFO destructibles_bevy::damage: damage #0449 [pane] ShatterPane(b1006521 f3·l2·c4)
+2026-11-16T13:21:38.496527Z  INFO destructibles_bevy::damage: damage #0450 [pane] ShatterPane(b1006521 f3·l3·c0)
+2026-11-16T13:21:38.496596Z  INFO destructibles_bevy::damage: damage #0451 [pane] ShatterPane(b1006521 f3·l3·c1)
+2026-11-16T13:21:38.496683Z  INFO destructibles_bevy::damage: damage #0452 [pane] ShatterPane(b1006521 f3·l3·c2)
+2026-11-16T13:21:38.496750Z  INFO destructibles_bevy::damage: damage #0453 [pane] ShatterPane(b1006521 f3·l3·c3)
+2026-11-16T13:21:38.496817Z  INFO destructibles_bevy::damage: damage #0454 [pane] ShatterPane(b1006521 f3·l3·c4)
+2026-11-16T13:21:38.496886Z  INFO destructibles_bevy::damage: damage #0455 [pane] ShatterPane(b1006521 f3·l4·c0)
+2026-11-16T13:21:38.496954Z  INFO destructibles_bevy::damage: damage #0456 [pane] ShatterPane(b1006521 f3·l4·c1)
+2026-11-16T13:21:38.497024Z  INFO destructibles_bevy::damage: damage #0457 [pane] ShatterPane(b1006521 f3·l4·c2)
+2026-11-16T13:21:38.497095Z  INFO destructibles_bevy::damage: damage #0458 [pane] ShatterPane(b1006521 f3·l4·c3)
+2026-11-16T13:21:38.497164Z  INFO destructibles_bevy::damage: damage #0459 [pane] ShatterPane(b1006521 f3·l5·c0)
+2026-11-16T13:21:38.497234Z  INFO destructibles_bevy::damage: damage #0460 [pane] ShatterPane(b1006521 f3·l5·c1)
+2026-11-16T13:21:38.497303Z  INFO destructibles_bevy::damage: damage #0461 [pane] ShatterPane(b1006521 f3·l5·c2)
+2026-11-16T13:21:38.499035Z  INFO manhattan_viewer::neighborhood: DETAIL b6538: Tier 1 ready at 41.6 m
+2026-11-16T13:21:38.753794Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.975 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.753828Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.025 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.753833Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.097 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.753837Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.939 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.753845Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.044 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.753849Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.966 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.753854Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.094 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.753858Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.008 vol=0.68 paused=false empty=false
+2026-11-16T13:21:38.753896Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.656 vol=0.34 paused=false empty=false
+2026-11-16T13:21:38.753902Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.965 vol=0.16 paused=false empty=false
+2026-11-16T13:21:38.759283Z  INFO destructibles_bevy::damage: damage #0462 [structural] SagSlab(b1006521 slab l1·s3 depth=0.04 dir=(0.0,1.0) seed=1006523)
+2026-11-16T13:21:38.759404Z  INFO destructibles_bevy::damage: damage #0463 [shard] BreachCell(b1006521 f2·l1·x0 r=2.2 partial=false seed=1006522 E=0.0 MJ)
+2026-11-16T13:21:38.760277Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f2·l1·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:38.760296Z  INFO destructibles_bevy::damage: damage #0465 [shard] BreachCell(b1006531 f1·l3·x3 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:38.760854Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l3·x3: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:38.760866Z  INFO destructibles_bevy::damage: damage #0467 [shard] BreachCell(b1006531 f1·l4·x2 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:38.761479Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l4·x2: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:38.764925Z  INFO manhattan_viewer::neighborhood: DETAIL b6496: Tier 1 ready at 48.2 m
+2026-11-16T13:21:38.973145Z  INFO destructibles_bevy::structure: STRUCTURE audio: groan loop started
+2026-11-16T13:21:38.973381Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.619 vol=0.34 paused=false empty=false
+2026-11-16T13:21:38.973409Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.028 vol=0.16 paused=false empty=false
+2026-11-16T13:21:38.981432Z  INFO destructibles_bevy::damage: damage #0469 [shard] BreachCell(b1006531 f1·l2·x0 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:38.982553Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l2·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:38.984723Z  INFO manhattan_viewer::neighborhood: DETAIL b6539: Tier 1 ready at 43.0 m
+2026-11-16T13:21:39.187545Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.598 vol=0.34 paused=false empty=false
+2026-11-16T13:21:39.187595Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.068 vol=0.16 paused=false empty=false
+2026-11-16T13:21:39.193787Z  INFO destructibles_bevy::damage: damage #0471 [shard] BreachCell(b1006531 f1·l4·x1 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:39.194973Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l4·x1: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:39.195000Z  INFO destructibles_bevy::damage: damage #0473 [shard] BreachCell(b1006531 f1·l4·x3 r=2.2 partial=false seed=1006529 E=0.0 MJ)
+2026-11-16T13:21:39.195962Z  INFO destructibles_bevy::breach: BREACH building 1006531 cell f1·l4·x3: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:39.413244Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.553 vol=0.34 paused=false empty=false
+2026-11-16T13:21:39.413300Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.955 vol=0.16 paused=false empty=false
+2026-11-16T13:21:39.416307Z  INFO destructibles_bevy::damage: damage #0475 [shard] BreachCell(b1006521 f1·l2·x3 r=2.2 partial=false seed=1006523 E=0.0 MJ)
+2026-11-16T13:21:39.417601Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f1·l2·x3: 8 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:39.624818Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.627 vol=0.34 paused=false empty=false
+2026-11-16T13:21:39.624861Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.062 vol=0.16 paused=false empty=false
+2026-11-16T13:21:39.630200Z  INFO destructibles_bevy::damage: damage #0477 [structural] SagSlab(b1006521 slab l1·s3 depth=0.45 dir=(0.0,1.0) seed=1006523)
+2026-11-16T13:21:39.630372Z  INFO destructibles_bevy::damage: damage #0478 [structural] ShedChunks(b1006521 slab l1·s3 n=2 seed=1006523)
+2026-11-16T13:21:39.833119Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=concrete_crack pitch=0.952 vol=0.34 paused=false empty=false
+2026-11-16T13:21:39.833180Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.584 vol=0.34 paused=false empty=false
+2026-11-16T13:21:39.833190Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.082 vol=0.16 paused=false empty=false
+2026-11-16T13:21:39.845475Z  INFO destructibles_bevy::damage: damage #0479 [shard] BreachCell(b1006521 f2·l2·x0 r=2.2 partial=false seed=1006522 E=0.0 MJ)
+2026-11-16T13:21:39.846352Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f2·l2·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:39.846367Z  INFO destructibles_bevy::damage: damage #0481 [structural] SagSlab(b1006521 slab l2·s3 depth=0.03 dir=(0.0,1.0) seed=1006523)
+2026-11-16T13:21:39.847757Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6494 (1.11 ms)
+2026-11-16T13:21:39.848556Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6495 (0.78 ms)
+2026-11-16T13:21:40.034741Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.567 vol=0.34 paused=false empty=false
+2026-11-16T13:21:40.034834Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.045 vol=0.16 paused=false empty=false
+2026-11-16T13:21:40.046641Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6500 (1.14 ms)
+2026-11-16T13:21:40.046985Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6504 (0.32 ms)
+2026-11-16T13:21:40.245596Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=concrete_crack pitch=1.093 vol=0.34 paused=false empty=false
+2026-11-16T13:21:40.245723Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.581 vol=0.34 paused=false empty=false
+2026-11-16T13:21:40.245740Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.974 vol=0.16 paused=false empty=false
+2026-11-16T13:21:40.264401Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6505 (5.81 ms)
+2026-11-16T13:21:40.268015Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6507 (3.56 ms)
+2026-11-16T13:21:40.270141Z  INFO manhattan_viewer::neighborhood: DETAIL b5893: Tier 1 ready at 15.3 m
+2026-11-16T13:21:40.273069Z  INFO destructibles_bevy::damage: damage #0482 [collapse] FireStage(b1006529 seed=854647801 Ignited->Spread)
+2026-11-16T13:21:40.273090Z  INFO destructibles_bevy::damage: damage #0483 [collapse] FireStage(b1006529 seed=1983576843 Ignited->Spread)
+2026-11-16T13:21:40.273093Z  INFO destructibles_bevy::damage: damage #0484 [collapse] FireStage(b1006529 seed=3450260439 Ignited->Spread)
+2026-11-16T13:21:40.431543Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.616 vol=0.34 paused=false empty=false
+2026-11-16T13:21:40.431592Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.057 vol=0.16 paused=false empty=false
+2026-11-16T13:21:40.445810Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6508 (1.82 ms)
+2026-11-16T13:21:40.447771Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6522 (1.92 ms)
+2026-11-16T13:21:40.617124Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=concrete_crack pitch=0.989 vol=0.34 paused=false empty=false
+2026-11-16T13:21:40.617178Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=1.188 vol=0.34 paused=false empty=false
+2026-11-16T13:21:40.617187Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.922 vol=0.16 paused=false empty=false
+2026-11-16T13:21:40.627900Z  INFO destructibles_bevy::damage: damage #0485 [structural] FailNode(b1006521 slab l1·s3 seed=1006523)
+2026-11-16T13:21:40.628498Z  INFO destructibles_bevy::damage: damage #0486 [pane] ShatterPane(b1006521 f3·l3·c2)
+2026-11-16T13:21:40.628658Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f3·l3·c2 in building 1006521
+2026-11-16T13:21:40.628665Z  INFO destructibles_bevy::damage: damage #0487 [pane] ShatterPane(b1006521 f1·l2·c5)
+2026-11-16T13:21:40.628682Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f1·l2·c5 in building 1006521
+2026-11-16T13:21:40.628686Z  INFO destructibles_bevy::damage: damage #0488 [pane] ShatterPane(b1006521 f1·l3·c5)
+2026-11-16T13:21:40.628700Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f1·l3·c5 in building 1006521
+2026-11-16T13:21:40.628704Z  INFO destructibles_bevy::damage: damage #0489 [pane] ShatterPane(b1006521 f1·l2·c6)
+2026-11-16T13:21:40.628717Z  WARN destructibles_bevy::damage::panes: ShatterPane: no pane f1·l2·c6 in building 1006521
+2026-11-16T13:21:40.628722Z  INFO destructibles_bevy::damage: damage #0490 [structural] SagSlab(b1006521 slab l2·s3 depth=0.45 dir=(0.0,1.0) seed=1006523)
+2026-11-16T13:21:40.628780Z  INFO destructibles_bevy::damage: damage #0491 [structural] ShedChunks(b1006521 slab l2·s3 n=2 seed=1006523)
+2026-11-16T13:21:40.632088Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6523 (2.88 ms)
+2026-11-16T13:21:40.633289Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6525 (1.15 ms)
+2026-11-16T13:21:40.634842Z  INFO manhattan_viewer::neighborhood: DETAIL b5890: Tier 1 ready at 17.4 m
+2026-11-16T13:21:40.796525Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=concrete_crack pitch=0.984 vol=0.34 paused=false empty=false
+2026-11-16T13:21:40.796579Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.601 vol=0.34 paused=false empty=false
+2026-11-16T13:21:40.810270Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6516 (1.90 ms)
+2026-11-16T13:21:40.811677Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6517 (1.34 ms)
+2026-11-16T13:21:40.985007Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.565 vol=0.34 paused=false empty=false
+2026-11-16T13:21:40.985085Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.957 vol=0.16 paused=false empty=false
+2026-11-16T13:21:40.991072Z  INFO destructibles_bevy::damage: damage #0492 [shard] BreachCell(b1006521 f2·l3·x0 r=2.2 partial=false seed=1006522 E=0.0 MJ)
+2026-11-16T13:21:40.992382Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f2·l3·x0: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T13:21:40.998619Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6527 (1.34 ms)
+2026-11-16T13:21:41.000000Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6541 (1.32 ms)
+2026-11-16T13:21:41.001781Z  INFO manhattan_viewer::neighborhood: DETAIL b5896: Tier 1 ready at 34.9 m
+2026-11-16T13:21:41.156735Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.542 vol=0.34 paused=false empty=false
+2026-11-16T13:21:41.156831Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.063 vol=0.16 paused=false empty=false
+2026-11-16T13:21:41.161877Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6168 (0.70 ms)
+2026-11-16T13:21:41.162442Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6174 (0.55 ms)
+2026-11-16T13:21:41.164460Z  INFO manhattan_viewer::neighborhood: DETAIL b5892: Tier 1 ready at 45.8 m
+2026-11-16T13:21:41.167631Z  INFO destructibles_bevy::rewind: RESTORATION b1006521: volume 63.20 m3, rate 47.40 m3/s (explicit), height 18.0 m
+2026-11-16T13:21:41.167658Z  INFO destructibles_bevy::rewind: RESTORATION b1006529: volume 28.82 m3, rate 48.21 m3/s (explicit), height 23.8 m
+2026-11-16T13:21:41.167662Z  INFO destructibles_bevy::rewind: RESTORATION b1006531: volume 71.40 m3, rate 51.86 m3/s (explicit), height 18.0 m
+2026-11-16T13:21:41.167666Z  INFO destructibles_bevy::rewind: RESTORATION b1006533: volume 28.17 m3, rate 55.53 m3/s (explicit), height 18.0 m
+2026-11-16T13:21:41.167670Z  INFO destructibles_bevy::rewind: RESTORATION b1006535: volume 63.77 m3, rate 59.49 m3/s (explicit), height 17.5 m
+2026-11-16T13:21:41.167679Z  INFO manhattan_viewer::restoration: WAVE: 5 building(s) within 150 m, amplitude 60 m3/s, linear profile
+2026-11-16T13:21:41.167685Z  INFO manhattan_viewer::neighborhood: WAVE DEMO: fired 5 assignments radius 150 m
+2026-11-16T13:21:41.272301Z  INFO destructibles_bevy::structure: STRUCTURE audio: groan loop stopped
+2026-11-16T13:21:41.272585Z  INFO destructibles_bevy::audio: AUDIO whoosh started rate=1.0x
+2026-11-16T13:21:41.272638Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=concrete_crack pitch=0.948 vol=0.34 paused=false empty=false
+2026-11-16T13:21:41.272675Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.629 vol=0.34 paused=false empty=false
+2026-11-16T13:21:41.272687Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.927 vol=0.16 paused=false empty=false
+2026-11-16T13:21:41.284176Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6176 (2.77 ms)
+2026-11-16T13:21:41.285739Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6178 (1.52 ms)
+2026-11-16T13:21:41.291012Z  INFO destructibles_bevy::breach: BREACH rewind building 1006533 cell f0·l5·x2: instant restore (reverse cap)
+2026-11-16T13:21:41.291105Z  INFO destructibles_bevy::breach: BREACH rewind building 1006533 cell f0·l4·x2: instant restore (reverse cap)
+2026-11-16T13:21:41.291823Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l4·x3: 10 chunks flying home over 1.25s (started 13.2s)
+2026-11-16T13:21:41.292116Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l4·x1: 10 chunks flying home over 1.25s (started 13.2s)
+2026-11-16T13:21:41.292185Z  INFO destructibles_bevy::breach: BREACH rewind building 1006529 cell f1·l2·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.294027Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f2·l3·x0: 10 chunks flying home over 1.25s (started 13.2s)
+2026-11-16T13:21:41.295069Z  WARN bevy_ecs::error::handler: Encountered an error in command `<bevy_ecs::system::commands::entity_command::despawn::{{closure}} as bevy_ecs::system::commands::entity_command::EntityCommand>::with_entity::{{closure}}`: Entity despawned: The entity with ID 119462v4 is invalid; its index now has generation 5.
+Note that interacting with a despawned entity is the most common cause of this error but there are others
+
+    If you were attempting to apply a command to this entity,
+    and want to handle this error gracefully, consider using `EntityCommands::queue_handled` or `queue_silenced`.
+
+2026-11-16T13:21:41.386035Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.543 vol=0.34 paused=false empty=false
+2026-11-16T13:21:41.386091Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=rewind_whoosh pitch=1.000 vol=0.18 paused=false empty=false
+2026-11-16T13:21:41.399326Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6530 (2.24 ms)
+2026-11-16T13:21:41.401064Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6532 (1.69 ms)
+2026-11-16T13:21:41.405584Z  INFO destructibles_bevy::breach: BREACH rewind building 1006533 cell f0·l3·x2: instant restore (reverse cap)
+2026-11-16T13:21:41.406002Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l2·x0: 10 chunks flying home over 1.25s (started 13.4s)
+2026-11-16T13:21:41.406062Z  INFO destructibles_bevy::breach: BREACH rewind building 1006529 cell f1·l2·x1: instant restore (reverse cap)
+2026-11-16T13:21:41.406216Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f0·l1·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.407948Z  INFO destructibles_bevy::breach: BREACH rewind building 1006533 cell f0·l2·x2: instant restore (reverse cap)
+2026-11-16T13:21:41.408786Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l4·x2: 10 chunks flying home over 1.25s (started 13.4s)
+2026-11-16T13:21:41.409049Z  INFO destructibles_bevy::breach: BREACH rewind building 1006529 cell f1·l1·x1: instant restore (reverse cap)
+2026-11-16T13:21:41.409802Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f3·l4·x0: instant restore (reverse cap)
+STREAM TIMING b1006498 evict: collect=0.5ms despawn=7.6ms total=8.1ms
+2026-11-16T13:21:41.502734Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6498 (8.19 ms)
+2026-11-16T13:21:41.507955Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l3·x3: 10 chunks flying home over 1.25s (started 13.5s)
+2026-11-16T13:21:41.508107Z  INFO destructibles_bevy::breach: BREACH rewind building 1006529 cell f1·l1·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.508513Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f2·l2·x0: 10 chunks flying home over 1.25s (started 13.5s)
+2026-11-16T13:21:41.508782Z  INFO destructibles_bevy::breach: BREACH rewind building 1006533 cell f0·l1·x2: instant restore (reverse cap)
+2026-11-16T13:21:41.508893Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l1·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.509353Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f1·l2·x3: 10 chunks flying home over 1.25s (started 13.5s)
+2026-11-16T13:21:41.509494Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f3·l3·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.510451Z  INFO destructibles_bevy::damage: damage #0494 [collapse] PowerRestore(b1006535 seed=1006099)
+2026-11-16T13:21:41.510470Z  INFO destructibles_bevy::power: POWER restored building 1006535
+2026-11-16T13:21:41.584732Z  INFO destructibles_bevy::alarm: ALARM audio: klaxon loop started
+2026-11-16T13:21:41.584753Z  INFO destructibles_bevy::alarm: ALARM audio: sprinkler hiss started
+2026-11-16T13:21:41.584803Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=electric_crackle pitch=0.983 vol=0.14 paused=false empty=false
+2026-11-16T13:21:41.584811Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=electric_crackle pitch=0.924 vol=0.16 paused=false empty=false
+STREAM TIMING b1006499 evict: collect=0.6ms despawn=8.3ms total=8.9ms
+2026-11-16T13:21:41.598931Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6499 (8.95 ms)
+2026-11-16T13:21:41.602939Z  INFO manhattan_viewer::neighborhood: DETAIL b6158: Tier 1 ready at 183.4 m
+2026-11-16T13:21:41.605399Z  INFO destructibles_bevy::breach: BREACH rewind building 1006529 cell f1·l0·x1: instant restore (reverse cap)
+2026-11-16T13:21:41.605636Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f2·l1·x0: 6 chunks flying home over 1.25s (started 13.6s)
+2026-11-16T13:21:41.605746Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f3·l2·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.605871Z  INFO destructibles_bevy::breach: BREACH rewind building 1006533 cell f0·l0·x2: instant restore (reverse cap)
+2026-11-16T13:21:41.605958Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l3·x1: instant restore (reverse cap)
+2026-11-16T13:21:41.606044Z  INFO destructibles_bevy::breach: BREACH rewind building 1006529 cell f1·l0·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.610434Z  INFO manhattan_viewer::restoration: WAVE: 2 building(s) completed
+2026-11-16T13:21:41.611033Z  INFO manhattan_viewer::neighborhood: PERSIST b6529: released after restoration at 395 m
+2026-11-16T13:21:41.611934Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6521
+2026-11-16T13:21:41.611953Z  INFO manhattan_viewer::neighborhood: WAVE DEMO: mid-wave car bomb queued at b6521
+2026-11-16T13:21:41.693730Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=electric_crackle pitch=1.046 vol=0.14 paused=false empty=false
+STREAM TIMING b1006506 evict: collect=0.8ms despawn=10.9ms total=11.7ms
+2026-11-16T13:21:41.714902Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6506 (11.75 ms)
+2026-11-16T13:21:41.719497Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006521 (1341.8,2.2,-1012.6)
+2026-11-16T13:21:41.719752Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f3·l1·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.721244Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l2·x3: instant restore (reverse cap)
+2026-11-16T13:21:41.721465Z  INFO manhattan_viewer::neighborhood: PERSIST b6533: released after restoration at 381 m
+2026-11-16T13:21:41.811708Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=0.946 vol=0.76 paused=false empty=false
+2026-11-16T13:21:41.821474Z  INFO destructibles_bevy::impact: IMPACT building 1006521: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T13:21:41.821730Z  INFO destructibles_bevy::impact: IMPACT: 5 breach cells (radius 8.4 m), 69 panes overpressure (radius 17.0 m)
+2026-11-16T13:21:41.821759Z  INFO destructibles_bevy::damage: damage #0495 [collapse] FireIgnite(b1006521 l0 at (1344.5,2.1,-1011.2) seed=2921272094)
+2026-11-16T13:21:41.821854Z  INFO destructibles_bevy::hazards: FIRE ignited building 1006521 floor 0 seed 2921272094
+2026-11-16T13:21:41.821868Z  INFO destructibles_bevy::damage: damage #0496 [collapse] FireIgnite(b1006521 l2 at (1344.5,8.1,-1011.2) seed=611566266)
+2026-11-16T13:21:41.821896Z  INFO destructibles_bevy::hazards: FIRE ignited building 1006521 floor 2 seed 611566266
+2026-11-16T13:21:41.821905Z  INFO destructibles_bevy::damage: damage #0497 [collapse] Shudder(b1006521 seed=3486112499 E=22.2 MJ)
+2026-11-16T13:21:41.823406Z  INFO destructibles_bevy::shudder: SHUDDER building 1006521: 0.01 shake strength, 108 pane rats, 2 dust vents
+2026-11-16T13:21:41.823454Z  INFO destructibles_bevy::damage: damage #0498 [collapse] Alarm(b1006521 active=true floor=0 seed=3486112499)
+2026-11-16T13:21:41.823580Z  INFO destructibles_bevy::alarm: ALARM building 1006521: on, floor 0, 3 sprinkler heads, 12 entities
+2026-11-16T13:21:41.823597Z  INFO destructibles_bevy::damage: damage #0499 [shard] BreachCell(b1006521 f3·l0·x2 r=8.4 partial=false seed=4087818625 E=22.2 MJ)
+2026-11-16T13:21:41.824377Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f3·l0·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:41.824398Z  INFO destructibles_bevy::damage: damage #0501 [shard] BreachCell(b1006521 f3·l0·x3 r=8.4 partial=true seed=359643096 E=22.2 MJ)
+2026-11-16T13:21:41.824607Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f3·l0·x3: 5 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:41.824637Z  INFO destructibles_bevy::damage: damage #0503 [shard] BreachCell(b1006521 f3·l1·x2 r=8.4 partial=false seed=4087818625 E=22.2 MJ)
+2026-11-16T13:21:41.825095Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f3·l1·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T13:21:41.825124Z  INFO destructibles_bevy::damage: damage #0505 [shard] BreachCell(b1006521 f3·l1·x3 r=8.4 partial=true seed=359643096 E=22.2 MJ)
+2026-11-16T13:21:41.825438Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f3·l1·x3: 5 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:41.825453Z  INFO destructibles_bevy::damage: damage #0507 [shard] BreachCell(b1006521 f3·l2·x2 r=8.4 partial=true seed=4087818625 E=22.2 MJ)
+2026-11-16T13:21:41.825674Z  INFO destructibles_bevy::breach: BREACH building 1006521 cell f3·l2·x2: 13 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T13:21:41.825686Z  INFO destructibles_bevy::damage: damage #0509 [pane] ShatterPane(b1006521 f0·l0·c0)
+2026-11-16T13:21:41.826003Z  INFO destructibles_bevy::damage: damage #0510 [pane] ShatterPane(b1006521 f0·l0·c1)
+2026-11-16T13:21:41.826275Z  INFO destructibles_bevy::damage: damage #0511 [pane] ShatterPane(b1006521 f0·l1·c0)
+2026-11-16T13:21:41.826555Z  INFO destructibles_bevy::damage: damage #0512 [pane] ShatterPane(b1006521 f0·l1·c1)
+2026-11-16T13:21:41.826781Z  INFO destructibles_bevy::damage: damage #0513 [pane] ShatterPane(b1006521 f0·l2·c0)
+2026-11-16T13:21:41.827006Z  INFO destructibles_bevy::damage: damage #0514 [pane] ShatterPane(b1006521 f0·l2·c1)
+2026-11-16T13:21:41.827209Z  INFO destructibles_bevy::damage: damage #0515 [pane] ShatterPane(b1006521 f0·l3·c0)
+2026-11-16T13:21:41.827408Z  INFO destructibles_bevy::damage: damage #0516 [pane] ShatterPane(b1006521 f0·l3·c1)
+2026-11-16T13:21:41.828331Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6157 (0.52 ms)
+2026-11-16T13:21:41.830919Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6158 (2.56 ms)
+2026-11-16T13:21:41.832879Z  INFO manhattan_viewer::neighborhood: DETAIL b5897: Tier 1 ready at 138.7 m
+2026-11-16T13:21:41.836078Z  INFO manhattan_viewer::neighborhood: DETAIL b6160: Tier 1 ready at 192.8 m
+2026-11-16T13:21:41.836304Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f3·l0·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.836425Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l3·x2: instant restore (reverse cap)
+2026-11-16T13:21:41.836483Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f3·l1·x1: instant restore (reverse cap)
+2026-11-16T13:21:41.836525Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f2·l2·x2: instant restore (reverse cap)
+2026-11-16T13:21:41.836569Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f3·l1·x0: instant restore (reverse cap)
+2026-11-16T13:21:41.931005Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.078 vol=0.68 paused=false empty=false
+2026-11-16T13:21:41.931058Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.082 vol=0.68 paused=false empty=false
+2026-11-16T13:21:41.931063Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.970 vol=0.68 paused=false empty=false
+2026-11-16T13:21:41.931066Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.041 vol=0.68 paused=false empty=false
+2026-11-16T13:21:41.931070Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.050 vol=0.68 paused=false empty=false
+2026-11-16T13:21:41.931077Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.981 vol=0.68 paused=false empty=false
+2026-11-16T13:21:41.931081Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.083 vol=0.68 paused=false empty=false
+2026-11-16T13:21:41.931084Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.065 vol=0.68 paused=false empty=false
+2026-11-16T13:21:41.938359Z  INFO destructibles_bevy::damage: damage #0517 [pane] ShatterPane(b1006521 f0·l4·c0)
+2026-11-16T13:21:41.939022Z  INFO destructibles_bevy::damage: damage #0518 [pane] ShatterPane(b1006521 f0·l4·c1)
+2026-11-16T13:21:41.939408Z  INFO destructibles_bevy::damage: damage #0519 [pane] ShatterPane(b1006521 f0·l5·c0)
+2026-11-16T13:21:41.939626Z  INFO destructibles_bevy::damage: damage #0520 [pane] ShatterPane(b1006521 f1·l0·c0)
+2026-11-16T13:21:41.939825Z  INFO destructibles_bevy::damage: damage #0521 [pane] ShatterPane(b1006521 f1·l0·c1)
+2026-11-16T13:21:41.940027Z  INFO destructibles_bevy::damage: damage #0522 [pane] ShatterPane(b1006521 f1·l0·c2)
+2026-11-16T13:21:41.940202Z  INFO destructibles_bevy::damage: damage #0523 [pane] ShatterPane(b1006521 f1·l0·c3)
+2026-11-16T13:21:41.940379Z  INFO destructibles_bevy::damage: damage #0524 [pane] ShatterPane(b1006521 f1·l0·c4)
+2026-11-16T13:21:41.940550Z  INFO destructibles_bevy::damage: damage #0525 [pane] ShatterPane(b1006521 f1·l1·c0)
+2026-11-16T13:21:41.940735Z  INFO destructibles_bevy::damage: damage #0526 [pane] ShatterPane(b1006521 f1·l1·c1)
+2026-11-16T13:21:41.940906Z  INFO destructibles_bevy::damage: damage #0527 [pane] ShatterPane(b1006521 f1·l1·c2)
+2026-11-16T13:21:41.941081Z  INFO destructibles_bevy::damage: damage #0528 [pane] ShatterPane(b1006521 f1·l1·c3)
+2026-11-16T13:21:41.941258Z  INFO destructibles_bevy::damage: damage #0529 [pane] ShatterPane(b1006521 f1·l1·c4)
+2026-11-16T13:21:41.941432Z  INFO destructibles_bevy::damage: damage #0530 [pane] ShatterPane(b1006521 f1·l2·c0)
+2026-11-16T13:21:41.941703Z  INFO destructibles_bevy::damage: damage #0531 [pane] ShatterPane(b1006521 f1·l2·c1)
+2026-11-16T13:21:41.941887Z  INFO destructibles_bevy::damage: damage #0532 [pane] ShatterPane(b1006521 f1·l2·c2)
+2026-11-16T13:21:41.942058Z  INFO destructibles_bevy::damage: damage #0533 [pane] ShatterPane(b1006521 f1·l2·c3)
+2026-11-16T13:21:41.942226Z  INFO destructibles_bevy::damage: damage #0534 [pane] ShatterPane(b1006521 f1·l2·c4)
+2026-11-16T13:21:41.942391Z  INFO destructibles_bevy::damage: damage #0535 [pane] ShatterPane(b1006521 f1·l3·c0)
+2026-11-16T13:21:41.942590Z  INFO destructibles_bevy::damage: damage #0536 [pane] ShatterPane(b1006521 f1·l3·c1)
+2026-11-16T13:21:41.942818Z  INFO destructibles_bevy::damage: damage #0537 [pane] ShatterPane(b1006521 f1·l3·c2)
+2026-11-16T13:21:41.942981Z  INFO destructibles_bevy::damage: damage #0538 [pane] ShatterPane(b1006521 f1·l3·c3)
+2026-11-16T13:21:41.943136Z  INFO destructibles_bevy::damage: damage #0539 [pane] ShatterPane(b1006521 f1·l3·c4)
+2026-11-16T13:21:41.943285Z  INFO destructibles_bevy::damage: damage #0540 [pane] ShatterPane(b1006521 f1·l4·c0)
+2026-11-16T13:21:41.943456Z  INFO destructibles_bevy::damage: damage #0541 [pane] ShatterPane(b1006521 f1·l4·c1)
+2026-11-16T13:21:41.943644Z  INFO destructibles_bevy::damage: damage #0542 [pane] ShatterPane(b1006521 f1·l4·c2)
+2026-11-16T13:21:41.943800Z  INFO destructibles_bevy::damage: damage #0543 [pane] ShatterPane(b1006521 f1·l4·c3)
+2026-11-16T13:21:41.943976Z  INFO destructibles_bevy::damage: damage #0544 [pane] ShatterPane(b1006521 f1·l5·c1)
+2026-11-16T13:21:41.944169Z  INFO destructibles_bevy::damage: damage #0545 [pane] ShatterPane(b1006521 f1·l5·c2)
+2026-11-16T13:21:41.944324Z  INFO destructibles_bevy::damage: damage #0546 [pane] ShatterPane(b1006521 f3·l0·c1)
+2026-11-16T13:21:41.950530Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6160 (5.82 ms)
+2026-11-16T13:21:41.952325Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6161 (1.75 ms)
+2026-11-16T13:21:41.957202Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l1·x3: instant restore (reverse cap)
+2026-11-16T13:21:41.957290Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f3·l0·x1: instant restore (reverse cap)
+2026-11-16T13:21:41.957396Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f2·l2·x1: instant restore (reverse cap)
+2026-11-16T13:21:41.957506Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f2·l1·x2: instant restore (reverse cap)
+2026-11-16T13:21:41.957528Z  INFO destructibles_bevy::damage: damage #0547 [collapse] PowerRestore(b1006531 seed=1005981)
+2026-11-16T13:21:41.957553Z  INFO destructibles_bevy::power: POWER restored building 1006531
+2026-11-16T13:21:42.066447Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.997 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.066506Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.996 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.066521Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.008 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.066531Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.046 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.066540Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.060 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.066549Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.042 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.066557Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.031 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.066588Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.960 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.066598Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=electric_crackle pitch=1.031 vol=0.16 paused=false empty=false
+2026-11-16T13:21:42.076726Z  INFO destructibles_bevy::damage: damage #0548 [pane] ShatterPane(b1006521 f3·l0·c2)
+2026-11-16T13:21:42.077133Z  INFO destructibles_bevy::damage: damage #0549 [pane] ShatterPane(b1006521 f3·l0·c3)
+2026-11-16T13:21:42.077287Z  INFO destructibles_bevy::damage: damage #0550 [pane] ShatterPane(b1006521 f3·l0·c4)
+2026-11-16T13:21:42.077399Z  INFO destructibles_bevy::damage: damage #0551 [pane] ShatterPane(b1006521 f3·l0·c5)
+2026-11-16T13:21:42.077506Z  INFO destructibles_bevy::damage: damage #0552 [pane] ShatterPane(b1006521 f3·l0·c6)
+2026-11-16T13:21:42.077594Z  INFO destructibles_bevy::damage: damage #0553 [pane] ShatterPane(b1006521 f3·l1·c1)
+2026-11-16T13:21:42.077698Z  INFO destructibles_bevy::damage: damage #0554 [pane] ShatterPane(b1006521 f3·l1·c2)
+2026-11-16T13:21:42.077779Z  INFO destructibles_bevy::damage: damage #0555 [pane] ShatterPane(b1006521 f3·l1·c3)
+2026-11-16T13:21:42.077862Z  INFO destructibles_bevy::damage: damage #0556 [pane] ShatterPane(b1006521 f3·l1·c4)
+2026-11-16T13:21:42.077936Z  INFO destructibles_bevy::damage: damage #0557 [pane] ShatterPane(b1006521 f3·l1·c5)
+2026-11-16T13:21:42.078005Z  INFO destructibles_bevy::damage: damage #0558 [pane] ShatterPane(b1006521 f3·l1·c6)
+2026-11-16T13:21:42.078073Z  INFO destructibles_bevy::damage: damage #0559 [pane] ShatterPane(b1006521 f3·l2·c1)
+2026-11-16T13:21:42.078166Z  INFO destructibles_bevy::damage: damage #0560 [pane] ShatterPane(b1006521 f3·l2·c2)
+2026-11-16T13:21:42.078265Z  INFO destructibles_bevy::damage: damage #0561 [pane] ShatterPane(b1006521 f3·l2·c3)
+2026-11-16T13:21:42.078353Z  INFO destructibles_bevy::damage: damage #0562 [pane] ShatterPane(b1006521 f3·l2·c4)
+2026-11-16T13:21:42.078434Z  INFO destructibles_bevy::damage: damage #0563 [pane] ShatterPane(b1006521 f3·l2·c5)
+2026-11-16T13:21:42.078506Z  INFO destructibles_bevy::damage: damage #0564 [pane] ShatterPane(b1006521 f3·l2·c6)
+2026-11-16T13:21:42.078575Z  INFO destructibles_bevy::damage: damage #0565 [pane] ShatterPane(b1006521 f3·l3·c2)
+2026-11-16T13:21:42.078664Z  INFO destructibles_bevy::damage: damage #0566 [pane] ShatterPane(b1006521 f3·l3·c3)
+2026-11-16T13:21:42.078738Z  INFO destructibles_bevy::damage: damage #0567 [pane] ShatterPane(b1006521 f3·l3·c4)
+2026-11-16T13:21:42.078810Z  INFO destructibles_bevy::damage: damage #0568 [pane] ShatterPane(b1006521 f3·l3·c5)
+2026-11-16T13:21:42.078880Z  INFO destructibles_bevy::damage: damage #0569 [pane] ShatterPane(b1006521 f3·l3·c6)
+2026-11-16T13:21:42.078947Z  INFO destructibles_bevy::damage: damage #0570 [pane] ShatterPane(b1006521 f3·l4·c2)
+2026-11-16T13:21:42.079022Z  INFO destructibles_bevy::damage: damage #0571 [pane] ShatterPane(b1006521 f3·l4·c3)
+2026-11-16T13:21:42.079100Z  INFO destructibles_bevy::damage: damage #0572 [pane] ShatterPane(b1006521 f3·l4·c4)
+2026-11-16T13:21:42.079183Z  INFO destructibles_bevy::damage: damage #0573 [pane] ShatterPane(b1006521 f3·l4·c5)
+2026-11-16T13:21:42.079253Z  INFO destructibles_bevy::damage: damage #0574 [pane] ShatterPane(b1006521 f3·l4·c6)
+2026-11-16T13:21:42.079325Z  INFO destructibles_bevy::damage: damage #0575 [pane] ShatterPane(b1006521 f3·l5·c3)
+2026-11-16T13:21:42.079396Z  INFO destructibles_bevy::damage: damage #0576 [pane] ShatterPane(b1006521 f3·l5·c4)
+2026-11-16T13:21:42.079468Z  INFO destructibles_bevy::damage: damage #0577 [pane] ShatterPane(b1006521 f3·l5·c5)
+2026-11-16T13:21:42.079541Z  INFO destructibles_bevy::damage: damage #0578 [pane] ShatterPane(b1006521 f3·l5·c6)
+2026-11-16T13:21:42.080800Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6162 (0.96 ms)
+2026-11-16T13:21:42.084859Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6496 (4.03 ms)
+2026-11-16T13:21:42.089263Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l2·x1: instant restore (reverse cap)
+2026-11-16T13:21:42.089307Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f3·l0·x0: instant restore (reverse cap)
+2026-11-16T13:21:42.089387Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f2·l1·x1: instant restore (reverse cap)
+2026-11-16T13:21:42.091013Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l2·x2: instant restore (reverse cap)
+2026-11-16T13:21:42.091124Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f2·l0·x2: instant restore (reverse cap)
+2026-11-16T13:21:42.208277Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.068 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.208316Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.022 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.208325Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.995 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.208334Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.901 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.208342Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.008 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.208350Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.918 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.208358Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.959 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.208365Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.955 vol=0.68 paused=false empty=false
+2026-11-16T13:21:42.208375Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=electric_crackle pitch=0.987 vol=0.14 paused=false empty=false
+2026-11-16T13:21:42.213665Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6497 (1.04 ms)
+2026-11-16T13:21:42.218002Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6501 (4.30 ms)
+2026-11-16T13:21:42.219037Z  INFO manhattan_viewer::neighborhood: DETAIL b6163: Tier 1 ready at 191.7 m
+2026-11-16T13:21:42.219912Z  INFO manhattan_viewer::neighborhood: DETAIL b6196: Tier 1 ready at 193.1 m
+2026-11-16T13:21:42.221936Z  INFO manhattan_viewer::neighborhood: DETAIL b6510: Tier 1 ready at 193.2 m
+2026-11-16T13:21:42.224297Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f1·l2·x2: instant restore (reverse cap)
+2026-11-16T13:21:42.224531Z  INFO destructibles_bevy::breach: BREACH rewind building 1006535 cell f2·l0·x1: instant restore (reverse cap)
+2026-11-16T13:21:42.224672Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l1·x2: instant restore (reverse cap)
+2026-11-16T13:21:42.224708Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f1·l1·x3: instant restore (reverse cap)
+2026-11-16T13:21:42.224945Z  INFO manhattan_viewer::restoration: WAVE: 1 building(s) completed
+2026-11-16T13:21:42.310515Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6502 (3.83 ms)
+STREAM TIMING b1006503 evict: collect=0.9ms despawn=11.3ms total=12.2ms
+2026-11-16T13:21:42.322875Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6503 (12.30 ms)
+2026-11-16T13:21:42.327555Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f1·l1·x2: instant restore (reverse cap)
+2026-11-16T13:21:42.327699Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l1·x1: instant restore (reverse cap)
+2026-11-16T13:21:42.327761Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f1·l0·x3: instant restore (reverse cap)
+2026-11-16T13:21:42.327918Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l0·x2: instant restore (reverse cap)
+2026-11-16T13:21:42.329123Z  INFO manhattan_viewer::neighborhood: WAVE DEMO: HOT heal capture b6521
+2026-11-16T13:21:42.403693Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=electric_crackle pitch=0.935 vol=0.14 paused=false empty=false
+2026-11-16T13:21:42.403741Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=electric_crackle pitch=0.924 vol=0.14 paused=false empty=false
+2026-11-16T13:21:42.411496Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6511 (2.76 ms)
+2026-11-16T13:21:42.412151Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6512 (0.63 ms)
+2026-11-16T13:21:42.414317Z  INFO manhattan_viewer::neighborhood: DETAIL b6518: Tier 1 ready at 35.9 m
+2026-11-16T13:21:42.414563Z  INFO manhattan_viewer::neighborhood: DETAIL b6540: Tier 1 ready at 57.7 m
+2026-11-16T13:21:42.417213Z  INFO destructibles_bevy::breach: BREACH rewind building 1006531 cell f1·l0·x1: instant restore (reverse cap)
+2026-11-16T13:21:42.417340Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f1·l0·x2: instant restore (reverse cap)
+2026-11-16T13:21:42.417691Z  INFO manhattan_viewer::restoration: WAVE: 2 building(s) completed
+2026-11-16T13:21:42.417700Z  INFO manhattan_viewer::restoration: WAVE COMPLETE: 5 buildings in 1.41s (3.56 buildings/s), worst slice 5.03 ms, starved frames 1
+2026-11-16T13:21:42.418548Z  INFO manhattan_viewer::neighborhood: PERSIST b6521: thawed on re-entry at 33 m
+2026-11-16T13:21:42.418606Z  INFO manhattan_viewer::neighborhood: PERSIST b6531: thawed on re-entry at 81 m
+2026-11-16T13:21:42.418675Z  INFO manhattan_viewer::neighborhood: PERSIST b6535: thawed on re-entry at 63 m
+2026-11-16T13:21:42.419127Z  INFO manhattan_viewer::neighborhood: WAVE DEMO FIRST: size 5 radius 150 m duration 1.41 s throughput 3.56 buildings/s worst_slice 5.03 ms starved_frames 1
+2026-11-16T13:21:42.419150Z  INFO destructibles_bevy::rewind: RESTORATION b1006521: volume 18.19 m3, rate 3159.78 m3/s (explicit), height 18.0 m
+2026-11-16T13:21:42.419157Z  INFO manhattan_viewer::restoration: WAVE: 1 building(s) within 150 m, amplitude 4000 m3/s, linear profile
+2026-11-16T13:21:42.419162Z  INFO manhattan_viewer::neighborhood: WAVE DEMO: second (full-restore) wave fired on 1 buildings
+2026-11-16T13:21:42.500363Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6513 (0.63 ms)
+2026-11-16T13:21:42.505854Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6514 (5.46 ms)
+2026-11-16T13:21:42.506350Z  INFO manhattan_viewer::neighborhood: DETAIL b6537: Tier 1 ready at 86.6 m
+2026-11-16T13:21:42.513421Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f3·l2·x2: 8 chunks flying home over 1.25s (started 14.5s)
+2026-11-16T13:21:42.513582Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f3·l1·x3: 8 chunks flying home over 1.25s (started 14.5s)
+2026-11-16T13:21:42.513862Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f3·l1·x2: 10 chunks flying home over 1.25s (started 14.5s)
+2026-11-16T13:21:42.514051Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f3·l0·x3: 8 chunks flying home over 1.25s (started 14.5s)
+2026-11-16T13:21:42.514385Z  INFO destructibles_bevy::breach: BREACH rewind building 1006521 cell f3·l0·x2: 10 chunks flying home over 1.25s (started 14.5s)
+2026-11-16T13:21:42.514560Z  INFO manhattan_viewer::restoration: WAVE: 1 building(s) completed
+2026-11-16T13:21:42.514570Z  INFO manhattan_viewer::restoration: WAVE COMPLETE: 1 buildings in 0.11s (8.76 buildings/s), worst slice 3.85 ms, starved frames 0
+2026-11-16T13:21:42.515287Z  INFO manhattan_viewer::neighborhood: WAVE DEMO SUMMARY: size 1 radius 150 m first_wave_worst_frame 184.0 ms second_duration 0.11 s throughput 8.76 buildings/s worst_slice 3.85 ms starved_frames 0
+2026-11-16T13:21:42.581977Z  INFO destructibles_bevy::audio: AUDIO whoosh stopped
+2026-11-16T13:21:42.587771Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6515 (0.94 ms)
+STREAM TIMING b1006518 evict: collect=0.6ms despawn=10.3ms total=10.9ms
+2026-11-16T13:21:42.598773Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6518 (10.96 ms)
+STREAM TIMING b1006519 evict: collect=0.6ms despawn=8.1ms total=8.7ms
+2026-11-16T13:21:42.678887Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6519 (8.78 ms)
+2026-11-16T13:21:42.681799Z  INFO manhattan_viewer::neighborhood: DETAIL b6526: Tier 1 ready at 112.6 m
+2026-11-16T13:21:42.745035Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6520 (4.50 ms)
+2026-11-16T13:21:42.747593Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6526 (2.52 ms)
+2026-11-16T13:21:42.826798Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6528 (4.00 ms)
+STREAM TIMING b1006537 evict: collect=0.4ms despawn=9.3ms total=9.7ms
+2026-11-16T13:21:42.836659Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6537 (9.83 ms)
+2026-11-16T13:21:42.837365Z  INFO manhattan_viewer::neighborhood: DETAIL b6189: Tier 1 ready at 91.1 m
+STREAM TIMING b1006538 evict: collect=0.6ms despawn=9.6ms total=10.1ms
+2026-11-16T13:21:42.922900Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6538 (10.21 ms)
+2026-11-16T13:21:43.005699Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6539 (4.10 ms)
+2026-11-16T13:21:43.006501Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6540 (0.77 ms)
+2026-11-16T13:21:43.007086Z  INFO manhattan_viewer::neighborhood: DETAIL b6534: Tier 1 ready at 114.9 m
+2026-11-16T13:21:43.008105Z  INFO manhattan_viewer::neighborhood: DETAIL b6195: Tier 1 ready at 100.0 m
+STREAM TIMING b1005892 evict: collect=0.9ms despawn=10.3ms total=11.2ms
+2026-11-16T13:21:43.074217Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b5892 (11.29 ms)
+STREAM TIMING b1005896 evict: collect=0.8ms despawn=7.7ms total=8.5ms
+2026-11-16T13:21:43.142695Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b5896 (8.63 ms)
+2026-11-16T13:21:43.202567Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6510 (4.78 ms)
+2026-11-16T13:21:43.203676Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6164 (1.05 ms)
+2026-11-16T13:21:43.272934Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6180 (1.62 ms)
+2026-11-16T13:21:43.278865Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6182 (5.89 ms)
+2026-11-16T13:21:43.358889Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6187 (4.04 ms)
+2026-11-16T13:21:43.364708Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6189 (5.78 ms)
+2026-11-16T13:21:43.430010Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6534 (6.05 ms)
+STREAM TIMING b1006163 evict: collect=0.8ms despawn=13.6ms total=14.4ms
+2026-11-16T13:21:43.523190Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6163 (14.58 ms)
+2026-11-16T13:21:43.615587Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6195 (7.65 ms)
+2026-11-16T13:21:43.699256Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6196 (3.97 ms)
+2026-11-16T13:21:43.707247Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6529 (7.95 ms)
+STREAM TIMING b1006533 evict: collect=0.7ms despawn=15.0ms total=15.7ms
+2026-11-16T13:21:43.787641Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6533 (15.85 ms)
+2026-11-16T13:21:43.858093Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5881 (5.05 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:43.864705Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5883 (6.23 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:43.869381Z  INFO destructibles_bevy::rewind: RESTORATION finished
+EPILOGUE TRANSFORM b1006529: PASS
+PRISTINE RESET b1006529: regime=HOT pre=PASS post=PASS inventory=PASS regenerated=false 0.1ms NO-HITCH
+2026-11-16T13:21:43.942009Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5885 (3.10 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:43.947059Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5887 (4.92 ms) footprint PASS style=Some(BrickBrownstone)
+EPILOGUE TRANSFORM b1006533: PASS
+PRISTINE RESET b1006533: regime=HOT pre=PASS post=PASS inventory=PASS regenerated=false 0.1ms NO-HITCH
+2026-11-16T13:21:44.014359Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5888 (2.70 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.016829Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5902 (2.21 ms) footprint PASS style=Some(BrickMidrise)
+PRE-EPILOGUE CHECK b1006521: PASS pre=23f8c56085071c1b pristine=23f8c56085071c1b regime=HOT
+EPILOGUE TRANSFORM b1006521: PASS
+PRISTINE RESET b1006521: regime=HOT pre=PASS post=PASS inventory=PASS regenerated=false 0.7ms NO-HITCH
+2026-11-16T13:21:44.090157Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5904 (5.23 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.091604Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b5614: footprint area is too small (2.7468085 m²)
+2026-11-16T13:21:44.156386Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5898 (4.16 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.160320Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5899 (3.87 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.236994Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5900 (4.55 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.240493Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5901 (3.19 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:44.312319Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5903 (1.79 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.314137Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5905 (1.77 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.401586Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5906 (3.16 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:44.402830Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD footprint FAIL b5601; returned to plain map
+2026-11-16T13:21:44.407850Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5891 (4.83 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:44.410995Z  INFO manhattan_viewer::neighborhood: DETAIL b5898: Tier 1 ready at 61.9 m
+2026-11-16T13:21:44.493280Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5907 (4.92 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.495711Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5908 (2.36 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.499504Z  INFO manhattan_viewer::neighborhood: DETAIL b5903: Tier 1 ready at 70.6 m
+2026-11-16T13:21:44.585257Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5596 (5.34 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.589953Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5597 (4.45 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T13:21:44.590663Z  INFO manhattan_viewer::neighborhood: DETAIL b5901: Tier 1 ready at 59.5 m
+2026-11-16T13:21:44.680713Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5624 (1.94 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.683056Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6192 (2.22 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.684188Z  INFO manhattan_viewer::neighborhood: DETAIL b5899: Tier 1 ready at 71.6 m
+2026-11-16T13:21:44.777774Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6193 (2.53 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.780571Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6194 (2.73 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T13:21:44.785838Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD GAUNTLET COMPLETE
+
+# destructibles damage journal — 2 command(s)
+0494 @  13.51s | collapse   | b1006535 | PowerRestore(b1006535 seed=1006099)
+0547 @  13.92s | collapse   | b1006531 | PowerRestore(b1006531 seed=1005981)
+

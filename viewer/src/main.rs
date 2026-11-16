@@ -54,6 +54,7 @@ use manhattan_viewer::{
     motion::{MotionPlugin, accessories_active},
     neighborhood::NeighborhoodPlugin,
     people::{Crowd, setup_people_catalog, stream_people, update_limbs, update_pedestrians},
+    restoration::CityRestorationPlugin,
     stationing::{
         LineSet, MAX_COORDS_PER_SET, Stationing, StationingConfig, StationingState,
         configure_station_gizmos, draw_stationing, handle_station_keys, update_civil_coordinates,
@@ -280,6 +281,7 @@ fn main() {
         .add_plugins(destructibles_bevy::destructibles_plugin_for_manhattan())
         .add_plugins(MaterialPlugin::<CityMaterial>::default())
         .add_plugins(NeighborhoodPlugin)
+        .add_plugins(CityRestorationPlugin)
         .add_plugins(WeatherPlugin)
         .add_plugins(MotionPlugin)
         .add_plugins(LightningPlugin)

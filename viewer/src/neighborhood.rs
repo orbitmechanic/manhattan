@@ -26,7 +26,7 @@ use destructibles_bevy::night::SceneTime;
 use destructibles_bevy::puncture::apply_puncture;
 use destructibles_bevy::rewind::{begin_restoration, set_restoration_rate};
 use destructibles_bevy::streaming::{
-    HotZone, Regime, Streaming, freeze_building, register_building, spawn_far_marker, thaw_building,
+    HotZone, Regime, Streaming, freeze_building, register_building, thaw_building,
 };
 use destructibles_bevy::swap::{DestructibleHandle, swap_in_lod, swap_out};
 use destructibles_core::{BuildingSpec, FacadeStyle, WallQuad, core_for_style};
@@ -209,7 +209,7 @@ pub struct Neighborhood {
     pub tier1_built: usize,
     pub tier2_built: usize,
     pub frozen_count: usize,
-    smoke_markers: BTreeMap<u32, Vec<Entity>>,
+    pub smoke_markers: BTreeMap<u32, Vec<Entity>>,
 }
 
 /// Per-regime acceptance statistics.
@@ -257,6 +257,23 @@ pub struct NeighborhoodDemo {
     return_armed: bool,
     damage_seen: bool,
     restored_at: f32,
+    wave_size: usize,
+    wave_center: Vec3,
+    wave_radius: f32,
+    wave_targets: Vec<usize>,
+    wave_worst_ms: f32,
+    wave_captured: [bool; 4],
+    wave_mid_damage: bool,
+    wave_hot_captured: bool,
+    wave_plume_started: bool,
+    wave_plume_moved: bool,
+    gauntlet_wave: bool,
+    wave_fired: bool,
+    wave_second: bool,
+    wave_started: f64,
+    wave_mid_captured: bool,
+    wave_first_ms: f32,
+    no_capture: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -276,6 +293,12 @@ enum DemoStage {
     Horizon,
     Return,
     Restored,
+    WaveBoot,
+    WaveDamage,
+    WaveFreeze,
+    WaveFire,
+    WaveWatch,
+    WavePlume,
     ExitWait,
 }
 
@@ -307,6 +330,9 @@ impl Plugin for NeighborhoodPlugin {
                     process_swaps,
                     detail_tick,
                     damage_input,
+                    crate::restoration::wave_input,
+                    crate::restoration::restoration_tick,
+                    crate::restoration::wave_panel,
                     persistence_tick,
                     sync_street_dressing,
                     sync_dressing_damage,
@@ -330,10 +356,25 @@ impl NeighborhoodDemo {
             .map(PathBuf::from)
             .unwrap_or_else(|_| PathBuf::from("captures"));
         let _ = std::fs::create_dir_all(&capture_dir);
+        let wave_demo = std::env::var_os("MANHATTAN_WAVE").is_some();
+        let wave_size = std::env::var("MANHATTAN_WAVE_SIZE")
+            .ok()
+            .and_then(|value| value.parse::<usize>().ok())
+            .unwrap_or(10)
+            .clamp(1, 64);
+        let stage = if wave_demo {
+            DemoStage::WaveBoot
+        } else {
+            DemoStage::Boot
+        };
         Self {
-            active,
+            active: active || wave_demo,
             capture_dir,
             damage: std::env::var_os("MANHATTAN_DAMAGE").is_some(),
+            wave_size,
+            stage,
+            gauntlet_wave: std::env::var_os("MANHATTAN_GAUNTLET_WAVE").is_some(),
+            no_capture: std::env::var_os("MANHATTAN_WAVE_NOCAPTURE").is_some(),
             ..default()
         }
     }
@@ -1005,9 +1046,19 @@ fn damage_input(world: &mut World) {
             }
         }
     }
+    let ground_point = if forward.y < -0.02 {
+        let t = -origin.y / forward.y;
+        if (0.0..1_800.0).contains(&t) {
+            origin + forward * t
+        } else {
+            origin + forward * 30.0
+        }
+    } else {
+        origin + forward * 30.0
+    };
     let (target, point) = best
         .map(|(_, id, point)| (Some(id), point))
-        .unwrap_or((None, origin + forward * 30.0));
+        .unwrap_or((None, ground_point));
     {
         let mut aim = world.resource_mut::<DamageAim>();
         aim.target = target;
@@ -1031,31 +1082,32 @@ fn damage_input(world: &mut World) {
         }
     }
     if keys.just_pressed(KeyCode::KeyZ) {
-        let target_id = target.filter(|id| {
-            let did = NEIGHBORHOOD_ID_BASE + *id as u32;
-            world.resource::<DamageJournal>().0.head_for(did) > 0.0
-        });
-        let ids: Vec<u32> = if keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)
-        {
-            let neighborhood = world.resource::<Neighborhood>();
-            let journal = world.resource::<DamageJournal>();
-            neighborhood
-                .live
-                .iter()
-                .filter(|(id, live)| {
-                    journal.0.head_for(NEIGHBORHOOD_ID_BASE + **id as u32) > 0.0
-                        && live.origin.distance(origin) <= 250.0
-                })
-                .map(|(id, _)| NEIGHBORHOOD_ID_BASE + *id as u32)
-                .collect()
+        let shift = keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight);
+        if shift {
+            // Iteration 19: Shift+Z retires as a special case and delegates to
+            // the city controller at the reticle, radius 250 m.
+            let radius = 250.0;
+            let amplitude = world
+                .resource::<crate::restoration::CityRestoration>()
+                .config_amplitude;
+            let amplitude = if amplitude > 0.0 { amplitude } else { 600.0 };
+            let profile = world
+                .resource::<crate::restoration::CityRestoration>()
+                .profile;
+            let fired = crate::restoration::restore_city(world, point, radius, amplitude, profile);
+            if fired > 0 {
+                info!("RESTORE delegated to city wave: {fired} buildings within {radius:.0} m");
+            }
         } else {
-            target_id
-                .map(|id| vec![NEIGHBORHOOD_ID_BASE + id as u32])
-                .unwrap_or_default()
-        };
-        if !ids.is_empty() {
-            info!("RESTORE request: {} building(s)", ids.len());
-            begin_restoration(world, &ids);
+            let target_id = target.filter(|id| {
+                let did = NEIGHBORHOOD_ID_BASE + *id as u32;
+                world.resource::<DamageJournal>().0.head_for(did) > 0.0
+            });
+            if let Some(id) = target_id {
+                let did = NEIGHBORHOOD_ID_BASE + id as u32;
+                info!("RESTORE request: b{id}");
+                begin_restoration(world, &[did]);
+            }
         }
     }
 }
@@ -1103,83 +1155,6 @@ fn persistence_action(
     }
 }
 
-/// Host-side far smoke: two crossed quads using the destructibles procedural
-/// puff texture, sized from the building height. The standalone far marker is
-/// intentionally subtle; the host keeps a brighter column so a damaged block
-/// reads from three blocks away. Tracked and despawned on thaw/release.
-fn spawn_host_smoke(world: &mut World, did: u32) -> Vec<Entity> {
-    let Some((origin, height)) = world
-        .resource::<Buildings>()
-        .get(did)
-        .map(|record| (record.origin, record.layout.height))
-    else {
-        return Vec::new();
-    };
-    let pane = world
-        .resource::<destructibles_bevy::assets::WorldAssets>()
-        .pane_mesh
-        .clone();
-    let puff = world
-        .resource::<destructibles_bevy::sprites::SpriteTables>()
-        .day
-        .first()
-        .cloned();
-    let Some(puff) = puff else {
-        return Vec::new();
-    };
-    let base = world
-        .resource::<Assets<StandardMaterial>>()
-        .get(&puff)
-        .cloned()
-        .unwrap_or_default();
-    let material = world
-        .resource_mut::<Assets<StandardMaterial>>()
-        .add(StandardMaterial {
-            base_color: Color::srgba(1.0, 1.0, 1.0, 0.95),
-            ..base
-        });
-    let width = (height * 0.75).clamp(16.0, 120.0);
-    let column = (height * 1.6).clamp(50.0, 420.0);
-    let levels = 5;
-    let mut spawned = Vec::new();
-    for level in 0..levels {
-        let t = level as f32 / (levels - 1) as f32;
-        let centre = origin + Vec3::Y * (height * 0.35 + column * (0.1 + 0.8 * t));
-        let size = width * (0.65 + 0.55 * t);
-        for yaw in [0.0f32, std::f32::consts::FRAC_PI_2] {
-            spawned.push(
-                world
-                    .spawn((
-                        Mesh3d(pane.clone()),
-                        MeshMaterial3d(material.clone()),
-                        Transform::from_translation(centre)
-                            .with_rotation(Quat::from_rotation_y(yaw))
-                            .with_scale(Vec3::new(size, size * 1.15, 1.0)),
-                        bevy::light::NotShadowCaster,
-                        Visibility::Inherited,
-                        Name::new(format!("far smoke b{did} l{level}")),
-                    ))
-                    .id(),
-            );
-        }
-    }
-    spawned
-}
-
-fn despawn_host_smoke(world: &mut World, did: u32) {
-    let markers = world
-        .resource_mut::<Neighborhood>()
-        .smoke_markers
-        .remove(&did);
-    if let Some(markers) = markers {
-        for marker in markers {
-            if let Ok(entity_mut) = world.get_entity_mut(marker) {
-                entity_mut.despawn();
-            }
-        }
-    }
-}
-
 fn persistence_tick(world: &mut World) {
     let Some(camera) = world
         .query_filtered::<&Transform, With<FlyCamera>>()
@@ -1207,13 +1182,11 @@ fn persistence_tick(world: &mut World) {
         if action == PersistAction::Freeze {
             let hide = distance > 250.0;
             if let Some(cache) = freeze_building(world, did, hide) {
-                let marker = if hide {
-                    spawn_far_marker(world, did)
-                } else {
-                    None
-                };
-                let _ = marker;
-                let smoke = spawn_host_smoke(world, did);
+                // Iteration 19 consolidation: the host crossed-quad column is
+                // the single far-plume mechanism; no destructibles sprite is
+                // spawned for FAR duty.
+                let marker = None;
+                let smoke = crate::restoration::spawn_host_smoke(world, did);
                 if !smoke.is_empty() {
                     world
                         .resource_mut::<Neighborhood>()
@@ -1240,7 +1213,7 @@ fn persistence_tick(world: &mut World) {
             if let Some(cache) = cache {
                 thaw_building(world, &cache);
             }
-            despawn_host_smoke(world, did);
+            crate::restoration::despawn_host_smoke(world, did);
             let marker = world
                 .resource_mut::<Streaming>()
                 .by_building
@@ -1262,7 +1235,7 @@ fn persistence_tick(world: &mut World) {
             }
             info!("PERSIST b{id}: thawed on re-entry at {distance:.0} m");
         } else if action == PersistAction::Release {
-            despawn_host_smoke(world, did);
+            crate::restoration::despawn_host_smoke(world, did);
             let cache = world
                 .resource_mut::<Streaming>()
                 .by_building
@@ -1271,7 +1244,7 @@ fn persistence_tick(world: &mut World) {
             if let Some(cache) = cache {
                 thaw_building(world, &cache);
             }
-            despawn_host_smoke(world, did);
+            crate::restoration::despawn_host_smoke(world, did);
             let marker = world
                 .resource_mut::<Streaming>()
                 .by_building
@@ -2050,6 +2023,35 @@ fn nearest_demo_live(world: &World, point: Vec3) -> Option<(usize, Vec3)> {
     best.map(|(_, _, id, origin)| (id, origin))
 }
 
+fn nearest_live_ids(world: &World, point: Vec3, count: usize) -> Vec<usize> {
+    let index = world.resource::<BuildingIndex>();
+    let mut ids: Vec<(f32, usize)> = world
+        .resource::<Neighborhood>()
+        .live
+        .keys()
+        .filter_map(|id| {
+            index.buildings.get(*id).map(|meta| {
+                (
+                    Vec2::new(meta.centroid[0] - point.x, meta.centroid[1] - point.z).length(),
+                    *id,
+                )
+            })
+        })
+        .collect();
+    ids.sort_by(|a, b| a.0.total_cmp(&b.0));
+    ids.into_iter().take(count).map(|(_, id)| id).collect()
+}
+
+fn mid_wave_target(world: &World) -> Option<usize> {
+    let journal = world.resource::<DamageJournal>();
+    let city = world.resource::<crate::restoration::CityRestoration>();
+    city.assignments
+        .values()
+        .filter(|assignment| assignment.completed_at.is_none())
+        .find(|assignment| journal.0.head_for(assignment.did) > 0.0)
+        .map(|assignment| assignment.building)
+}
+
 fn nearest_live(world: &World, point: Vec3) -> Option<(usize, Vec3)> {
     world
         .resource::<Neighborhood>()
@@ -2138,6 +2140,7 @@ fn run_neighborhood_demo(world: &mut World) {
             demo.captured = false;
             demo.captured_detail = false;
             demo.bombed = false;
+            demo.wave_fired = false;
             demo.current = RegimeStats {
                 name: REGIMES[demo.regime].0.to_string(),
                 speed: REGIMES[demo.regime].1,
@@ -2185,6 +2188,36 @@ fn run_neighborhood_demo(world: &mut World) {
             {
                 world.resource_mut::<NeighborhoodDemo>().bombed = true;
                 auto_bomb(world, position);
+            }
+            if world.resource::<NeighborhoodDemo>().gauntlet_wave
+                && world.resource::<NeighborhoodDemo>().regime == 2
+                && !world.resource::<NeighborhoodDemo>().wave_fired
+                && distance >= TRAVERSE_METERS * 0.4
+            {
+                world.resource_mut::<NeighborhoodDemo>().wave_fired = true;
+                let center = Vec3::new(position.x, 0.0, position.z);
+                for id in nearest_live_ids(world, center, 6) {
+                    let origin = world
+                        .resource::<Neighborhood>()
+                        .live
+                        .get(&id)
+                        .map(|live| live.origin)
+                        .unwrap_or(center);
+                    queue_damage(
+                        world,
+                        id,
+                        DamagePreset::CarBomb,
+                        origin + Vec3::new(0.0, 2.2, 6.0),
+                    );
+                }
+                let fired = crate::restoration::restore_city(
+                    world,
+                    center,
+                    500.0,
+                    2_000.0,
+                    crate::restoration::FalloffProfile::Linear,
+                );
+                info!("GAUNTLET WAVE: {fired} assignments at hero speed");
             }
             if distance >= TRAVERSE_METERS * 0.5 && !world.resource::<NeighborhoodDemo>().captured {
                 world.resource_mut::<NeighborhoodDemo>().captured = true;
@@ -2666,6 +2699,385 @@ fn run_neighborhood_demo(world: &mut World) {
             demo.stage = DemoStage::ExitWait;
             demo.stage_at = now;
         }
+        DemoStage::WaveBoot => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.0
+                || !world.resource::<CityMaterialSetup>().done
+            {
+                return;
+            }
+            let (cell, _) = world.resource::<BuildingIndex>().densest_cell();
+            let center = Vec3::new(
+                (cell.0 as f32 + 0.5) * 100.0,
+                0.0,
+                (cell.1 as f32 + 0.5) * 100.0,
+            );
+            set_camera(world, center + Vec3::Y * 160.0, Vec3::NEG_Y, 20.0);
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.start = center;
+                demo.wave_center = center;
+                demo.wave_targets.clear();
+                demo.wave_worst_ms = 0.0;
+                demo.wave_captured = [false; 4];
+                demo.wave_mid_damage = false;
+                demo.wave_hot_captured = false;
+                demo.stage = DemoStage::WaveDamage;
+                demo.stage_at = now;
+            }
+            info!(
+                "WAVE DEMO: center {center:?}, target {} buildings",
+                world.resource::<NeighborhoodDemo>().wave_size
+            );
+        }
+        DemoStage::WaveDamage => {
+            let center = world.resource::<NeighborhoodDemo>().wave_center;
+            let size = world.resource::<NeighborhoodDemo>().wave_size;
+            if world.resource::<NeighborhoodDemo>().wave_targets.is_empty() {
+                if now - world.resource::<NeighborhoodDemo>().stage_at < 3.0 {
+                    return;
+                }
+                let targets = nearest_live_ids(world, center, size);
+                if targets.is_empty() {
+                    info!("WAVE DEMO: no live buildings to damage");
+                    world.resource_mut::<NeighborhoodDemo>().stage = DemoStage::ExitWait;
+                    return;
+                }
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.wave_targets = targets.clone();
+                demo.stage_at = now;
+                drop(demo);
+                for id in targets {
+                    let did = NEIGHBORHOOD_ID_BASE + id as u32;
+                    let origin = world
+                        .resource::<Neighborhood>()
+                        .live
+                        .get(&id)
+                        .map(|live| live.origin)
+                        .unwrap_or(center);
+                    let away =
+                        Vec2::new(center.x - origin.x, center.z - origin.z).normalize_or_zero();
+                    let away = if away.length_squared() < 0.01 {
+                        Vec2::X
+                    } else {
+                        away
+                    };
+                    let point = origin + Vec3::new(away.x, 0.0, away.y) * 7.0 + Vec3::Y * 2.2;
+                    queue_damage(world, id, DamagePreset::CarBomb, point);
+                    let _ = did;
+                }
+                return;
+            }
+            let targets = world.resource::<NeighborhoodDemo>().wave_targets.clone();
+            let journal = world.resource::<DamageJournal>();
+            let damaged = targets
+                .iter()
+                .filter(|id| journal.0.head_for(NEIGHBORHOOD_ID_BASE + **id as u32) > 0.0)
+                .count();
+            let elapsed = now - world.resource::<NeighborhoodDemo>().stage_at;
+            if damaged == targets.len() || elapsed > 25.0 {
+                info!("WAVE DEMO: {damaged}/{} buildings damaged", targets.len());
+                let radius = {
+                    let index = world.resource::<BuildingIndex>();
+                    let max = targets
+                        .iter()
+                        .filter_map(|id| index.buildings.get(*id))
+                        .map(|meta| {
+                            Vec2::new(meta.centroid[0] - center.x, meta.centroid[1] - center.z)
+                                .length()
+                        })
+                        .fold(40.0f32, f32::max);
+                    (max + 30.0).clamp(150.0, 1_400.0)
+                };
+                let radius = std::env::var("MANHATTAN_WAVE_RADIUS")
+                    .ok()
+                    .and_then(|value| value.parse::<f32>().ok())
+                    .unwrap_or(radius)
+                    .clamp(80.0, 1_400.0);
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.wave_radius = radius;
+                demo.stage = DemoStage::WaveFreeze;
+                demo.stage_at = now;
+                info!("WAVE DEMO: radius {radius:.0} m");
+            }
+        }
+        DemoStage::WaveFreeze => {
+            let center = world.resource::<NeighborhoodDemo>().wave_center;
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 0.1 {
+                set_camera(
+                    world,
+                    center + Vec3::new(0.0, 140.0, 340.0),
+                    Vec3::NEG_Y,
+                    30.0,
+                );
+                world.resource_mut::<NeighborhoodDemo>().stage_at = now;
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.6 {
+                return;
+            }
+            // Return to a mixed close-in pose: nearest records are HOT again,
+            // the outer ones stay FROZEN for the wave.
+            set_camera(
+                world,
+                center + Vec3::new(0.0, 110.0, 100.0),
+                Vec3::new(0.0, -0.6, -1.0),
+                12.0,
+            );
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.stage = DemoStage::WaveFire;
+                demo.stage_at = now;
+            }
+        }
+        DemoStage::WaveFire => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.6 {
+                return;
+            }
+            let center = world.resource::<NeighborhoodDemo>().wave_center;
+            let radius = world.resource::<NeighborhoodDemo>().wave_radius;
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration19_wave_mixed.png");
+            if !world.resource::<NeighborhoodDemo>().no_capture {
+                screenshot(world, &path, "mixed-regime wave");
+            }
+            let fired = crate::restoration::restore_city(
+                world,
+                center,
+                radius,
+                60.0,
+                crate::restoration::FalloffProfile::Linear,
+            );
+            info!("WAVE DEMO: fired {fired} assignments radius {radius:.0} m");
+            {
+                let mut city = world.resource_mut::<crate::restoration::CityRestoration>();
+                city.config_radius = radius;
+                city.config_amplitude = 60.0;
+            }
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::WaveWatch;
+            demo.stage_at = now;
+            demo.wave_started = now as f64;
+            demo.wave_worst_ms = 0.0;
+            demo.wave_fired = true;
+            demo.wave_second = false;
+            demo.wave_mid_captured = false;
+        }
+        DemoStage::WaveWatch => {
+            let dt = world.resource::<Time>().delta_secs();
+            let elapsed = now - world.resource::<NeighborhoodDemo>().stage_at;
+            world.resource_mut::<NeighborhoodDemo>().wave_worst_ms = world
+                .resource::<NeighborhoodDemo>()
+                .wave_worst_ms
+                .max(dt * 1000.0);
+            let center = world.resource::<NeighborhoodDemo>().wave_center;
+            let ring_shots = [(0.3f32, 0usize), (1.0, 1), (2.1, 2), (3.2, 3)];
+            let altitude = center + Vec3::new(0.0, 290.0, 240.0);
+            let hot_window = (0.45..1.0).contains(&elapsed);
+            if !hot_window {
+                set_camera(world, altitude, center - altitude, 20.0);
+            }
+            for (threshold, index) in ring_shots {
+                if elapsed >= threshold
+                    && !world.resource::<NeighborhoodDemo>().wave_captured[index]
+                {
+                    world.resource_mut::<NeighborhoodDemo>().wave_captured[index] = true;
+                    set_camera(world, altitude, center - altitude, 20.0);
+                    let path = world
+                        .resource::<NeighborhoodDemo>()
+                        .capture_dir
+                        .join(format!("iteration19_wave_ring_{index}.png"));
+                    if !world.resource::<NeighborhoodDemo>().no_capture {
+                        screenshot(world, &path, "healing ring");
+                    }
+                }
+            }
+            // On-camera HOT heal: park at a still-damaged target's street.
+            if elapsed >= 0.5
+                && !world.resource::<NeighborhoodDemo>().wave_hot_captured
+                && let Some(id) = mid_wave_target(world)
+                && let Some(origin) = world
+                    .resource::<Neighborhood>()
+                    .live
+                    .get(&id)
+                    .map(|live| live.origin)
+            {
+                let position = origin + Vec3::new(0.0, 7.0, 32.0);
+                set_camera(world, position, origin + Vec3::Y * 6.0 - position, 8.0);
+                let path = world
+                    .resource::<NeighborhoodDemo>()
+                    .capture_dir
+                    .join("iteration19_wave_hot_heal.png");
+                if !world.resource::<NeighborhoodDemo>().no_capture {
+                    screenshot(world, &path, "HOT heal");
+                }
+                info!("WAVE DEMO: HOT heal capture b{id}");
+                world.resource_mut::<NeighborhoodDemo>().wave_hot_captured = true;
+            }
+            // Deliberate war: shoot a building that is still healing.
+            if elapsed >= 1.1 && !world.resource::<NeighborhoodDemo>().wave_mid_damage {
+                world.resource_mut::<NeighborhoodDemo>().wave_mid_damage = true;
+                if let Some(id) = mid_wave_target(world) {
+                    let origin = world
+                        .resource::<Neighborhood>()
+                        .live
+                        .get(&id)
+                        .map(|live| live.origin)
+                        .unwrap_or(center);
+                    queue_damage(
+                        world,
+                        id,
+                        DamagePreset::CarBomb,
+                        origin + Vec3::new(0.0, 2.2, 7.0),
+                    );
+                    info!("WAVE DEMO: mid-wave car bomb queued at b{id}");
+                }
+            }
+            if elapsed >= 1.45 && !world.resource::<NeighborhoodDemo>().wave_mid_captured {
+                world.resource_mut::<NeighborhoodDemo>().wave_mid_captured = true;
+                let path = world
+                    .resource::<NeighborhoodDemo>()
+                    .capture_dir
+                    .join("iteration19_mid_wave_damage.png");
+                if !world.resource::<NeighborhoodDemo>().no_capture {
+                    screenshot(world, &path, "mid-wave damage");
+                }
+            }
+            let wave_active = world
+                .resource::<crate::restoration::CityRestoration>()
+                .wave
+                .is_some();
+            let fired = world.resource::<NeighborhoodDemo>().wave_fired;
+            if fired && !wave_active {
+                if !world.resource::<NeighborhoodDemo>().wave_second {
+                    let city = world.resource::<crate::restoration::CityRestoration>();
+                    let first =
+                        (now as f64 - world.resource::<NeighborhoodDemo>().wave_started) as f32;
+                    info!(
+                        "WAVE DEMO FIRST: size {} radius {:.0} m duration {:.2} s throughput {:.2} buildings/s worst_slice {:.2} ms starved_frames {}",
+                        city.last_buildings,
+                        world.resource::<NeighborhoodDemo>().wave_radius,
+                        first,
+                        city.last_buildings as f32 / first.max(0.001),
+                        city.worst_slice_ms,
+                        city.starved_frames
+                    );
+                    world.resource_mut::<NeighborhoodDemo>().wave_first_ms =
+                        world.resource::<NeighborhoodDemo>().wave_worst_ms;
+                    let center = world.resource::<NeighborhoodDemo>().wave_center;
+                    let radius = world.resource::<NeighborhoodDemo>().wave_radius;
+                    let fired = crate::restoration::restore_city(
+                        world,
+                        center,
+                        radius,
+                        4_000.0,
+                        crate::restoration::FalloffProfile::Linear,
+                    );
+                    info!("WAVE DEMO: second (full-restore) wave fired on {fired} buildings");
+                    let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                    demo.wave_second = true;
+                    demo.wave_started = now as f64;
+                    return;
+                }
+                let path = world
+                    .resource::<NeighborhoodDemo>()
+                    .capture_dir
+                    .join("iteration19_wave_restored.png");
+                if !world.resource::<NeighborhoodDemo>().no_capture {
+                    screenshot(world, &path, "wave restored");
+                }
+                let second =
+                    (now as f64 - world.resource::<NeighborhoodDemo>().wave_started) as f32;
+                let size = world
+                    .resource::<crate::restoration::CityRestoration>()
+                    .last_buildings;
+                let first_ms = world.resource::<NeighborhoodDemo>().wave_first_ms;
+                info!(
+                    "WAVE DEMO SUMMARY: size {size} radius {:.0} m first_wave_worst_frame {first_ms:.1} ms second_duration {second:.2} s throughput {:.2} buildings/s worst_slice {:.2} ms starved_frames {}",
+                    world.resource::<NeighborhoodDemo>().wave_radius,
+                    size as f32 / second.max(0.001),
+                    world
+                        .resource::<crate::restoration::CityRestoration>()
+                        .worst_slice_ms,
+                    world
+                        .resource::<crate::restoration::CityRestoration>()
+                        .starved_frames
+                );
+                {
+                    let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                    if demo.no_capture {
+                        demo.stage = DemoStage::ExitWait;
+                        demo.stage_at = now + 1.0;
+                    } else {
+                        demo.stage = DemoStage::WavePlume;
+                        demo.stage_at = now;
+                    }
+                }
+            } else if elapsed > 60.0 {
+                info!("WAVE DEMO: timeout waiting for the wave");
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.stage = DemoStage::WavePlume;
+                demo.stage_at = now;
+            }
+        }
+        DemoStage::WavePlume => {
+            if world.resource::<NeighborhoodDemo>().wave_targets.is_empty() {
+                return;
+            }
+            let id = world.resource::<NeighborhoodDemo>().wave_targets[0];
+            let did = NEIGHBORHOOD_ID_BASE + id as u32;
+            let head = world.resource::<DamageJournal>().0.head_for(did);
+            if !world.resource::<NeighborhoodDemo>().wave_plume_started {
+                queue_damage(
+                    world,
+                    id,
+                    DamagePreset::CarBomb,
+                    Vec3::new(0.0, 2.2, 7.0)
+                        + world
+                            .resource::<Neighborhood>()
+                            .live
+                            .get(&id)
+                            .map(|live| live.origin)
+                            .unwrap_or(Vec3::ZERO),
+                );
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.wave_plume_started = true;
+                demo.stage_at = now;
+                return;
+            }
+            if !world.resource::<NeighborhoodDemo>().wave_plume_moved {
+                if head <= 0.0 && now - world.resource::<NeighborhoodDemo>().stage_at < 8.0 {
+                    return;
+                }
+                let origin = world
+                    .resource::<Neighborhood>()
+                    .live
+                    .get(&id)
+                    .map(|live| live.origin)
+                    .unwrap_or(Vec3::ZERO);
+                let position = origin + Vec3::new(0.0, 65.0, 300.0);
+                set_camera(world, position, origin + Vec3::Y * 30.0 - position, 30.0);
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.wave_plume_moved = true;
+                demo.stage_at = now;
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.5 {
+                return;
+            }
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration19_soft_plume.png");
+            if !world.resource::<NeighborhoodDemo>().no_capture {
+                screenshot(world, &path, "softened plume");
+            }
+            info!("WAVE DEMO: soft plume capture b{id}");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::ExitWait;
+            demo.stage_at = now + 2.0;
+        }
         DemoStage::ExitWait => {
             if now - world.resource::<NeighborhoodDemo>().stage_at > 1.2 {
                 info!("NEIGHBORHOOD GAUNTLET COMPLETE");
@@ -2693,7 +3105,7 @@ fn force_clear(world: &mut World) -> usize {
         if let Some(live) = world.resource_mut::<Neighborhood>().live.remove(&id) {
             let _ = swap_out(world, live.handle);
         }
-        despawn_host_smoke(world, NEIGHBORHOOD_ID_BASE + id as u32);
+        crate::restoration::despawn_host_smoke(world, NEIGHBORHOOD_ID_BASE + id as u32);
     }
     {
         let mut neighborhood = world.resource_mut::<Neighborhood>();
