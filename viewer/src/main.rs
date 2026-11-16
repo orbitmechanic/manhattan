@@ -39,6 +39,7 @@ use manhattan_viewer::{
         BuildingChunk, CityMaterial, CityMaterialSetup, RoadMaterials, setup_city_materials,
         setup_road_materials, update_city_materials, update_road_colors,
     },
+    city_tuning::{setup_tuning, tuning_keys},
     clock::{ClockAction, ProcessingClock, SimClock},
     collision::{CAMERA_RADIUS, CollisionGrid},
     detail::{DetailCull, update_detail_culling},
@@ -50,6 +51,7 @@ use manhattan_viewer::{
         Environment, fog_cull_distance, setup_lighting, spawn_fog_banks, update_environment,
         update_fog_bank_materials, update_fog_banks,
     },
+    instrument::InstrumentPlugin,
     lightning::LightningPlugin,
     minimap::MinimapPlugin,
     motion::{MotionPlugin, accessories_active},
@@ -282,6 +284,9 @@ fn main() {
         )
         .add_plugins(destructibles_bevy::destructibles_plugin_for_manhattan())
         .add_plugins(MaterialPlugin::<CityMaterial>::default())
+        .add_plugins(InstrumentPlugin)
+        .add_systems(Startup, setup_tuning)
+        .add_systems(Update, tuning_keys)
         .add_plugins(NightAmbientPlugin)
         .add_plugins(NeighborhoodPlugin)
         .add_plugins(CityRestorationPlugin)

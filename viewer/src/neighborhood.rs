@@ -519,18 +519,21 @@ pub fn spec_for(meta: &BuildingMeta) -> Result<BuildingSpec, String> {
         .map(|point| [point[0] - meta.centroid[0], point[1] - meta.centroid[1]])
         .collect();
     let height = meta.height_m.max(1.0);
-    let raw_floor = meta.floor_height_m.max(1.5);
+    let raw_floor = meta.floor_height_m.clamp(2.4, 6.0);
+    // Shared floor pitch: the map record's measured floor height is the ground
+    // truth for both generators, so a swap cannot change the window-row count.
     let mut floor_count = (height / raw_floor).round().max(1.0) as u32;
-    // Neighborhood LOD: a live building is generated at the map's exact
-    // footprint and height, but the floor count is capped so a swap cannot
-    // spawn a full-detail 30-storey tower in one frame. The 12 m validation
-    // ceiling raises the cap for very tall towers; the visual is a plausible
-    // stylised floor stack (style popping is accepted open-world LOD).
-    floor_count = floor_count.clamp(1, 8);
-    if height / floor_count as f32 > 12.0 {
-        floor_count = (height / 12.0).ceil().max(1.0) as u32;
+    // Measurement hook only: reproduce the pre-iteration-23 8-floor LOD.
+    if std::env::var_os("MANHATTAN_LEGACY_FLOORS").is_some() {
+        floor_count = floor_count.clamp(1, 8);
+        if height / floor_count as f32 > 12.0 {
+            floor_count = (height / 12.0).ceil().max(1.0) as u32;
+        }
     }
-    let floor_height = (height / floor_count as f32).clamp(1.8, 12.0);
+    // Bound the absolutely pathological supertall only; normal records keep
+    // their real pitch even though the destructible side gains rows/cells.
+    floor_count = floor_count.clamp(1, 200);
+    let floor_height = height / floor_count as f32;
     let style = style_for(meta);
     let mut windows = style.windows();
     if style == FacadeStyle::GlassCurtainWall {
@@ -572,6 +575,13 @@ pub fn spec_for(meta: &BuildingMeta) -> Result<BuildingSpec, String> {
 /// furniture floating (or bury them), so reject it and keep plain geometry.
 pub fn height_matches(meta: &BuildingMeta, layout: &destructibles_core::BuildingLayout) -> bool {
     (layout.height - meta.height_m).abs() <= HEIGHT_TOL_M
+}
+
+pub fn window_rows_match(meta: &BuildingMeta, layout: &destructibles_core::BuildingLayout) -> bool {
+    let expected = (meta.height_m / meta.floor_height_m.clamp(2.4, 6.0))
+        .round()
+        .max(1.0) as u32;
+    layout.spec.floor_count == expected
 }
 
 pub fn footprint_matches(
@@ -1063,6 +1073,7 @@ fn apply_preset(
     direction: Vec3,
 ) {
     let direction = direction.normalize_or_zero();
+    let tuning = world.resource::<crate::city_tuning::CityTuning>().clone();
     let impact = match preset {
         DamagePreset::Bullet => destructibles_core::ImpactSpec {
             position: point.to_array(),
@@ -1074,9 +1085,9 @@ fn apply_preset(
         DamagePreset::CarBomb => destructibles_core::ImpactSpec {
             position: point.to_array(),
             radius: 0.0,
-            velocity: (direction * 42.0).to_array(),
-            mass_kg: 1_500.0,
-            explosive_yield_kg_tnt: 5.0,
+            velocity: (direction * tuning.projectile_velocity_mps).to_array(),
+            mass_kg: tuning.projectile_mass_kg,
+            explosive_yield_kg_tnt: tuning.explosive_yield_kg,
         },
         DamagePreset::Tier3 => destructibles_core::ImpactSpec {
             position: point.to_array(),
@@ -1088,8 +1099,8 @@ fn apply_preset(
         DamagePreset::Hero => destructibles_core::ImpactSpec {
             position: point.to_array(),
             radius: 0.5,
-            velocity: (direction * 620.0).to_array(),
-            mass_kg: 220.0,
+            velocity: (direction * tuning.projectile_velocity_mps.max(120.0) * 14.0).to_array(),
+            mass_kg: tuning.projectile_mass_kg.min(400.0),
             explosive_yield_kg_tnt: 0.0,
         },
     };
@@ -1901,9 +1912,12 @@ fn process_swaps(world: &mut World) {
         let height_ok = layout
             .as_ref()
             .is_some_and(|layout| height_matches(&meta, layout));
-        if !footprint_ok || !height_ok {
+        let rows_ok = layout
+            .as_ref()
+            .is_some_and(|layout| window_rows_match(&meta, layout));
+        if !footprint_ok || !height_ok || !rows_ok {
             let _ = swap_out(world, handle);
-            if !height_ok {
+            if !height_ok || !rows_ok {
                 world.resource_mut::<Neighborhood>().height_failures += 1;
             }
             if !footprint_ok {
@@ -2830,9 +2844,11 @@ fn run_neighborhood_demo(world: &mut World) {
             screenshot(world, &path, "storefront re-entry");
             if let Some(id) = world.resource::<NeighborhoodDemo>().damage_building {
                 let did = NEIGHBORHOOD_ID_BASE + id as u32;
-                // The host owns the rate; a demo restoration should finish in
-                // seconds even after a car bomb on a mid-rise.
-                set_restoration_rate(world, did, 900.0);
+                // The host owns the rate; tuning drives the demo restoration.
+                let rate = world
+                    .resource::<crate::city_tuning::CityTuning>()
+                    .restoration_rate_m3s;
+                set_restoration_rate(world, did, rate);
                 begin_restoration(world, &[did]);
             }
             let mut demo = world.resource_mut::<NeighborhoodDemo>();
@@ -3357,7 +3373,10 @@ fn run_neighborhood_demo(world: &mut World) {
                     .is_restoring(did)
                 && now - world.resource::<NeighborhoodDemo>().stage_at > 0.8
             {
-                destructibles_bevy::rewind::set_restoration_rate(world, did, 900.0);
+                let rate = world
+                    .resource::<crate::city_tuning::CityTuning>()
+                    .restoration_rate_m3s;
+                destructibles_bevy::rewind::set_restoration_rate(world, did, rate);
                 begin_restoration(world, &[did]);
             }
             if head > 0.0 {

@@ -736,3 +736,92 @@ deferred item.
 - Batch audits: all envelope/height/antenna/glass invariants 0 offenders;
   9,799 generated, 1,233 pre-existing spec rejections.
 - Journal/audit/determinism/wave battery untouched.
+
+## Iteration 23 — instrumentation, correctness, perf war
+
+### Instruments
+
+Always-visible FPS panel (F3): instant FPS, 5 s average, worst frame of the
+last second, p50/p95/p99 per second, heading; plus the reviewer tuning line.
+The minimap carries a compass ring with a north tick/N that rotates with heading
+(`compass_angle(yaw) = yaw - 90°`; tested). Committed as a feature.
+
+### 20-shot journal gate
+
+`repeat_fire.rs` fires 20 tier-2 impacts twice: inline-drained and fully queued
+before admission. Both journals grow monotonically, the head never regresses,
+no restoration ledger leaks, and every entry belongs to the building. The
+queued case drains in ≤25 frames. No journal mutation was required; the gate
+guards the admission path.
+
+### Shared floor pitch
+
+The map record's `floor_height_m` (clamped 2.4–6 m) is ground truth for both
+generators; the 8-floor LOD cap is gone (200-floor safety bound). Window rows
+now match the map: batch `rows=0` mismatches over 9,761 generated records.
+Cost: **cells 1,011,970 → 1,320,882 (+30.5 %)**, **panes 1,707,733 →
+2,237,821 (+31.0 %)**, measured with the `MANHATTAN_LEGACY_FLOORS` hook.
+Verification gate now includes window-row parity.
+
+### Chimney / hybrid gate
+
+Batch audit: tall/chimney 0, envelope 0, antenna 0, glass 0, rows 0 over 9,761
+generated records (1,271 pre-existing spec rejections). Swaps require footprint,
+height and window-row parity; failures stay plain (b6159 rejected in the
+gauntlet, counted). Map furniture hides with the plain building, so the
+antenna-orphan path is gone.
+
+### Shadows: decision and cost
+
+Research/codegraph showed the pipeline has no lightmap UV channel or bake pass
+for 11k merged atlas buildings; a static lightmap hybrid would require a new
+UV/bake pipeline outside this round. Decision: keep dynamic sun shadows (the
+only global caster) and restore a **tiny damage-theatre budget** — the first
+fire light per building casts, the second does not; night block fills stay
+shadowless. Measured line item at the AM pose: **78.04 ms without sun shadows vs
+87.12 ms with (≈9.1 ms)**. Firelight shadow cost is included in the burning
+night capture; no measurable frame spike beyond city streaming was observed.
+A future lightmap hybrid remains the documented recommendation with this
+measured baseline.
+
+### Plume rewrite (host FAR)
+
+Far columns now use **7 recycled billboard puffs**: seeded phase per building,
+slow rise, expansion, renewal, camera-facing, `NotShadowCaster`. This is 7
+draws per frozen column (down from 10 crossed quads). Near fire columns remain
+the destructibles Hanabi system. Epilogue removes the column; seed derives from
+the journal/host state so replay reproduces it. Moon tint remains a read-only
+journal consumer.
+
+### Targeted optimization table
+
+| Item | Before | After |
+|---|---|---|
+| AM dense frame | 77.65 ms | 87.12 ms |
+| Sun-shadow line | 78.04 ms (no shadows) | 87.12 ms (≈9.1 ms) |
+| Floor pitch cells/panes | 1,011,970 / 1,707,733 | 1,320,882 / 2,237,821 |
+| Visible mesh entities (AM) | 89,834 | 92,239 |
+| Teleport envelope | 345 ms | **178 ms** |
+| Hybrid double-render | possible | **0** (gate rejects) |
+| Admission budget | const 6 ms | host-wired 6 ms, 20-shot drain ≤25 frames |
+| Plume draws / frozen column | 10 | **7** |
+
+Shot saturation: one impact decomposition per frame ⇒ **60 impacts/s at 60
+fps**; a 20-shot backlog drains in ~0.33 s. Damage therefore shows as slow
+damage, not slow frames.
+
+### Controls parity
+
+`tuning.toml` is now in the tree and loaded at startup. The instrument panel
+shows and edits: explosive yield, projectile mass, projectile velocity,
+restoration rate, grip force, fire-stage pace and admission budget; F6 saves,
+F7 reloads. Damage presets consume yield/mass/velocity, restoration consumes
+the rate, admission budget is written into the destructibles Admission resource
+each frame, and grip force into the destructibles Tuning resource. Fire-stage
+pace is persisted/displayed (consumption is a destructibles-side follow-up).
+
+### Verification
+
+Manhattan **104 tests**, destructibles **170**, clippy clean both. Gauntlet:
+worst 250.0 / 202.1 / 157.4 / 115.6 ms, worst swap 44.7 ms (more floors/cells
+as expected), `stray=0` each regime, hover swaps 0. Batch audits 0 offenders.

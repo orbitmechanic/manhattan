@@ -1,0 +1,7 @@
+explosive_yield_kg = 5.0
+projectile_mass_kg = 1500.0
+projectile_velocity_mps = 42.0
+restoration_rate_m3s = 900.0
+grip_max_g = 3.5
+fire_stage_pace = 1.0
+admission_budget_ms = 6.0
