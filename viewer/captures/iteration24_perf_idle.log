@@ -1,0 +1,58 @@
+2026-11-16T18:56:55.195276Z  INFO bevy_diagnostic::system_information_diagnostics_plugin::internal: SystemInfo { os: "Linux (Omarchy 4.5.0)", kernel: "7.2.15-1-omarchy", cpu: "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx", core_count: "4", memory: "17.5 GiB" }
+2026-11-16T18:56:55.271846Z  INFO bevy_render::renderer: AdapterInfo { name: "AMD Radeon Vega 8 Graphics (RADV RAVEN)", vendor: 4098, device: 5592, device_type: IntegratedGpu, device_pci_bus_id: "0000:03:00.0", driver: "radv", driver_info: "Mesa 26.2.5-arch1.1", backend: Vulkan, subgroup_min_size: 64, subgroup_max_size: 64, transient_saves_memory: Some(false), limit_bucket: None }
+2026-11-16T18:56:55.420841Z  INFO bevy_pbr::cluster: GPU clustering is supported on this device.
+2026-11-16T18:56:55.420886Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+2026-11-16T18:56:55.421685Z  INFO bevy_hanabi::plugin: Initializing Hanabi for GPU adapter AMD Radeon Vega 8 Graphics (RADV RAVEN)
+2026-11-16T18:56:55.426679Z  INFO bevy_winit::system: Creating new window Manhattan — day/night fly-through (67v0)
+2026-11-16T18:56:55.430516Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 23 orthogonal masonry chunks per structural cell
+2026-11-16T18:56:55.431180Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 30 crystalline glass chunks per structural cell
+2026-11-16T18:56:55.443577Z  INFO destructibles_bevy::audio: AUDIO DEVICE: host=Alsa device='Default Audio Device' config=F32 44100 Hz 2 ch (Bevy/rodio default output)
+2026-11-16T18:56:55.443769Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD: feeder/index ready, mask 1024² @ 1200 m
+2026-11-16T18:56:55.680786Z  INFO manhattan_viewer::storefront: Storefronts: 11032 buildings, 4 categories, 0 repeat warnings, seed a444a930
+2026-11-16T18:56:55.682080Z  INFO manhattan_viewer::details: Trees: 3000
+2026-11-16T18:56:55.966151Z  INFO manhattan_viewer::details: Roof furniture: 39164 equipment boxes, 21633 masts on 10824 buildings
+2026-11-16T18:56:55.966315Z  INFO manhattan_viewer::people: People catalog ready
+2026-11-16T18:56:55.973057Z  INFO manhattan_viewer::traffic: Vehicle catalog: 150 variants
+2026-11-16T18:56:56.045769Z  INFO manhattan_viewer::details: Signs: 44173 on 5910 buildings
+2026-11-16T18:56:56.194393Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: glass_break.ogg (31276 bytes)
+2026-11-16T18:56:56.194449Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: impact.ogg (7792 bytes)
+2026-11-16T18:56:56.194456Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: shard_chatter.ogg (39114 bytes)
+2026-11-16T18:56:56.194462Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: chime.wav (79424 bytes)
+2026-11-16T18:56:56.194467Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: rewind_whoosh.wav (141164 bytes)
+2026-11-16T18:56:56.194473Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: explosion.wav (229364 bytes)
+2026-11-16T18:56:56.194478Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: klaxon.wav (176444 bytes)
+2026-11-16T18:56:56.194483Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: sprinkler_hiss.wav (176444 bytes)
+2026-11-16T18:56:56.194488Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: masonry_thud.wav (48554 bytes)
+2026-11-16T18:56:56.194530Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: collapse_rumble.wav (458684 bytes)
+2026-11-16T18:56:56.194535Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: structural_groan.wav (264644 bytes)
+2026-11-16T18:56:56.194541Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: concrete_crack.wav (19448 bytes)
+2026-11-16T18:56:56.194546Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: gas_hiss.wav (176444 bytes)
+2026-11-16T18:56:56.194551Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: fire_crackle.wav (176444 bytes)
+2026-11-16T18:56:56.194556Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: cascade_crackle.wav (352844 bytes)
+2026-11-16T18:56:56.194561Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: dust_hiss.wav (352844 bytes)
+2026-11-16T18:56:56.194566Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: breaker_pop.wav (39734 bytes)
+2026-11-16T18:56:56.194571Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: electric_crackle.wav (79424 bytes)
+2026-11-16T18:56:56.194579Z  INFO destructibles_bevy::audio: AUDIO CHAIN READY: device=Some("Default Audio Device") assets=18 master_volume=0.80
+2026-11-16T18:56:56.747398Z  INFO destructibles_bevy::audio: AUDIO startup chime requested
+2026-11-16T18:56:57.610991Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=chime pitch=0.900 vol=0.48 paused=false empty=false
+2026-11-16T18:56:58.270219Z  INFO manhattan_viewer::city_material: City materials ready: 12 materials / 4353 primitives
+2026-11-16T18:56:58.526552Z ERROR bevy_render::render_resource::pipeline_cache: failed to create shader module: Validation Error
+
+Caused by:
+  In Device::create_shader_module
+    
+Shader validation error: Entry point fragment at Fragment is invalid
+   ┌─ :54:21
+   │
+54 │     let to_camera = in.world_position - camera.xyz;
+   │                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ naga::ir::Expression [74]
+   │
+   = Expression [74] is invalid
+   = Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+
+      Expression [74] is invalid
+        Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+2026-11-16T18:57:08.266745Z  INFO manhattan_viewer::neighborhood: PERF PROBE: frames 123 avg 40.76 ms worst 58.85 ms teleport_envelope 0 ms vehicles 0 pedestrians 1000 ad_meshes 19509 mesh_entities 69560 hidden_meshes 51601 visible_meshes 69560 interior_meshes 0 interior_hidden 0 live 0 frozen 0
+2026-11-16T18:57:09.953885Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD GAUNTLET COMPLETE

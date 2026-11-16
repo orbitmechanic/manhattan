@@ -126,6 +126,43 @@ impl BuildingIndex {
         out
     }
 
+    /// Deterministic point → building resolver used by JIT impacts. Boundary
+    /// points use the nearest footprint edge; ties use centroid distance, then
+    /// record id. Misses return None.
+    pub fn resolve_point(&self, point: Vec2) -> Option<usize> {
+        let mut hits: Vec<(usize, f32)> = Vec::new();
+        let mut edges: Vec<(usize, f32)> = Vec::new();
+        for candidate in self.candidates(point, self.cell * 10.0) {
+            let Some(meta) = self.buildings.get(candidate) else {
+                continue;
+            };
+            let inside =
+                destructibles_core::math::point_in_polygon([point.x, point.y], &meta.perimeter);
+            if inside {
+                let centroid = Vec2::from_array(meta.centroid);
+                hits.push((meta.id, centroid.distance(point)));
+            } else {
+                let edge = destructibles_core::math::distance_to_polygon_edges(
+                    [point.x, point.y],
+                    &meta.perimeter,
+                );
+                if edge <= 1.0 {
+                    edges.push((meta.id, edge));
+                }
+            }
+        }
+        let mut pool = if hits.is_empty() {
+            edges
+                .into_iter()
+                .map(|(id, edge)| (id, edge * 4.0))
+                .collect::<Vec<_>>()
+        } else {
+            hits
+        };
+        pool.sort_by(|a, b| a.1.total_cmp(&b.1).then_with(|| a.0.cmp(&b.0)));
+        pool.first().map(|(id, _)| *id)
+    }
+
     fn densest_cell(&self) -> ((i32, i32), usize) {
         self.grid
             .iter()
@@ -203,6 +240,9 @@ pub struct Neighborhood {
     pub last_zone_ms: f32,
     pub footprint_failures: u32,
     pub height_failures: u32,
+    pub jit_target: Option<usize>,
+    pub jit_started: f32,
+    pub jit_latency: f32,
     pending_damage: Vec<PendingDamage>,
     pub dressing_panels: usize,
     pub dressing_plates: usize,
@@ -329,6 +369,9 @@ enum DemoStage {
     GoldenDeck,
     GoldenMoon,
     GoldenSmokeMoon,
+    JitBullet,
+    JitCar,
+    JitRestore,
     ExitWait,
 }
 
@@ -395,7 +438,10 @@ impl NeighborhoodDemo {
         let roofs = std::env::var_os("MANHATTAN_ROOFS").is_some();
         let perf_probe = std::env::var_os("MANHATTAN_PERF_PROBE").is_some();
         let golden = std::env::var_os("MANHATTAN_GOLDEN").is_some();
-        let stage = if golden {
+        let jit = std::env::var_os("MANHATTAN_JIT").is_some();
+        let stage = if jit {
+            DemoStage::JitBullet
+        } else if golden {
             DemoStage::GoldenBoot
         } else if perf_probe {
             DemoStage::PerfProbe
@@ -407,7 +453,7 @@ impl NeighborhoodDemo {
             DemoStage::Boot
         };
         Self {
-            active: active || wave_demo || roofs || perf_probe || golden,
+            active: active || wave_demo || roofs || perf_probe || golden || jit,
             capture_dir,
             damage: std::env::var_os("MANHATTAN_DAMAGE").is_some(),
             wave_size,
@@ -679,6 +725,7 @@ fn sync_host_camera(
     scene.auto = false;
 }
 
+#[allow(dead_code)]
 fn visibility_class(ahead: bool, visible: bool) -> u8 {
     match (ahead, visible) {
         (true, true) => 0,
@@ -687,6 +734,7 @@ fn visibility_class(ahead: bool, visible: bool) -> u8 {
     }
 }
 
+#[allow(dead_code)]
 fn los_blocked(index: &BuildingIndex, from: Vec3, target: usize) -> bool {
     let Some(meta) = index.buildings.get(target) else {
         return false;
@@ -744,7 +792,6 @@ fn update_zone(
     // Candidates are always rebuilt from the camera's CURRENT position; the
     // queue below is replaced, never appended to, so a stale entry behind the
     // camera can never be instantiated and then collected.
-    let mut desired_now: Vec<usize> = Vec::new();
     let idle = motion.speed < 3.0 || !clock.playing;
     let mut seen = BTreeSet::new();
     for candidate in candidates {
@@ -764,9 +811,7 @@ fn update_zone(
         let damaged = live && journal.0.head_for(NEIGHBORHOOD_ID_BASE + id as u32) > 0.0;
         let desired = in_zone(distance, along, lateral, live, &config)
             || (damaged && config.damaged_persists);
-        if desired && !live && !neighborhood.failed.contains(&id) {
-            desired_now.push(id);
-        } else if !desired && live && idle && !neighborhood.queued_out.contains(&id) {
+        if !desired && live && idle && !neighborhood.queued_out.contains(&id) {
             neighborhood.pending_out.push_back(id);
             neighborhood.queued_out.insert(id);
         }
@@ -806,32 +851,10 @@ fn update_zone(
         neighborhood.pending_out.clear();
         neighborhood.queued_out.clear();
     }
-    // Line-of-sight weighted priority: visible ahead > visible/occluded ahead
-    // > behind. Distance is the tie-break.
-    let camera_pos = camera.translation;
-    let mut ranked: Vec<(u8, f32, usize)> = desired_now
-        .into_iter()
-        .map(|id| {
-            let meta = index.buildings.get(id);
-            let point = meta
-                .map(|meta| Vec2::new(meta.centroid[0], meta.centroid[1]))
-                .unwrap_or(center);
-            let delta = point - center;
-            let distance = delta.length();
-            let along = delta.dot(forward);
-            let ahead =
-                along >= 0.0 && (delta - forward * along).length() <= config.ahead_half_width * 1.5;
-            let visible = !los_blocked(&index, camera_pos, id);
-            (visibility_class(ahead, visible), distance, id)
-        })
-        .collect();
-    ranked.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.total_cmp(&b.1)));
+    // Camera-follow prefetch is retired. Nothing is queued for swap-in by
+    // position; JIT impacts are the only producer. Stale entries are cleared.
     neighborhood.pending_in.clear();
     neighborhood.queued_in.clear();
-    for (_, _, id) in ranked {
-        neighborhood.pending_in.push_back(id);
-        neighborhood.queued_in.insert(id);
-    }
     neighborhood.pending_peak = neighborhood.pending_peak.max(neighborhood.pending_in.len());
     neighborhood.last_zone_ms = started.elapsed().as_secs_f32() * 1000.0;
     let _ = time;
@@ -985,8 +1008,15 @@ fn detail_tick(world: &mut World) {
             .partial_cmp(&detail_priority(b.4, b.3 > 0.0, b.2))
             .unwrap_or(std::cmp::Ordering::Equal)
     });
+    let jit = world.resource::<Neighborhood>().jit_target;
+    if let Some(target) = jit
+        && let Some(position) = items.iter().position(|item| item.0 == target)
+    {
+        let item = items.remove(position);
+        items.insert(0, item);
+    }
     let catch_up = !world.resource::<SimClock>().playing;
-    let detail_budget = if catch_up { 8.0 } else { 4.0 };
+    let detail_budget = if catch_up || jit.is_some() { 8.0 } else { 4.0 };
     let started = Instant::now();
     let mut tier1 = 0usize;
     let mut tier2 = 0usize;
@@ -1003,6 +1033,15 @@ fn detail_tick(world: &mut World) {
             if reached >= DetailTier::Structural {
                 tier1 += 1;
                 info!("DETAIL b{id}: Tier 1 ready at {distance:.1} m");
+                if jit == Some(id) {
+                    let now = world.resource::<Time>().elapsed_secs();
+                    let started = world.resource::<Neighborhood>().jit_started;
+                    let latency = (now - started).max(0.0);
+                    let mut neighborhood = world.resource_mut::<Neighborhood>();
+                    neighborhood.jit_target = None;
+                    neighborhood.jit_latency = latency;
+                    info!("JIT READY b{id}: Tier 1 in {:.2} s", latency);
+                }
             }
             set_live_detail(world, id, reached);
             if let Some(live) = world.resource_mut::<Neighborhood>().live.get_mut(&id)
@@ -1166,6 +1205,7 @@ fn damage_input(world: &mut World) {
         preset = DamagePreset::Hero;
     }
     let origin = camera.translation;
+    let origin_of_ray = origin;
     let forward = camera.forward().as_vec3();
     let mut best: Option<(f32, usize, Vec3)> = None;
     {
@@ -1180,6 +1220,19 @@ fn damage_input(world: &mut World) {
                 && best.is_none_or(|(best_t, _, _)| t < best_t)
             {
                 best = Some((t, *id, origin + forward * t));
+            }
+        }
+    }
+    if best.is_none() {
+        // Plain geometry still receives the aim ray: JIT needs the record.
+        let index = world.resource::<BuildingIndex>();
+        for meta in &index.buildings {
+            let origin = Vec3::new(meta.centroid[0], 0.0, meta.centroid[1]);
+            let (min, max) = meta_bounds(meta, origin);
+            if let Some(t) = ray_aabb(origin_of_ray, forward, min, max)
+                && best.is_none_or(|(best_t, _, _)| t < best_t)
+            {
+                best = Some((t, meta.id, origin_of_ray + forward * t));
             }
         }
     }
@@ -1227,6 +1280,9 @@ fn damage_input(world: &mut World) {
         let Some(id) = target else {
             return;
         };
+        if !world.resource::<Neighborhood>().live.contains_key(&id) && !jit_swap(world, id) {
+            return;
+        }
         let level = detail_level(world, NEIGHBORHOOD_ID_BASE + id as u32);
         if level < DetailTier::Structural {
             world
@@ -1420,6 +1476,15 @@ fn persistence_tick(world: &mut World) {
             }
             if let Some(live) = world.resource_mut::<Neighborhood>().live.get_mut(&id) {
                 live.frozen = false;
+            }
+            // Epilogue becomes eviction: a fully restored record returns to
+            // the plain resting state immediately.
+            {
+                let mut neighborhood = world.resource_mut::<Neighborhood>();
+                if !neighborhood.queued_out.contains(&id) {
+                    neighborhood.pending_out.push_back(id);
+                    neighborhood.queued_out.insert(id);
+                }
             }
             info!("PERSIST b{id}: released after restoration at {distance:.0} m");
         }
@@ -1804,6 +1869,86 @@ fn sync_dressing_damage(world: &mut World) {
         }
     }
     world.resource_mut::<StreetParity>().hidden = hidden;
+}
+
+/// JIT: a plain record becomes live because something hit it, never because
+/// the camera is near it. Uses the same footprint/height/window-row gate.
+#[allow(clippy::drop_non_drop)]
+fn jit_swap(world: &mut World, id: usize) -> bool {
+    if world.resource::<Neighborhood>().live.contains_key(&id) {
+        return true;
+    }
+    let Some(meta) = world.resource::<BuildingIndex>().buildings.get(id).cloned() else {
+        return false;
+    };
+    let spec = match spec_for(&meta) {
+        Ok(spec) => spec,
+        Err(error) => {
+            info!("JIT skip b{id}: {error}");
+            world.resource_mut::<Neighborhood>().failed.insert(id);
+            return false;
+        }
+    };
+    let origin = Vec3::new(meta.centroid[0], 0.0, meta.centroid[1]);
+    let started = Instant::now();
+    let Some(handle) = swap_in_lod(
+        world,
+        NEIGHBORHOOD_ID_BASE + id as u32,
+        spec.clone(),
+        Transform::from_translation(origin),
+        BuildingDetail::Shell,
+    ) else {
+        return false;
+    };
+    let layout = world
+        .resource::<Buildings>()
+        .get(handle.building)
+        .map(|record| record.layout.clone());
+    let ok = layout.as_ref().is_some_and(|layout| {
+        footprint_matches(&meta, layout, origin)
+            && height_matches(&meta, layout)
+            && window_rows_match(&meta, layout)
+    });
+    if !ok {
+        let _ = swap_out(world, handle);
+        world.resource_mut::<Neighborhood>().height_failures += 1;
+        world.resource_mut::<Neighborhood>().failed.insert(id);
+        info!("JIT b{id} rejected by geometry gate; stays plain");
+        return false;
+    }
+    if let Some(mut streaming) = world.get_resource_mut::<Streaming>() {
+        streaming.dormant_specs.remove(&handle.building);
+        streaming.by_building.remove(&handle.building);
+    }
+    let now_secs = world.resource::<Time>().elapsed_secs();
+    {
+        let mut neighborhood = world.resource_mut::<Neighborhood>();
+        neighborhood.live.insert(
+            id,
+            LiveBuilding {
+                handle,
+                meta: id,
+                spec,
+                origin,
+                detail: DetailTier::Shell,
+                entry_distance: 0.0,
+                tier1_ready: None,
+                frozen: false,
+                dressing: Vec::new(),
+            },
+        );
+        neighborhood.swaps_in += 1;
+        neighborhood.mask_dirty = true;
+        neighborhood.mask_revision += 1;
+        neighborhood.live_revision += 1;
+        neighborhood.jit_target = Some(id);
+        neighborhood.jit_started = now_secs;
+    }
+    info!(
+        "JIT swap_in b{id} ({:.2} ms) geometry PASS",
+        started.elapsed().as_secs_f32() * 1000.0
+    );
+    true
 }
 
 #[allow(clippy::drop_non_drop)]
@@ -2242,6 +2387,12 @@ fn nearest_live(world: &World, point: Vec3) -> Option<(usize, Vec3)> {
 }
 
 fn queue_damage(world: &mut World, id: usize, preset: DamagePreset, point: Vec3) {
+    // JIT: every damage source localizes to a plain record and swaps it in
+    // before the shot is admitted. No other path creates live buildings.
+    if !world.resource::<Neighborhood>().live.contains_key(&id) && !jit_swap(world, id) {
+        info!("DAMAGE skip b{id}: JIT geometry gate rejected");
+        return;
+    }
     world
         .resource_mut::<Neighborhood>()
         .pending_damage
@@ -3917,6 +4068,143 @@ fn run_neighborhood_demo(world: &mut World) {
             demo.stage = DemoStage::ExitWait;
             demo.stage_at = now + 1.0;
         }
+        DemoStage::JitBullet => {
+            if world.resource::<NeighborhoodDemo>().golden_step == 0 {
+                if now - world.resource::<NeighborhoodDemo>().stage_at < 2.0
+                    || !world.resource::<CityMaterialSetup>().done
+                {
+                    return;
+                }
+                world.resource_mut::<NeighborhoodDemo>().golden_step = 1;
+            }
+            let center = crate::city_rhythm::TIMES_SQUARE;
+            let index = world.resource::<BuildingIndex>();
+            let live: BTreeSet<usize> = world
+                .resource::<Neighborhood>()
+                .live
+                .keys()
+                .copied()
+                .collect();
+            let target = index
+                .buildings
+                .iter()
+                .filter(|meta| !live.contains(&meta.id) && meta.height_m > 20.0)
+                .map(|meta| {
+                    let d = Vec2::new(meta.centroid[0] - center.x, meta.centroid[1] - center.y)
+                        .length();
+                    (d, meta.id)
+                })
+                .min_by(|a, b| a.0.total_cmp(&b.0));
+            let Some((_, id)) = target else {
+                world.resource_mut::<NeighborhoodDemo>().stage = DemoStage::ExitWait;
+                return;
+            };
+            let origin = {
+                let meta = &index.buildings[id];
+                Vec3::new(meta.centroid[0], 0.0, meta.centroid[1])
+            };
+            let position = origin + Vec3::new(0.0, 7.0, 38.0);
+            set_camera(world, position, origin + Vec3::Y * 5.0 - position, 8.0);
+            world.resource_mut::<NeighborhoodDemo>().roof_target = Some(id);
+            if !golden_take(world, "iteration24_jit_before.png", "plain before JIT", now) {
+                return;
+            }
+            queue_damage(
+                world,
+                id,
+                DamagePreset::Bullet,
+                origin + Vec3::Y * 6.0 + Vec3::Z * 8.0,
+            );
+            info!("JIT DEMO: bullet queued at plain b{id}");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::JitCar;
+            demo.stage_at = now;
+        }
+        DemoStage::JitCar => {
+            let Some(id) = world.resource::<NeighborhoodDemo>().roof_target else {
+                return;
+            };
+            let did = NEIGHBORHOOD_ID_BASE + id as u32;
+            let head = world.resource::<DamageJournal>().0.head_for(did);
+            if head <= 0.0 && now - world.resource::<NeighborhoodDemo>().stage_at < 10.0 {
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 0.5 {
+                return;
+            }
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration24_jit_bullet_wound.png");
+            screenshot(world, &path, "JIT bullet wound");
+            info!("JIT DEMO: bullet wound visible b{id} head {head:.2}");
+            let center = crate::city_rhythm::TIMES_SQUARE;
+            let index = world.resource::<BuildingIndex>();
+            let neighbor = index
+                .buildings
+                .iter()
+                .filter(|meta| meta.id != id && meta.height_m > 12.0)
+                .map(|meta| {
+                    let d = Vec2::new(meta.centroid[0] - center.x, meta.centroid[1] - center.y)
+                        .length();
+                    (d, meta.id)
+                })
+                .min_by(|a, b| a.0.total_cmp(&b.0))
+                .map(|(_, id)| id);
+            if let Some(neighbor) = neighbor {
+                let origin = Vec3::new(
+                    index.buildings[neighbor].centroid[0],
+                    0.0,
+                    index.buildings[neighbor].centroid[1],
+                );
+                queue_damage(
+                    world,
+                    neighbor,
+                    DamagePreset::CarBomb,
+                    origin + Vec3::Y * 3.0 + Vec3::Z * 8.0,
+                );
+                info!("JIT DEMO: car bomb queued at plain b{neighbor}");
+            }
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::JitRestore;
+            demo.stage_at = now;
+        }
+        DemoStage::JitRestore => {
+            let Some(id) = world.resource::<NeighborhoodDemo>().roof_target else {
+                return;
+            };
+            let did = NEIGHBORHOOD_ID_BASE + id as u32;
+            let head = world.resource::<DamageJournal>().0.head_for(did);
+            if head > 0.0
+                && !world
+                    .resource::<destructibles_bevy::rewind::RewindState>()
+                    .is_restoring(did)
+            {
+                let rate = world
+                    .resource::<crate::city_tuning::CityTuning>()
+                    .restoration_rate_m3s;
+                destructibles_bevy::rewind::set_restoration_rate(world, did, rate);
+                begin_restoration(world, &[did]);
+            }
+            if head > 0.0 {
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.2 {
+                return;
+            }
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration24_jit_restored_plain.png");
+            screenshot(world, &path, "restored plain");
+            info!(
+                "JIT DEMO: restored, live={}",
+                world.resource::<Neighborhood>().live.len()
+            );
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::ExitWait;
+            demo.stage_at = now;
+        }
         DemoStage::ExitWait => {
             if now - world.resource::<NeighborhoodDemo>().stage_at > 1.2 {
                 info!("NEIGHBORHOOD GAUNTLET COMPLETE");
@@ -4023,6 +4311,37 @@ mod tests {
             centroid: [638.06, 2368.9],
             category: "industrial".to_string(),
             year_built: 1930,
+        }
+    }
+
+    #[test]
+    fn point_resolver_matches_manual_footprints_for_every_record() {
+        let data = StorefrontData::default();
+        let index = BuildingIndex::build(data.buildings());
+        // Grid sample: the resolver must match a manual first-inside scan.
+        for gx in 0..40 {
+            for gz in 0..40 {
+                let point = Vec2::new(-2_200.0 + gx as f32 * 180.0, -2_800.0 + gz as f32 * 140.0);
+                let manual = data
+                    .buildings()
+                    .iter()
+                    .filter(|meta| {
+                        destructibles_core::math::point_in_polygon(
+                            [point.x, point.y],
+                            &meta.perimeter,
+                        )
+                    })
+                    .min_by(|a, b| {
+                        Vec2::from_array(a.centroid)
+                            .distance(point)
+                            .total_cmp(&Vec2::from_array(b.centroid).distance(point))
+                    })
+                    .map(|meta| meta.id);
+                let resolved = index.resolve_point(point);
+                if let Some(expected) = manual {
+                    assert_eq!(resolved, Some(expected), "grid {point:?}");
+                }
+            }
         }
     }
 

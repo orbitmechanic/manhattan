@@ -825,3 +825,59 @@ pace is persisted/displayed (consumption is a destructibles-side follow-up).
 Manhattan **104 tests**, destructibles **170**, clippy clean both. Gauntlet:
 worst 250.0 / 202.1 / 157.4 / 115.6 ms, worst swap 44.7 ms (more floors/cells
 as expected), `stray=0` each regime, hover swaps 0. Batch audits 0 offenders.
+
+## Iteration 24 — just-in-time destructibles
+
+### Resting state and deletion
+
+Camera-follow prefetch, proximity/nadir/corridor swap-in, hysteresis and swap
+envelopes are **deleted**. `update_zone` now only performs idle GC/release; no
+building becomes live from camera position, speed, altitude or clock. The
+gauntlet confirms the resting city: `live=0, swaps=0` at 15/30/100/650 m/s.
+
+### JIT impact router
+
+`BuildingIndex::resolve_point` is the deterministic point→record resolver: a
+1000 m candidate grid, point-in-polygon, boundary fallback within 1 m, nearest
+centroid then id tie-break. Unit test: every sampled grid point matches the
+manual footprint scan. `queue_damage` and the reticle JIT-swap a plain record
+before damage admission; the same footprint/height/window-row geometry gate
+rejects silently to plain. JIT is the only producer of live buildings.
+
+### First-contact latency
+
+Bullet JIT: swap-in **4.12 ms**, Tier 1 ready **0.32 s**, wound captured.
+Car-bomb JIT: swap-in **7.90 ms**, Tier 1 **0.55 s**. JIT targets get the 8 ms
+detail budget and front-of-queue priority until Tier 1. Repeat fire hits the
+live record instantly; after full restoration (eviction) the next shot pays JIT
+again.
+
+### Damaged set and eviction
+
+With zero damage, `live=0` and no interior/destructible meshes exist. Each
+damaged record is live exactly once; frozen/dormant/restoration rules unchanged.
+The restoration epilogue queues immediate eviction: journal empty → thaw/release
+→ swap-out to plain, map furniture unhides, memory returns to baseline.
+
+### Attribution and after-table
+
+| Item | Before (iteration 23) | JIT after |
+|---|---|---|
+| AM dense frame (52 live) | 87.12 ms | 40.76 ms (0 live) |
+| Visible mesh entities | 92,239 | 69,560 |
+| Gauntlet 15/30/100/650 worst | 250 / 202 / 157 / 116 ms | **51.6 / 73.2 / 53.5 / 47.4 ms** |
+| Swap machinery in flight | up to 44.7 ms/swap | **0 swaps** |
+| Detail tiers in flight | 46 Tier-1 builds | 0 |
+| Sun-shadow line | ≈9.1 ms | unchanged |
+| JIT spawn | — | 4.1 ms bullet / 7.9 ms car bomb |
+| Tier-1 first contact | — | 0.32 s / 0.55 s |
+
+Ordinary flight now costs what idle costs; the remaining 40–73 ms is city
+streaming/entity draw load, seeding round 25. Captures:
+`iteration24_jit_before`, `_jit_bullet_wound`, `_restored_plain`; logs
+`iteration24_jit.log`, `iteration24_perf_idle.log`, `iteration24_gauntlet.log`.
+
+### Verification
+
+Manhattan **105 tests** (resolver + JIT gate), destructibles **170**, clippy
+clean. Gauntlet `stray=0`, hover swaps 0; batch audits unchanged 0 offenders.

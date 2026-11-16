@@ -1,0 +1,740 @@
+2026-11-16T18:56:38.842040Z  INFO bevy_diagnostic::system_information_diagnostics_plugin::internal: SystemInfo { os: "Linux (Omarchy 4.5.0)", kernel: "7.2.15-1-omarchy", cpu: "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx", core_count: "4", memory: "17.5 GiB" }
+2026-11-16T18:56:38.918210Z  INFO bevy_render::renderer: AdapterInfo { name: "AMD Radeon Vega 8 Graphics (RADV RAVEN)", vendor: 4098, device: 5592, device_type: IntegratedGpu, device_pci_bus_id: "0000:03:00.0", driver: "radv", driver_info: "Mesa 26.2.5-arch1.1", backend: Vulkan, subgroup_min_size: 64, subgroup_max_size: 64, transient_saves_memory: Some(false), limit_bucket: None }
+2026-11-16T18:56:39.069934Z  INFO bevy_pbr::cluster: GPU clustering is supported on this device.
+2026-11-16T18:56:39.069980Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+2026-11-16T18:56:39.070718Z  INFO bevy_hanabi::plugin: Initializing Hanabi for GPU adapter AMD Radeon Vega 8 Graphics (RADV RAVEN)
+2026-11-16T18:56:39.075390Z  INFO bevy_winit::system: Creating new window Manhattan — day/night fly-through (67v0)
+2026-11-16T18:56:39.077827Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 23 orthogonal masonry chunks per structural cell
+2026-11-16T18:56:39.078130Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 30 crystalline glass chunks per structural cell
+2026-11-16T18:56:39.090973Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD: feeder/index ready, mask 1024² @ 1200 m
+2026-11-16T18:56:39.095156Z  INFO destructibles_bevy::audio: AUDIO DEVICE: host=Alsa device='Default Audio Device' config=F32 44100 Hz 2 ch (Bevy/rodio default output)
+2026-11-16T18:56:39.330346Z  INFO manhattan_viewer::storefront: Storefronts: 11032 buildings, 4 categories, 0 repeat warnings, seed d583dc07
+2026-11-16T18:56:39.332681Z  INFO manhattan_viewer::details: Trees: 3000
+2026-11-16T18:56:39.693820Z  INFO manhattan_viewer::details: Roof furniture: 39164 equipment boxes, 21633 masts on 10824 buildings
+2026-11-16T18:56:39.694053Z  INFO manhattan_viewer::people: People catalog ready
+2026-11-16T18:56:39.704296Z  INFO manhattan_viewer::traffic: Vehicle catalog: 150 variants
+2026-11-16T18:56:39.804391Z  INFO manhattan_viewer::details: Signs: 44172 on 5910 buildings
+2026-11-16T18:56:39.962088Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: glass_break.ogg (31276 bytes)
+2026-11-16T18:56:39.962120Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: impact.ogg (7792 bytes)
+2026-11-16T18:56:39.962123Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: shard_chatter.ogg (39114 bytes)
+2026-11-16T18:56:39.962126Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: chime.wav (79424 bytes)
+2026-11-16T18:56:39.962129Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: rewind_whoosh.wav (141164 bytes)
+2026-11-16T18:56:39.962132Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: explosion.wav (229364 bytes)
+2026-11-16T18:56:39.962135Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: klaxon.wav (176444 bytes)
+2026-11-16T18:56:39.962138Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: sprinkler_hiss.wav (176444 bytes)
+2026-11-16T18:56:39.962141Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: masonry_thud.wav (48554 bytes)
+2026-11-16T18:56:39.962164Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: collapse_rumble.wav (458684 bytes)
+2026-11-16T18:56:39.962167Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: structural_groan.wav (264644 bytes)
+2026-11-16T18:56:39.962170Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: concrete_crack.wav (19448 bytes)
+2026-11-16T18:56:39.962172Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: gas_hiss.wav (176444 bytes)
+2026-11-16T18:56:39.962175Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: fire_crackle.wav (176444 bytes)
+2026-11-16T18:56:39.962178Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: cascade_crackle.wav (352844 bytes)
+2026-11-16T18:56:39.962181Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: dust_hiss.wav (352844 bytes)
+2026-11-16T18:56:39.962184Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: breaker_pop.wav (39734 bytes)
+2026-11-16T18:56:39.962187Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: electric_crackle.wav (79424 bytes)
+2026-11-16T18:56:39.962190Z  INFO destructibles_bevy::audio: AUDIO CHAIN READY: device=Some("Default Audio Device") assets=18 master_volume=0.80
+2026-11-16T18:56:40.526444Z  INFO destructibles_bevy::audio: AUDIO startup chime requested
+2026-11-16T18:56:41.332331Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=chime pitch=0.900 vol=0.48 paused=false empty=false
+2026-11-16T18:56:41.951354Z  INFO manhattan_viewer::city_material: City materials ready: 12 materials / 4353 primitives
+2026-11-16T18:56:42.158584Z ERROR bevy_render::render_resource::pipeline_cache: failed to create shader module: Validation Error
+
+Caused by:
+  In Device::create_shader_module
+    
+Shader validation error: Entry point fragment at Fragment is invalid
+   ┌─ :54:21
+   │
+54 │     let to_camera = in.world_position - camera.xyz;
+   │                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ naga::ir::Expression [74]
+   │
+   = Expression [74] is invalid
+   = Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+
+      Expression [74] is invalid
+        Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+2026-11-16T18:56:42.863791Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [plain before JIT] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration24_jit_before.png
+2026-11-16T18:56:43.127936Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration24_jit_before.png
+2026-11-16T18:56:43.324333Z  INFO manhattan_viewer::neighborhood: JIT swap_in b9675 (4.12 ms) geometry PASS
+2026-11-16T18:56:43.324368Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: bullet queued at b9675
+2026-11-16T18:56:43.324374Z  INFO manhattan_viewer::neighborhood: JIT DEMO: bullet queued at plain b9675
+2026-11-16T18:56:43.643099Z  INFO manhattan_viewer::neighborhood: DETAIL b9675: Tier 1 ready at 38.0 m
+2026-11-16T18:56:43.643171Z  INFO manhattan_viewer::neighborhood: JIT READY b9675: Tier 1 in 0.32 s
+2026-11-16T18:56:43.643245Z  INFO destructibles_bevy::damage: damage #0000 [surface] ChipFacade(b1009675 pos=(1620.92,6.00,-2041.83) r=0.12)
+2026-11-16T18:56:43.643668Z  INFO destructibles_bevy::damage: damage #0001 [collapse] PowerLoss(b1009675 seed=1047200696)
+2026-11-16T18:56:43.643691Z  INFO destructibles_bevy::power: POWER loss building 1009675
+2026-11-16T18:56:43.643701Z  INFO manhattan_viewer::neighborhood: DAMAGE bullet at b1009675 (1620.9,6.0,-2041.8)
+2026-11-16T18:56:43.684440Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=impact pitch=0.984 vol=0.34 paused=false empty=false
+2026-11-16T18:56:43.684482Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=1.068 vol=0.28 paused=false empty=false
+2026-11-16T18:56:43.854265Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [JIT bullet wound] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration24_jit_bullet_wound.png
+2026-11-16T18:56:43.854415Z  INFO manhattan_viewer::neighborhood: JIT DEMO: bullet wound visible b9675 head 2.77
+2026-11-16T18:56:43.862604Z  INFO manhattan_viewer::neighborhood: JIT swap_in b9381 (7.90 ms) geometry PASS
+2026-11-16T18:56:43.862710Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b9381
+2026-11-16T18:56:43.862722Z  INFO manhattan_viewer::neighborhood: JIT DEMO: car bomb queued at plain b9381
+2026-11-16T18:56:43.906024Z  INFO destructibles_bevy::rewind: RESTORATION b1009675: volume 0.00 m3, rate 900.00 m3/s (explicit), height 21.0 m
+2026-11-16T18:56:43.937865Z  INFO destructibles_bevy::audio: AUDIO whoosh started rate=1.0x
+2026-11-16T18:56:44.009542Z  INFO destructibles_bevy::audio: AUDIO whoosh stopped
+2026-11-16T18:56:44.009660Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=electric_crackle pitch=0.945 vol=0.14 paused=false empty=false
+2026-11-16T18:56:44.009675Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=rewind_whoosh pitch=1.000 vol=0.18 paused=false empty=false
+2026-11-16T18:56:44.028974Z  INFO destructibles_bevy::rewind: RESTORATION finished
+PRE-EPILOGUE CHECK b1009675: PASS pre=b2fd66943adcc1ef pristine=b2fd66943adcc1ef regime=HOT
+EPILOGUE TRANSFORM b1009675: PASS
+PRISTINE RESET b1009675: regime=HOT pre=PASS post=PASS inventory=PASS regenerated=false 0.8ms NO-HITCH
+2026-11-16T18:56:44.083227Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration24_jit_bullet_wound.png
+2026-11-16T18:56:44.401631Z  INFO manhattan_viewer::neighborhood: DETAIL b9381: Tier 1 ready at 101.9 m
+2026-11-16T18:56:44.401682Z  INFO manhattan_viewer::neighborhood: JIT READY b9381: Tier 1 in 0.55 s
+2026-11-16T18:56:44.401842Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1009381 (1720.9,3.0,-1984.3)
+2026-11-16T18:56:44.437235Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=1.038 vol=0.76 paused=false empty=false
+2026-11-16T18:56:44.443658Z  INFO destructibles_bevy::impact: IMPACT building 1009381: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T18:56:44.443721Z  INFO destructibles_bevy::impact: IMPACT: 2 breach cells (radius 8.4 m), 174 panes overpressure (radius 17.0 m)
+2026-11-16T18:56:44.443749Z  INFO destructibles_bevy::damage: damage #0002 [collapse] FireIgnite(b1009381 l1 at (1724.0,4.8,-1986.7) seed=4093192949)
+2026-11-16T18:56:44.443968Z  INFO destructibles_bevy::hazards: FIRE ignited building 1009381 floor 1 seed 4093192949
+2026-11-16T18:56:44.443998Z  INFO destructibles_bevy::damage: damage #0003 [collapse] FireIgnite(b1009381 l0 at (1721.3,2.0,-1988.2) seed=957287610)
+2026-11-16T18:56:44.444048Z  INFO destructibles_bevy::hazards: FIRE ignited building 1009381 floor 0 seed 957287610
+2026-11-16T18:56:44.444055Z  INFO destructibles_bevy::damage: damage #0004 [collapse] Shudder(b1009381 seed=2438830030 E=22.2 MJ)
+2026-11-16T18:56:44.444902Z  INFO destructibles_bevy::shudder: SHUDDER building 1009381: 0.03 shake strength, 192 pane rats, 2 dust vents
+2026-11-16T18:56:44.444915Z  INFO destructibles_bevy::damage: damage #0005 [collapse] Alarm(b1009381 active=true floor=1 seed=2438830030)
+2026-11-16T18:56:44.444989Z  INFO destructibles_bevy::alarm: ALARM building 1009381: on, floor 1, 2 sprinkler heads, 4 entities
+2026-11-16T18:56:44.445003Z  INFO destructibles_bevy::damage: damage #0006 [shard] BreachCell(b1009381 f0·l1·x1 r=8.4 partial=true seed=258666103 E=22.2 MJ)
+2026-11-16T18:56:44.445729Z  INFO destructibles_bevy::breach: BREACH building 1009381 cell f0·l1·x1: 13 quads removed, 8 chunks (partial=true, radius=8.4, glass shards)
+2026-11-16T18:56:44.445744Z  INFO destructibles_bevy::damage: damage #0008 [collapse] PowerLoss(b1009381 seed=3218480411)
+2026-11-16T18:56:44.445761Z  INFO destructibles_bevy::power: POWER loss building 1009381
+2026-11-16T18:56:44.445767Z  INFO destructibles_bevy::damage: damage #0009 [shard] BreachCell(b1009381 f0·l1·x2 r=8.4 partial=true seed=2905826492 E=22.2 MJ)
+2026-11-16T18:56:44.446007Z  INFO destructibles_bevy::breach: BREACH building 1009381 cell f0·l1·x2: 13 quads removed, 8 chunks (partial=true, radius=8.4, glass shards)
+2026-11-16T18:56:44.446018Z  INFO destructibles_bevy::damage: damage #0011 [pane] ShatterPane(b1009381 f0·l0·c0)
+2026-11-16T18:56:44.446707Z  INFO destructibles_bevy::damage: damage #0012 [pane] ShatterPane(b1009381 f0·l0·c1)
+2026-11-16T18:56:44.447056Z  INFO destructibles_bevy::damage: damage #0013 [pane] ShatterPane(b1009381 f0·l0·c2)
+2026-11-16T18:56:44.447407Z  INFO destructibles_bevy::damage: damage #0014 [pane] ShatterPane(b1009381 f0·l0·c3)
+2026-11-16T18:56:44.447697Z  INFO destructibles_bevy::damage: damage #0015 [pane] ShatterPane(b1009381 f0·l0·c4)
+2026-11-16T18:56:44.448005Z  INFO destructibles_bevy::damage: damage #0016 [pane] ShatterPane(b1009381 f0·l0·c5)
+2026-11-16T18:56:44.448237Z  INFO destructibles_bevy::damage: damage #0017 [pane] ShatterPane(b1009381 f0·l0·c6)
+2026-11-16T18:56:44.448470Z  INFO destructibles_bevy::damage: damage #0018 [pane] ShatterPane(b1009381 f0·l0·c7)
+2026-11-16T18:56:44.448736Z  INFO destructibles_bevy::damage: damage #0019 [pane] ShatterPane(b1009381 f0·l0·c8)
+2026-11-16T18:56:44.449050Z  INFO destructibles_bevy::damage: damage #0020 [pane] ShatterPane(b1009381 f0·l0·c9)
+2026-11-16T18:56:44.449285Z  INFO destructibles_bevy::damage: damage #0021 [pane] ShatterPane(b1009381 f0·l0·c10)
+2026-11-16T18:56:44.449537Z  INFO destructibles_bevy::damage: damage #0022 [pane] ShatterPane(b1009381 f0·l0·c11)
+2026-11-16T18:56:44.559132Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=1.074 vol=0.28 paused=false empty=false
+2026-11-16T18:56:44.559203Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.977 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.559214Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.905 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.559224Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.015 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.559232Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.052 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.559241Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.049 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.559251Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.012 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.559259Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.914 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.559268Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.911 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.564307Z  INFO destructibles_bevy::damage: damage #0023 [pane] ShatterPane(b1009381 f0·l0·c12)
+2026-11-16T18:56:44.565051Z  INFO destructibles_bevy::damage: damage #0024 [pane] ShatterPane(b1009381 f0·l1·c0)
+2026-11-16T18:56:44.565530Z  INFO destructibles_bevy::damage: damage #0025 [pane] ShatterPane(b1009381 f0·l1·c1)
+2026-11-16T18:56:44.565908Z  INFO destructibles_bevy::damage: damage #0026 [pane] ShatterPane(b1009381 f0·l1·c2)
+2026-11-16T18:56:44.566253Z  INFO destructibles_bevy::damage: damage #0027 [pane] ShatterPane(b1009381 f0·l1·c3)
+2026-11-16T18:56:44.566588Z  INFO destructibles_bevy::damage: damage #0028 [pane] ShatterPane(b1009381 f0·l1·c4)
+2026-11-16T18:56:44.566866Z  INFO destructibles_bevy::damage: damage #0029 [pane] ShatterPane(b1009381 f0·l1·c5)
+2026-11-16T18:56:44.567121Z  INFO destructibles_bevy::damage: damage #0030 [pane] ShatterPane(b1009381 f0·l1·c6)
+2026-11-16T18:56:44.567403Z  INFO destructibles_bevy::damage: damage #0031 [pane] ShatterPane(b1009381 f0·l1·c7)
+2026-11-16T18:56:44.567793Z  INFO destructibles_bevy::damage: damage #0032 [pane] ShatterPane(b1009381 f0·l1·c8)
+2026-11-16T18:56:44.568069Z  INFO destructibles_bevy::damage: damage #0033 [pane] ShatterPane(b1009381 f0·l1·c9)
+2026-11-16T18:56:44.568403Z  INFO destructibles_bevy::damage: damage #0034 [pane] ShatterPane(b1009381 f0·l1·c10)
+2026-11-16T18:56:44.568805Z  INFO destructibles_bevy::damage: damage #0035 [pane] ShatterPane(b1009381 f0·l1·c11)
+2026-11-16T18:56:44.569076Z  INFO destructibles_bevy::damage: damage #0036 [pane] ShatterPane(b1009381 f0·l1·c12)
+2026-11-16T18:56:44.569363Z  INFO destructibles_bevy::damage: damage #0037 [pane] ShatterPane(b1009381 f0·l2·c0)
+2026-11-16T18:56:44.569707Z  INFO destructibles_bevy::damage: damage #0038 [pane] ShatterPane(b1009381 f0·l2·c1)
+2026-11-16T18:56:44.570000Z  INFO destructibles_bevy::damage: damage #0039 [pane] ShatterPane(b1009381 f0·l2·c2)
+2026-11-16T18:56:44.654992Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.994 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.655138Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.092 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.655148Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.013 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.655154Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.911 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.655160Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.049 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.655166Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.041 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.655173Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.021 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.655180Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.923 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.655186Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.013 vol=0.16 paused=false empty=false
+2026-11-16T18:56:44.662007Z  INFO destructibles_bevy::damage: damage #0040 [pane] ShatterPane(b1009381 f0·l2·c3)
+2026-11-16T18:56:44.662698Z  INFO destructibles_bevy::damage: damage #0041 [pane] ShatterPane(b1009381 f0·l2·c4)
+2026-11-16T18:56:44.662888Z  INFO destructibles_bevy::damage: damage #0042 [pane] ShatterPane(b1009381 f0·l2·c5)
+2026-11-16T18:56:44.663112Z  INFO destructibles_bevy::damage: damage #0043 [pane] ShatterPane(b1009381 f0·l2·c6)
+2026-11-16T18:56:44.663388Z  INFO destructibles_bevy::damage: damage #0044 [pane] ShatterPane(b1009381 f0·l2·c7)
+2026-11-16T18:56:44.663605Z  INFO destructibles_bevy::damage: damage #0045 [pane] ShatterPane(b1009381 f0·l2·c8)
+2026-11-16T18:56:44.663866Z  INFO destructibles_bevy::damage: damage #0046 [pane] ShatterPane(b1009381 f0·l2·c9)
+2026-11-16T18:56:44.664107Z  INFO destructibles_bevy::damage: damage #0047 [pane] ShatterPane(b1009381 f0·l2·c10)
+2026-11-16T18:56:44.664282Z  INFO destructibles_bevy::damage: damage #0048 [pane] ShatterPane(b1009381 f0·l2·c11)
+2026-11-16T18:56:44.664459Z  INFO destructibles_bevy::damage: damage #0049 [pane] ShatterPane(b1009381 f0·l2·c12)
+2026-11-16T18:56:44.664593Z  INFO destructibles_bevy::damage: damage #0050 [pane] ShatterPane(b1009381 f0·l3·c0)
+2026-11-16T18:56:44.664814Z  INFO destructibles_bevy::damage: damage #0051 [pane] ShatterPane(b1009381 f0·l3·c1)
+2026-11-16T18:56:44.664978Z  INFO destructibles_bevy::damage: damage #0052 [pane] ShatterPane(b1009381 f0·l3·c2)
+2026-11-16T18:56:44.665132Z  INFO destructibles_bevy::damage: damage #0053 [pane] ShatterPane(b1009381 f0·l3·c3)
+2026-11-16T18:56:44.665291Z  INFO destructibles_bevy::damage: damage #0054 [pane] ShatterPane(b1009381 f0·l3·c4)
+2026-11-16T18:56:44.665435Z  INFO destructibles_bevy::damage: damage #0055 [pane] ShatterPane(b1009381 f0·l3·c5)
+2026-11-16T18:56:44.665577Z  INFO destructibles_bevy::damage: damage #0056 [pane] ShatterPane(b1009381 f0·l3·c6)
+2026-11-16T18:56:44.665799Z  INFO destructibles_bevy::damage: damage #0057 [pane] ShatterPane(b1009381 f0·l3·c7)
+2026-11-16T18:56:44.665991Z  INFO destructibles_bevy::damage: damage #0058 [pane] ShatterPane(b1009381 f0·l3·c8)
+2026-11-16T18:56:44.666154Z  INFO destructibles_bevy::damage: damage #0059 [pane] ShatterPane(b1009381 f0·l3·c9)
+2026-11-16T18:56:44.666293Z  INFO destructibles_bevy::damage: damage #0060 [pane] ShatterPane(b1009381 f0·l3·c10)
+2026-11-16T18:56:44.666424Z  INFO destructibles_bevy::damage: damage #0061 [pane] ShatterPane(b1009381 f0·l3·c11)
+2026-11-16T18:56:44.666589Z  INFO destructibles_bevy::damage: damage #0062 [pane] ShatterPane(b1009381 f0·l3·c12)
+2026-11-16T18:56:44.666735Z  INFO destructibles_bevy::damage: damage #0063 [pane] ShatterPane(b1009381 f0·l4·c0)
+2026-11-16T18:56:44.666876Z  INFO destructibles_bevy::damage: damage #0064 [pane] ShatterPane(b1009381 f0·l4·c1)
+2026-11-16T18:56:44.666986Z  INFO destructibles_bevy::damage: damage #0065 [pane] ShatterPane(b1009381 f0·l4·c2)
+2026-11-16T18:56:44.667097Z  INFO destructibles_bevy::damage: damage #0066 [pane] ShatterPane(b1009381 f0·l4·c3)
+2026-11-16T18:56:44.667203Z  INFO destructibles_bevy::damage: damage #0067 [pane] ShatterPane(b1009381 f0·l4·c4)
+2026-11-16T18:56:44.667312Z  INFO destructibles_bevy::damage: damage #0068 [pane] ShatterPane(b1009381 f0·l4·c5)
+2026-11-16T18:56:44.667418Z  INFO destructibles_bevy::damage: damage #0069 [pane] ShatterPane(b1009381 f0·l4·c6)
+2026-11-16T18:56:44.667531Z  INFO destructibles_bevy::damage: damage #0070 [pane] ShatterPane(b1009381 f0·l4·c7)
+2026-11-16T18:56:44.667627Z  INFO destructibles_bevy::damage: damage #0071 [pane] ShatterPane(b1009381 f0·l4·c8)
+2026-11-16T18:56:44.667709Z  INFO destructibles_bevy::damage: damage #0072 [pane] ShatterPane(b1009381 f0·l4·c9)
+2026-11-16T18:56:44.667811Z  INFO destructibles_bevy::damage: damage #0073 [pane] ShatterPane(b1009381 f0·l4·c10)
+2026-11-16T18:56:44.667888Z  INFO destructibles_bevy::damage: damage #0074 [pane] ShatterPane(b1009381 f0·l4·c11)
+2026-11-16T18:56:44.667964Z  INFO destructibles_bevy::damage: damage #0075 [pane] ShatterPane(b1009381 f0·l4·c12)
+2026-11-16T18:56:44.730105Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.906 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.730151Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.003 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.730163Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.085 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.730174Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.935 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.730184Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.041 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.730194Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.916 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.730204Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.062 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.730214Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.010 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.730245Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.968 vol=0.16 paused=false empty=false
+2026-11-16T18:56:44.734135Z  INFO destructibles_bevy::damage: damage #0076 [pane] ShatterPane(b1009381 f0·l5·c0)
+2026-11-16T18:56:44.734519Z  INFO destructibles_bevy::damage: damage #0077 [pane] ShatterPane(b1009381 f0·l5·c1)
+2026-11-16T18:56:44.734702Z  INFO destructibles_bevy::damage: damage #0078 [pane] ShatterPane(b1009381 f0·l5·c2)
+2026-11-16T18:56:44.734844Z  INFO destructibles_bevy::damage: damage #0079 [pane] ShatterPane(b1009381 f0·l5·c3)
+2026-11-16T18:56:44.734978Z  INFO destructibles_bevy::damage: damage #0080 [pane] ShatterPane(b1009381 f0·l5·c4)
+2026-11-16T18:56:44.735153Z  INFO destructibles_bevy::damage: damage #0081 [pane] ShatterPane(b1009381 f0·l5·c5)
+2026-11-16T18:56:44.735310Z  INFO destructibles_bevy::damage: damage #0082 [pane] ShatterPane(b1009381 f0·l5·c6)
+2026-11-16T18:56:44.735461Z  INFO destructibles_bevy::damage: damage #0083 [pane] ShatterPane(b1009381 f0·l5·c7)
+2026-11-16T18:56:44.735592Z  INFO destructibles_bevy::damage: damage #0084 [pane] ShatterPane(b1009381 f0·l5·c8)
+2026-11-16T18:56:44.735769Z  INFO destructibles_bevy::damage: damage #0085 [pane] ShatterPane(b1009381 f0·l5·c9)
+2026-11-16T18:56:44.735993Z  INFO destructibles_bevy::damage: damage #0086 [pane] ShatterPane(b1009381 f0·l5·c10)
+2026-11-16T18:56:44.736361Z  INFO destructibles_bevy::damage: damage #0087 [pane] ShatterPane(b1009381 f1·l0·c0)
+2026-11-16T18:56:44.736779Z  INFO destructibles_bevy::damage: damage #0088 [pane] ShatterPane(b1009381 f1·l0·c1)
+2026-11-16T18:56:44.737012Z  INFO destructibles_bevy::damage: damage #0089 [pane] ShatterPane(b1009381 f1·l0·c2)
+2026-11-16T18:56:44.737193Z  INFO destructibles_bevy::damage: damage #0090 [pane] ShatterPane(b1009381 f1·l1·c0)
+2026-11-16T18:56:44.737368Z  INFO destructibles_bevy::damage: damage #0091 [pane] ShatterPane(b1009381 f1·l1·c1)
+2026-11-16T18:56:44.737546Z  INFO destructibles_bevy::damage: damage #0092 [pane] ShatterPane(b1009381 f1·l1·c2)
+2026-11-16T18:56:44.737764Z  INFO destructibles_bevy::damage: damage #0093 [pane] ShatterPane(b1009381 f1·l2·c0)
+2026-11-16T18:56:44.737947Z  INFO destructibles_bevy::damage: damage #0094 [pane] ShatterPane(b1009381 f1·l2·c1)
+2026-11-16T18:56:44.738121Z  INFO destructibles_bevy::damage: damage #0095 [pane] ShatterPane(b1009381 f1·l3·c0)
+2026-11-16T18:56:44.738297Z  INFO destructibles_bevy::damage: damage #0096 [pane] ShatterPane(b1009381 f1·l3·c1)
+2026-11-16T18:56:44.738470Z  INFO destructibles_bevy::damage: damage #0097 [pane] ShatterPane(b1009381 f2·l0·c0)
+2026-11-16T18:56:44.738678Z  INFO destructibles_bevy::damage: damage #0098 [pane] ShatterPane(b1009381 f2·l0·c1)
+2026-11-16T18:56:44.738896Z  INFO destructibles_bevy::damage: damage #0099 [pane] ShatterPane(b1009381 f2·l0·c2)
+2026-11-16T18:56:44.739127Z  INFO destructibles_bevy::damage: damage #0100 [pane] ShatterPane(b1009381 f2·l0·c3)
+2026-11-16T18:56:44.739356Z  INFO destructibles_bevy::damage: damage #0101 [pane] ShatterPane(b1009381 f2·l0·c4)
+2026-11-16T18:56:44.739577Z  INFO destructibles_bevy::damage: damage #0102 [pane] ShatterPane(b1009381 f2·l0·c5)
+2026-11-16T18:56:44.739834Z  INFO destructibles_bevy::damage: damage #0103 [pane] ShatterPane(b1009381 f2·l0·c6)
+2026-11-16T18:56:44.740032Z  INFO destructibles_bevy::damage: damage #0104 [pane] ShatterPane(b1009381 f2·l0·c7)
+2026-11-16T18:56:44.809198Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.063 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.809272Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.037 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.809283Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.989 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.809293Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.000 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.809302Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.921 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.809311Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.062 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.809320Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.953 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.809329Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.095 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.809337Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.913 vol=0.16 paused=false empty=false
+2026-11-16T18:56:44.816172Z  INFO destructibles_bevy::damage: damage #0105 [pane] ShatterPane(b1009381 f2·l0·c8)
+2026-11-16T18:56:44.816847Z  INFO destructibles_bevy::damage: damage #0106 [pane] ShatterPane(b1009381 f2·l0·c9)
+2026-11-16T18:56:44.817091Z  INFO destructibles_bevy::damage: damage #0107 [pane] ShatterPane(b1009381 f2·l0·c10)
+2026-11-16T18:56:44.817338Z  INFO destructibles_bevy::damage: damage #0108 [pane] ShatterPane(b1009381 f2·l0·c11)
+2026-11-16T18:56:44.817489Z  INFO destructibles_bevy::damage: damage #0109 [pane] ShatterPane(b1009381 f2·l0·c12)
+2026-11-16T18:56:44.817637Z  INFO destructibles_bevy::damage: damage #0110 [pane] ShatterPane(b1009381 f2·l1·c0)
+2026-11-16T18:56:44.817777Z  INFO destructibles_bevy::damage: damage #0111 [pane] ShatterPane(b1009381 f2·l1·c1)
+2026-11-16T18:56:44.817920Z  INFO destructibles_bevy::damage: damage #0112 [pane] ShatterPane(b1009381 f2·l1·c2)
+2026-11-16T18:56:44.818095Z  INFO destructibles_bevy::damage: damage #0113 [pane] ShatterPane(b1009381 f2·l1·c3)
+2026-11-16T18:56:44.818262Z  INFO destructibles_bevy::damage: damage #0114 [pane] ShatterPane(b1009381 f2·l1·c4)
+2026-11-16T18:56:44.818427Z  INFO destructibles_bevy::damage: damage #0115 [pane] ShatterPane(b1009381 f2·l1·c5)
+2026-11-16T18:56:44.818569Z  INFO destructibles_bevy::damage: damage #0116 [pane] ShatterPane(b1009381 f2·l1·c6)
+2026-11-16T18:56:44.818743Z  INFO destructibles_bevy::damage: damage #0117 [pane] ShatterPane(b1009381 f2·l1·c7)
+2026-11-16T18:56:44.818914Z  INFO destructibles_bevy::damage: damage #0118 [pane] ShatterPane(b1009381 f2·l1·c8)
+2026-11-16T18:56:44.819053Z  INFO destructibles_bevy::damage: damage #0119 [pane] ShatterPane(b1009381 f2·l1·c9)
+2026-11-16T18:56:44.819239Z  INFO destructibles_bevy::damage: damage #0120 [pane] ShatterPane(b1009381 f2·l1·c10)
+2026-11-16T18:56:44.819373Z  INFO destructibles_bevy::damage: damage #0121 [pane] ShatterPane(b1009381 f2·l1·c11)
+2026-11-16T18:56:44.819508Z  INFO destructibles_bevy::damage: damage #0122 [pane] ShatterPane(b1009381 f2·l1·c12)
+2026-11-16T18:56:44.819689Z  INFO destructibles_bevy::damage: damage #0123 [pane] ShatterPane(b1009381 f2·l2·c0)
+2026-11-16T18:56:44.819832Z  INFO destructibles_bevy::damage: damage #0124 [pane] ShatterPane(b1009381 f2·l2·c1)
+2026-11-16T18:56:44.819962Z  INFO destructibles_bevy::damage: damage #0125 [pane] ShatterPane(b1009381 f2·l2·c2)
+2026-11-16T18:56:44.820094Z  INFO destructibles_bevy::damage: damage #0126 [pane] ShatterPane(b1009381 f2·l2·c3)
+2026-11-16T18:56:44.820239Z  INFO destructibles_bevy::damage: damage #0127 [pane] ShatterPane(b1009381 f2·l2·c4)
+2026-11-16T18:56:44.820372Z  INFO destructibles_bevy::damage: damage #0128 [pane] ShatterPane(b1009381 f2·l2·c5)
+2026-11-16T18:56:44.820505Z  INFO destructibles_bevy::damage: damage #0129 [pane] ShatterPane(b1009381 f2·l2·c6)
+2026-11-16T18:56:44.820697Z  INFO destructibles_bevy::damage: damage #0130 [pane] ShatterPane(b1009381 f2·l2·c7)
+2026-11-16T18:56:44.820846Z  INFO destructibles_bevy::damage: damage #0131 [pane] ShatterPane(b1009381 f2·l2·c8)
+2026-11-16T18:56:44.820984Z  INFO destructibles_bevy::damage: damage #0132 [pane] ShatterPane(b1009381 f2·l2·c9)
+2026-11-16T18:56:44.821143Z  INFO destructibles_bevy::damage: damage #0133 [pane] ShatterPane(b1009381 f2·l2·c10)
+2026-11-16T18:56:44.821288Z  INFO destructibles_bevy::damage: damage #0134 [pane] ShatterPane(b1009381 f2·l2·c11)
+2026-11-16T18:56:44.821451Z  INFO destructibles_bevy::damage: damage #0135 [pane] ShatterPane(b1009381 f2·l2·c12)
+2026-11-16T18:56:44.821589Z  INFO destructibles_bevy::damage: damage #0136 [pane] ShatterPane(b1009381 f2·l3·c1)
+2026-11-16T18:56:44.821772Z  INFO destructibles_bevy::damage: damage #0137 [pane] ShatterPane(b1009381 f2·l3·c2)
+2026-11-16T18:56:44.821927Z  INFO destructibles_bevy::damage: damage #0138 [pane] ShatterPane(b1009381 f2·l3·c3)
+2026-11-16T18:56:44.822115Z  INFO destructibles_bevy::damage: damage #0139 [pane] ShatterPane(b1009381 f2·l3·c4)
+2026-11-16T18:56:44.891079Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.034 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.891108Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.070 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.891117Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.931 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.891126Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.016 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.891134Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.070 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.891142Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.982 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.891171Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.907 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.891179Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.071 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.891186Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.932 vol=0.16 paused=false empty=false
+2026-11-16T18:56:44.894594Z  INFO destructibles_bevy::damage: damage #0140 [pane] ShatterPane(b1009381 f2·l3·c5)
+2026-11-16T18:56:44.895086Z  INFO destructibles_bevy::damage: damage #0141 [pane] ShatterPane(b1009381 f2·l3·c6)
+2026-11-16T18:56:44.895442Z  INFO destructibles_bevy::damage: damage #0142 [pane] ShatterPane(b1009381 f2·l3·c7)
+2026-11-16T18:56:44.895819Z  INFO destructibles_bevy::damage: damage #0143 [pane] ShatterPane(b1009381 f2·l3·c8)
+2026-11-16T18:56:44.896126Z  INFO destructibles_bevy::damage: damage #0144 [pane] ShatterPane(b1009381 f2·l3·c9)
+2026-11-16T18:56:44.896404Z  INFO destructibles_bevy::damage: damage #0145 [pane] ShatterPane(b1009381 f2·l3·c10)
+2026-11-16T18:56:44.896720Z  INFO destructibles_bevy::damage: damage #0146 [pane] ShatterPane(b1009381 f2·l3·c11)
+2026-11-16T18:56:44.897028Z  INFO destructibles_bevy::damage: damage #0147 [pane] ShatterPane(b1009381 f2·l3·c12)
+2026-11-16T18:56:44.897259Z  INFO destructibles_bevy::damage: damage #0148 [pane] ShatterPane(b1009381 f2·l4·c2)
+2026-11-16T18:56:44.897479Z  INFO destructibles_bevy::damage: damage #0149 [pane] ShatterPane(b1009381 f2·l4·c3)
+2026-11-16T18:56:44.897716Z  INFO destructibles_bevy::damage: damage #0150 [pane] ShatterPane(b1009381 f2·l4·c4)
+2026-11-16T18:56:44.897912Z  INFO destructibles_bevy::damage: damage #0151 [pane] ShatterPane(b1009381 f2·l4·c5)
+2026-11-16T18:56:44.898107Z  INFO destructibles_bevy::damage: damage #0152 [pane] ShatterPane(b1009381 f2·l4·c6)
+2026-11-16T18:56:44.898293Z  INFO destructibles_bevy::damage: damage #0153 [pane] ShatterPane(b1009381 f2·l4·c7)
+2026-11-16T18:56:44.898520Z  INFO destructibles_bevy::damage: damage #0154 [pane] ShatterPane(b1009381 f2·l4·c8)
+2026-11-16T18:56:44.898805Z  INFO destructibles_bevy::damage: damage #0155 [pane] ShatterPane(b1009381 f2·l4·c9)
+2026-11-16T18:56:44.899055Z  INFO destructibles_bevy::damage: damage #0156 [pane] ShatterPane(b1009381 f2·l4·c10)
+2026-11-16T18:56:44.899387Z  INFO destructibles_bevy::damage: damage #0157 [pane] ShatterPane(b1009381 f2·l4·c11)
+2026-11-16T18:56:44.899667Z  INFO destructibles_bevy::damage: damage #0158 [pane] ShatterPane(b1009381 f2·l4·c12)
+2026-11-16T18:56:44.899877Z  INFO destructibles_bevy::damage: damage #0159 [pane] ShatterPane(b1009381 f2·l5·c5)
+2026-11-16T18:56:44.900067Z  INFO destructibles_bevy::damage: damage #0160 [pane] ShatterPane(b1009381 f2·l5·c6)
+2026-11-16T18:56:44.900253Z  INFO destructibles_bevy::damage: damage #0161 [pane] ShatterPane(b1009381 f2·l5·c7)
+2026-11-16T18:56:44.900453Z  INFO destructibles_bevy::damage: damage #0162 [pane] ShatterPane(b1009381 f2·l5·c8)
+2026-11-16T18:56:44.986145Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.093 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.986283Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.064 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.986287Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.999 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.986294Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.997 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.986297Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.068 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.986302Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.064 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.986309Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.012 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.986313Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.942 vol=0.68 paused=false empty=false
+2026-11-16T18:56:44.986317Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.965 vol=0.16 paused=false empty=false
+2026-11-16T18:56:44.994335Z  INFO destructibles_bevy::damage: damage #0163 [pane] ShatterPane(b1009381 f2·l5·c9)
+2026-11-16T18:56:44.994949Z  INFO destructibles_bevy::damage: damage #0164 [pane] ShatterPane(b1009381 f2·l5·c10)
+2026-11-16T18:56:44.995152Z  INFO destructibles_bevy::damage: damage #0165 [pane] ShatterPane(b1009381 f2·l5·c11)
+2026-11-16T18:56:44.995335Z  INFO destructibles_bevy::damage: damage #0166 [pane] ShatterPane(b1009381 f2·l5·c12)
+2026-11-16T18:56:44.995515Z  INFO destructibles_bevy::damage: damage #0167 [pane] ShatterPane(b1009381 f3·l0·c0)
+2026-11-16T18:56:44.995724Z  INFO destructibles_bevy::damage: damage #0168 [pane] ShatterPane(b1009381 f3·l0·c1)
+2026-11-16T18:56:44.995905Z  INFO destructibles_bevy::damage: damage #0169 [pane] ShatterPane(b1009381 f3·l0·c2)
+2026-11-16T18:56:44.996078Z  INFO destructibles_bevy::damage: damage #0170 [pane] ShatterPane(b1009381 f3·l1·c0)
+2026-11-16T18:56:44.996253Z  INFO destructibles_bevy::damage: damage #0171 [pane] ShatterPane(b1009381 f3·l1·c1)
+2026-11-16T18:56:44.996425Z  INFO destructibles_bevy::damage: damage #0172 [pane] ShatterPane(b1009381 f3·l1·c2)
+2026-11-16T18:56:44.996591Z  INFO destructibles_bevy::damage: damage #0173 [pane] ShatterPane(b1009381 f3·l2·c0)
+2026-11-16T18:56:44.996779Z  INFO destructibles_bevy::damage: damage #0174 [pane] ShatterPane(b1009381 f3·l2·c1)
+2026-11-16T18:56:44.996944Z  INFO destructibles_bevy::damage: damage #0175 [pane] ShatterPane(b1009381 f3·l2·c2)
+2026-11-16T18:56:44.997116Z  INFO destructibles_bevy::damage: damage #0176 [pane] ShatterPane(b1009381 f3·l3·c0)
+2026-11-16T18:56:44.997279Z  INFO destructibles_bevy::damage: damage #0177 [pane] ShatterPane(b1009381 f3·l3·c1)
+2026-11-16T18:56:44.997442Z  INFO destructibles_bevy::damage: damage #0178 [pane] ShatterPane(b1009381 f3·l3·c2)
+2026-11-16T18:56:44.997595Z  INFO destructibles_bevy::damage: damage #0179 [pane] ShatterPane(b1009381 f3·l4·c0)
+2026-11-16T18:56:44.997778Z  INFO destructibles_bevy::damage: damage #0180 [pane] ShatterPane(b1009381 f3·l4·c1)
+2026-11-16T18:56:44.998012Z  INFO destructibles_bevy::damage: damage #0181 [pane] ShatterPane(b1009381 f3·l4·c2)
+2026-11-16T18:56:44.998170Z  INFO destructibles_bevy::damage: damage #0182 [pane] ShatterPane(b1009381 f3·l5·c0)
+2026-11-16T18:56:44.998330Z  INFO destructibles_bevy::damage: damage #0183 [pane] ShatterPane(b1009381 f3·l5·c1)
+2026-11-16T18:56:44.998488Z  INFO destructibles_bevy::damage: damage #0184 [pane] ShatterPane(b1009381 f3·l5·c2)
+2026-11-16T18:56:45.075550Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.030 vol=0.68 paused=false empty=false
+2026-11-16T18:56:45.075580Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.904 vol=0.68 paused=false empty=false
+2026-11-16T18:56:45.075587Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.033 vol=0.68 paused=false empty=false
+2026-11-16T18:56:45.075593Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.046 vol=0.68 paused=false empty=false
+2026-11-16T18:56:45.075598Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.976 vol=0.68 paused=false empty=false
+2026-11-16T18:56:45.075603Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.072 vol=0.68 paused=false empty=false
+2026-11-16T18:56:45.075608Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.089 vol=0.68 paused=false empty=false
+2026-11-16T18:56:45.075627Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.017 vol=0.68 paused=false empty=false
+2026-11-16T18:56:45.075632Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.948 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.123175Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.011 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.134730Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [restored plain] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration24_jit_restored_plain.png
+2026-11-16T18:56:45.134766Z  INFO manhattan_viewer::neighborhood: JIT DEMO: restored, live=2
+2026-11-16T18:56:45.161738Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.022 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.162015Z  INFO destructibles_bevy::damage: damage #0185 [shard] BreachCell(b1009381 f0·l2·x2 r=2.2 partial=false seed=1009380 E=0.0 MJ)
+2026-11-16T18:56:45.163036Z  INFO destructibles_bevy::breach: BREACH building 1009381 cell f0·l2·x2: 13 quads removed, 22 chunks (partial=false, radius=2.2, glass shards)
+2026-11-16T18:56:45.248297Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.616 vol=0.34 paused=false empty=false
+2026-11-16T18:56:45.248332Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.091 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.318645Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration24_jit_restored_plain.png
+2026-11-16T18:56:45.353377Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.584 vol=0.34 paused=false empty=false
+2026-11-16T18:56:45.353451Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.935 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.432341Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.638 vol=0.34 paused=false empty=false
+2026-11-16T18:56:45.432374Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.938 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.509326Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.592 vol=0.34 paused=false empty=false
+2026-11-16T18:56:45.509387Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.051 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.569768Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.942 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.652380Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.571 vol=0.34 paused=false empty=false
+2026-11-16T18:56:45.652441Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.074 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.729793Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.903 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.734325Z  INFO destructibles_bevy::damage: damage #0187 [shard] BreachCell(b1009381 f0·l2·x1 r=2.2 partial=false seed=1009380 E=0.0 MJ)
+2026-11-16T18:56:45.735450Z  INFO destructibles_bevy::breach: BREACH building 1009381 cell f0·l2·x1: 13 quads removed, 22 chunks (partial=false, radius=2.2, glass shards)
+2026-11-16T18:56:45.827218Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.985 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.903501Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.923 vol=0.16 paused=false empty=false
+2026-11-16T18:56:45.981657Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.091 vol=0.16 paused=false empty=false
+2026-11-16T18:56:46.070993Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.025 vol=0.16 paused=false empty=false
+2026-11-16T18:56:46.156424Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.041 vol=0.16 paused=false empty=false
+2026-11-16T18:56:46.188197Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.650 vol=0.34 paused=false empty=false
+2026-11-16T18:56:46.225808Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.974 vol=0.16 paused=false empty=false
+2026-11-16T18:56:46.271474Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.558 vol=0.34 paused=false empty=false
+2026-11-16T18:56:46.312311Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.926 vol=0.16 paused=false empty=false
+2026-11-16T18:56:46.316059Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD GAUNTLET COMPLETE
+
+# destructibles damage journal — 187 command(s)
+0002 @   3.58s | collapse   | b1009381 | FireIgnite(b1009381 l1 at (1724.0,4.8,-1986.7) seed=4093192949)
+0003 @   3.58s | collapse   | b1009381 | FireIgnite(b1009381 l0 at (1721.3,2.0,-1988.2) seed=957287610)
+0004 @   3.58s | collapse   | b1009381 | Shudder(b1009381 seed=2438830030 E=22.2 MJ)
+0005 @   3.58s | collapse   | b1009381 | Alarm(b1009381 active=true floor=1 seed=2438830030)
+0006 @   3.58s | shard      | b1009381 | BreachCell(b1009381 f0·l1·x1 r=8.4 partial=true seed=258666103 E=22.2 MJ)
+      volume 1.4568 m3
+0007 @   3.58s | structural | b1009381 | FailNode(b1009381 facade f0·l1·x1 seed=258666103)
+0008 @   3.58s | collapse   | b1009381 | PowerLoss(b1009381 seed=3218480411)
+0009 @   3.58s | shard      | b1009381 | BreachCell(b1009381 f0·l1·x2 r=8.4 partial=true seed=2905826492 E=22.2 MJ)
+      volume 1.4568 m3
+0010 @   3.58s | structural | b1009381 | FailNode(b1009381 facade f0·l1·x2 seed=2905826492)
+0011 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c0)
+      volume 0.0453 m3
+0012 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c1)
+      volume 0.0453 m3
+0013 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c2)
+      volume 0.0453 m3
+0014 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c3)
+      volume 0.0453 m3
+0015 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c4)
+      volume 0.0453 m3
+0016 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c5)
+      volume 0.0453 m3
+0017 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c6)
+      volume 0.0453 m3
+0018 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c7)
+      volume 0.0453 m3
+0019 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c8)
+      volume 0.0453 m3
+0020 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c9)
+      volume 0.0453 m3
+0021 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c10)
+      volume 0.0453 m3
+0022 @   3.58s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c11)
+      volume 0.0453 m3
+0023 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l0·c12)
+      volume 0.0453 m3
+0024 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c0)
+      volume 0.0453 m3
+0025 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c1)
+      volume 0.0453 m3
+0026 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c2)
+      volume 0.0453 m3
+0027 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c3)
+      volume 0.0453 m3
+0028 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c4)
+      volume 0.0453 m3
+0029 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c5)
+      volume 0.0453 m3
+0030 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c6)
+      volume 0.0453 m3
+0031 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c7)
+      volume 0.0453 m3
+0032 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c8)
+      volume 0.0453 m3
+0033 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c9)
+      volume 0.0453 m3
+0034 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c10)
+      volume 0.0453 m3
+0035 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c11)
+      volume 0.0453 m3
+0036 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l1·c12)
+      volume 0.0453 m3
+0037 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c0)
+      volume 0.0453 m3
+0038 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c1)
+      volume 0.0453 m3
+0039 @   3.62s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c2)
+      volume 0.0453 m3
+0040 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c3)
+      volume 0.0453 m3
+0041 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c4)
+      volume 0.0453 m3
+0042 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c5)
+      volume 0.0453 m3
+0043 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c6)
+      volume 0.0453 m3
+0044 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c7)
+      volume 0.0453 m3
+0045 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c8)
+      volume 0.0453 m3
+0046 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c9)
+      volume 0.0453 m3
+0047 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c10)
+      volume 0.0453 m3
+0048 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c11)
+      volume 0.0453 m3
+0049 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l2·c12)
+      volume 0.0453 m3
+0050 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c0)
+      volume 0.0453 m3
+0051 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c1)
+      volume 0.0453 m3
+0052 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c2)
+      volume 0.0453 m3
+0053 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c3)
+      volume 0.0453 m3
+0054 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c4)
+      volume 0.0453 m3
+0055 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c5)
+      volume 0.0453 m3
+0056 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c6)
+      volume 0.0453 m3
+0057 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c7)
+      volume 0.0453 m3
+0058 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c8)
+      volume 0.0453 m3
+0059 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c9)
+      volume 0.0453 m3
+0060 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c10)
+      volume 0.0453 m3
+0061 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c11)
+      volume 0.0453 m3
+0062 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l3·c12)
+      volume 0.0453 m3
+0063 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c0)
+      volume 0.0453 m3
+0064 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c1)
+      volume 0.0453 m3
+0065 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c2)
+      volume 0.0453 m3
+0066 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c3)
+      volume 0.0453 m3
+0067 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c4)
+      volume 0.0453 m3
+0068 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c5)
+      volume 0.0453 m3
+0069 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c6)
+      volume 0.0453 m3
+0070 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c7)
+      volume 0.0453 m3
+0071 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c8)
+      volume 0.0453 m3
+0072 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c9)
+      volume 0.0453 m3
+0073 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c10)
+      volume 0.0453 m3
+0074 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c11)
+      volume 0.0453 m3
+0075 @   3.72s | pane       | b1009381 | ShatterPane(b1009381 f0·l4·c12)
+      volume 0.0453 m3
+0076 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c0)
+      volume 0.0453 m3
+0077 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c1)
+      volume 0.0453 m3
+0078 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c2)
+      volume 0.0453 m3
+0079 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c3)
+      volume 0.0453 m3
+0080 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c4)
+      volume 0.0453 m3
+0081 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c5)
+      volume 0.0453 m3
+0082 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c6)
+      volume 0.0453 m3
+0083 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c7)
+      volume 0.0453 m3
+0084 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c8)
+      volume 0.0453 m3
+0085 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c9)
+      volume 0.0453 m3
+0086 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f0·l5·c10)
+      volume 0.0453 m3
+0087 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l0·c0)
+      volume 0.0453 m3
+0088 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l0·c1)
+      volume 0.0453 m3
+0089 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l0·c2)
+      volume 0.0453 m3
+0090 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l1·c0)
+      volume 0.0453 m3
+0091 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l1·c1)
+      volume 0.0453 m3
+0092 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l1·c2)
+      volume 0.0453 m3
+0093 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l2·c0)
+      volume 0.0453 m3
+0094 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l2·c1)
+      volume 0.0453 m3
+0095 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l3·c0)
+      volume 0.0453 m3
+0096 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f1·l3·c1)
+      volume 0.0453 m3
+0097 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c0)
+      volume 0.0453 m3
+0098 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c1)
+      volume 0.0453 m3
+0099 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c2)
+      volume 0.0453 m3
+0100 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c3)
+      volume 0.0453 m3
+0101 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c4)
+      volume 0.0453 m3
+0102 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c5)
+      volume 0.0453 m3
+0103 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c6)
+      volume 0.0453 m3
+0104 @   3.80s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c7)
+      volume 0.0453 m3
+0105 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c8)
+      volume 0.0453 m3
+0106 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c9)
+      volume 0.0453 m3
+0107 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c10)
+      volume 0.0453 m3
+0108 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c11)
+      volume 0.0453 m3
+0109 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l0·c12)
+      volume 0.0453 m3
+0110 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c0)
+      volume 0.0453 m3
+0111 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c1)
+      volume 0.0453 m3
+0112 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c2)
+      volume 0.0453 m3
+0113 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c3)
+      volume 0.0453 m3
+0114 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c4)
+      volume 0.0453 m3
+0115 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c5)
+      volume 0.0453 m3
+0116 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c6)
+      volume 0.0453 m3
+0117 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c7)
+      volume 0.0453 m3
+0118 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c8)
+      volume 0.0453 m3
+0119 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c9)
+      volume 0.0453 m3
+0120 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c10)
+      volume 0.0453 m3
+0121 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c11)
+      volume 0.0453 m3
+0122 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l1·c12)
+      volume 0.0453 m3
+0123 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c0)
+      volume 0.0453 m3
+0124 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c1)
+      volume 0.0453 m3
+0125 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c2)
+      volume 0.0453 m3
+0126 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c3)
+      volume 0.0453 m3
+0127 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c4)
+      volume 0.0453 m3
+0128 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c5)
+      volume 0.0453 m3
+0129 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c6)
+      volume 0.0453 m3
+0130 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c7)
+      volume 0.0453 m3
+0131 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c8)
+      volume 0.0453 m3
+0132 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c9)
+      volume 0.0453 m3
+0133 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c10)
+      volume 0.0453 m3
+0134 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c11)
+      volume 0.0453 m3
+0135 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l2·c12)
+      volume 0.0453 m3
+0136 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c1)
+      volume 0.0453 m3
+0137 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c2)
+      volume 0.0453 m3
+0138 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c3)
+      volume 0.0453 m3
+0139 @   3.89s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c4)
+      volume 0.0453 m3
+0140 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c5)
+      volume 0.0453 m3
+0141 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c6)
+      volume 0.0453 m3
+0142 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c7)
+      volume 0.0453 m3
+0143 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c8)
+      volume 0.0453 m3
+0144 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c9)
+      volume 0.0453 m3
+0145 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c10)
+      volume 0.0453 m3
+0146 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c11)
+      volume 0.0453 m3
+0147 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l3·c12)
+      volume 0.0453 m3
+0148 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c2)
+      volume 0.0453 m3
+0149 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c3)
+      volume 0.0453 m3
+0150 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c4)
+      volume 0.0453 m3
+0151 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c5)
+      volume 0.0453 m3
+0152 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c6)
+      volume 0.0453 m3
+0153 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c7)
+      volume 0.0453 m3
+0154 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c8)
+      volume 0.0453 m3
+0155 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c9)
+      volume 0.0453 m3
+0156 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c10)
+      volume 0.0453 m3
+0157 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c11)
+      volume 0.0453 m3
+0158 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l4·c12)
+      volume 0.0453 m3
+0159 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l5·c5)
+      volume 0.0453 m3
+0160 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l5·c6)
+      volume 0.0453 m3
+0161 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l5·c7)
+      volume 0.0453 m3
+0162 @   3.96s | pane       | b1009381 | ShatterPane(b1009381 f2·l5·c8)
+      volume 0.0453 m3
+0163 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f2·l5·c9)
+      volume 0.0453 m3
+0164 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f2·l5·c10)
+      volume 0.0453 m3
+0165 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f2·l5·c11)
+      volume 0.0453 m3
+0166 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f2·l5·c12)
+      volume 0.0453 m3
+0167 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l0·c0)
+      volume 0.0453 m3
+0168 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l0·c1)
+      volume 0.0453 m3
+0169 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l0·c2)
+      volume 0.0453 m3
+0170 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l1·c0)
+      volume 0.0453 m3
+0171 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l1·c1)
+      volume 0.0453 m3
+0172 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l1·c2)
+      volume 0.0453 m3
+0173 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l2·c0)
+      volume 0.0453 m3
+0174 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l2·c1)
+      volume 0.0453 m3
+0175 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l2·c2)
+      volume 0.0453 m3
+0176 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l3·c0)
+      volume 0.0453 m3
+0177 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l3·c1)
+      volume 0.0453 m3
+0178 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l3·c2)
+      volume 0.0453 m3
+0179 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l4·c0)
+      volume 0.0453 m3
+0180 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l4·c1)
+      volume 0.0453 m3
+0181 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l4·c2)
+      volume 0.0453 m3
+0182 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l5·c0)
+      volume 0.0453 m3
+0183 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l5·c1)
+      volume 0.0453 m3
+0184 @   4.05s | pane       | b1009381 | ShatterPane(b1009381 f3·l5·c2)
+      volume 0.0453 m3
+0185 @   4.28s | shard      | b1009381 | BreachCell(b1009381 f0·l2·x2 r=2.2 partial=false seed=1009380 E=0.0 MJ)
+      volume 1.4568 m3
+0186 @   4.28s | structural | b1009381 | FailNode(b1009381 facade f0·l2·x2 seed=1009380)
+0187 @   4.87s | shard      | b1009381 | BreachCell(b1009381 f0·l2·x1 r=2.2 partial=false seed=1009380 E=0.0 MJ)
+      volume 1.4568 m3
+0188 @   4.87s | structural | b1009381 | FailNode(b1009381 facade f0·l2·x1 seed=1009380)
+
