@@ -148,7 +148,8 @@ pub struct CityRestorationPlugin;
 impl Plugin for CityRestorationPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CityRestoration>()
-            .add_systems(Startup, (setup_wave_panel, setup_far_smoke));
+            .add_systems(Startup, (setup_wave_panel, setup_far_smoke))
+            .add_systems(Update, animate_host_smoke);
     }
 }
 
@@ -626,7 +627,17 @@ pub fn world_aim_epicenter(aim: &DamageAim) -> Vec3 {
     aim.point
 }
 
-/// Crossed, softened host smoke quads for a frozen damaged record.
+/// One recycled far-smoke puff: seven per column, rising and renewing.
+#[derive(Component)]
+pub struct FarSmokePuff {
+    pub phase: f32,
+    pub base: Vec3,
+    pub column: f32,
+    pub width: f32,
+}
+
+/// Seven recycled puffs per far column (reviewer's model): seeded phase, slow
+/// rise, expansion, renewal. One billboard per puff keeps the cost at 7 draws.
 pub fn spawn_host_smoke(world: &mut World, did: u32) -> Vec<Entity> {
     let Some((origin, height)) = world
         .resource::<Buildings>()
@@ -642,30 +653,51 @@ pub fn spawn_host_smoke(world: &mut World, did: u32) -> Vec<Entity> {
     let mesh = far.mesh.clone();
     let width = (height * 0.75).clamp(16.0, 120.0);
     let column = (height * 1.6).clamp(50.0, 420.0);
-    let levels = 5;
+    let seed = did.wrapping_mul(0x9E37_79B9);
     let mut spawned = Vec::new();
-    for level in 0..levels {
-        let t = level as f32 / (levels - 1) as f32;
-        let centre = origin + Vec3::Y * (height * 0.35 + column * (0.1 + 0.8 * t));
-        let size = width * (0.65 + 0.55 * t);
-        for yaw in [0.0f32, std::f32::consts::FRAC_PI_2] {
-            spawned.push(
-                world
-                    .spawn((
-                        Mesh3d(mesh.clone()),
-                        MeshMaterial3d(material.clone()),
-                        Transform::from_translation(centre)
-                            .with_rotation(Quat::from_rotation_y(yaw))
-                            .with_scale(Vec3::new(size, size * 1.15, 1.0)),
-                        bevy::light::NotShadowCaster,
-                        Visibility::Inherited,
-                        Name::new(format!("far smoke b{did} l{level}")),
-                    ))
-                    .id(),
-            );
-        }
+    for level in 0..7 {
+        let phase =
+            (level as f32 / 7.0 + ((seed.rotate_left(level) & 0xFF) as f32 / 255.0) * 0.12).fract();
+        spawned.push(
+            world
+                .spawn((
+                    Mesh3d(mesh.clone()),
+                    MeshMaterial3d(material.clone()),
+                    Transform::from_translation(origin + Vec3::Y * height * 0.4),
+                    bevy::light::NotShadowCaster,
+                    Visibility::Inherited,
+                    FarSmokePuff {
+                        phase,
+                        base: origin,
+                        column,
+                        width,
+                    },
+                    Name::new(format!("far smoke b{did} puff {level}")),
+                ))
+                .id(),
+        );
     }
     spawned
+}
+
+pub fn animate_host_smoke(
+    time: Res<Time>,
+    camera: Single<&GlobalTransform, With<crate::camera::FlyCamera>>,
+    mut puffs: Query<(&FarSmokePuff, &mut Transform)>,
+) {
+    let now = time.elapsed_secs();
+    let cam = camera.translation();
+    for (puff, mut transform) in &mut puffs {
+        let t = ((now * 0.11 + puff.phase).fract()).clamp(0.0, 1.0);
+        let rise = puff.base + Vec3::Y * (puff.column * (0.05 + 0.95 * t));
+        transform.translation = rise;
+        let size = puff.width * (0.55 + 0.75 * t);
+        transform.scale = Vec3::new(size, size * 1.12, 1.0);
+        let direction = cam - rise;
+        if direction.length_squared() > 1.0e-4 {
+            transform.rotation = Quat::from_rotation_arc(Vec3::Z, direction.normalize());
+        }
+    }
 }
 
 pub fn despawn_host_smoke(world: &mut World, did: u32) {

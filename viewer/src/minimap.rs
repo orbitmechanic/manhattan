@@ -231,6 +231,56 @@ fn draw_line(data: &mut [u8], a: Vec2, b: Vec2, color: [u8; 4], thickness: i32) 
     }
 }
 
+/// Screen angle of world north given the heading-up map rotation.
+fn compass_angle(yaw: f32) -> f32 {
+    yaw - std::f32::consts::FRAC_PI_2
+}
+
+fn draw_compass(data: &mut [u8], yaw: f32) {
+    let ring = MAP_RADIUS - 15.0;
+    draw_ring(data, ring, 3.0, [120, 176, 214, 210]);
+    let angle = compass_angle(yaw);
+    let (sin, cos) = angle.sin_cos();
+    let inner = ring - 9.0;
+    let outer = ring + 9.0;
+    let steps = 18;
+    for step in 0..=steps {
+        let t = step as f32 / steps as f32;
+        let r = inner + (outer - inner) * t;
+        put(
+            data,
+            (MAP_CENTER + cos * r).round() as i32,
+            (MAP_CENTER + sin * r).round() as i32,
+            [230, 245, 255, 245],
+        );
+    }
+    // A simple upright N just inside the tick: map orientation and world
+    // direction reconcile without needing a font or shader.
+    let nx = MAP_CENTER + cos * (ring - 24.0);
+    let ny = MAP_CENTER + sin * (ring - 24.0);
+    for (dx, dy) in [
+        (-3, -5),
+        (-3, 5),
+        (-3, -3),
+        (-3, -2),
+        (-2, -1),
+        (-1, 0),
+        (0, 1),
+        (1, 2),
+        (2, 3),
+        (3, 4),
+        (3, -5),
+        (3, 5),
+    ] {
+        put(
+            data,
+            nx.round() as i32 + dx,
+            ny.round() as i32 + dy,
+            [235, 248, 255, 250],
+        );
+    }
+}
+
 fn draw_ring(data: &mut [u8], radius: f32, width: f32, color: [u8; 4]) {
     draw_ring_at(data, MAP_CENTER, MAP_CENTER, radius, width, color);
 }
@@ -889,6 +939,7 @@ fn update_minimap_map(
 fn update_minimap_overlay(
     time: Res<Time>,
     motion: Res<MotionState>,
+    camera: Single<&FlyCamera, With<FlyCamera>>,
     images: Option<Res<MinimapImages>>,
     mut assets: ResMut<Assets<Image>>,
     mut last: Local<f32>,
@@ -910,6 +961,7 @@ fn update_minimap_overlay(
     data.fill(0);
     let mph = motion.speed * 2.236_936;
     render_overlay_layer(data, mph, motion.accel_g);
+    draw_compass(data, camera.yaw);
 }
 
 fn update_minimap_text(
@@ -974,6 +1026,14 @@ mod tests {
             east.sin < -0.99,
             "east heading should rotate counter-clockwise"
         );
+    }
+
+    #[test]
+    fn compass_marks_north_at_the_top_when_facing_north() {
+        let up = compass_angle(0.0);
+        assert!((up + std::f32::consts::FRAC_PI_2).abs() < 1e-6);
+        let right = compass_angle(std::f32::consts::FRAC_PI_2);
+        assert!(right.abs() < 1e-6);
     }
 
     #[test]

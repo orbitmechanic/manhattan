@@ -102,7 +102,9 @@ pub fn setup_lighting(
         SunLight,
         DirectionalLight {
             illuminance: 10_000.0,
-            shadow_maps_enabled: true,
+            // Measurement hook: MANHATTAN_NO_SUN_SHADOWS=1 reproduces the
+            // pre-shadow cost line for the iteration-23 table.
+            shadow_maps_enabled: std::env::var_os("MANHATTAN_NO_SUN_SHADOWS").is_none(),
             ..default()
         },
         Transform::from_rotation(Quat::from_rotation_x(-0.7)),

@@ -36,6 +36,9 @@ fn audit_generation_bounds() {
     let mut shell_bad = 0usize;
     let mut antenna_bad = 0usize;
     let mut glass_bad = 0usize;
+    let mut rows_bad = 0usize;
+    let mut panes_total = 0usize;
+    let mut cells_total = 0usize;
     let mut examples: Vec<String> = Vec::new();
     for meta in data.buildings() {
         let Ok(spec) = spec_for(meta) else {
@@ -51,9 +54,28 @@ fn audit_generation_bounds() {
             continue;
         };
         generated += 1;
+        panes_total += layout.panes.len();
+        cells_total += layout.cells.len();
         let poly = &layout.footprint;
         let tol = 0.06;
         let mut bad_types = Vec::new();
+        let expected_rows = (meta.height_m / meta.floor_height_m.clamp(2.4, 6.0))
+            .round()
+            .max(1.0) as u32;
+        if layout.spec.floor_count != expected_rows {
+            if rows_bad < 5 {
+                println!(
+                    "ROWS b{} h{:.2} floor_h {:.2} generated {} expected {}",
+                    meta.id,
+                    meta.height_m,
+                    meta.floor_height_m,
+                    layout.spec.floor_count,
+                    expected_rows
+                );
+            }
+            rows_bad += 1;
+            bad_types.push("window-rows");
+        }
         for slab in &layout.slabs {
             if rect_outside(
                 slab.center[0],
@@ -193,7 +215,7 @@ fn audit_generation_bounds() {
         }
     }
     println!(
-        "AUDIT total={} generated={generated} failed={failed} slab={slab_bad} column={column_bad} core={core_bad} clutter={clutter_bad} roof={roof_bad} tall={tall_bad} shell={shell_bad} antenna={antenna_bad} glass={glass_bad}",
+        "AUDIT total={} generated={generated} failed={failed} slab={slab_bad} column={column_bad} core={core_bad} clutter={clutter_bad} roof={roof_bad} tall={tall_bad} shell={shell_bad} antenna={antenna_bad} glass={glass_bad} rows={rows_bad} panes={panes_total} cells={cells_total}",
         data.buildings().len()
     );
     for (reason, count) in &reasons {
@@ -212,7 +234,8 @@ fn audit_generation_bounds() {
             + tall_bad
             + shell_bad
             + antenna_bad
-            + glass_bad,
+            + glass_bad
+            + rows_bad,
         0
     );
 }
