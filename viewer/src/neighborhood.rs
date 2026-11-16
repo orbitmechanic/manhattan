@@ -14,12 +14,19 @@ use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 
 use destructibles_bevy::HostCameraProbe;
-use destructibles_bevy::building::{BuildingDetail, Buildings};
+use destructibles_bevy::building::{
+    BuildingDetail, Buildings, DetailTier, advance_detail, begin_detail_upgrade, detail_level,
+};
 use destructibles_bevy::camera::FlyCamera as DestructiblesFlyCamera;
 use destructibles_bevy::damage::DamageJournal;
 use destructibles_bevy::health::HealthIndex;
+use destructibles_bevy::impact::apply_impact;
 use destructibles_bevy::night::SceneTime;
-use destructibles_bevy::streaming::{HotZone, Streaming};
+use destructibles_bevy::puncture::apply_puncture;
+use destructibles_bevy::rewind::begin_restoration;
+use destructibles_bevy::streaming::{
+    HotZone, Regime, Streaming, freeze_building, register_building, spawn_far_marker, thaw_building,
+};
 use destructibles_bevy::swap::{DestructibleHandle, swap_in_lod, swap_out};
 use destructibles_core::{BuildingSpec, FacadeStyle, core_for_style};
 
@@ -125,12 +132,48 @@ impl BuildingIndex {
     }
 }
 
-#[derive(Clone)]
 pub struct LiveBuilding {
     pub handle: DestructibleHandle,
     pub meta: usize,
     pub spec: BuildingSpec,
     pub origin: Vec3,
+    pub detail: DetailTier,
+    pub entry_distance: f32,
+    pub tier1_ready: Option<f32>,
+    pub frozen: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum DamagePreset {
+    #[default]
+    Bullet,
+    CarBomb,
+    Tier3,
+    Hero,
+}
+
+impl DamagePreset {
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Bullet => "bullet",
+            Self::CarBomb => "car bomb",
+            Self::Tier3 => "tier-3",
+            Self::Hero => "hero punch",
+        }
+    }
+}
+
+#[derive(Resource, Default)]
+pub struct DamageAim {
+    pub target: Option<usize>,
+    pub point: Vec3,
+    pub preset: DamagePreset,
+}
+
+struct PendingDamage {
+    id: usize,
+    preset: DamagePreset,
+    point: Vec3,
 }
 
 #[derive(Resource, Default)]
@@ -155,6 +198,13 @@ pub struct Neighborhood {
     pub behind_max: f32,
     pub last_zone_ms: f32,
     pub footprint_failures: u32,
+    pending_damage: Vec<PendingDamage>,
+    pub dressing_panels: usize,
+    pub dressing_plates: usize,
+    pub damage_events: u32,
+    pub tier1_built: usize,
+    pub tier2_built: usize,
+    pub frozen_count: usize,
 }
 
 /// Per-regime acceptance statistics.
@@ -219,18 +269,24 @@ impl Plugin for NeighborhoodPlugin {
             .init_resource::<Neighborhood>()
             .init_resource::<BuildingIndex>()
             .init_resource::<LiveFootprints>()
+            .init_resource::<DamageAim>()
             .insert_resource(NeighborhoodDemo::from_env())
-            .add_systems(Startup, setup_neighborhood)
+            .add_systems(Startup, (setup_neighborhood, setup_neighborhood_hud))
             .add_systems(
                 Update,
                 (
                     sync_host_camera.after(crate::camera::fly_camera_system),
                     update_zone,
                     process_swaps,
+                    detail_tick,
+                    damage_input,
+                    persistence_tick,
+                    refresh_footprints,
                     refresh_mask,
                     update_mask_texture,
                     sync_live_mask,
                     toggle_minimap_fills,
+                    update_neighborhood_hud,
                     run_neighborhood_demo,
                 )
                     .chain(),
@@ -551,6 +607,585 @@ fn update_zone(
 }
 
 #[allow(clippy::drop_non_drop)]
+#[derive(Component)]
+struct NeighborhoodHud;
+
+#[derive(Component)]
+struct NeighborhoodReticle;
+
+fn setup_neighborhood_hud(mut commands: Commands) {
+    commands.spawn((
+        NeighborhoodReticle,
+        Node {
+            position_type: PositionType::Absolute,
+            left: percent(50),
+            top: percent(50),
+            ..default()
+        },
+        Text::new("+"),
+        TextFont {
+            font_size: FontSize::Px(22.0),
+            ..default()
+        },
+        TextColor(Color::srgba(1.0, 1.0, 1.0, 0.9)),
+        TextShadow::default(),
+        ZIndex(21),
+    ));
+    commands.spawn((
+        NeighborhoodHud,
+        Node {
+            position_type: PositionType::Absolute,
+            left: px(12),
+            bottom: px(168),
+            ..default()
+        },
+        Text::new("DETAIL —"),
+        TextFont {
+            font_size: FontSize::Px(12.0),
+            ..default()
+        },
+        TextColor(Color::srgba(0.76, 0.96, 1.0, 0.96)),
+        TextShadow::default(),
+        ZIndex(20),
+    ));
+}
+
+fn update_neighborhood_hud(
+    neighborhood: Res<Neighborhood>,
+    aim: Res<DamageAim>,
+    index: Res<BuildingIndex>,
+    mut texts: Query<&mut Text, With<NeighborhoodHud>>,
+    mut reticles: Query<&mut TextColor, With<NeighborhoodReticle>>,
+) {
+    let target = aim
+        .target
+        .map(|id| {
+            let detail = neighborhood
+                .live
+                .get(&id)
+                .map(|live| match live.detail {
+                    DetailTier::Shell => "T0",
+                    DetailTier::Structural => "T1",
+                    DetailTier::Full => "T2",
+                })
+                .unwrap_or("—");
+            format!("b{id} {detail}")
+        })
+        .unwrap_or_else(|| "—".to_string());
+    let mut levels = [0usize; 3];
+    for live in neighborhood.live.values() {
+        levels[live.detail as usize] += 1;
+    }
+    let body = format!(
+        "DETAIL live={} T0={} T1={} T2={} built={}/{} frozen={} damage={} pending={} panels={} ads={}  target {target}  [1-4] {}  [X] fire  [Z]/[Shift+Z] restore",
+        neighborhood.live.len(),
+        levels[0],
+        levels[1],
+        levels[2],
+        neighborhood.tier1_built,
+        neighborhood.tier2_built,
+        neighborhood.frozen_count,
+        neighborhood.damage_events,
+        neighborhood.pending_damage.len(),
+        neighborhood.dressing_panels,
+        neighborhood.dressing_plates,
+        aim.preset.label()
+    );
+    for mut text in &mut texts {
+        text.0 = body.clone();
+    }
+    let colour = if aim.target.is_some() {
+        Color::srgba(0.32, 1.0, 0.52, 0.98)
+    } else {
+        Color::srgba(1.0, 1.0, 1.0, 0.9)
+    };
+    for mut text_color in &mut reticles {
+        text_color.0 = colour;
+    }
+    let _ = &index;
+}
+
+fn detail_tick(world: &mut World) {
+    let camera = world
+        .query_filtered::<&Transform, With<FlyCamera>>()
+        .single(world)
+        .ok()
+        .map(|transform| transform.translation)
+        .unwrap_or(Vec3::ZERO);
+    let forward = world
+        .query_filtered::<&Transform, With<FlyCamera>>()
+        .single(world)
+        .map(|transform| {
+            let forward = transform.forward();
+            Vec2::new(forward.x, forward.z).normalize_or_zero()
+        })
+        .unwrap_or(Vec2::Y);
+    let config = world.resource::<NeighborhoodConfig>().clone();
+    let mut items: Vec<(usize, usize, f32, f32, DetailTier)> = {
+        let neighborhood = world.resource::<Neighborhood>();
+        let index = world.resource::<BuildingIndex>();
+        neighborhood
+            .live
+            .iter()
+            .filter(|(_, live)| !live.frozen)
+            .filter_map(|(id, live)| {
+                let meta = index.buildings.get(live.meta)?;
+                let point = Vec2::new(meta.centroid[0], meta.centroid[1]);
+                let delta = point - Vec2::new(camera.x, camera.z);
+                let distance = delta.length();
+                let along = delta.dot(forward);
+                let lateral = (delta - forward * along).length();
+                Some((
+                    *id,
+                    live.meta,
+                    distance,
+                    if along >= 0.0 && lateral <= config.ahead_half_width * 1.5 {
+                        along
+                    } else {
+                        0.0
+                    },
+                    live.detail,
+                ))
+            })
+            .collect()
+    };
+    items.sort_by(|a, b| {
+        detail_priority(a.4, a.3 > 0.0, a.2)
+            .partial_cmp(&detail_priority(b.4, b.3 > 0.0, b.2))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    let started = Instant::now();
+    let mut tier1 = 0usize;
+    let mut tier2 = 0usize;
+    for (id, _meta, distance, _along, _detail) in items {
+        if started.elapsed().as_secs_f32() * 1000.0 >= 4.0 {
+            break;
+        }
+        let level = detail_level(world, id as u32);
+        let did = NEIGHBORHOOD_ID_BASE + id as u32;
+        let damaged = world.resource::<DamageJournal>().0.head_for(did) > 0.0;
+        if level < DetailTier::Structural {
+            begin_detail_upgrade(world, id as u32, DetailTier::Structural);
+            let reached = advance_detail(world, id as u32, 2.0);
+            if reached >= DetailTier::Structural {
+                tier1 += 1;
+                info!("DETAIL b{id}: Tier 1 ready at {distance:.1} m");
+            }
+            set_live_detail(world, id, reached);
+            if let Some(live) = world.resource_mut::<Neighborhood>().live.get_mut(&id)
+                && reached >= DetailTier::Structural
+            {
+                live.tier1_ready = Some(distance);
+            }
+            let _ = damaged;
+        } else if level < DetailTier::Full && (damaged || distance < 150.0) {
+            begin_detail_upgrade(world, id as u32, DetailTier::Full);
+            let reached = advance_detail(world, id as u32, 1.5);
+            if reached >= DetailTier::Full {
+                tier2 += 1;
+            }
+            set_live_detail(world, id, reached);
+        }
+    }
+    if tier1 > 0 || tier2 > 0 {
+        let mut neighborhood = world.resource_mut::<Neighborhood>();
+        neighborhood.tier1_built += tier1;
+        neighborhood.tier2_built += tier2;
+    }
+    // Damage admission: apply the queued shot only once its target is Tier 1.
+    let pending = std::mem::take(&mut world.resource_mut::<Neighborhood>().pending_damage);
+    let mut keep = Vec::new();
+    let mut applied = 0usize;
+    for shot in pending {
+        if applied >= 1 {
+            keep.push(shot);
+            continue;
+        }
+        let level = detail_level(world, shot.id as u32);
+        let live = world.resource::<Neighborhood>().live.contains_key(&shot.id);
+        if live && level >= DetailTier::Structural {
+            let did = NEIGHBORHOOD_ID_BASE + shot.id as u32;
+            let direction = world
+                .query_filtered::<&Transform, With<FlyCamera>>()
+                .single(world)
+                .map(|transform| transform.forward().as_vec3())
+                .unwrap_or(Vec3::NEG_Z);
+            apply_preset(world, did, shot.preset, shot.point, direction);
+            applied += 1;
+        } else {
+            keep.push(shot);
+        }
+    }
+    world.resource_mut::<Neighborhood>().pending_damage = keep;
+}
+
+/// Detail build-out order: lower tiers first, then corridor buildings (the
+/// ones the camera is flying towards), then nearest. That is what pre-warms a
+/// high-speed approach without spending the budget on nadir edges.
+fn detail_priority(detail: DetailTier, corridor: bool, distance: f32) -> (u8, u8, f32) {
+    (detail as u8, if corridor { 0 } else { 1 }, distance)
+}
+
+fn set_live_detail(world: &mut World, id: usize, level: DetailTier) {
+    if let Some(live) = world.resource_mut::<Neighborhood>().live.get_mut(&id) {
+        live.detail = level;
+    }
+}
+
+fn apply_preset(
+    world: &mut World,
+    building: u32,
+    preset: DamagePreset,
+    point: Vec3,
+    direction: Vec3,
+) {
+    let direction = direction.normalize_or_zero();
+    let impact = match preset {
+        DamagePreset::Bullet => destructibles_core::ImpactSpec {
+            position: point.to_array(),
+            radius: 0.0,
+            velocity: (direction * 300.0).to_array(),
+            mass_kg: 5.0,
+            explosive_yield_kg_tnt: 0.0,
+        },
+        DamagePreset::CarBomb => destructibles_core::ImpactSpec {
+            position: point.to_array(),
+            radius: 0.0,
+            velocity: (direction * 42.0).to_array(),
+            mass_kg: 1_500.0,
+            explosive_yield_kg_tnt: 5.0,
+        },
+        DamagePreset::Tier3 => destructibles_core::ImpactSpec {
+            position: point.to_array(),
+            radius: 0.0,
+            velocity: (direction * 120.0).to_array(),
+            mass_kg: 120_000.0,
+            explosive_yield_kg_tnt: 0.0,
+        },
+        DamagePreset::Hero => destructibles_core::ImpactSpec {
+            position: point.to_array(),
+            radius: 0.5,
+            velocity: (direction * 620.0).to_array(),
+            mass_kg: 220.0,
+            explosive_yield_kg_tnt: 0.0,
+        },
+    };
+    if preset == DamagePreset::Hero {
+        apply_puncture(world, building, impact);
+    } else {
+        apply_impact(world, building, impact);
+    }
+    world.resource_mut::<Neighborhood>().damage_events += 1;
+    info!(
+        "DAMAGE {} at b{building} ({:.1},{:.1},{:.1})",
+        preset.label(),
+        point.x,
+        point.y,
+        point.z
+    );
+}
+
+fn ray_aabb(origin: Vec3, direction: Vec3, min: Vec3, max: Vec3) -> Option<f32> {
+    let mut tmin = 0.0f32;
+    let mut tmax = f32::INFINITY;
+    for axis in 0..3 {
+        let d = direction[axis];
+        if d.abs() < 1.0e-6 {
+            if origin[axis] < min[axis] || origin[axis] > max[axis] {
+                return None;
+            }
+        } else {
+            let inv = 1.0 / d;
+            let mut t1 = (min[axis] - origin[axis]) * inv;
+            let mut t2 = (max[axis] - origin[axis]) * inv;
+            if t1 > t2 {
+                std::mem::swap(&mut t1, &mut t2);
+            }
+            tmin = tmin.max(t1);
+            tmax = tmax.min(t2);
+            if tmin > tmax {
+                return None;
+            }
+        }
+    }
+    (tmax >= 0.0).then_some(tmin.max(0.0))
+}
+
+fn damage_input(world: &mut World) {
+    let keys = world.resource::<ButtonInput<KeyCode>>().clone();
+    let Some(camera) = world
+        .query_filtered::<&Transform, With<FlyCamera>>()
+        .single(world)
+        .ok()
+        .copied()
+    else {
+        return;
+    };
+    let mut preset = world.resource::<DamageAim>().preset;
+    if keys.just_pressed(KeyCode::Digit1) {
+        preset = DamagePreset::Bullet;
+    } else if keys.just_pressed(KeyCode::Digit2) {
+        preset = DamagePreset::CarBomb;
+    } else if keys.just_pressed(KeyCode::Digit3) {
+        preset = DamagePreset::Tier3;
+    } else if keys.just_pressed(KeyCode::Digit4) {
+        preset = DamagePreset::Hero;
+    }
+    let origin = camera.translation;
+    let forward = camera.forward().as_vec3();
+    let mut best: Option<(f32, usize, Vec3)> = None;
+    {
+        let neighborhood = world.resource::<Neighborhood>();
+        let index = world.resource::<BuildingIndex>();
+        for (id, live) in &neighborhood.live {
+            let Some(meta) = index.buildings.get(live.meta) else {
+                continue;
+            };
+            let (min, max) = meta_bounds(meta, live.origin);
+            if let Some(t) = ray_aabb(origin, forward, min, max)
+                && best.is_none_or(|(best_t, _, _)| t < best_t)
+            {
+                best = Some((t, *id, origin + forward * t));
+            }
+        }
+    }
+    if best.is_none() {
+        // No direct ray hit: pick the closest live building in the forward cone.
+        let neighborhood = world.resource::<Neighborhood>();
+        let index = world.resource::<BuildingIndex>();
+        let flat = Vec2::new(forward.x, forward.z).normalize_or_zero();
+        for (id, live) in &neighborhood.live {
+            let Some(meta) = index.buildings.get(live.meta) else {
+                continue;
+            };
+            let delta = Vec2::new(meta.centroid[0] - origin.x, meta.centroid[1] - origin.z);
+            let distance = delta.length();
+            let along = delta.dot(flat);
+            let lateral = (delta - flat * along).length();
+            if along > 0.0 && along < 250.0 && lateral < 30.0 {
+                let point = live.origin + Vec3::Y * (meta.height_m * 0.5);
+                if best.is_none_or(|(best_t, _, _)| distance < best_t) {
+                    best = Some((distance, *id, point));
+                }
+            }
+        }
+    }
+    let (target, point) = best
+        .map(|(_, id, point)| (Some(id), point))
+        .unwrap_or((None, origin + forward * 30.0));
+    {
+        let mut aim = world.resource_mut::<DamageAim>();
+        aim.target = target;
+        aim.point = point;
+        aim.preset = preset;
+    }
+    if keys.just_pressed(KeyCode::KeyX) {
+        let Some(id) = target else {
+            return;
+        };
+        let level = detail_level(world, id as u32);
+        if level < DetailTier::Structural {
+            world
+                .resource_mut::<Neighborhood>()
+                .pending_damage
+                .push(PendingDamage { id, preset, point });
+            info!("DAMAGE queued for b{id}: waiting for Tier 1 (currently {level:?})");
+        } else {
+            let did = NEIGHBORHOOD_ID_BASE + id as u32;
+            apply_preset(world, did, preset, point, forward);
+        }
+    }
+    if keys.just_pressed(KeyCode::KeyZ) {
+        let target_id = target.filter(|id| {
+            let did = NEIGHBORHOOD_ID_BASE + *id as u32;
+            world.resource::<DamageJournal>().0.head_for(did) > 0.0
+        });
+        let ids: Vec<u32> = if keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)
+        {
+            let neighborhood = world.resource::<Neighborhood>();
+            let journal = world.resource::<DamageJournal>();
+            neighborhood
+                .live
+                .iter()
+                .filter(|(id, live)| {
+                    journal.0.head_for(NEIGHBORHOOD_ID_BASE + **id as u32) > 0.0
+                        && live.origin.distance(origin) <= 250.0
+                })
+                .map(|(id, _)| NEIGHBORHOOD_ID_BASE + *id as u32)
+                .collect()
+        } else {
+            target_id
+                .map(|id| vec![NEIGHBORHOOD_ID_BASE + id as u32])
+                .unwrap_or_default()
+        };
+        if !ids.is_empty() {
+            info!("RESTORE request: {} building(s)", ids.len());
+            begin_restoration(world, &ids);
+        }
+    }
+}
+
+fn meta_bounds(meta: &BuildingMeta, origin: Vec3) -> (Vec3, Vec3) {
+    let mut min = Vec3::splat(f32::INFINITY);
+    let mut max = Vec3::splat(f32::NEG_INFINITY);
+    for point in &meta.perimeter {
+        let p = Vec3::new(
+            point[0] - meta.centroid[0],
+            0.0,
+            point[1] - meta.centroid[1],
+        ) + origin;
+        min = min.min(p);
+        max = max.max(p);
+    }
+    max.y = origin.y + meta.height_m;
+    (min, max)
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PersistAction {
+    None,
+    Freeze,
+    Thaw,
+    Release,
+}
+
+/// Damaged buildings are frozen beyond the exit radius and thawed on re-entry;
+/// a restored building (empty journal) is released so it can swap out again.
+fn persistence_action(
+    damaged: bool,
+    frozen: bool,
+    distance: f32,
+    config: &NeighborhoodConfig,
+) -> PersistAction {
+    if damaged && !frozen && distance > config.nadir_exit {
+        PersistAction::Freeze
+    } else if damaged && frozen && distance <= config.nadir_enter {
+        PersistAction::Thaw
+    } else if !damaged && frozen {
+        PersistAction::Release
+    } else {
+        PersistAction::None
+    }
+}
+
+fn persistence_tick(world: &mut World) {
+    let Some(camera) = world
+        .query_filtered::<&Transform, With<FlyCamera>>()
+        .single(world)
+        .ok()
+        .map(|transform| transform.translation)
+    else {
+        return;
+    };
+    let config = world.resource::<NeighborhoodConfig>().clone();
+    let ids: Vec<(usize, Vec3, bool)> = {
+        let neighborhood = world.resource::<Neighborhood>();
+        neighborhood
+            .live
+            .iter()
+            .map(|(id, live)| (*id, live.origin, live.frozen))
+            .collect()
+    };
+    let mut frozen_count = 0usize;
+    for (id, origin, was_frozen) in ids {
+        let did = NEIGHBORHOOD_ID_BASE + id as u32;
+        let damaged = world.resource::<DamageJournal>().0.head_for(did) > 0.0;
+        let distance = camera.distance(origin);
+        let action = persistence_action(damaged, was_frozen, distance, &config);
+        if action == PersistAction::Freeze {
+            let hide = distance > 250.0;
+            if let Some(cache) = freeze_building(world, did, hide) {
+                let marker = if hide {
+                    spawn_far_marker(world, did)
+                } else {
+                    None
+                };
+                register_building(world, did, Regime::Frozen);
+                if let Some(state) = world.resource_mut::<Streaming>().by_building.get_mut(&did) {
+                    state.damaged = true;
+                    state.frozen = Some(cache);
+                    state.marker = marker;
+                }
+                if let Some(live) = world.resource_mut::<Neighborhood>().live.get_mut(&id) {
+                    live.frozen = true;
+                }
+                info!("PERSIST b{id}: damaged building frozen at {distance:.0} m hidden={hide}");
+            }
+        } else if action == PersistAction::Thaw {
+            let cache = world
+                .resource_mut::<Streaming>()
+                .by_building
+                .get_mut(&did)
+                .and_then(|state| state.frozen.take());
+            if let Some(cache) = cache {
+                thaw_building(world, &cache);
+            }
+            let marker = world
+                .resource_mut::<Streaming>()
+                .by_building
+                .get_mut(&did)
+                .and_then(|state| state.marker.take());
+            if let Some(marker) = marker
+                && let Ok(entity_mut) = world.get_entity_mut(marker)
+            {
+                entity_mut.despawn();
+            }
+            if let Some(state) = world.resource_mut::<Streaming>().by_building.get_mut(&did) {
+                state.regime = Regime::Hot;
+                state.damaged = true;
+                state.frozen = None;
+                state.marker = None;
+            }
+            if let Some(live) = world.resource_mut::<Neighborhood>().live.get_mut(&id) {
+                live.frozen = false;
+            }
+            info!("PERSIST b{id}: thawed on re-entry at {distance:.0} m");
+        } else if action == PersistAction::Release {
+            let cache = world
+                .resource_mut::<Streaming>()
+                .by_building
+                .get_mut(&did)
+                .and_then(|state| state.frozen.take());
+            if let Some(cache) = cache {
+                thaw_building(world, &cache);
+            }
+            let marker = world
+                .resource_mut::<Streaming>()
+                .by_building
+                .get_mut(&did)
+                .and_then(|state| state.marker.take());
+            if let Some(marker) = marker
+                && let Ok(entity_mut) = world.get_entity_mut(marker)
+            {
+                entity_mut.despawn();
+            }
+            if let Some(state) = world.resource_mut::<Streaming>().by_building.get_mut(&did) {
+                state.regime = Regime::Hot;
+                state.frozen = None;
+                state.marker = None;
+            }
+            if let Some(live) = world.resource_mut::<Neighborhood>().live.get_mut(&id) {
+                live.frozen = false;
+            }
+            info!("PERSIST b{id}: released after restoration at {distance:.0} m");
+        }
+        if world
+            .resource::<Neighborhood>()
+            .live
+            .get(&id)
+            .is_some_and(|live| live.frozen)
+        {
+            frozen_count += 1;
+        }
+    }
+    world.resource_mut::<Neighborhood>().frozen_count = frozen_count;
+}
+
+fn refresh_footprints(world: &mut World) {
+    update_live_footprints(world);
+}
+
+#[allow(clippy::drop_non_drop)]
 fn process_swaps(world: &mut World) {
     let started = Instant::now();
     let budget = world
@@ -658,6 +1293,10 @@ fn process_swaps(world: &mut World) {
                     meta: id,
                     spec,
                     origin,
+                    detail: DetailTier::Shell,
+                    entry_distance: 0.0,
+                    tier1_ready: None,
+                    frozen: false,
                 },
             );
             neighborhood.swaps_in += 1;
@@ -712,10 +1351,10 @@ fn update_live_footprints(world: &mut World) {
         }
     }
     let mut footprints = world.resource_mut::<LiveFootprints>();
-    if footprints.live != live || footprints.revision != revision {
+    if footprints.live != live || footprints.colors != colors {
         footprints.live = live;
         footprints.colors = colors;
-        footprints.revision = revision;
+        footprints.revision = revision.max(footprints.revision.wrapping_add(1));
     }
 }
 
@@ -1248,5 +1887,78 @@ mod tests {
         assert_eq!(live_fill_color(false, 1.0), [255, 255, 255, 235]);
         let damaged = live_fill_color(true, 0.0);
         assert!(damaged[0] > damaged[1]);
+    }
+
+    #[test]
+    fn minimap_color_is_journal_derived_and_ramps_with_integrity() {
+        // Pristine is the map's own white regardless of nominal integrity.
+        assert_eq!(live_fill_color(false, 0.2), [255, 255, 255, 235]);
+        // Once the journal carries damage the fill ramps green -> red as
+        // integrity falls; restoration to pristine returns white.
+        let healthy = live_fill_color(true, 1.0);
+        let broken = live_fill_color(true, 0.0);
+        assert!(healthy[1] > healthy[0], "intact damaged fill reads green");
+        assert!(broken[0] > broken[1], "collapsed fill reads red");
+        assert!(broken[0] >= healthy[0]);
+        assert!(broken[1] <= healthy[1]);
+        assert_eq!(live_fill_color(false, 1.0), [255, 255, 255, 235]);
+    }
+
+    #[test]
+    fn detail_priority_prefers_lower_tiers_then_the_corridor() {
+        let config = NeighborhoodConfig::default();
+        // Tier ordering dominates: every Shell comes before any Structural.
+        assert!(
+            detail_priority(DetailTier::Shell, false, 10.0)
+                < detail_priority(DetailTier::Structural, true, 10.0)
+        );
+        // Within a tier the corridor building wins even if it is farther.
+        assert!(
+            detail_priority(DetailTier::Shell, true, 180.0)
+                < detail_priority(DetailTier::Shell, false, 20.0)
+        );
+        // Otherwise nearest first.
+        assert!(
+            detail_priority(DetailTier::Shell, false, 20.0)
+                < detail_priority(DetailTier::Shell, false, 60.0)
+        );
+        let _ = config;
+    }
+
+    #[test]
+    fn damaged_persistence_round_trip() {
+        let config = NeighborhoodConfig::default();
+        let near = config.nadir_enter * 0.5;
+        let far = config.nadir_exit + 40.0;
+        // Pristine live building inside the zone: nothing to do.
+        assert_eq!(
+            persistence_action(false, false, near, &config),
+            PersistAction::None
+        );
+        // Damage at the nadir keeps the live record.
+        assert_eq!(
+            persistence_action(true, false, near, &config),
+            PersistAction::None
+        );
+        // Fly three blocks: freeze, retaining damage.
+        assert_eq!(
+            persistence_action(true, false, far, &config),
+            PersistAction::Freeze
+        );
+        assert_eq!(
+            persistence_action(true, true, far, &config),
+            PersistAction::None
+        );
+        // Re-entry thaws in place, no snap.
+        assert_eq!(
+            persistence_action(true, true, near, &config),
+            PersistAction::Thaw
+        );
+        // Full restoration empties the journal and releases the frozen record
+        // so swap-out becomes eligible again.
+        assert_eq!(
+            persistence_action(false, true, far, &config),
+            PersistAction::Release
+        );
     }
 }
