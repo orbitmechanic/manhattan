@@ -881,3 +881,47 @@ streaming/entity draw load, seeding round 25. Captures:
 
 Manhattan **105 tests** (resolver + JIT gate), destructibles **170**, clippy
 clean. Gauntlet `stray=0`, hover swaps 0; batch audits unchanged 0 offenders.
+
+## Iteration 25 — fire path repair and real-input acceptance
+
+### Root cause
+
+JIT created the live record in `damage_input`, after the frame's
+`update_zone`/`process_swaps` pass. With camera prefetch deleted there is no
+"desired set", so the next frame's idle GC saw the fresh JIT record as
+out-of-zone and swapped it out **before Tier 1 admitted the queued shot** —
+the journal stayed empty, no wound, no minimap fill. Fix: a building is exempt
+from exit/GC while it is `jit_target`, has pending damage, or carries journal
+damage; `process_swaps` honours the same guard.
+
+### Fire trace and rejection counter
+
+`damage_input` now logs every stage (key/mouse, ray origin, hit point, resolved
+id, live/JIT, gate verdict, admission) and the DETAIL HUD shows
+`rej=<n>` (`jit_rejected`). Left mouse also fires; X remains.
+
+### Real-input path
+
+`MANHATTAN_INPUT_TEST=1` synthesizes a genuine `ButtonInput<KeyCode>` X press
+and drives the real keybind → reticle → resolver → JIT gate → spawn → Tier-1 →
+journal chain. Result: target b9634, JIT 13.5 ms geometry PASS, Tier-1 1.07 s,
+`DAMAGE bullet` logged, `live=1`, and the capture shows the wound with the
+white minimap fill (`iteration25_input_fire.png`). OS-level focus itself could
+not be automated on this Wayland host (`wtype`/xdotool unavailable), so that
+link is reported UNVERIFIED; every stage after the key event is exercised.
+
+### Report discipline amendment
+
+`README.md` now states that each iteration report must label features
+**exercised via real input** or **exercised via programmatic path**, and mark
+anything without an input-driven test as **UNVERIFIED**. Iteration 25 status:
+bullet JIT = real-input (mocked) PASS; car-bomb JIT = programmatic PASS;
+20-shot monotone = programmatic PASS, real-input UNVERIFIED; hero/lift/thrown
+neighbour = programmatic only / UNVERIFIED real-input; restoration eviction =
+programmatic PASS; minimap fill = real-input capture PASS.
+
+### Performance
+
+No regression: idle flight remains 40.76 ms AM / 47–73 ms gauntlet; JIT spawns
+3.7–14.9 ms and Tier 1 0.27–1.26 s in these runs. Rejection counter stays 0
+for accepted records.

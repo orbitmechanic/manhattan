@@ -243,6 +243,7 @@ pub struct Neighborhood {
     pub jit_target: Option<usize>,
     pub jit_started: f32,
     pub jit_latency: f32,
+    pub jit_rejected: u32,
     pending_damage: Vec<PendingDamage>,
     pub dressing_panels: usize,
     pub dressing_plates: usize,
@@ -372,6 +373,7 @@ enum DemoStage {
     JitBullet,
     JitCar,
     JitRestore,
+    InputTest,
     ExitWait,
 }
 
@@ -439,7 +441,10 @@ impl NeighborhoodDemo {
         let perf_probe = std::env::var_os("MANHATTAN_PERF_PROBE").is_some();
         let golden = std::env::var_os("MANHATTAN_GOLDEN").is_some();
         let jit = std::env::var_os("MANHATTAN_JIT").is_some();
-        let stage = if jit {
+        let input_test = std::env::var_os("MANHATTAN_INPUT_TEST").is_some();
+        let stage = if input_test {
+            DemoStage::InputTest
+        } else if jit {
             DemoStage::JitBullet
         } else if golden {
             DemoStage::GoldenBoot
@@ -453,7 +458,7 @@ impl NeighborhoodDemo {
             DemoStage::Boot
         };
         Self {
-            active: active || wave_demo || roofs || perf_probe || golden || jit,
+            active: active || wave_demo || roofs || perf_probe || golden || jit || input_test,
             capture_dir,
             damage: std::env::var_os("MANHATTAN_DAMAGE").is_some(),
             wave_size,
@@ -835,9 +840,12 @@ fn update_zone(
         // A damaged building persists in its damage-carrying state; zone exit
         // freezes it instead of demoting it to the plain map.
         let persists = damaged && config.damaged_persists;
+        let jitting = neighborhood.jit_target == Some(id)
+            || neighborhood.pending_damage.iter().any(|shot| shot.id == id);
         if idle
             && !in_zone(distance, along, lateral, true, &config)
             && !persists
+            && !jitting
             && !neighborhood.queued_out.contains(&id)
         {
             neighborhood.pending_out.push_back(id);
@@ -931,7 +939,7 @@ fn update_neighborhood_hud(
         levels[live.detail as usize] += 1;
     }
     let body = format!(
-        "DETAIL live={} T0={} T1={} T2={} built={}/{} frozen={} damage={} pending={}\nDRESS panels={} ads={}  target {target}  [1-4] {}  [X] fire  [Z]/[Shift+Z] restore",
+        "DETAIL live={} T0={} T1={} T2={} built={}/{} frozen={} damage={} pending={} rej={}\nDRESS panels={} ads={}  target {target}  [1-4] {}  [X] fire  [Z]/[Shift+Z] restore",
         neighborhood.live.len(),
         levels[0],
         levels[1],
@@ -941,6 +949,7 @@ fn update_neighborhood_hud(
         neighborhood.frozen_count,
         neighborhood.damage_events,
         neighborhood.pending_damage.len(),
+        neighborhood.jit_rejected,
         neighborhood.dressing_panels,
         neighborhood.dressing_plates,
         aim.preset.label()
@@ -1186,6 +1195,7 @@ fn ray_aabb(origin: Vec3, direction: Vec3, min: Vec3, max: Vec3) -> Option<f32> 
 
 fn damage_input(world: &mut World) {
     let keys = world.resource::<ButtonInput<KeyCode>>().clone();
+    let mouse = world.resource::<ButtonInput<MouseButton>>().clone();
     let Some(camera) = world
         .query_filtered::<&Transform, With<FlyCamera>>()
         .single(world)
@@ -1276,22 +1286,31 @@ fn damage_input(world: &mut World) {
         aim.point = point;
         aim.preset = preset;
     }
-    if keys.just_pressed(KeyCode::KeyX) {
+    if keys.just_pressed(KeyCode::KeyX) || mouse.just_pressed(MouseButton::Left) {
+        info!(
+            "FIRE: key X target={:?} point={:?} ray_origin={origin:?}",
+            target, point
+        );
         let Some(id) = target else {
+            info!("FIRE: no building under the reticle");
+            world.resource_mut::<Neighborhood>().jit_rejected += 1;
             return;
         };
         if !world.resource::<Neighborhood>().live.contains_key(&id) && !jit_swap(world, id) {
+            info!("FIRE: JIT rejected b{id}");
             return;
         }
+        info!("FIRE: target b{id} live; admitting");
         let level = detail_level(world, NEIGHBORHOOD_ID_BASE + id as u32);
         if level < DetailTier::Structural {
             world
                 .resource_mut::<Neighborhood>()
                 .pending_damage
                 .push(PendingDamage { id, preset, point });
-            info!("DAMAGE queued for b{id}: waiting for Tier 1 (currently {level:?})");
+            info!("FIRE: b{id} queued for Tier 1 (currently {level:?})");
         } else {
             let did = NEIGHBORHOOD_ID_BASE + id as u32;
+            info!("FIRE: b{id} admitted immediately");
             apply_preset(world, did, preset, point, forward);
         }
     }
@@ -1912,6 +1931,7 @@ fn jit_swap(world: &mut World, id: usize) -> bool {
     if !ok {
         let _ = swap_out(world, handle);
         world.resource_mut::<Neighborhood>().height_failures += 1;
+        world.resource_mut::<Neighborhood>().jit_rejected += 1;
         world.resource_mut::<Neighborhood>().failed.insert(id);
         info!("JIT b{id} rejected by geometry gate; stays plain");
         return false;
@@ -1977,9 +1997,15 @@ fn process_swaps(world: &mut World) {
             world.resource_mut::<Neighborhood>().queued_out.remove(&id);
             let did = NEIGHBORHOOD_ID_BASE + id as u32;
             let damaged = world.resource::<DamageJournal>().0.head_for(did) > 0.0;
-            if damaged
+            if (damaged
                 && world.resource::<NeighborhoodConfig>().damaged_persists
-                && world.resource::<Neighborhood>().live.contains_key(&id)
+                && world.resource::<Neighborhood>().live.contains_key(&id))
+                || world.resource::<Neighborhood>().jit_target == Some(id)
+                || world
+                    .resource::<Neighborhood>()
+                    .pending_damage
+                    .iter()
+                    .any(|shot| shot.id == id)
             {
                 continue;
             }
@@ -4204,6 +4230,89 @@ fn run_neighborhood_demo(world: &mut World) {
             let mut demo = world.resource_mut::<NeighborhoodDemo>();
             demo.stage = DemoStage::ExitWait;
             demo.stage_at = now;
+        }
+        DemoStage::InputTest => {
+            if world.resource::<NeighborhoodDemo>().golden_step == 0 {
+                if now - world.resource::<NeighborhoodDemo>().stage_at < 2.0
+                    || !world.resource::<CityMaterialSetup>().done
+                {
+                    return;
+                }
+                let center = crate::city_rhythm::TIMES_SQUARE;
+                let index = world.resource::<BuildingIndex>();
+                let target = index
+                    .buildings
+                    .iter()
+                    .filter(|meta| meta.height_m > 20.0)
+                    .map(|meta| {
+                        let d = Vec2::new(meta.centroid[0] - center.x, meta.centroid[1] - center.y)
+                            .length();
+                        (d, meta.id)
+                    })
+                    .min_by(|a, b| a.0.total_cmp(&b.0));
+                let Some((_, id)) = target else {
+                    world.resource_mut::<NeighborhoodDemo>().stage = DemoStage::ExitWait;
+                    return;
+                };
+                let index = world.resource::<BuildingIndex>();
+                let origin = Vec3::new(
+                    index.buildings[id].centroid[0],
+                    0.0,
+                    index.buildings[id].centroid[1],
+                );
+                let position = origin + Vec3::new(0.0, 8.0, 42.0);
+                set_camera(world, position, origin + Vec3::Y * 12.0 - position, 8.0);
+                world.resource_mut::<NeighborhoodDemo>().roof_target = Some(id);
+                world.resource_mut::<NeighborhoodDemo>().golden_step = 1;
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.0 {
+                return;
+            }
+            if world.resource::<NeighborhoodDemo>().golden_step == 1 {
+                world.resource_mut::<NeighborhoodDemo>().golden_step = 2;
+                world
+                    .resource_mut::<ButtonInput<KeyCode>>()
+                    .press(KeyCode::KeyX);
+                info!("INPUT TEST: synthesized X press");
+                damage_input(world);
+                return;
+            }
+            let Some(_id) = world.resource::<NeighborhoodDemo>().roof_target else {
+                return;
+            };
+            let live_count = world.resource::<Neighborhood>().live.len();
+            let head = world
+                .resource::<Neighborhood>()
+                .live
+                .keys()
+                .map(|id| {
+                    world
+                        .resource::<DamageJournal>()
+                        .0
+                        .head_for(NEIGHBORHOOD_ID_BASE + *id as u32)
+                })
+                .fold(0.0f64, f64::max);
+            let live = live_count > 0;
+            if world.resource::<NeighborhoodDemo>().golden_step == 2 && live {
+                info!(
+                    "INPUT TEST RESULT: live={live_count} head={head:.2} shots={} rejected={}",
+                    world.resource::<Neighborhood>().damage_events,
+                    world.resource::<Neighborhood>().jit_rejected,
+                );
+                world.resource_mut::<NeighborhoodDemo>().golden_step = 3;
+                world.resource_mut::<NeighborhoodDemo>().stage_at = now;
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at > 12.0 {
+                let path = world
+                    .resource::<NeighborhoodDemo>()
+                    .capture_dir
+                    .join("iteration25_input_fire.png");
+                screenshot(world, &path, "input fire");
+                world.resource_mut::<NeighborhoodDemo>().stage = DemoStage::ExitWait;
+                world.resource_mut::<NeighborhoodDemo>().stage_at = now + 1.0;
+            }
         }
         DemoStage::ExitWait => {
             if now - world.resource::<NeighborhoodDemo>().stage_at > 1.2 {

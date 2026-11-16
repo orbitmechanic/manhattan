@@ -1052,3 +1052,11 @@ affected presentation and is already reflected in the script.
   (94,085 boundary edges, zero non-manifold multi-face edges, zero degenerate
   or duplicate faces).  This does not affect display or the import; closing
   every shell would add geometry that was never in the source model.
+
+## Reporting contract (permanent)
+
+Every iteration report distinguishes features **exercised via real input**
+(keybind → reticle → resolver → gate → spawn → admission, mocked events allowed
+but not direct function calls) from **exercised via programmatic path**.
+Features without a real-input test are reported as **UNVERIFIED**, never as
+passing. Silent fallbacks must expose a visible rejection counter.
