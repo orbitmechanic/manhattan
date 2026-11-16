@@ -925,3 +925,46 @@ programmatic PASS; minimap fill = real-input capture PASS.
 No regression: idle flight remains 40.76 ms AM / 47–73 ms gauntlet; JIT spawns
 3.7–14.9 ms and Tier 1 0.27–1.26 s in these runs. Rejection counter stays 0
 for accepted records.
+
+## Iteration 26 — the shot that never landed
+
+### Root cause
+
+G was never bound to the fire handler. In iteration 25 G still fired the city
+restoration wave (`restoration.rs`) and cycled the stationing set
+(`stationing.rs`); the UI key-click audio made it sound like a gunshot. X/left
+mouse were the only damage bindings, so the reviewer's G press had no shot.
+
+### Fix
+
+- **G is the authoritative fire key** (X and left mouse remain aliases).
+- City restoration wave moved to **B**; stationing set moved to **Y**.
+- The full badge chain is on the HUD and in stdout:
+  `SOUND=heard → RAY origin/direction → HIT=b####/MISS → GATE=PASS/REJECT →
+  JIT=spawned/live → ADMITTED[=queued(T1)] → JOURNAL=n → WOUND VISIBLE`.
+- `MISS` increments its own counter (`miss=`), alongside `rej=`.
+
+### G-path input test
+
+`MANHATTAN_INPUT_TEST=1` injects a real `ButtonInput<KeyCode>` **G** press and
+drives keybind → ray → resolver → gate → JIT → admission. Street pose:
+`HIT=b9634`, JIT 4.69 ms PASS, Tier 1 1.18 s, `DAMAGE bullet` journaled,
+wound + white minimap capture. Aerial pose (180 m): `HIT=b9675`, JIT 6.54 ms,
+damage journaled — the JIT target survives idle GC. Logs:
+`iteration26_input_g.log`, `iteration26_input_g_aerial.log`.
+
+### Reporting contract amendment
+
+The binding the reviewer uses is the binding tests use. G is now encoded;
+tests must inject G. A fire key that only produces audio without lighting the
+badge chain is a failure.
+
+### Status
+
+| Feature | Status |
+|---|---|
+| G bullet street → wound + white fill | real input (mocked) PASS |
+| G bullet aerial → wound | real input (mocked) PASS |
+| Car bomb / 20-shot / hero / lift / thrown | programmatic path only; real-input **UNVERIFIED** |
+| Badge chain + miss/reject counters | permanent HUD + logs |
+| Performance | unchanged from iteration 24 (40.76 ms AM idle, 47–73 ms gauntlet) |

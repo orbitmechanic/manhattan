@@ -447,7 +447,7 @@ pub fn handle_station_keys(keys: Res<ButtonInput<KeyCode>>, mut config: ResMut<S
     if keys.just_pressed(KeyCode::KeyC) {
         config.show_coords = !config.show_coords;
     }
-    if keys.just_pressed(KeyCode::KeyG) {
+    if keys.just_pressed(KeyCode::KeyY) {
         config.set = config.set.next();
     }
 }

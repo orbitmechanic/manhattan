@@ -558,7 +558,7 @@ pub fn wave_input(world: &mut World) {
         city.profile = profile;
     }
     let shift = keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight);
-    let fire = keys.just_pressed(KeyCode::KeyG);
+    let fire = keys.just_pressed(KeyCode::KeyB);
     let delegated = keys.just_pressed(KeyCode::KeyZ) && shift;
     if !fire && !delegated {
         return;
