@@ -119,6 +119,8 @@ pub struct BuildingDressing {
     pub category: String,
     pub height_m: f32,
     pub panels: Vec<PanelDressing>,
+    /// Atlas material selected by the shared radial ad-density band.
+    pub material: Handle<StandardMaterial>,
 }
 
 #[derive(Resource, Default)]
@@ -126,8 +128,9 @@ pub struct StorefrontState {
     pub assignments: Vec<BuildingDressing>,
     /// building id -> index in `assignments`.
     pub index: HashMap<usize, usize>,
-    /// Category -> atlas material, reused by the live facade re-projection.
-    pub materials: HashMap<String, Handle<StandardMaterial>>,
+    /// (category, illumination band) -> atlas material. Storefronts nearer
+    /// Times Square are self-illuminated; the outer bands are shuttered/dim.
+    pub materials: HashMap<(String, u8), Handle<StandardMaterial>>,
     /// The plain map mesh per building, hidden while a live destructible
     /// occupies the same footprint.
     pub entities: HashMap<usize, Entity>,
@@ -275,17 +278,31 @@ pub fn spawn_storefronts(
                 });
             })
             .load(path);
-        let material = materials.add(StandardMaterial {
-            base_color: Color::WHITE,
-            base_color_texture: Some(texture),
-            unlit: true,
-            double_sided: true,
-            cull_mode: None,
-            perceptual_roughness: 0.88,
-            ..default()
-        });
-        material_by_category.insert(category.clone(), material.clone());
-        state.materials.insert(category.clone(), material);
+        // Four illumination bands from the shared ad-density field. Band 3 is
+        // fully self-lit (Times Square); band 0 is a dark, lit-only storefront.
+        for band in 0..4u8 {
+            let strength = match band {
+                0 => 0.0,
+                1 => 0.45,
+                2 => 1.0,
+                _ => 1.7,
+            };
+            let material = materials.add(StandardMaterial {
+                base_color: Color::WHITE,
+                base_color_texture: Some(texture.clone()),
+                emissive: LinearRgba::rgb(strength, strength * 0.94, strength * 0.82),
+                emissive_texture: Some(texture.clone()),
+                unlit: false,
+                double_sided: true,
+                cull_mode: None,
+                perceptual_roughness: 0.88,
+                ..default()
+            });
+            state.materials.insert((category.clone(), band), material);
+        }
+        if let Some(material) = state.materials.get(&(category.clone(), 0)).cloned() {
+            material_by_category.insert(category.clone(), material);
+        }
     }
 
     let seed = run_seed();
@@ -297,7 +314,13 @@ pub fn spawn_storefronts(
         if category.images.is_empty() || building.perimeter.len() < 3 {
             continue;
         }
-        let Some(material) = material_by_category.get(&building.category) else {
+        let density = crate::city_rhythm::ad_density(building.centroid[0], building.centroid[1]);
+        let band = (density * 3.0).round().clamp(0.0, 3.0) as u8;
+        let Some(material) = state
+            .materials
+            .get(&(building.category.clone(), band))
+            .cloned()
+        else {
             continue;
         };
         let mut perimeter = building.perimeter.clone();
@@ -411,6 +434,7 @@ pub fn spawn_storefronts(
             category: building.category.clone(),
             height_m: building.height_m,
             panels,
+            material: material.clone(),
         });
     }
     info!(

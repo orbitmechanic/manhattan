@@ -39,7 +39,7 @@ use manhattan_viewer::{
         BuildingChunk, CityMaterial, CityMaterialSetup, RoadMaterials, setup_city_materials,
         setup_road_materials, update_city_materials, update_road_colors,
     },
-    clock::{ClockAction, SimClock},
+    clock::{ClockAction, ProcessingClock, SimClock},
     collision::{CAMERA_RADIUS, CollisionGrid},
     detail::{DetailCull, update_detail_culling},
     details::{
@@ -319,6 +319,7 @@ fn main() {
         .init_resource::<Intersections>()
         .init_resource::<StreetFurniture>()
         .init_resource::<RoadMaterials>()
+        .init_resource::<ProcessingClock>()
         .init_resource::<ControlLayout>()
         .init_resource::<SpeedMode>()
         .insert_resource(args)
@@ -338,6 +339,7 @@ fn main() {
         .add_systems(Startup, setup_people_catalog)
         .add_systems(Startup, setup_vehicle_catalog)
         .add_systems(Startup, setup_street_furniture)
+        .add_systems(Update, tick_processing_clock)
         .add_systems(
             Update,
             (
@@ -403,6 +405,15 @@ fn main() {
 
 fn tick_clock(time: Res<Time>, mut clock: ResMut<SimClock>) {
     clock.tick(time.delta_secs() as f64);
+}
+
+fn tick_processing_clock(
+    time: Res<Time>,
+    clock: Res<SimClock>,
+    mut processing: ResMut<ProcessingClock>,
+) {
+    processing.elapsed += time.delta_secs() as f64;
+    processing.catch_up = !clock.playing;
 }
 
 #[cfg(target_arch = "wasm32")]

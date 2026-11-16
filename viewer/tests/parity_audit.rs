@@ -1,5 +1,6 @@
 //! Iteration-20 generation audit over the full Manhattan conversion.
 
+use bevy::prelude::Vec3;
 use destructibles_core::math::{distance_to_polygon_edges, point_in_polygon};
 use destructibles_core::{BuildingLayout, interior};
 use manhattan_viewer::neighborhood::spec_for;
@@ -34,6 +35,7 @@ fn audit_generation_bounds() {
     let mut tall_bad = 0usize;
     let mut shell_bad = 0usize;
     let mut antenna_bad = 0usize;
+    let mut glass_bad = 0usize;
     let mut examples: Vec<String> = Vec::new();
     for meta in data.buildings() {
         let Ok(spec) = spec_for(meta) else {
@@ -152,6 +154,30 @@ fn audit_generation_bounds() {
             shell_bad += 1;
             bad_types.push("shell");
         }
+        if layout.spec.facade_style == destructibles_core::FacadeStyle::GlassCurtainWall
+            && meta.height_m >= 60.0
+        {
+            let wall_area: f32 = layout
+                .wall_quads()
+                .iter()
+                .map(|quad| {
+                    let a = Vec3::from_array(quad.corners[0]);
+                    let b = Vec3::from_array(quad.corners[1]);
+                    let c = Vec3::from_array(quad.corners[2]);
+                    (b - a).cross(c - a).length()
+                })
+                .sum();
+            let pane_area: f32 = layout
+                .panes
+                .iter()
+                .map(|pane| pane.width * pane.height)
+                .sum();
+            let total = wall_area + pane_area;
+            if total > 1.0 && pane_area / total < 0.60 {
+                glass_bad += 1;
+                bad_types.push("glass-grammar");
+            }
+        }
         let max_mast = destructibles_bevy::night::antenna_heights(meta.id as u32, layout.height)
             .into_iter()
             .fold(0.0f32, f32::max);
@@ -167,7 +193,7 @@ fn audit_generation_bounds() {
         }
     }
     println!(
-        "AUDIT total={} generated={generated} failed={failed} slab={slab_bad} column={column_bad} core={core_bad} clutter={clutter_bad} roof={roof_bad} tall={tall_bad} shell={shell_bad} antenna={antenna_bad}",
+        "AUDIT total={} generated={generated} failed={failed} slab={slab_bad} column={column_bad} core={core_bad} clutter={clutter_bad} roof={roof_bad} tall={tall_bad} shell={shell_bad} antenna={antenna_bad} glass={glass_bad}",
         data.buildings().len()
     );
     for (reason, count) in &reasons {
@@ -185,7 +211,8 @@ fn audit_generation_bounds() {
             + roof_bad
             + tall_bad
             + shell_bad
-            + antenna_bad,
+            + antenna_bad
+            + glass_bad,
         0
     );
 }

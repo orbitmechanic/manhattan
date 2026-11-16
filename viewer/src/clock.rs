@@ -25,6 +25,23 @@ pub struct SimClock {
     pub speed: f64,
 }
 
+/// Wall-clock time for background processing. Never pauses with the game
+/// clock; a frozen clock is extra frame budget, not a stop signal.
+#[derive(Resource, Clone, Debug)]
+pub struct ProcessingClock {
+    pub elapsed: f64,
+    pub catch_up: bool,
+}
+
+impl Default for ProcessingClock {
+    fn default() -> Self {
+        Self {
+            elapsed: 0.0,
+            catch_up: false,
+        }
+    }
+}
+
 pub const START_DATE: Date = Date::new(2026, 6, 21);
 pub const START_MINUTE: f64 = 12.0 * 60.0;
 
@@ -165,6 +182,22 @@ mod tests {
         c.set_time(12, 0);
         c.tick(2.0);
         assert_eq!(c.datetime().hour(), 10);
+    }
+
+    #[test]
+    fn processing_clock_advances_while_time_is_frozen() {
+        let mut clock = SimClock {
+            playing: false,
+            ..Default::default()
+        };
+        let before = clock.datetime();
+        clock.tick(2.0);
+        assert_eq!(clock.datetime(), before);
+        let mut processing = ProcessingClock::default();
+        processing.elapsed += 2.0;
+        processing.catch_up = !clock.playing;
+        assert!(processing.elapsed > 0.0);
+        assert!(processing.catch_up);
     }
 
     #[test]

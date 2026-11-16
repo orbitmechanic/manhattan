@@ -641,3 +641,98 @@ unit-tested.
 - Gauntlet: worst 156.9 / 140.1 / 107.1 / 86.4 ms, `stray=0` every regime,
   hover swaps 0. Journal/audit/determinism/wave battery untouched.
 - Year metadata is generation-only; no checksum changes.
+
+## Iteration 22 — visual correctness sweep and swap-brain surgery
+
+### Traveling shadow (fixed)
+
+Root cause: the camera-following cloud decks (15–27 km discs at 360–2,180 m)
+became shadow casters when iteration 21 enabled sun shadows, painting a moving
+dark disc over the city beneath the camera. All five decks now carry
+`NotShadowCaster`; only the sun/moon directional fixtures shadow the scene.
+Before/after: `iteration22_shadow_before.png` / `_shadow_after.png`. The camera
+no longer changes any building's direct light.
+
+### Storefront illumination gradation
+
+Storefront atlas materials are now four **emissive bands** selected by the
+shared radial ad-density field: 0 (lit-only, shuttered), 0.45, 1.0, and 1.7
+(Times Square). This is the **fourth consumer** of the same field (ads, people,
+storefront light, facade probability), and the material handle is stored per
+building so the live re-projection keeps the same band. Epicentre storefronts
+stay self-lit; outer-borough bands are mostly dark and lit only by the sun.
+
+### Glass grammar inversion
+
+`spec_for` previously widened every bay for LOD, including curtain walls, so an
+all-glass tower became 1.36 m panes in 4.2 m bays (~32 % glass). Curtain walls
+now get height-scaled panes (`1.35 + min(h/300, 0.45)` m wide, floor-height
+tall), 0.10 m mullions and 0.05 m edge margins. Batch audit over the generated
+city: tall (≥60 m) glass buildings with a realised pane-to-facade area ratio
+below **0.60** → **0 offenders**. (One edge case sits at 0.632; the rest are
+higher.) The old synchronous LOD convention still applies to brick/concrete.
+
+### Ghost shells and orphaned antennas
+
+- **Height integrity:** `height_matches` is the twin of the footprint check
+  (0.05 m tolerance). A swap whose generated height differs is rejected and
+  plain geometry stays. Gauntlet run: one record (b6159) rejected, no ghost
+  shells; `height_failures` counter added.
+- **Furniture ownership:** map antennae/equipment are hidden with the rest of
+  the plain building while live (`RoofFurniture` in `set_plain_hidden`).
+  Antenna containment audit: every mast ≤ 12 % of the map record height, 0
+  failures across 9,799 generated records.
+- **Windows-only shell:** Tier-1 regression test now asserts the wall shell is
+  present and visible plus non-empty slab/column sets at Tier 1.
+
+### Clock decoupling
+
+`ProcessingClock` advances with wall time and never pauses; `SimClock` drives
+time-of-day, journal-adjacent choreography and the heartbeat. When the game
+clock is frozen, swap budget and max swaps double and the detail budget rises
+4 → 8 ms, so background catch-up uses the gift frame budget. Processing time is
+never read by the journal. Test: processing time advances while `SimClock` is
+paused and `catch_up` is set.
+
+### Swap prioritization: current-position, LOS-weighted, idle GC
+
+- Candidate set and priority queue are rebuilt every tick from the camera's
+  **current** position; stale pending entries behind the camera are dropped
+  before instantiation. The instantiate→collect cycle is structurally gone.
+- Priority classes: **visible ahead (0) < visible/occluded ahead or visible
+  behind (1) < occluded behind (2)**, distance as tie-break. LOS is a coarse
+  ray vs candidate AABBs.
+- GC is idle-time only: exits are queued only below 3 m/s (or while the clock is
+  frozen); moving frames clear the exit queue rather than mass-despawn.
+- Teleport envelope metric: **345 ms** until ≥8 live buildings at the new pose
+  (`iteration22_perf_am.log`). Gauntlet: `stray=0` every regime, hover swaps 0.
+  Mach 1.92 remains unreachable ahead (documented since iteration 17); behind is
+  no longer spawned-then-collected.
+
+### Performance refresh
+
+| Pose | avg frame | worst | notes |
+|---|---:|---:|---|
+| AM rush epicentre | 77.65 ms | 136.3 ms | sun shadows + full ads + 1,000 peds |
+| pedestrian 15 m/s | — | 250.0 ms | city-streaming spike |
+| fast 30 m/s | — | 187.1 ms | |
+| hero 100 m/s | — | 184.2 ms | |
+| mach 1.92 | — | 126.7 ms | |
+
+The shadow fix itself does not add cost; enabling sun shadows in iteration 21
+did, and the camera-shadow bug is gone. City-streaming frames remain the
+deferred item.
+
+### Captures/evidence (iteration 22)
+
+`iteration22_shadow_before/after`, `iteration22_swap_envelope[_detail]`,
+`iteration22_perf_am.log`, `iteration22_gauntlet.log`, `iteration22_golden.log`
+(golden set regenerated under the fixes).
+
+### Verification (iteration 22)
+
+- Manhattan: fmt, clippy `-D warnings`, **103 tests**, release build.
+- Destructibles: **168 tests**, clippy clean (detail-tier shell test extended).
+- Batch audits: all envelope/height/antenna/glass invariants 0 offenders;
+  9,799 generated, 1,233 pre-existing spec rejections.
+- Journal/audit/determinism/wave battery untouched.

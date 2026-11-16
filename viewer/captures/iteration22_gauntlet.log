@@ -1,0 +1,1794 @@
+2026-11-16T16:47:24.236443Z  INFO bevy_diagnostic::system_information_diagnostics_plugin::internal: SystemInfo { os: "Linux (Omarchy 4.5.0)", kernel: "7.2.15-1-omarchy", cpu: "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx", core_count: "4", memory: "17.5 GiB" }
+2026-11-16T16:47:24.316884Z  INFO bevy_render::renderer: AdapterInfo { name: "AMD Radeon Vega 8 Graphics (RADV RAVEN)", vendor: 4098, device: 5592, device_type: IntegratedGpu, device_pci_bus_id: "0000:03:00.0", driver: "radv", driver_info: "Mesa 26.2.5-arch1.1", backend: Vulkan, subgroup_min_size: 64, subgroup_max_size: 64, transient_saves_memory: Some(false), limit_bucket: None }
+2026-11-16T16:47:24.463987Z  INFO bevy_pbr::cluster: GPU clustering is supported on this device.
+2026-11-16T16:47:24.464031Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+2026-11-16T16:47:24.464755Z  INFO bevy_hanabi::plugin: Initializing Hanabi for GPU adapter AMD Radeon Vega 8 Graphics (RADV RAVEN)
+2026-11-16T16:47:24.469875Z  INFO bevy_winit::system: Creating new window Manhattan — day/night fly-through (67v0)
+2026-11-16T16:47:24.473181Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 23 orthogonal masonry chunks per structural cell
+2026-11-16T16:47:24.473887Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 30 crystalline glass chunks per structural cell
+2026-11-16T16:47:24.477282Z  INFO manhattan_viewer::people: People catalog ready
+2026-11-16T16:47:24.480046Z  INFO destructibles_bevy::audio: AUDIO DEVICE: host=Alsa device='Default Audio Device' config=F32 44100 Hz 2 ch (Bevy/rodio default output)
+2026-11-16T16:47:24.490240Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD: feeder/index ready, mask 1024² @ 1200 m
+2026-11-16T16:47:24.670626Z  INFO manhattan_viewer::storefront: Storefronts: 11032 buildings, 4 categories, 0 repeat warnings, seed 530e0bac
+2026-11-16T16:47:24.987747Z  INFO manhattan_viewer::details: Roof furniture: 39164 equipment boxes, 21633 masts on 10824 buildings
+2026-11-16T16:47:24.989418Z  INFO manhattan_viewer::details: Trees: 3000
+2026-11-16T16:47:24.996335Z  INFO manhattan_viewer::traffic: Vehicle catalog: 150 variants
+2026-11-16T16:47:25.065705Z  INFO manhattan_viewer::details: Signs: 44173 on 5910 buildings
+2026-11-16T16:47:25.216592Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: glass_break.ogg (31276 bytes)
+2026-11-16T16:47:25.216686Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: impact.ogg (7792 bytes)
+2026-11-16T16:47:25.216695Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: shard_chatter.ogg (39114 bytes)
+2026-11-16T16:47:25.216703Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: chime.wav (79424 bytes)
+2026-11-16T16:47:25.216711Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: rewind_whoosh.wav (141164 bytes)
+2026-11-16T16:47:25.216717Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: explosion.wav (229364 bytes)
+2026-11-16T16:47:25.216723Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: klaxon.wav (176444 bytes)
+2026-11-16T16:47:25.216730Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: sprinkler_hiss.wav (176444 bytes)
+2026-11-16T16:47:25.216737Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: masonry_thud.wav (48554 bytes)
+2026-11-16T16:47:25.216764Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: collapse_rumble.wav (458684 bytes)
+2026-11-16T16:47:25.216771Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: structural_groan.wav (264644 bytes)
+2026-11-16T16:47:25.216777Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: concrete_crack.wav (19448 bytes)
+2026-11-16T16:47:25.216783Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: gas_hiss.wav (176444 bytes)
+2026-11-16T16:47:25.216789Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: fire_crackle.wav (176444 bytes)
+2026-11-16T16:47:25.216795Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: cascade_crackle.wav (352844 bytes)
+2026-11-16T16:47:25.216802Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: dust_hiss.wav (352844 bytes)
+2026-11-16T16:47:25.216809Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: breaker_pop.wav (39734 bytes)
+2026-11-16T16:47:25.216815Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: electric_crackle.wav (79424 bytes)
+2026-11-16T16:47:25.216823Z  INFO destructibles_bevy::audio: AUDIO CHAIN READY: device=Some("Default Audio Device") assets=18 master_volume=0.80
+2026-11-16T16:47:25.817504Z  INFO destructibles_bevy::audio: AUDIO startup chime requested
+2026-11-16T16:47:26.608034Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=chime pitch=0.900 vol=0.48 paused=false empty=false
+2026-11-16T16:47:27.246456Z  INFO manhattan_viewer::city_material: City materials ready: 12 materials / 4353 primitives
+2026-11-16T16:47:27.402542Z ERROR bevy_render::render_resource::pipeline_cache: failed to create shader module: Validation Error
+
+Caused by:
+  In Device::create_shader_module
+    
+Shader validation error: Entry point fragment at Fragment is invalid
+   ┌─ :54:21
+   │
+54 │     let to_camera = in.world_position - camera.xyz;
+   │                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ naga::ir::Expression [74]
+   │
+   = Expression [74] is invalid
+   = Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+
+      Expression [74] is invalid
+        Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+2026-11-16T16:47:28.177909Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD DEMO: start Vec3(1000.0, 120.0, -1050.0) toward +X at 15 m/s
+2026-11-16T16:47:28.248463Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6127 (24.33 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:28.356779Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6130 (5.22 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.364133Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6128 (7.08 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:28.453336Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6125 (6.08 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:28.456628Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6853 (3.16 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:28.457808Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6124 (1.14 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.459041Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6135 (1.18 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.559472Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6133 (2.67 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:28.559551Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6134: window (sill 0.55 + height 2.3) does not fit in floor height 2.7857144
+2026-11-16T16:47:28.559588Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6136: window (sill 0.55 + height 2.3) does not fit in floor height 2.8142858
+2026-11-16T16:47:28.560641Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6462 (1.04 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.561897Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6471 (1.21 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.574005Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6861 (11.83 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:28.661638Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6463 (0.55 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.664257Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6447 (2.50 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:28.665810Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6465 (1.44 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.667234Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6464 (1.36 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.669168Z  INFO manhattan_viewer::neighborhood: DETAIL b6135: Tier 1 ready at 48.4 m
+2026-11-16T16:47:28.844240Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6466 (7.48 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:28.849430Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6468 (5.08 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.974110Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6467 (4.62 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:28.979331Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6474 (4.97 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:28.981256Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6446 (1.78 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:28.983741Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6129 (2.41 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:29.141791Z  INFO manhattan_viewer::neighborhood: DETAIL b6133: Tier 1 ready at 49.1 m
+2026-11-16T16:47:29.144691Z  INFO manhattan_viewer::neighborhood: DETAIL b6130: Tier 1 ready at 90.1 m
+2026-11-16T16:47:29.511267Z  INFO manhattan_viewer::neighborhood: DETAIL b6128: Tier 1 ready at 92.8 m
+2026-11-16T16:47:29.562417Z  INFO manhattan_viewer::neighborhood: DETAIL b6125: Tier 1 ready at 104.8 m
+2026-11-16T16:47:29.563981Z  INFO manhattan_viewer::neighborhood: DETAIL b6853: Tier 1 ready at 107.7 m
+2026-11-16T16:47:29.621190Z  INFO manhattan_viewer::neighborhood: DETAIL b6463: Tier 1 ready at 94.9 m
+2026-11-16T16:47:29.671802Z  INFO manhattan_viewer::neighborhood: DETAIL b6124: Tier 1 ready at 47.2 m
+2026-11-16T16:47:29.714844Z  INFO manhattan_viewer::neighborhood: DETAIL b6462: Tier 1 ready at 100.4 m
+2026-11-16T16:47:29.817324Z  INFO manhattan_viewer::neighborhood: DETAIL b6465: Tier 1 ready at 103.7 m
+2026-11-16T16:47:29.864001Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6859 (5.77 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:30.058875Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6131 (10.65 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:30.061290Z  INFO manhattan_viewer::neighborhood: DETAIL b6127: Tier 1 ready at 70.9 m
+2026-11-16T16:47:30.117893Z  INFO manhattan_viewer::neighborhood: DETAIL b6464: Tier 1 ready at 107.8 m
+2026-11-16T16:47:30.228597Z  INFO manhattan_viewer::neighborhood: DETAIL b6447: Tier 1 ready at 107.4 m
+2026-11-16T16:47:30.292464Z  INFO manhattan_viewer::neighborhood: DETAIL b6859: Tier 1 ready at 126.2 m
+2026-11-16T16:47:30.329954Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6860: window (sill 0.55 + height 2.3) does not fit in floor height 2.825
+2026-11-16T16:47:30.635075Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6856 (1.73 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:30.638538Z  INFO manhattan_viewer::neighborhood: DETAIL b6129: Tier 1 ready at 114.5 m
+2026-11-16T16:47:30.642256Z  INFO manhattan_viewer::neighborhood: DETAIL b6856: Tier 1 ready at 119.9 m
+2026-11-16T16:47:30.802633Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6132 (2.43 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:30.802990Z  INFO manhattan_viewer::neighborhood: DETAIL b6861: Tier 1 ready at 105.7 m
+2026-11-16T16:47:30.949668Z  INFO manhattan_viewer::neighborhood: DETAIL b6132: Tier 1 ready at 118.8 m
+2026-11-16T16:47:30.950448Z  INFO manhattan_viewer::neighborhood: DETAIL b6474: Tier 1 ready at 124.5 m
+2026-11-16T16:47:30.951756Z  INFO manhattan_viewer::neighborhood: DETAIL b6466: Tier 1 ready at 125.9 m
+2026-11-16T16:47:31.010333Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6857 (3.09 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:31.013283Z  INFO manhattan_viewer::neighborhood: DETAIL b6131: Tier 1 ready at 111.8 m
+2026-11-16T16:47:31.072376Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6144 (3.00 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:31.078107Z  INFO manhattan_viewer::neighborhood: DETAIL b6471: Tier 1 ready at 129.9 m
+2026-11-16T16:47:31.292809Z  INFO manhattan_viewer::neighborhood: DETAIL b6467: Tier 1 ready at 133.0 m
+2026-11-16T16:47:31.401259Z  INFO manhattan_viewer::neighborhood: DETAIL b6857: Tier 1 ready at 124.5 m
+2026-11-16T16:47:31.448933Z  INFO manhattan_viewer::neighborhood: DETAIL b6144: Tier 1 ready at 126.9 m
+2026-11-16T16:47:31.449683Z  INFO manhattan_viewer::neighborhood: DETAIL b6446: Tier 1 ready at 135.5 m
+2026-11-16T16:47:31.506191Z  INFO manhattan_viewer::neighborhood: DETAIL b6468: Tier 1 ready at 136.7 m
+2026-11-16T16:47:31.893169Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6866 (7.81 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:32.257369Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [detail build-out] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_detail_buildout_pedestrian_drone.png
+2026-11-16T16:47:32.324411Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6141 (5.09 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:32.324479Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6137: window (sill 1 + height 1.43) does not fit in floor height 2.4
+2026-11-16T16:47:32.418259Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6145 (2.41 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:32.423391Z  INFO manhattan_viewer::neighborhood: DETAIL b6866: Tier 1 ready at 115.9 m
+2026-11-16T16:47:32.536911Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6467 (3.97 ms)
+2026-11-16T16:47:32.542072Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6468 (5.12 ms)
+2026-11-16T16:47:32.545355Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6471 (3.24 ms)
+2026-11-16T16:47:32.549384Z  INFO manhattan_viewer::neighborhood: DETAIL b6145: Tier 1 ready at 119.1 m
+2026-11-16T16:47:32.571981Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_detail_buildout_pedestrian_drone.png
+2026-11-16T16:47:32.659728Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6446 (6.88 ms)
+STREAM TIMING b1006466 evict: collect=0.9ms despawn=14.4ms total=15.3ms
+2026-11-16T16:47:32.774057Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6466 (15.47 ms)
+2026-11-16T16:47:32.881288Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6126 (3.00 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:32.992073Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6483 (4.43 ms) footprint PASS style=Some(BrickBrownstone)
+STREAM TIMING b1006474 evict: collect=0.9ms despawn=12.5ms total=13.4ms
+2026-11-16T16:47:33.223753Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6474 (13.55 ms)
+2026-11-16T16:47:33.229169Z  INFO manhattan_viewer::neighborhood: DETAIL b6126: Tier 1 ready at 119.2 m
+2026-11-16T16:47:33.301056Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6465 (3.90 ms)
+2026-11-16T16:47:33.305439Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6464 (4.35 ms)
+2026-11-16T16:47:33.310074Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6146 (4.58 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:33.418477Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6143 (6.73 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:33.420533Z  INFO manhattan_viewer::neighborhood: DETAIL b6141: Tier 1 ready at 105.3 m
+2026-11-16T16:47:33.422131Z  INFO manhattan_viewer::neighborhood: DETAIL b6483: Tier 1 ready at 119.6 m
+2026-11-16T16:47:33.535431Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6486 (3.40 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:33.742759Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6462 (2.44 ms)
+2026-11-16T16:47:33.827677Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6150 (4.31 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:33.835822Z  INFO manhattan_viewer::neighborhood: DETAIL b6146: Tier 1 ready at 113.8 m
+STREAM TIMING b1006447 evict: collect=0.7ms despawn=8.0ms total=8.7ms
+2026-11-16T16:47:33.925859Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6447 (8.82 ms)
+2026-11-16T16:47:33.927115Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6463 (1.23 ms)
+2026-11-16T16:47:33.929565Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6147 (2.37 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:33.930121Z  INFO manhattan_viewer::neighborhood: DETAIL b6143: Tier 1 ready at 114.1 m
+2026-11-16T16:47:33.930576Z  INFO manhattan_viewer::neighborhood: DETAIL b6486: Tier 1 ready at 118.8 m
+2026-11-16T16:47:34.245083Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6482 (7.59 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:34.332270Z  INFO manhattan_viewer::neighborhood: DETAIL b6150: Tier 1 ready at 125.3 m
+2026-11-16T16:47:34.497993Z  INFO manhattan_viewer::neighborhood: DETAIL b6147: Tier 1 ready at 115.6 m
+2026-11-16T16:47:34.701055Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6149: window (sill 0.55 + height 2.3) does not fit in floor height 2.85
+2026-11-16T16:47:34.987356Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6151 (6.26 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:35.181051Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6142 (5.49 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:35.380854Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6485 (11.91 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:35.496076Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6148 (1.17 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:35.618159Z  INFO manhattan_viewer::neighborhood: DETAIL b6482: Tier 1 ready at 104.8 m
+2026-11-16T16:47:35.618341Z  INFO manhattan_viewer::neighborhood: DETAIL b6151: Tier 1 ready at 113.2 m
+2026-11-16T16:47:35.619461Z  INFO manhattan_viewer::neighborhood: DETAIL b6142: Tier 1 ready at 114.7 m
+2026-11-16T16:47:35.748754Z  INFO manhattan_viewer::neighborhood: DETAIL b6148: Tier 1 ready at 117.5 m
+2026-11-16T16:47:35.855063Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6152 (4.00 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:35.934630Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6153: window (sill 0.55 + height 2.3) does not fit in floor height 2.825
+2026-11-16T16:47:36.130229Z  INFO manhattan_viewer::neighborhood: DETAIL b6152: Tier 1 ready at 115.8 m
+2026-11-16T16:47:36.237744Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6484 (6.29 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:36.534351Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6493 (6.60 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:36.534791Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6154: window (sill 0.55 + height 2.3) does not fit in floor height 2.825
+2026-11-16T16:47:36.942347Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6492 (5.61 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:36.952028Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6127
+2026-11-16T16:47:37.057746Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006127 (1082.0,2.2,-1051.6)
+2026-11-16T16:47:37.148408Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=0.984 vol=0.76 paused=false empty=false
+2026-11-16T16:47:37.149249Z  INFO destructibles_bevy::impact: IMPACT building 1006127: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T16:47:37.149396Z  INFO destructibles_bevy::impact: IMPACT: 0 breach cells (radius 8.4 m), 26 panes overpressure (radius 17.0 m)
+2026-11-16T16:47:37.149427Z  INFO destructibles_bevy::damage: damage #0000 [collapse] Shudder(b1006127 seed=4139454907 E=22.2 MJ)
+2026-11-16T16:47:37.151699Z  INFO destructibles_bevy::shudder: SHUDDER building 1006127: 0.02 shake strength, 520 pane rats, 2 dust vents
+2026-11-16T16:47:37.151726Z  INFO destructibles_bevy::damage: damage #0001 [collapse] Alarm(b1006127 active=true floor=0 seed=4139454907)
+2026-11-16T16:47:37.151794Z  INFO destructibles_bevy::alarm: ALARM building 1006127: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T16:47:37.151805Z  INFO destructibles_bevy::damage: damage #0002 [pane] ShatterPane(b1006127 f3·l0·c5)
+2026-11-16T16:47:37.152443Z  INFO destructibles_bevy::damage: damage #0003 [collapse] PowerLoss(b1006127 seed=2512201609)
+2026-11-16T16:47:37.152455Z  INFO destructibles_bevy::power: POWER loss building 1006127
+2026-11-16T16:47:37.152461Z  INFO destructibles_bevy::damage: damage #0004 [pane] ShatterPane(b1006127 f3·l0·c6)
+2026-11-16T16:47:37.152735Z  INFO destructibles_bevy::damage: damage #0005 [pane] ShatterPane(b1006127 f3·l0·c7)
+2026-11-16T16:47:37.152961Z  INFO destructibles_bevy::damage: damage #0006 [pane] ShatterPane(b1006127 f3·l0·c8)
+2026-11-16T16:47:37.153128Z  INFO destructibles_bevy::damage: damage #0007 [pane] ShatterPane(b1006127 f3·l0·c9)
+2026-11-16T16:47:37.153304Z  INFO destructibles_bevy::damage: damage #0008 [pane] ShatterPane(b1006127 f3·l0·c10)
+2026-11-16T16:47:37.153446Z  INFO destructibles_bevy::damage: damage #0009 [pane] ShatterPane(b1006127 f3·l0·c11)
+2026-11-16T16:47:37.153587Z  INFO destructibles_bevy::damage: damage #0010 [pane] ShatterPane(b1006127 f3·l1·c5)
+2026-11-16T16:47:37.153744Z  INFO destructibles_bevy::damage: damage #0011 [pane] ShatterPane(b1006127 f3·l1·c6)
+2026-11-16T16:47:37.153949Z  INFO destructibles_bevy::damage: damage #0012 [pane] ShatterPane(b1006127 f3·l1·c7)
+2026-11-16T16:47:37.154090Z  INFO destructibles_bevy::damage: damage #0013 [pane] ShatterPane(b1006127 f3·l1·c8)
+2026-11-16T16:47:37.154215Z  INFO destructibles_bevy::damage: damage #0014 [pane] ShatterPane(b1006127 f3·l1·c9)
+2026-11-16T16:47:37.154283Z  INFO destructibles_bevy::damage: damage #0015 [pane] ShatterPane(b1006127 f3·l1·c10)
+2026-11-16T16:47:37.154345Z  INFO destructibles_bevy::damage: damage #0016 [pane] ShatterPane(b1006127 f3·l1·c11)
+2026-11-16T16:47:37.154403Z  INFO destructibles_bevy::damage: damage #0017 [pane] ShatterPane(b1006127 f3·l2·c5)
+2026-11-16T16:47:37.154481Z  INFO destructibles_bevy::damage: damage #0018 [pane] ShatterPane(b1006127 f3·l2·c6)
+2026-11-16T16:47:37.154557Z  INFO destructibles_bevy::damage: damage #0019 [pane] ShatterPane(b1006127 f3·l2·c7)
+2026-11-16T16:47:37.154649Z  INFO destructibles_bevy::damage: damage #0020 [pane] ShatterPane(b1006127 f3·l2·c8)
+2026-11-16T16:47:37.154708Z  INFO destructibles_bevy::damage: damage #0021 [pane] ShatterPane(b1006127 f3·l2·c9)
+2026-11-16T16:47:37.154773Z  INFO destructibles_bevy::damage: damage #0022 [pane] ShatterPane(b1006127 f3·l2·c10)
+2026-11-16T16:47:37.154847Z  INFO destructibles_bevy::damage: damage #0023 [pane] ShatterPane(b1006127 f3·l3·c6)
+2026-11-16T16:47:37.154910Z  INFO destructibles_bevy::damage: damage #0024 [pane] ShatterPane(b1006127 f3·l3·c7)
+2026-11-16T16:47:37.154970Z  INFO destructibles_bevy::damage: damage #0025 [pane] ShatterPane(b1006127 f3·l3·c8)
+2026-11-16T16:47:37.155032Z  INFO destructibles_bevy::damage: damage #0026 [pane] ShatterPane(b1006127 f3·l3·c9)
+2026-11-16T16:47:37.155098Z  INFO destructibles_bevy::damage: damage #0027 [pane] ShatterPane(b1006127 f3·l3·c10)
+2026-11-16T16:47:37.155160Z  INFO destructibles_bevy::damage: damage #0028 [pane] ShatterPane(b1006127 f3·l4·c8)
+2026-11-16T16:47:37.158192Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6124 (2.89 ms)
+2026-11-16T16:47:37.160653Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6858 (2.42 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:37.168469Z  INFO manhattan_viewer::neighborhood: DETAIL b6493: Tier 1 ready at 119.3 m
+2026-11-16T16:47:37.351402Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.021 vol=0.68 paused=false empty=false
+2026-11-16T16:47:37.351466Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=0.945 vol=0.28 paused=false empty=false
+2026-11-16T16:47:37.351475Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.982 vol=0.68 paused=false empty=false
+2026-11-16T16:47:37.351483Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.053 vol=0.68 paused=false empty=false
+2026-11-16T16:47:37.351490Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.013 vol=0.68 paused=false empty=false
+2026-11-16T16:47:37.351496Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.053 vol=0.68 paused=false empty=false
+2026-11-16T16:47:37.351502Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.924 vol=0.68 paused=false empty=false
+2026-11-16T16:47:37.351508Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.040 vol=0.68 paused=false empty=false
+2026-11-16T16:47:37.351514Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.911 vol=0.68 paused=false empty=false
+2026-11-16T16:47:37.530324Z  INFO manhattan_viewer::neighborhood: DETAIL b6484: Tier 1 ready at 104.2 m
+2026-11-16T16:47:37.653247Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.049 vol=0.16 paused=false empty=false
+2026-11-16T16:47:37.764589Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.041 vol=0.16 paused=false empty=false
+2026-11-16T16:47:37.885716Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.021 vol=0.16 paused=false empty=false
+2026-11-16T16:47:38.011142Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.994 vol=0.16 paused=false empty=false
+2026-11-16T16:47:38.019623Z  INFO manhattan_viewer::neighborhood: DETAIL b6492: Tier 1 ready at 117.4 m
+2026-11-16T16:47:38.124443Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.092 vol=0.16 paused=false empty=false
+2026-11-16T16:47:38.152257Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6480 (19.73 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:38.155581Z  INFO manhattan_viewer::neighborhood: DETAIL b6858: Tier 1 ready at 115.0 m
+2026-11-16T16:47:38.287362Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.923 vol=0.16 paused=false empty=false
+2026-11-16T16:47:38.298604Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6155 (5.11 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:38.454863Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.013 vol=0.16 paused=false empty=false
+2026-11-16T16:47:38.623067Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.934 vol=0.16 paused=false empty=false
+2026-11-16T16:47:38.765629Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.045 vol=0.16 paused=false empty=false
+2026-11-16T16:47:38.902600Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.052 vol=0.16 paused=false empty=false
+2026-11-16T16:47:38.928269Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6491 (21.06 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:39.072972Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.974 vol=0.16 paused=false empty=false
+2026-11-16T16:47:39.085865Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6139 (2.44 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:39.248757Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.094 vol=0.16 paused=false empty=false
+2026-11-16T16:47:39.268223Z  INFO manhattan_viewer::neighborhood: DETAIL b6155: Tier 1 ready at 114.9 m
+2026-11-16T16:47:39.269549Z  INFO manhattan_viewer::neighborhood: DETAIL b6139: Tier 1 ready at 119.3 m
+2026-11-16T16:47:39.419529Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.936 vol=0.16 paused=false empty=false
+2026-11-16T16:47:39.426007Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6157 (2.23 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:39.431826Z  INFO manhattan_viewer::neighborhood: DETAIL b6157: Tier 1 ready at 133.0 m
+2026-11-16T16:47:39.597652Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.006 vol=0.16 paused=false empty=false
+2026-11-16T16:47:39.756039Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6490 (7.68 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:39.757722Z  INFO manhattan_viewer::neighborhood: DETAIL b6485: Tier 1 ready at 61.8 m
+2026-11-16T16:47:40.093294Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6162 (4.96 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:40.102703Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [pedestrian_drone] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_pedestrian_drone.png
+2026-11-16T16:47:40.420294Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6489 (7.16 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:40.455161Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_pedestrian_drone.png
+2026-11-16T16:47:40.813232Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6126 (6.73 ms)
+STREAM TIMING b1006129 evict: collect=1.0ms despawn=9.6ms total=10.7ms
+2026-11-16T16:47:40.824011Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6129 (10.73 ms)
+STREAM TIMING b1006130 evict: collect=1.4ms despawn=26.9ms total=28.4ms
+2026-11-16T16:47:41.032711Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6130 (28.48 ms)
+2026-11-16T16:47:41.041113Z  INFO manhattan_viewer::neighborhood: DETAIL b6162: Tier 1 ready at 118.9 m
+2026-11-16T16:47:41.198084Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD footprint/height FAIL b6159; returned to plain map
+2026-11-16T16:47:41.206375Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6161 (8.19 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:41.219010Z  INFO manhattan_viewer::neighborhood: PERSIST b6127: damaged building frozen at 151 m hidden=false
+2026-11-16T16:47:41.429111Z  INFO manhattan_viewer::neighborhood: DETAIL b6490: Tier 1 ready at 101.8 m
+2026-11-16T16:47:41.599884Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6160 (3.93 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:41.603455Z  INFO manhattan_viewer::neighborhood: DETAIL b6489: Tier 1 ready at 109.2 m
+2026-11-16T16:47:41.786144Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6506 (9.25 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:41.794062Z  INFO manhattan_viewer::neighborhood: DETAIL b6160: Tier 1 ready at 127.9 m
+STREAM TIMING b1006135 evict: collect=1.1ms despawn=10.8ms total=11.9ms
+2026-11-16T16:47:41.989646Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6135 (11.96 ms)
+2026-11-16T16:47:41.994535Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6499 (4.54 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:42.415385Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6132 (4.18 ms)
+2026-11-16T16:47:42.420131Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6498 (4.36 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:42.634243Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6158 (2.80 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:42.639013Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6496 (4.58 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:42.642590Z  INFO manhattan_viewer::neighborhood: DETAIL b6161: Tier 1 ready at 107.3 m
+2026-11-16T16:47:42.839658Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6501 (11.85 ms) footprint PASS style=Some(GlassCurtainWall)
+STREAM TIMING b1006131 evict: collect=1.0ms despawn=15.2ms total=16.2ms
+2026-11-16T16:47:43.077659Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6131 (16.34 ms)
+STREAM TIMING b1006133 evict: collect=1.2ms despawn=15.7ms total=16.9ms
+2026-11-16T16:47:43.280554Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6133 (17.04 ms)
+2026-11-16T16:47:43.286366Z  INFO manhattan_viewer::neighborhood: DETAIL b6499: Tier 1 ready at 101.1 m
+STREAM TIMING b1006125 evict: collect=1.6ms despawn=31.3ms total=32.9ms
+2026-11-16T16:47:43.545441Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6125 (33.00 ms)
+2026-11-16T16:47:43.758024Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6856 (2.21 ms)
+2026-11-16T16:47:43.763587Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6866 (5.53 ms)
+2026-11-16T16:47:43.765845Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6503 (2.10 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:43.768025Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6502 (2.04 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:43.772730Z  INFO manhattan_viewer::neighborhood: DETAIL b6498: Tier 1 ready at 98.0 m
+STREAM TIMING b1006853 evict: collect=1.5ms despawn=25.3ms total=26.8ms
+2026-11-16T16:47:44.036640Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6853 (26.92 ms)
+2026-11-16T16:47:44.038918Z  INFO manhattan_viewer::neighborhood: DETAIL b6491: Tier 1 ready at 73.2 m
+2026-11-16T16:47:44.268646Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6497 (12.53 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:44.272458Z  INFO manhattan_viewer::neighborhood: DETAIL b6496: Tier 1 ready at 95.1 m
+2026-11-16T16:47:44.272873Z  INFO manhattan_viewer::neighborhood: DETAIL b6158: Tier 1 ready at 100.0 m
+2026-11-16T16:47:44.496320Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5885 (4.37 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:44.499340Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6488 (2.96 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:44.503943Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5888 (4.53 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:44.718308Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6514 (5.85 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:44.964544Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5892 (5.25 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:44.968956Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5887 (4.33 ms) footprint PASS style=Some(BrickBrownstone)
+STREAM TIMING b1006861 evict: collect=2.1ms despawn=33.2ms total=35.4ms
+2026-11-16T16:47:45.239372Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6861 (35.46 ms)
+2026-11-16T16:47:45.241310Z  INFO manhattan_viewer::neighborhood: DETAIL b6506: Tier 1 ready at 71.6 m
+2026-11-16T16:47:45.245395Z  INFO manhattan_viewer::neighborhood: DETAIL b6503: Tier 1 ready at 92.6 m
+STREAM TIMING b1006128 evict: collect=1.0ms despawn=18.2ms total=19.1ms
+2026-11-16T16:47:45.459943Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6128 (19.20 ms)
+STREAM TIMING b1006147 evict: collect=1.0ms despawn=8.6ms total=9.6ms
+2026-11-16T16:47:45.694923Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6147 (9.70 ms)
+2026-11-16T16:47:45.700256Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6507 (5.27 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:45.703079Z  INFO manhattan_viewer::neighborhood: DETAIL b6502: Tier 1 ready at 93.5 m
+2026-11-16T16:47:45.917332Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6536: window (sill 0.55 + height 2.3) does not fit in floor height 2.8142858
+2026-11-16T16:47:45.922606Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6521 (5.22 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:45.924626Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6535 (1.94 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:45.926892Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6505 (2.23 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:45.931926Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5896 (4.97 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:46.192237Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6520 (5.79 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:46.426512Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6533 (4.70 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:46.429130Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6529 (2.48 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:46.646578Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6531 (5.68 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:46.648580Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6519 (1.95 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:46.649895Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6528 (1.28 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:46.875762Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6139 (1.93 ms)
+STREAM TIMING b1006146 evict: collect=0.9ms despawn=8.2ms total=9.0ms
+2026-11-16T16:47:46.884935Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6146 (9.13 ms)
+2026-11-16T16:47:46.887264Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6494 (2.05 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:46.888130Z  INFO manhattan_viewer::neighborhood: DETAIL b6501: Tier 1 ready at 63.1 m
+2026-11-16T16:47:47.105824Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6526 (4.44 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:47.108469Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6525 (2.58 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:47.321560Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6858 (7.80 ms)
+2026-11-16T16:47:47.325098Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6518 (3.28 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:47.538923Z  INFO manhattan_viewer::neighborhood: DETAIL b6514: Tier 1 ready at 79.6 m
+STREAM TIMING b1006859 evict: collect=0.8ms despawn=9.4ms total=10.1ms
+2026-11-16T16:47:47.729768Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6859 (10.20 ms)
+2026-11-16T16:47:47.734961Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6145 (5.15 ms)
+2026-11-16T16:47:47.735359Z  INFO manhattan_viewer::neighborhood: DETAIL b6497: Tier 1 ready at 75.1 m
+2026-11-16T16:47:47.739097Z  INFO manhattan_viewer::neighborhood: DETAIL b6507: Tier 1 ready at 86.7 m
+2026-11-16T16:47:47.916065Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6515 (2.39 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:47.917929Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6511 (1.80 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:47.920330Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6500 (2.36 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:47.922810Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5897 (2.44 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:47.923365Z  INFO manhattan_viewer::neighborhood: DETAIL b6521: Tier 1 ready at 83.7 m
+2026-11-16T16:47:48.098321Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6155 (5.33 ms)
+2026-11-16T16:47:48.100153Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6539 (1.78 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:48.100940Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6512 (0.75 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:48.101766Z  INFO manhattan_viewer::neighborhood: DETAIL b6535: Tier 1 ready at 81.9 m
+2026-11-16T16:47:48.102539Z  INFO manhattan_viewer::neighborhood: DETAIL b5892: Tier 1 ready at 88.0 m
+2026-11-16T16:47:48.313710Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6513 (6.30 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:48.315998Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6510 (2.22 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:48.529250Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6538 (4.85 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:48.739355Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6524: window (sill 0.55 + height 2.3) does not fit in floor height 2.8285713
+2026-11-16T16:47:48.741371Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6540 (1.98 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:48.745493Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5898 (4.05 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:48.750729Z  INFO manhattan_viewer::neighborhood: DETAIL b6505: Tier 1 ready at 87.4 m
+STREAM TIMING b1006857 evict: collect=0.6ms despawn=10.7ms total=11.4ms
+2026-11-16T16:47:48.979309Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6857 (11.41 ms)
+STREAM TIMING b1006144 evict: collect=0.6ms despawn=9.6ms total=10.2ms
+2026-11-16T16:47:48.989590Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6144 (10.26 ms)
+2026-11-16T16:47:48.992988Z  INFO manhattan_viewer::neighborhood: DETAIL b6533: Tier 1 ready at 80.4 m
+2026-11-16T16:47:49.208261Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6537 (4.01 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:49.214200Z  INFO manhattan_viewer::neighborhood: DETAIL b6529: Tier 1 ready at 82.5 m
+2026-11-16T16:47:49.445092Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5893 (4.47 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:49.446767Z  INFO manhattan_viewer::neighborhood: DETAIL b6520: Tier 1 ready at 74.6 m
+2026-11-16T16:47:49.447664Z  INFO manhattan_viewer::neighborhood: DETAIL b6531: Tier 1 ready at 78.7 m
+2026-11-16T16:47:49.669202Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6523 (4.05 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:49.875251Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6534 (5.63 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:49.879524Z  INFO manhattan_viewer::neighborhood: DETAIL b6528: Tier 1 ready at 79.1 m
+2026-11-16T16:47:50.121520Z  INFO manhattan_viewer::neighborhood: DETAIL b6519: Tier 1 ready at 74.1 m
+2026-11-16T16:47:50.124419Z  INFO manhattan_viewer::neighborhood: DETAIL b6526: Tier 1 ready at 84.5 m
+2026-11-16T16:47:50.125674Z  INFO manhattan_viewer::neighborhood: DETAIL b6515: Tier 1 ready at 85.5 m
+2026-11-16T16:47:50.333047Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6530 (7.71 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:50.334132Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6532 (1.04 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:50.335111Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6495 (0.96 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:50.335527Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6504 (0.40 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:50.340582Z  INFO manhattan_viewer::neighborhood: DETAIL b6511: Tier 1 ready at 87.9 m
+2026-11-16T16:47:50.580749Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6152 (6.77 ms)
+2026-11-16T16:47:50.594493Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6522 (13.63 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:50.602588Z  INFO manhattan_viewer::neighborhood: DETAIL b6525: Tier 1 ready at 87.6 m
+2026-11-16T16:47:50.805732Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6527 (6.10 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:50.810983Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5890 (5.04 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:50.821540Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6508 (10.47 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:51.308654Z  INFO manhattan_viewer::neighborhood: DETAIL b6539: Tier 1 ready at 86.2 m
+STREAM TIMING b1005892 evict: collect=1.0ms despawn=9.1ms total=10.1ms
+STREAM TIMING b1005896 evict: collect=1.4ms despawn=12.3ms total=13.6ms
+STREAM TIMING b1006127 evict: collect=1.5ms despawn=36.1ms total=37.6ms
+STREAM TIMING b1006141 evict: collect=0.9ms despawn=13.7ms total=14.6ms
+STREAM TIMING b1006142 evict: collect=0.7ms despawn=8.3ms total=9.0ms
+STREAM TIMING b1006143 evict: collect=0.7ms despawn=8.4ms total=9.1ms
+STREAM TIMING b1006480 evict: collect=0.8ms despawn=12.4ms total=13.2ms
+STREAM TIMING b1006482 evict: collect=0.9ms despawn=12.2ms total=13.2ms
+STREAM TIMING b1006485 evict: collect=0.8ms despawn=21.9ms total=22.7ms
+STREAM TIMING b1006491 evict: collect=0.9ms despawn=16.6ms total=17.4ms
+STREAM TIMING b1006497 evict: collect=0.6ms despawn=12.2ms total=12.8ms
+STREAM TIMING b1006501 evict: collect=0.5ms despawn=11.7ms total=12.3ms
+STREAM TIMING b1006506 evict: collect=0.7ms despawn=16.1ms total=16.8ms
+STREAM TIMING b1006507 evict: collect=0.6ms despawn=13.4ms total=14.0ms
+STREAM TIMING b1006514 evict: collect=0.5ms despawn=22.6ms total=23.1ms
+STREAM TIMING b1006520 evict: collect=0.4ms despawn=9.2ms total=9.7ms
+2026-11-16T16:47:51.739293Z  INFO manhattan_viewer::neighborhood: REGIME pedestrian_drone speed=15.0 frames=156 worst_frame=250.0ms worst_swap=35.5ms worst_swap_frame=35.5ms live_max=75 swaps_in=110 swaps_out=35 pending_peak=6 behind_max=228.2m stray=0 tier1=47 tier1_max_approach=133.0m
+2026-11-16T16:47:51.830117Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6127 (21.20 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:51.904760Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6130 (5.71 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:51.911764Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6128 (6.67 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:52.021917Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6125 (8.49 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:52.028536Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6853 (6.36 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:52.129900Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6124 (1.68 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.132049Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6135 (2.08 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.134716Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6133 (2.55 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:52.135919Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6462 (1.15 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.232738Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6471 (3.32 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.239886Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6861 (6.88 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:52.240394Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6463 (0.46 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.242675Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6447 (2.21 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:52.321868Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6465 (2.18 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.325011Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6464 (3.07 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.333779Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6466 (8.65 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:52.334235Z  INFO manhattan_viewer::neighborhood: DETAIL b6135: Tier 1 ready at 48.4 m
+2026-11-16T16:47:52.424139Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6468 (4.13 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.425947Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6467 (1.70 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.428893Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6474 (2.79 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:52.431665Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6446 (2.65 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:52.437758Z  INFO manhattan_viewer::neighborhood: DETAIL b6130: Tier 1 ready at 90.1 m
+2026-11-16T16:47:52.525553Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6129 (3.19 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:52.526594Z  INFO manhattan_viewer::neighborhood: DETAIL b6133: Tier 1 ready at 49.1 m
+2026-11-16T16:47:52.770473Z  INFO manhattan_viewer::neighborhood: DETAIL b6128: Tier 1 ready at 92.8 m
+2026-11-16T16:47:52.878127Z  INFO manhattan_viewer::neighborhood: DETAIL b6125: Tier 1 ready at 104.8 m
+2026-11-16T16:47:52.919742Z  INFO manhattan_viewer::neighborhood: DETAIL b6853: Tier 1 ready at 107.7 m
+2026-11-16T16:47:53.014523Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6859 (4.03 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:53.022664Z  INFO manhattan_viewer::neighborhood: DETAIL b6124: Tier 1 ready at 48.5 m
+2026-11-16T16:47:53.074383Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6131 (5.99 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:53.081525Z  INFO manhattan_viewer::neighborhood: DETAIL b6463: Tier 1 ready at 97.3 m
+2026-11-16T16:47:53.154477Z  INFO manhattan_viewer::neighborhood: DETAIL b6462: Tier 1 ready at 104.1 m
+2026-11-16T16:47:53.231380Z  INFO manhattan_viewer::neighborhood: DETAIL b6859: Tier 1 ready at 126.9 m
+2026-11-16T16:47:53.346152Z  INFO manhattan_viewer::neighborhood: DETAIL b6464: Tier 1 ready at 113.6 m
+2026-11-16T16:47:53.392906Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6856 (0.99 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:53.399241Z  INFO manhattan_viewer::neighborhood: DETAIL b6447: Tier 1 ready at 111.8 m
+2026-11-16T16:47:53.454642Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6132 (2.44 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:53.549029Z  INFO manhattan_viewer::neighborhood: DETAIL b6861: Tier 1 ready at 105.0 m
+2026-11-16T16:47:53.622220Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6857 (3.99 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:53.624586Z  INFO manhattan_viewer::neighborhood: DETAIL b6127: Tier 1 ready at 56.8 m
+2026-11-16T16:47:53.630982Z  INFO manhattan_viewer::neighborhood: DETAIL b6129: Tier 1 ready at 112.6 m
+2026-11-16T16:47:53.696816Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6144 (5.05 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:53.777788Z  INFO manhattan_viewer::neighborhood: DETAIL b6856: Tier 1 ready at 114.0 m
+2026-11-16T16:47:53.871149Z  INFO manhattan_viewer::neighborhood: DETAIL b6132: Tier 1 ready at 115.3 m
+2026-11-16T16:47:53.928269Z  INFO manhattan_viewer::neighborhood: DETAIL b6465: Tier 1 ready at 129.5 m
+2026-11-16T16:47:53.997175Z  INFO manhattan_viewer::neighborhood: DETAIL b6144: Tier 1 ready at 122.5 m
+2026-11-16T16:47:53.998525Z  INFO manhattan_viewer::neighborhood: DETAIL b6131: Tier 1 ready at 106.2 m
+2026-11-16T16:47:54.055536Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6866 (4.01 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:54.056334Z  INFO manhattan_viewer::neighborhood: DETAIL b6857: Tier 1 ready at 117.3 m
+2026-11-16T16:47:54.213997Z  INFO manhattan_viewer::neighborhood: DETAIL b6446: Tier 1 ready at 145.6 m
+2026-11-16T16:47:54.214344Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [detail build-out] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_detail_buildout_fast_drone.png
+2026-11-16T16:47:54.270406Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6141 (4.03 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:54.335223Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6467 (1.00 ms)
+2026-11-16T16:47:54.336479Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6468 (1.22 ms)
+2026-11-16T16:47:54.337373Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6471 (0.87 ms)
+2026-11-16T16:47:54.345378Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6446 (7.95 ms)
+2026-11-16T16:47:54.351746Z  INFO manhattan_viewer::neighborhood: DETAIL b6474: Tier 1 ready at 143.7 m
+STREAM TIMING b1006466 evict: collect=0.6ms despawn=7.9ms total=8.6ms
+2026-11-16T16:47:54.459827Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6466 (8.76 ms)
+2026-11-16T16:47:54.461972Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6145 (2.08 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:54.466593Z  INFO manhattan_viewer::neighborhood: DETAIL b6866: Tier 1 ready at 114.4 m
+2026-11-16T16:47:54.486682Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_detail_buildout_fast_drone.png
+2026-11-16T16:47:54.568289Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6126 (3.02 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:54.686238Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6483 (3.98 ms) footprint PASS style=Some(BrickBrownstone)
+STREAM TIMING b1006474 evict: collect=1.0ms despawn=14.8ms total=15.8ms
+2026-11-16T16:47:54.795775Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6474 (15.92 ms)
+2026-11-16T16:47:54.798911Z  INFO manhattan_viewer::neighborhood: DETAIL b6145: Tier 1 ready at 110.1 m
+2026-11-16T16:47:54.902416Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6464 (3.47 ms)
+2026-11-16T16:47:54.906658Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6465 (4.19 ms)
+2026-11-16T16:47:54.912231Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6143 (5.50 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:55.004775Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6462 (2.44 ms)
+2026-11-16T16:47:55.007054Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6486 (2.21 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:55.008936Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6146 (1.83 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:55.013148Z  INFO manhattan_viewer::neighborhood: DETAIL b6483: Tier 1 ready at 114.7 m
+2026-11-16T16:47:55.113727Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6447 (8.07 ms)
+2026-11-16T16:47:55.115048Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6463 (1.28 ms)
+2026-11-16T16:47:55.117005Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6150 (1.92 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:55.119258Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6147 (2.17 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:55.120872Z  INFO manhattan_viewer::neighborhood: DETAIL b6141: Tier 1 ready at 97.4 m
+2026-11-16T16:47:55.315034Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6482 (5.59 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:55.317048Z  INFO manhattan_viewer::neighborhood: DETAIL b6143: Tier 1 ready at 108.0 m
+2026-11-16T16:47:55.317420Z  INFO manhattan_viewer::neighborhood: DETAIL b6486: Tier 1 ready at 112.9 m
+2026-11-16T16:47:55.321152Z  INFO manhattan_viewer::neighborhood: DETAIL b6150: Tier 1 ready at 125.1 m
+2026-11-16T16:47:55.322942Z  INFO manhattan_viewer::neighborhood: DETAIL b6146: Tier 1 ready at 109.3 m
+2026-11-16T16:47:55.397297Z  INFO manhattan_viewer::neighborhood: DETAIL b6126: Tier 1 ready at 118.3 m
+2026-11-16T16:47:55.561452Z  INFO manhattan_viewer::neighborhood: DETAIL b6147: Tier 1 ready at 113.0 m
+2026-11-16T16:47:55.630274Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6142 (2.10 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:55.633645Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6151 (3.24 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:55.812676Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6485 (9.64 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:55.813425Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6148 (0.71 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:55.813724Z  INFO manhattan_viewer::neighborhood: DETAIL b6482: Tier 1 ready at 106.9 m
+2026-11-16T16:47:55.822053Z  INFO manhattan_viewer::neighborhood: DETAIL b6148: Tier 1 ready at 121.1 m
+2026-11-16T16:47:55.897722Z  INFO manhattan_viewer::neighborhood: DETAIL b6151: Tier 1 ready at 112.9 m
+2026-11-16T16:47:55.898138Z  INFO manhattan_viewer::neighborhood: DETAIL b6142: Tier 1 ready at 114.3 m
+2026-11-16T16:47:55.995657Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6152 (3.21 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:56.245740Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6484 (6.93 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:56.249637Z  INFO manhattan_viewer::neighborhood: DETAIL b6152: Tier 1 ready at 114.0 m
+2026-11-16T16:47:56.419631Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6493 (5.16 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:56.516698Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6127
+2026-11-16T16:47:56.585882Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6492 (7.33 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:56.594761Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006127 (1082.0,2.2,-1051.6)
+2026-11-16T16:47:56.671145Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=0.903 vol=0.76 paused=false empty=false
+2026-11-16T16:47:56.681604Z  INFO destructibles_bevy::impact: IMPACT building 1006127: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T16:47:56.681820Z  INFO destructibles_bevy::impact: IMPACT: 0 breach cells (radius 8.4 m), 26 panes overpressure (radius 17.0 m)
+2026-11-16T16:47:56.681843Z  INFO destructibles_bevy::damage: damage #0029 [collapse] Shudder(b1006127 seed=2436375847 E=22.2 MJ)
+2026-11-16T16:47:56.684482Z  INFO destructibles_bevy::shudder: SHUDDER building 1006127: 0.02 shake strength, 520 pane rats, 2 dust vents
+2026-11-16T16:47:56.684528Z  INFO destructibles_bevy::damage: damage #0030 [collapse] Alarm(b1006127 active=true floor=0 seed=2436375847)
+2026-11-16T16:47:56.684586Z  INFO destructibles_bevy::alarm: ALARM building 1006127: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T16:47:56.684606Z  INFO destructibles_bevy::damage: damage #0031 [pane] ShatterPane(b1006127 f3·l0·c5)
+2026-11-16T16:47:56.685285Z  INFO destructibles_bevy::damage: damage #0032 [pane] ShatterPane(b1006127 f3·l0·c6)
+2026-11-16T16:47:56.685790Z  INFO destructibles_bevy::damage: damage #0033 [pane] ShatterPane(b1006127 f3·l0·c7)
+2026-11-16T16:47:56.686172Z  INFO destructibles_bevy::damage: damage #0034 [pane] ShatterPane(b1006127 f3·l0·c8)
+2026-11-16T16:47:56.686515Z  INFO destructibles_bevy::damage: damage #0035 [pane] ShatterPane(b1006127 f3·l0·c9)
+2026-11-16T16:47:56.686837Z  INFO destructibles_bevy::damage: damage #0036 [pane] ShatterPane(b1006127 f3·l0·c10)
+2026-11-16T16:47:56.687102Z  INFO destructibles_bevy::damage: damage #0037 [pane] ShatterPane(b1006127 f3·l0·c11)
+2026-11-16T16:47:56.687323Z  INFO destructibles_bevy::damage: damage #0038 [pane] ShatterPane(b1006127 f3·l1·c5)
+2026-11-16T16:47:56.687532Z  INFO destructibles_bevy::damage: damage #0039 [pane] ShatterPane(b1006127 f3·l1·c6)
+2026-11-16T16:47:56.694961Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6124 (6.99 ms)
+2026-11-16T16:47:56.701809Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6858 (6.76 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:56.829268Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.936 vol=0.68 paused=false empty=false
+2026-11-16T16:47:56.829333Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.086 vol=0.68 paused=false empty=false
+2026-11-16T16:47:56.829346Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.979 vol=0.68 paused=false empty=false
+2026-11-16T16:47:56.829353Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.014 vol=0.68 paused=false empty=false
+2026-11-16T16:47:56.829360Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.942 vol=0.68 paused=false empty=false
+2026-11-16T16:47:56.829366Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.910 vol=0.68 paused=false empty=false
+2026-11-16T16:47:56.829373Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.927 vol=0.68 paused=false empty=false
+2026-11-16T16:47:56.829420Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.006 vol=0.68 paused=false empty=false
+2026-11-16T16:47:56.835395Z  INFO destructibles_bevy::damage: damage #0040 [pane] ShatterPane(b1006127 f3·l1·c7)
+2026-11-16T16:47:56.836180Z  INFO destructibles_bevy::damage: damage #0041 [pane] ShatterPane(b1006127 f3·l1·c8)
+2026-11-16T16:47:56.836410Z  INFO destructibles_bevy::damage: damage #0042 [pane] ShatterPane(b1006127 f3·l1·c9)
+2026-11-16T16:47:56.836588Z  INFO destructibles_bevy::damage: damage #0043 [pane] ShatterPane(b1006127 f3·l1·c10)
+2026-11-16T16:47:56.836797Z  INFO destructibles_bevy::damage: damage #0044 [pane] ShatterPane(b1006127 f3·l1·c11)
+2026-11-16T16:47:56.836969Z  INFO destructibles_bevy::damage: damage #0045 [pane] ShatterPane(b1006127 f3·l2·c5)
+2026-11-16T16:47:56.837187Z  INFO destructibles_bevy::damage: damage #0046 [pane] ShatterPane(b1006127 f3·l2·c6)
+2026-11-16T16:47:56.837406Z  INFO destructibles_bevy::damage: damage #0047 [pane] ShatterPane(b1006127 f3·l2·c7)
+2026-11-16T16:47:56.837653Z  INFO destructibles_bevy::damage: damage #0048 [pane] ShatterPane(b1006127 f3·l2·c8)
+2026-11-16T16:47:56.837882Z  INFO destructibles_bevy::damage: damage #0049 [pane] ShatterPane(b1006127 f3·l2·c9)
+2026-11-16T16:47:56.838122Z  INFO destructibles_bevy::damage: damage #0050 [pane] ShatterPane(b1006127 f3·l2·c10)
+2026-11-16T16:47:56.838392Z  INFO destructibles_bevy::damage: damage #0051 [pane] ShatterPane(b1006127 f3·l3·c6)
+2026-11-16T16:47:56.838629Z  INFO destructibles_bevy::damage: damage #0052 [pane] ShatterPane(b1006127 f3·l3·c7)
+2026-11-16T16:47:56.838869Z  INFO destructibles_bevy::damage: damage #0053 [pane] ShatterPane(b1006127 f3·l3·c8)
+2026-11-16T16:47:56.839095Z  INFO destructibles_bevy::damage: damage #0054 [pane] ShatterPane(b1006127 f3·l3·c9)
+2026-11-16T16:47:56.839348Z  INFO destructibles_bevy::damage: damage #0055 [pane] ShatterPane(b1006127 f3·l3·c10)
+2026-11-16T16:47:56.839580Z  INFO destructibles_bevy::damage: damage #0056 [pane] ShatterPane(b1006127 f3·l4·c8)
+2026-11-16T16:47:57.030853Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.935 vol=0.68 paused=false empty=false
+2026-11-16T16:47:57.030927Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.041 vol=0.68 paused=false empty=false
+2026-11-16T16:47:57.030930Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.007 vol=0.68 paused=false empty=false
+2026-11-16T16:47:57.030934Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.019 vol=0.68 paused=false empty=false
+2026-11-16T16:47:57.030937Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.906 vol=0.68 paused=false empty=false
+2026-11-16T16:47:57.030946Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.003 vol=0.68 paused=false empty=false
+2026-11-16T16:47:57.030949Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.085 vol=0.68 paused=false empty=false
+2026-11-16T16:47:57.030952Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.916 vol=0.68 paused=false empty=false
+2026-11-16T16:47:57.046868Z  INFO manhattan_viewer::neighborhood: DETAIL b6493: Tier 1 ready at 114.2 m
+2026-11-16T16:47:57.166775Z  INFO manhattan_viewer::neighborhood: DETAIL b6484: Tier 1 ready at 97.2 m
+2026-11-16T16:47:57.274244Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.062 vol=0.16 paused=false empty=false
+2026-11-16T16:47:57.294010Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6480 (15.47 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:57.395225Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.010 vol=0.16 paused=false empty=false
+2026-11-16T16:47:57.405669Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6155 (3.75 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:57.526174Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.968 vol=0.16 paused=false empty=false
+2026-11-16T16:47:57.649444Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.065 vol=0.16 paused=false empty=false
+2026-11-16T16:47:57.671077Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6491 (18.84 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:57.778037Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.990 vol=0.16 paused=false empty=false
+2026-11-16T16:47:57.792585Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6157 (3.17 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:57.794115Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6139 (1.41 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:57.797473Z  INFO manhattan_viewer::neighborhood: DETAIL b6492: Tier 1 ready at 101.5 m
+2026-11-16T16:47:57.801560Z  INFO manhattan_viewer::neighborhood: DETAIL b6157: Tier 1 ready at 133.8 m
+2026-11-16T16:47:57.903843Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.017 vol=0.16 paused=false empty=false
+2026-11-16T16:47:57.922706Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6490 (7.40 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:58.037155Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.067 vol=0.16 paused=false empty=false
+2026-11-16T16:47:58.053565Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [fast_drone] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_fast_drone.png
+2026-11-16T16:47:58.157335Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.951 vol=0.16 paused=false empty=false
+2026-11-16T16:47:58.164120Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6162 (4.00 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:58.255578Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.048 vol=0.16 paused=false empty=false
+2026-11-16T16:47:58.291512Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_fast_drone.png
+2026-11-16T16:47:58.369482Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.982 vol=0.16 paused=false empty=false
+2026-11-16T16:47:58.376793Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6126 (3.76 ms)
+2026-11-16T16:47:58.379199Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6489 (2.34 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:58.490142Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.088 vol=0.16 paused=false empty=false
+STREAM TIMING b1006129 evict: collect=1.2ms despawn=9.4ms total=10.6ms
+2026-11-16T16:47:58.508152Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6129 (10.67 ms)
+STREAM TIMING b1006130 evict: collect=1.2ms despawn=16.3ms total=17.5ms
+2026-11-16T16:47:58.525785Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6130 (17.60 ms)
+2026-11-16T16:47:58.630932Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.933 vol=0.16 paused=false empty=false
+2026-11-16T16:47:58.643795Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6161 (6.09 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:58.650378Z  INFO manhattan_viewer::neighborhood: DETAIL b6490: Tier 1 ready at 103.9 m
+2026-11-16T16:47:58.655345Z  INFO manhattan_viewer::neighborhood: PERSIST b6127: damaged building frozen at 150 m hidden=false
+2026-11-16T16:47:58.791198Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.024 vol=0.16 paused=false empty=false
+2026-11-16T16:47:58.810450Z  INFO manhattan_viewer::neighborhood: DETAIL b6162: Tier 1 ready at 114.2 m
+2026-11-16T16:47:58.914591Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.923 vol=0.16 paused=false empty=false
+2026-11-16T16:47:58.920656Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6160 (2.98 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:58.926592Z  INFO manhattan_viewer::neighborhood: DETAIL b6489: Tier 1 ready at 108.6 m
+2026-11-16T16:47:59.061911Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6506 (14.03 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:47:59.185446Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.026 vol=0.16 paused=false empty=false
+2026-11-16T16:47:59.202781Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6135 (6.08 ms)
+2026-11-16T16:47:59.207264Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6499 (4.15 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:59.211969Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6498 (4.36 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:59.214004Z  INFO manhattan_viewer::neighborhood: DETAIL b6485: Tier 1 ready at 33.1 m
+2026-11-16T16:47:59.346463Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6132 (3.79 ms)
+2026-11-16T16:47:59.349311Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6158 (2.75 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:47:59.353995Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6496 (4.31 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:47:59.512999Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6501 (14.54 ms) footprint PASS style=Some(GlassCurtainWall)
+STREAM TIMING b1006131 evict: collect=1.2ms despawn=9.0ms total=10.1ms
+2026-11-16T16:47:59.668975Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6131 (10.39 ms)
+2026-11-16T16:47:59.673544Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6503 (4.36 ms) footprint PASS style=Some(BrickMidrise)
+STREAM TIMING b1006133 evict: collect=1.2ms despawn=12.2ms total=13.5ms
+2026-11-16T16:47:59.837090Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6133 (13.61 ms)
+STREAM TIMING b1006125 evict: collect=1.4ms despawn=15.3ms total=16.7ms
+2026-11-16T16:47:59.996957Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6125 (16.87 ms)
+2026-11-16T16:48:00.003838Z  INFO manhattan_viewer::neighborhood: DETAIL b6499: Tier 1 ready at 94.4 m
+2026-11-16T16:48:00.141513Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6856 (2.70 ms)
+STREAM TIMING b1006866 evict: collect=0.8ms despawn=11.1ms total=11.8ms
+2026-11-16T16:48:00.153501Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6866 (11.94 ms)
+STREAM TIMING b1006853 evict: collect=1.2ms despawn=12.5ms total=13.7ms
+2026-11-16T16:48:00.307750Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6853 (13.79 ms)
+2026-11-16T16:48:00.464682Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6514 (14.42 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:00.469363Z  INFO manhattan_viewer::neighborhood: DETAIL b6161: Tier 1 ready at 82.0 m
+2026-11-16T16:48:00.625570Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5892 (6.27 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:00.630786Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6502 (4.83 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:00.643505Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6497 (12.33 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:00.649762Z  INFO manhattan_viewer::neighborhood: DETAIL b6498: Tier 1 ready at 78.9 m
+STREAM TIMING b1006861 evict: collect=1.7ms despawn=29.4ms total=31.1ms
+2026-11-16T16:48:00.831408Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6861 (31.29 ms)
+2026-11-16T16:48:00.835819Z  INFO manhattan_viewer::neighborhood: DETAIL b6491: Tier 1 ready at 69.2 m
+STREAM TIMING b1006128 evict: collect=1.8ms despawn=21.1ms total=22.9ms
+2026-11-16T16:48:00.994433Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6128 (23.07 ms)
+STREAM TIMING b1006147 evict: collect=1.0ms despawn=11.2ms total=12.2ms
+2026-11-16T16:48:01.159165Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6147 (12.33 ms)
+2026-11-16T16:48:01.162006Z  INFO manhattan_viewer::neighborhood: DETAIL b6496: Tier 1 ready at 68.5 m
+2026-11-16T16:48:01.308975Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6507 (12.65 ms) footprint PASS style=Some(GlassCurtainWall)
+STREAM TIMING b1006146 evict: collect=1.0ms despawn=8.7ms total=9.7ms
+2026-11-16T16:48:01.473408Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6146 (9.83 ms)
+2026-11-16T16:48:01.478084Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6521 (4.58 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:01.486160Z  INFO manhattan_viewer::neighborhood: DETAIL b6160: Tier 1 ready at 71.1 m
+2026-11-16T16:48:01.648834Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6139 (1.10 ms)
+2026-11-16T16:48:01.653101Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6535 (4.17 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:01.658560Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6505 (5.38 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:01.668656Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6520 (9.97 ms) footprint PASS style=Some(GlassCurtainWall)
+STREAM TIMING b1006858 evict: collect=0.8ms despawn=7.9ms total=8.7ms
+2026-11-16T16:48:01.834357Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6858 (8.82 ms)
+2026-11-16T16:48:01.845867Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5896 (11.41 ms) footprint PASS style=Some(GlassCurtainWall)
+STREAM TIMING b1006859 evict: collect=1.1ms despawn=15.3ms total=16.4ms
+2026-11-16T16:48:02.031349Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6859 (16.54 ms)
+2026-11-16T16:48:02.189706Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6145 (6.11 ms)
+2026-11-16T16:48:02.191674Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6155 (1.92 ms)
+2026-11-16T16:48:02.196237Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6533 (4.49 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:02.198319Z  INFO manhattan_viewer::neighborhood: DETAIL b6506: Tier 1 ready at 30.2 m
+2026-11-16T16:48:02.367186Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6538 (4.09 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:02.370095Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6529 (2.77 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:02.372852Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6531 (2.69 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:02.374994Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6519 (2.10 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:02.378220Z  INFO manhattan_viewer::neighborhood: DETAIL b6503: Tier 1 ready at 48.6 m
+STREAM TIMING b1006144 evict: collect=0.8ms despawn=9.1ms total=9.9ms
+2026-11-16T16:48:02.549919Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6144 (10.03 ms)
+2026-11-16T16:48:02.552653Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6528 (2.67 ms) footprint PASS style=Some(BrickBrownstone)
+STREAM TIMING b1006857 evict: collect=1.3ms despawn=9.5ms total=10.8ms
+2026-11-16T16:48:02.727949Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6857 (10.90 ms)
+2026-11-16T16:48:02.729323Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6526 (1.34 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:02.732758Z  INFO manhattan_viewer::neighborhood: DETAIL b6502: Tier 1 ready at 50.3 m
+2026-11-16T16:48:02.862324Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6515 (1.23 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:02.866466Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6494 (3.76 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:02.872719Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6518 (5.77 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:02.874335Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6511 (1.54 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.008130Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6512 (1.98 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.010689Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6534 (2.50 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.012041Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6525 (1.31 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.013997Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6539 (1.91 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.022040Z  INFO manhattan_viewer::neighborhood: DETAIL b6535: Tier 1 ready at 55.6 m
+2026-11-16T16:48:03.195532Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6530 (15.02 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:03.341100Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6152 (6.18 ms)
+2026-11-16T16:48:03.344269Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6537 (2.91 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:03.344655Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6540 (0.35 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.346412Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6513 (1.73 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:03.346866Z  INFO manhattan_viewer::neighborhood: DETAIL b6501: Tier 1 ready at 21.0 m
+2026-11-16T16:48:03.495003Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6510 (2.87 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.500380Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6523 (5.09 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:03.503542Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6488 (3.08 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.518723Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6522 (15.07 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:03.521917Z  INFO manhattan_viewer::neighborhood: DETAIL b6521: Tier 1 ready at 49.8 m
+2026-11-16T16:48:03.668388Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6532 (3.97 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.673070Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6527 (4.32 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:03.675583Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6500 (2.46 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.676940Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5885 (1.33 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.846795Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5897 (3.16 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.848310Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5893 (1.47 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.853294Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5898 (4.94 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:03.855138Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5888 (1.78 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:03.860146Z  INFO manhattan_viewer::neighborhood: DETAIL b6533: Tier 1 ready at 57.0 m
+2026-11-16T16:48:04.042378Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5890 (8.02 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:04.043834Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6504 (1.39 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:04.046637Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6495 (2.74 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:04.050399Z  INFO manhattan_viewer::neighborhood: DETAIL b6497: Tier 1 ready at 51.2 m
+STREAM TIMING b1006127 evict: collect=1.0ms despawn=21.2ms total=22.2ms
+STREAM TIMING b1006141 evict: collect=0.8ms despawn=12.4ms total=13.1ms
+STREAM TIMING b1006480 evict: collect=0.6ms despawn=7.8ms total=8.4ms
+STREAM TIMING b1006485 evict: collect=0.9ms despawn=17.0ms total=17.9ms
+STREAM TIMING b1006491 evict: collect=0.8ms despawn=16.5ms total=17.3ms
+STREAM TIMING b1006497 evict: collect=0.6ms despawn=12.2ms total=12.8ms
+STREAM TIMING b1006501 evict: collect=0.6ms despawn=11.5ms total=12.1ms
+STREAM TIMING b1006506 evict: collect=0.5ms despawn=14.4ms total=14.9ms
+STREAM TIMING b1006514 evict: collect=0.5ms despawn=12.3ms total=12.8ms
+2026-11-16T16:48:04.354777Z  INFO manhattan_viewer::neighborhood: REGIME fast_drone speed=30.0 frames=89 worst_frame=187.1ms worst_swap=31.3ms worst_swap_frame=31.3ms live_max=73 swaps_in=218 swaps_out=70 pending_peak=21 behind_max=228.3m stray=0 tier1=32 tier1_max_approach=133.8m
+2026-11-16T16:48:04.496748Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6127 (12.87 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:04.612562Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6130 (7.48 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:04.622369Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6128 (9.47 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:04.726125Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6125 (7.01 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:04.733034Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6853 (6.65 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:04.814053Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6124 (1.70 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:04.815959Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6135 (1.84 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:04.818694Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6133 (2.61 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:04.819765Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6462 (1.01 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:04.908091Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6471 (4.31 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:04.924545Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6861 (15.97 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:05.009820Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6463 (1.43 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.016283Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6447 (6.23 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:05.018539Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6465 (2.18 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.021348Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6464 (2.74 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.121442Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6466 (4.89 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:05.123976Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6468 (2.47 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.125451Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6467 (1.45 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.127933Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6474 (2.40 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:05.128601Z  INFO manhattan_viewer::neighborhood: DETAIL b6135: Tier 1 ready at 48.4 m
+2026-11-16T16:48:05.222715Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6446 (2.65 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:05.225848Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6129 (3.07 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.364720Z  INFO manhattan_viewer::neighborhood: DETAIL b6133: Tier 1 ready at 49.1 m
+2026-11-16T16:48:05.463785Z  INFO manhattan_viewer::neighborhood: DETAIL b6130: Tier 1 ready at 90.1 m
+2026-11-16T16:48:05.719299Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6859 (6.49 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.727645Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6131 (8.17 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:05.732102Z  INFO manhattan_viewer::neighborhood: DETAIL b6128: Tier 1 ready at 88.3 m
+2026-11-16T16:48:05.862714Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6856 (2.53 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.922025Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6144 (3.47 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.924457Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6857 (2.37 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.925362Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6132 (0.86 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:05.928757Z  INFO manhattan_viewer::neighborhood: DETAIL b6125: Tier 1 ready at 90.9 m
+2026-11-16T16:48:06.018705Z  INFO manhattan_viewer::neighborhood: DETAIL b6853: Tier 1 ready at 89.7 m
+2026-11-16T16:48:06.025466Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [detail build-out] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_detail_buildout_hero.png
+2026-11-16T16:48:06.089413Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6866 (2.74 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:06.173780Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6466 (3.28 ms)
+2026-11-16T16:48:06.174943Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6467 (1.12 ms)
+2026-11-16T16:48:06.176170Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6468 (1.19 ms)
+2026-11-16T16:48:06.177022Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6471 (0.84 ms)
+2026-11-16T16:48:06.186064Z  INFO manhattan_viewer::neighborhood: DETAIL b6857: Tier 1 ready at 106.4 m
+2026-11-16T16:48:06.256534Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6446 (1.36 ms)
+2026-11-16T16:48:06.258448Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6474 (1.86 ms)
+2026-11-16T16:48:06.259125Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6464 (0.66 ms)
+2026-11-16T16:48:06.259640Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6465 (0.50 ms)
+2026-11-16T16:48:06.261081Z  INFO manhattan_viewer::neighborhood: DETAIL b6127: Tier 1 ready at 20.5 m
+2026-11-16T16:48:06.263808Z  INFO manhattan_viewer::neighborhood: DETAIL b6859: Tier 1 ready at 86.4 m
+2026-11-16T16:48:06.361470Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6462 (0.88 ms)
+2026-11-16T16:48:06.365842Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6141 (4.15 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:06.367597Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6145 (1.68 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:06.371321Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6150 (3.63 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:06.405732Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_detail_buildout_hero.png
+2026-11-16T16:48:06.476918Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6447 (2.79 ms)
+2026-11-16T16:48:06.477645Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6463 (0.69 ms)
+2026-11-16T16:48:06.481674Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6483 (3.97 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:06.487361Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6143 (5.62 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:06.597409Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6142 (5.18 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:06.601381Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6486 (3.90 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:06.606579Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6482 (4.98 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:06.706168Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6151 (4.33 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:06.714997Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6485 (8.75 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:06.720209Z  INFO manhattan_viewer::neighborhood: DETAIL b6144: Tier 1 ready at 74.4 m
+2026-11-16T16:48:06.822500Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6148 (2.10 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:06.825302Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6152 (2.75 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:06.831574Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6484 (5.97 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:06.836117Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6493 (4.43 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:06.846468Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6127
+2026-11-16T16:48:06.942057Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6124 (3.67 ms)
+2026-11-16T16:48:06.948424Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6858 (6.29 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:06.955932Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6492 (7.42 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:06.964534Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006127 (1082.0,2.2,-1051.7)
+2026-11-16T16:48:07.045369Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=1.100 vol=0.76 paused=false empty=false
+2026-11-16T16:48:07.056739Z  INFO destructibles_bevy::impact: IMPACT building 1006127: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T16:48:07.056909Z  INFO destructibles_bevy::impact: IMPACT: 0 breach cells (radius 8.4 m), 26 panes overpressure (radius 17.0 m)
+2026-11-16T16:48:07.056931Z  INFO destructibles_bevy::damage: damage #0057 [collapse] Shudder(b1006127 seed=91883973 E=22.2 MJ)
+2026-11-16T16:48:07.059102Z  INFO destructibles_bevy::shudder: SHUDDER building 1006127: 0.02 shake strength, 520 pane rats, 2 dust vents
+2026-11-16T16:48:07.059147Z  INFO destructibles_bevy::damage: damage #0058 [collapse] Alarm(b1006127 active=true floor=0 seed=91883973)
+2026-11-16T16:48:07.059200Z  INFO destructibles_bevy::alarm: ALARM building 1006127: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T16:48:07.059219Z  INFO destructibles_bevy::damage: damage #0059 [pane] ShatterPane(b1006127 f3·l0·c5)
+2026-11-16T16:48:07.059901Z  INFO destructibles_bevy::damage: damage #0060 [pane] ShatterPane(b1006127 f3·l0·c6)
+2026-11-16T16:48:07.060455Z  INFO destructibles_bevy::damage: damage #0061 [pane] ShatterPane(b1006127 f3·l0·c7)
+2026-11-16T16:48:07.060979Z  INFO destructibles_bevy::damage: damage #0062 [pane] ShatterPane(b1006127 f3·l0·c8)
+2026-11-16T16:48:07.061463Z  INFO destructibles_bevy::damage: damage #0063 [pane] ShatterPane(b1006127 f3·l0·c9)
+2026-11-16T16:48:07.061904Z  INFO destructibles_bevy::damage: damage #0064 [pane] ShatterPane(b1006127 f3·l0·c10)
+2026-11-16T16:48:07.062310Z  INFO destructibles_bevy::damage: damage #0065 [pane] ShatterPane(b1006127 f3·l0·c11)
+2026-11-16T16:48:07.062732Z  INFO destructibles_bevy::damage: damage #0066 [pane] ShatterPane(b1006127 f3·l1·c5)
+2026-11-16T16:48:07.083699Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6480 (20.24 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:07.090196Z  INFO manhattan_viewer::neighborhood: DETAIL b6483: Tier 1 ready at 58.1 m
+2026-11-16T16:48:07.209656Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.905 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.209768Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.907 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.209778Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.993 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.209787Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.034 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.209803Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.021 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.209812Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.986 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.209821Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.059 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.209830Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.993 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.218003Z  INFO destructibles_bevy::damage: damage #0067 [pane] ShatterPane(b1006127 f3·l1·c6)
+2026-11-16T16:48:07.218831Z  INFO destructibles_bevy::damage: damage #0068 [pane] ShatterPane(b1006127 f3·l1·c7)
+2026-11-16T16:48:07.219200Z  INFO destructibles_bevy::damage: damage #0069 [pane] ShatterPane(b1006127 f3·l1·c8)
+2026-11-16T16:48:07.219386Z  INFO destructibles_bevy::damage: damage #0070 [pane] ShatterPane(b1006127 f3·l1·c9)
+2026-11-16T16:48:07.219540Z  INFO destructibles_bevy::damage: damage #0071 [pane] ShatterPane(b1006127 f3·l1·c10)
+2026-11-16T16:48:07.219716Z  INFO destructibles_bevy::damage: damage #0072 [pane] ShatterPane(b1006127 f3·l1·c11)
+2026-11-16T16:48:07.219872Z  INFO destructibles_bevy::damage: damage #0073 [pane] ShatterPane(b1006127 f3·l2·c5)
+2026-11-16T16:48:07.220072Z  INFO destructibles_bevy::damage: damage #0074 [pane] ShatterPane(b1006127 f3·l2·c6)
+2026-11-16T16:48:07.220229Z  INFO destructibles_bevy::damage: damage #0075 [pane] ShatterPane(b1006127 f3·l2·c7)
+2026-11-16T16:48:07.220400Z  INFO destructibles_bevy::damage: damage #0076 [pane] ShatterPane(b1006127 f3·l2·c8)
+2026-11-16T16:48:07.220588Z  INFO destructibles_bevy::damage: damage #0077 [pane] ShatterPane(b1006127 f3·l2·c9)
+2026-11-16T16:48:07.220799Z  INFO destructibles_bevy::damage: damage #0078 [pane] ShatterPane(b1006127 f3·l2·c10)
+2026-11-16T16:48:07.220989Z  INFO destructibles_bevy::damage: damage #0079 [pane] ShatterPane(b1006127 f3·l3·c6)
+2026-11-16T16:48:07.221131Z  INFO destructibles_bevy::damage: damage #0080 [pane] ShatterPane(b1006127 f3·l3·c7)
+2026-11-16T16:48:07.221274Z  INFO destructibles_bevy::damage: damage #0081 [pane] ShatterPane(b1006127 f3·l3·c8)
+2026-11-16T16:48:07.221418Z  INFO destructibles_bevy::damage: damage #0082 [pane] ShatterPane(b1006127 f3·l3·c9)
+2026-11-16T16:48:07.221578Z  INFO destructibles_bevy::damage: damage #0083 [pane] ShatterPane(b1006127 f3·l3·c10)
+2026-11-16T16:48:07.221745Z  INFO destructibles_bevy::damage: damage #0084 [pane] ShatterPane(b1006127 f3·l4·c8)
+2026-11-16T16:48:07.240378Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6491 (17.95 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:07.412307Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.015 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.412369Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.003 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.412383Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.915 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.412396Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.913 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.412408Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.049 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.412418Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.940 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.412427Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.034 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.412443Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.011 vol=0.68 paused=false empty=false
+2026-11-16T16:48:07.423713Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6157 (0.79 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:07.427566Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6490 (3.56 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:07.430083Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6146 (2.48 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:07.432653Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6147 (2.47 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:07.438888Z  INFO manhattan_viewer::neighborhood: DETAIL b6486: Tier 1 ready at 45.8 m
+2026-11-16T16:48:07.442895Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [hero] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_hero.png
+2026-11-16T16:48:07.562768Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.040 vol=0.16 paused=false empty=false
+2026-11-16T16:48:07.579134Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6129 (2.12 ms)
+STREAM TIMING b1006130 evict: collect=0.9ms despawn=13.6ms total=14.6ms
+2026-11-16T16:48:07.593844Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6130 (14.66 ms)
+2026-11-16T16:48:07.596107Z  INFO manhattan_viewer::neighborhood: DETAIL b6143: Tier 1 ready at 27.2 m
+2026-11-16T16:48:07.702396Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.919 vol=0.16 paused=false empty=false
+2026-11-16T16:48:07.712376Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6135 (5.24 ms)
+2026-11-16T16:48:07.713332Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6132 (0.92 ms)
+2026-11-16T16:48:07.717234Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6162 (3.86 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:07.721771Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6489 (4.47 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:07.733012Z  INFO manhattan_viewer::neighborhood: PERSIST b6127: damaged building frozen at 161 m hidden=false
+2026-11-16T16:48:07.752464Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_hero.png
+2026-11-16T16:48:07.838691Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.986 vol=0.16 paused=false empty=false
+2026-11-16T16:48:07.851072Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6133 (5.04 ms)
+2026-11-16T16:48:07.852713Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6131 (1.61 ms)
+2026-11-16T16:48:07.858141Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6506 (5.27 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:07.861112Z  INFO manhattan_viewer::neighborhood: DETAIL b6148: Tier 1 ready at 25.5 m
+2026-11-16T16:48:07.963991Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.021 vol=0.16 paused=false empty=false
+STREAM TIMING b1006853 evict: collect=0.7ms despawn=7.6ms total=8.3ms
+2026-11-16T16:48:07.983226Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6853 (8.38 ms)
+2026-11-16T16:48:07.983876Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6856 (0.63 ms)
+2026-11-16T16:48:07.985068Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6866 (1.18 ms)
+2026-11-16T16:48:07.993180Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6125 (8.09 ms)
+2026-11-16T16:48:08.099176Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.097 vol=0.16 paused=false empty=false
+STREAM TIMING b1006861 evict: collect=1.2ms despawn=14.9ms total=16.1ms
+2026-11-16T16:48:08.120990Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6861 (16.26 ms)
+2026-11-16T16:48:08.124476Z  INFO manhattan_viewer::neighborhood: DETAIL b6157: Tier 1 ready at 68.0 m
+2026-11-16T16:48:08.224832Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.955 vol=0.16 paused=false empty=false
+STREAM TIMING b1006128 evict: collect=1.1ms despawn=9.9ms total=11.0ms
+2026-11-16T16:48:08.241208Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6128 (11.07 ms)
+2026-11-16T16:48:08.242451Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6147 (1.23 ms)
+2026-11-16T16:48:08.342241Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.072 vol=0.16 paused=false empty=false
+2026-11-16T16:48:08.350772Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6146 (2.05 ms)
+2026-11-16T16:48:08.362951Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6514 (12.06 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:08.468210Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.027 vol=0.16 paused=false empty=false
+2026-11-16T16:48:08.477694Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6858 (3.26 ms)
+STREAM TIMING b1006859 evict: collect=0.6ms despawn=8.7ms total=9.3ms
+2026-11-16T16:48:08.487126Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6859 (9.39 ms)
+2026-11-16T16:48:08.596572Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.084 vol=0.16 paused=false empty=false
+2026-11-16T16:48:08.610547Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6145 (4.81 ms)
+STREAM TIMING b1006144 evict: collect=0.6ms despawn=7.4ms total=8.1ms
+2026-11-16T16:48:08.618784Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6144 (8.17 ms)
+2026-11-16T16:48:08.719865Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.997 vol=0.16 paused=false empty=false
+2026-11-16T16:48:08.731997Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6857 (6.34 ms)
+2026-11-16T16:48:08.737877Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5892 (5.50 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:08.744896Z  INFO manhattan_viewer::neighborhood: DETAIL b6162: Tier 1 ready at 57.0 m
+2026-11-16T16:48:08.745805Z  INFO manhattan_viewer::neighborhood: DETAIL b6484: Tier 1 ready at 78.9 m
+2026-11-16T16:48:08.841109Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.085 vol=0.16 paused=false empty=false
+2026-11-16T16:48:08.848416Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6152 (1.30 ms)
+2026-11-16T16:48:08.852009Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6538 (3.53 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:08.853741Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6512 (1.67 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:08.856939Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6534 (3.14 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:08.865343Z  INFO manhattan_viewer::neighborhood: DETAIL b6512: Tier 1 ready at 92.2 m
+2026-11-16T16:48:08.948149Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.924 vol=0.16 paused=false empty=false
+2026-11-16T16:48:08.974546Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6530 (12.46 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:09.074452Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.915 vol=0.16 paused=false empty=false
+2026-11-16T16:48:09.090798Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6496 (4.84 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:09.102668Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6501 (11.50 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:09.217534Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.031 vol=0.16 paused=false empty=false
+2026-11-16T16:48:09.233448Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6503 (5.18 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:09.239073Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6502 (5.21 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:09.242062Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6535 (2.93 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:09.348928Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.938 vol=0.16 paused=false empty=false
+2026-11-16T16:48:09.364582Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6521 (4.14 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:09.375979Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6497 (11.01 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:09.486111Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.941 vol=0.16 paused=false empty=false
+2026-11-16T16:48:09.500236Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6533 (4.73 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:09.503069Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6160 (2.78 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:09.511974Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6520 (8.83 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:09.618573Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6531 (4.78 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:09.631526Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6507 (12.83 ms) footprint PASS style=Some(GlassCurtainWall)
+STREAM TIMING b1006127 evict: collect=0.9ms despawn=21.3ms total=22.2ms
+STREAM TIMING b1006514 evict: collect=0.4ms despawn=7.7ms total=8.1ms
+2026-11-16T16:48:09.775802Z  INFO manhattan_viewer::neighborhood: REGIME hero speed=100.0 frames=28 worst_frame=184.2ms worst_swap=20.2ms worst_swap_frame=20.2ms live_max=39 swaps_in=289 swaps_out=102 pending_peak=51 behind_max=227.8m stray=0 tier1=9 tier1_max_approach=92.2m
+2026-11-16T16:48:09.886415Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6127 (25.39 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:09.979939Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6130 (5.14 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:09.986051Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6128 (5.86 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:09.989231Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6125 (3.06 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:10.093087Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6853 (3.84 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:10.094495Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6124 (1.36 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.096040Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6135 (1.50 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.098424Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6133 (2.28 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:10.204106Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6462 (1.91 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.206559Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6471 (2.39 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.223836Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6861 (16.84 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:10.308824Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6463 (0.88 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.311398Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6447 (2.48 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:10.312199Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6465 (0.77 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.313069Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6464 (0.82 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.314778Z  INFO manhattan_viewer::neighborhood: DETAIL b6135: Tier 1 ready at 48.4 m
+2026-11-16T16:48:10.434295Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6466 (9.03 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:10.439408Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6468 (5.03 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.539752Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6467 (3.54 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.546261Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6474 (6.28 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:10.550051Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6446 (3.44 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:10.552177Z  INFO manhattan_viewer::neighborhood: DETAIL b6133: Tier 1 ready at 49.1 m
+2026-11-16T16:48:10.635741Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6129 (4.89 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:10.795103Z  INFO manhattan_viewer::neighborhood: DETAIL b6130: Tier 1 ready at 90.1 m
+2026-11-16T16:48:11.047958Z  INFO manhattan_viewer::neighborhood: DETAIL b6125: Tier 1 ready at 104.8 m
+2026-11-16T16:48:11.100377Z  INFO manhattan_viewer::neighborhood: DETAIL b6128: Tier 1 ready at 92.8 m
+2026-11-16T16:48:11.206806Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6144 (2.72 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:11.209245Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6859 (2.35 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:11.213704Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6857 (4.37 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:11.222322Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6131 (8.48 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:11.225494Z  INFO manhattan_viewer::neighborhood: DETAIL b6853: Tier 1 ready at 90.2 m
+2026-11-16T16:48:11.234027Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [detail build-out] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_detail_buildout_mach_1_92.png
+2026-11-16T16:48:11.290923Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6466 (3.59 ms)
+2026-11-16T16:48:11.292461Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6467 (1.50 ms)
+2026-11-16T16:48:11.294375Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6468 (1.88 ms)
+2026-11-16T16:48:11.295772Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6471 (1.37 ms)
+2026-11-16T16:48:11.382166Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6446 (2.15 ms)
+2026-11-16T16:48:11.383590Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6462 (1.37 ms)
+2026-11-16T16:48:11.386946Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6474 (3.31 ms)
+2026-11-16T16:48:11.388221Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6464 (1.25 ms)
+2026-11-16T16:48:11.398220Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6857
+2026-11-16T16:48:11.398305Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [mach_1_92] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_mach_1_92.png
+2026-11-16T16:48:11.470563Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6465 (1.08 ms)
+2026-11-16T16:48:11.472929Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6447 (2.33 ms)
+2026-11-16T16:48:11.473439Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6463 (0.49 ms)
+2026-11-16T16:48:11.475254Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6124 (1.80 ms)
+2026-11-16T16:48:11.508411Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_detail_buildout_mach_1_92.png
+STREAM TIMING b1006853 evict: collect=0.4ms despawn=11.3ms total=11.7ms
+2026-11-16T16:48:11.588986Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6853 (11.89 ms)
+STREAM TIMING b1006133 evict: collect=0.8ms despawn=9.0ms total=9.8ms
+2026-11-16T16:48:11.598901Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6133 (9.88 ms)
+2026-11-16T16:48:11.609744Z  INFO manhattan_viewer::neighborhood: PERSIST b6127: damaged building frozen at 180 m hidden=false
+2026-11-16T16:48:11.696092Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6135 (6.43 ms)
+STREAM TIMING b1006125 evict: collect=1.0ms despawn=16.3ms total=17.3ms
+2026-11-16T16:48:11.713634Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6125 (17.47 ms)
+2026-11-16T16:48:11.739661Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_mach_1_92.png
+2026-11-16T16:48:11.794034Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6129 (2.82 ms)
+STREAM TIMING b1006130 evict: collect=1.0ms despawn=16.7ms total=17.7ms
+2026-11-16T16:48:11.811850Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6130 (17.77 ms)
+2026-11-16T16:48:11.813097Z  INFO manhattan_viewer::neighborhood: DETAIL b6857: Tier 1 ready at 214.8 m
+2026-11-16T16:48:11.817007Z  INFO manhattan_viewer::neighborhood: DETAIL b6859: Tier 1 ready at 231.3 m
+2026-11-16T16:48:11.821285Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006857 (1139.6,2.2,-1093.9)
+2026-11-16T16:48:11.878280Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=1.087 vol=0.76 paused=false empty=false
+2026-11-16T16:48:11.889361Z  INFO destructibles_bevy::impact: IMPACT building 1006857: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T16:48:11.889538Z  INFO destructibles_bevy::impact: IMPACT: 6 breach cells (radius 8.4 m), 66 panes overpressure (radius 17.0 m)
+2026-11-16T16:48:11.889572Z  INFO destructibles_bevy::damage: damage #0085 [collapse] Shudder(b1006857 seed=1008520668 E=22.2 MJ)
+2026-11-16T16:48:11.890506Z  INFO destructibles_bevy::shudder: SHUDDER building 1006857: 0.01 shake strength, 108 pane rats, 2 dust vents
+2026-11-16T16:48:11.890536Z  INFO destructibles_bevy::damage: damage #0086 [collapse] Alarm(b1006857 active=true floor=0 seed=1008520668)
+2026-11-16T16:48:11.890635Z  INFO destructibles_bevy::alarm: ALARM building 1006857: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T16:48:11.890666Z  INFO destructibles_bevy::damage: damage #0087 [shard] BreachCell(b1006857 f1·l0·x1 r=8.4 partial=true seed=2720773221 E=22.2 MJ)
+2026-11-16T16:48:11.891572Z  INFO destructibles_bevy::breach: BREACH building 1006857 cell f1·l0·x1: 7 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T16:48:11.891589Z  INFO destructibles_bevy::damage: damage #0089 [collapse] PowerLoss(b1006857 seed=1019685449)
+2026-11-16T16:48:11.891604Z  INFO destructibles_bevy::power: POWER loss building 1006857
+2026-11-16T16:48:11.891625Z  INFO destructibles_bevy::damage: damage #0090 [shard] BreachCell(b1006857 f1·l0·x2 r=8.4 partial=false seed=7487150 E=22.2 MJ)
+2026-11-16T16:48:11.892415Z  INFO destructibles_bevy::breach: BREACH building 1006857 cell f1·l0·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T16:48:11.892427Z  INFO destructibles_bevy::damage: damage #0092 [shard] BreachCell(b1006857 f1·l0·x3 r=8.4 partial=true seed=3870990583 E=22.2 MJ)
+2026-11-16T16:48:11.892695Z  INFO destructibles_bevy::breach: BREACH building 1006857 cell f1·l0·x3: 5 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T16:48:11.892706Z  INFO destructibles_bevy::damage: damage #0094 [shard] BreachCell(b1006857 f1·l1·x2 r=8.4 partial=false seed=7487150 E=22.2 MJ)
+2026-11-16T16:48:11.893103Z  INFO destructibles_bevy::breach: BREACH building 1006857 cell f1·l1·x2: 13 quads removed, 22 chunks (partial=false, radius=8.4, masonry blocks)
+2026-11-16T16:48:11.893114Z  INFO destructibles_bevy::damage: damage #0096 [shard] BreachCell(b1006857 f1·l1·x3 r=8.4 partial=true seed=3870990583 E=22.2 MJ)
+2026-11-16T16:48:11.893341Z  INFO destructibles_bevy::breach: BREACH building 1006857 cell f1·l1·x3: 5 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T16:48:11.893350Z  INFO destructibles_bevy::damage: damage #0098 [shard] BreachCell(b1006857 f1·l2·x2 r=8.4 partial=true seed=7487150 E=22.2 MJ)
+2026-11-16T16:48:11.893537Z  INFO destructibles_bevy::breach: BREACH building 1006857 cell f1·l2·x2: 13 quads removed, 8 chunks (partial=true, radius=8.4, masonry blocks)
+2026-11-16T16:48:11.893545Z  INFO destructibles_bevy::damage: damage #0100 [pane] ShatterPane(b1006857 f1·l0·c1)
+2026-11-16T16:48:11.893943Z  INFO destructibles_bevy::damage: damage #0101 [pane] ShatterPane(b1006857 f1·l0·c2)
+2026-11-16T16:48:11.894209Z  INFO destructibles_bevy::damage: damage #0102 [pane] ShatterPane(b1006857 f1·l0·c3)
+2026-11-16T16:48:11.894478Z  INFO destructibles_bevy::damage: damage #0103 [pane] ShatterPane(b1006857 f1·l0·c4)
+2026-11-16T16:48:11.894744Z  INFO destructibles_bevy::damage: damage #0104 [pane] ShatterPane(b1006857 f1·l0·c5)
+2026-11-16T16:48:11.894951Z  INFO destructibles_bevy::damage: damage #0105 [pane] ShatterPane(b1006857 f1·l0·c6)
+2026-11-16T16:48:11.895163Z  INFO destructibles_bevy::damage: damage #0106 [pane] ShatterPane(b1006857 f1·l1·c1)
+2026-11-16T16:48:11.900062Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6131 (4.42 ms)
+2026-11-16T16:48:11.905733Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6861 (5.64 ms)
+STREAM TIMING b1006128 evict: collect=0.5ms despawn=8.3ms total=8.8ms
+2026-11-16T16:48:11.914692Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6128 (8.90 ms)
+2026-11-16T16:48:11.915708Z  INFO manhattan_viewer::neighborhood: DETAIL b6144: Tier 1 ready at 215.4 m
+2026-11-16T16:48:11.917846Z  INFO manhattan_viewer::neighborhood: PERSIST b6857: damaged building frozen at 246 m hidden=false
+2026-11-16T16:48:12.032395Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=1.020 vol=0.28 paused=false empty=false
+2026-11-16T16:48:12.032453Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.907 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.032458Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.034 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.032461Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.070 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.032465Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.931 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.032469Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.016 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.032472Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.070 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.032476Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.982 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.055844Z  INFO destructibles_bevy::damage: damage #0107 [pane] ShatterPane(b1006857 f1·l1·c2)
+2026-11-16T16:48:12.056697Z  INFO destructibles_bevy::damage: damage #0108 [pane] ShatterPane(b1006857 f1·l1·c3)
+2026-11-16T16:48:12.057045Z  INFO destructibles_bevy::damage: damage #0109 [pane] ShatterPane(b1006857 f1·l1·c4)
+2026-11-16T16:48:12.057382Z  INFO destructibles_bevy::damage: damage #0110 [pane] ShatterPane(b1006857 f1·l1·c5)
+2026-11-16T16:48:12.057572Z  INFO destructibles_bevy::damage: damage #0111 [pane] ShatterPane(b1006857 f1·l1·c6)
+2026-11-16T16:48:12.057734Z  INFO destructibles_bevy::damage: damage #0112 [pane] ShatterPane(b1006857 f1·l2·c1)
+2026-11-16T16:48:12.057902Z  INFO destructibles_bevy::damage: damage #0113 [pane] ShatterPane(b1006857 f1·l2·c2)
+2026-11-16T16:48:12.058043Z  INFO destructibles_bevy::damage: damage #0114 [pane] ShatterPane(b1006857 f1·l2·c3)
+2026-11-16T16:48:12.058181Z  INFO destructibles_bevy::damage: damage #0115 [pane] ShatterPane(b1006857 f1·l2·c4)
+2026-11-16T16:48:12.058355Z  INFO destructibles_bevy::damage: damage #0116 [pane] ShatterPane(b1006857 f1·l2·c5)
+2026-11-16T16:48:12.058490Z  INFO destructibles_bevy::damage: damage #0117 [pane] ShatterPane(b1006857 f1·l2·c6)
+2026-11-16T16:48:12.058660Z  INFO destructibles_bevy::damage: damage #0118 [pane] ShatterPane(b1006857 f1·l3·c2)
+2026-11-16T16:48:12.058831Z  INFO destructibles_bevy::damage: damage #0119 [pane] ShatterPane(b1006857 f1·l3·c3)
+2026-11-16T16:48:12.058965Z  INFO destructibles_bevy::damage: damage #0120 [pane] ShatterPane(b1006857 f1·l3·c4)
+2026-11-16T16:48:12.059093Z  INFO destructibles_bevy::damage: damage #0121 [pane] ShatterPane(b1006857 f1·l3·c5)
+2026-11-16T16:48:12.059263Z  INFO destructibles_bevy::damage: damage #0122 [pane] ShatterPane(b1006857 f1·l3·c6)
+2026-11-16T16:48:12.059423Z  INFO destructibles_bevy::damage: damage #0123 [pane] ShatterPane(b1006857 f1·l4·c2)
+2026-11-16T16:48:12.059552Z  INFO destructibles_bevy::damage: damage #0124 [pane] ShatterPane(b1006857 f1·l4·c3)
+2026-11-16T16:48:12.059698Z  INFO destructibles_bevy::damage: damage #0125 [pane] ShatterPane(b1006857 f1·l4·c4)
+2026-11-16T16:48:12.059830Z  INFO destructibles_bevy::damage: damage #0126 [pane] ShatterPane(b1006857 f1·l4·c5)
+2026-11-16T16:48:12.059982Z  INFO destructibles_bevy::damage: damage #0127 [pane] ShatterPane(b1006857 f1·l4·c6)
+2026-11-16T16:48:12.060112Z  INFO destructibles_bevy::damage: damage #0128 [pane] ShatterPane(b1006857 f1·l5·c3)
+2026-11-16T16:48:12.060254Z  INFO destructibles_bevy::damage: damage #0129 [pane] ShatterPane(b1006857 f1·l5·c4)
+2026-11-16T16:48:12.060422Z  INFO destructibles_bevy::damage: damage #0130 [pane] ShatterPane(b1006857 f1·l5·c5)
+2026-11-16T16:48:12.060555Z  INFO destructibles_bevy::damage: damage #0131 [pane] ShatterPane(b1006857 f1·l5·c6)
+2026-11-16T16:48:12.060701Z  INFO destructibles_bevy::damage: damage #0132 [pane] ShatterPane(b1006857 f2·l0·c0)
+2026-11-16T16:48:12.060968Z  INFO destructibles_bevy::damage: damage #0133 [pane] ShatterPane(b1006857 f2·l0·c1)
+2026-11-16T16:48:12.061102Z  INFO destructibles_bevy::damage: damage #0134 [pane] ShatterPane(b1006857 f2·l1·c0)
+2026-11-16T16:48:12.061241Z  INFO destructibles_bevy::damage: damage #0135 [pane] ShatterPane(b1006857 f2·l1·c1)
+2026-11-16T16:48:12.061398Z  INFO destructibles_bevy::damage: damage #0136 [pane] ShatterPane(b1006857 f2·l2·c0)
+2026-11-16T16:48:12.061538Z  INFO destructibles_bevy::damage: damage #0137 [pane] ShatterPane(b1006857 f2·l2·c1)
+2026-11-16T16:48:12.061705Z  INFO destructibles_bevy::damage: damage #0138 [pane] ShatterPane(b1006857 f2·l3·c0)
+2026-11-16T16:48:12.070551Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6859 (7.42 ms)
+2026-11-16T16:48:12.077749Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6144 (7.15 ms)
+2026-11-16T16:48:12.212706Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.039 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.212763Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.940 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.212772Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.006 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.212778Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.942 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.212785Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.965 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.212791Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.063 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.212798Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.947 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.212804Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.915 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.212863Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.542 vol=0.34 paused=false empty=false
+2026-11-16T16:48:12.222462Z  INFO destructibles_bevy::damage: damage #0139 [pane] ShatterPane(b1006857 f2·l3·c1)
+2026-11-16T16:48:12.222820Z  INFO destructibles_bevy::damage: damage #0140 [pane] ShatterPane(b1006857 f2·l4·c0)
+2026-11-16T16:48:12.222963Z  INFO destructibles_bevy::damage: damage #0141 [pane] ShatterPane(b1006857 f2·l4·c1)
+2026-11-16T16:48:12.223065Z  INFO destructibles_bevy::damage: damage #0142 [pane] ShatterPane(b1006857 f3·l0·c0)
+2026-11-16T16:48:12.223165Z  INFO destructibles_bevy::damage: damage #0143 [pane] ShatterPane(b1006857 f3·l0·c1)
+2026-11-16T16:48:12.223259Z  INFO destructibles_bevy::damage: damage #0144 [pane] ShatterPane(b1006857 f3·l0·c2)
+2026-11-16T16:48:12.223371Z  INFO destructibles_bevy::damage: damage #0145 [pane] ShatterPane(b1006857 f3·l0·c3)
+2026-11-16T16:48:12.223464Z  INFO destructibles_bevy::damage: damage #0146 [pane] ShatterPane(b1006857 f3·l0·c4)
+2026-11-16T16:48:12.223555Z  INFO destructibles_bevy::damage: damage #0147 [pane] ShatterPane(b1006857 f3·l1·c0)
+2026-11-16T16:48:12.223658Z  INFO destructibles_bevy::damage: damage #0148 [pane] ShatterPane(b1006857 f3·l1·c1)
+2026-11-16T16:48:12.223758Z  INFO destructibles_bevy::damage: damage #0149 [pane] ShatterPane(b1006857 f3·l1·c2)
+2026-11-16T16:48:12.223853Z  INFO destructibles_bevy::damage: damage #0150 [pane] ShatterPane(b1006857 f3·l1·c3)
+2026-11-16T16:48:12.223953Z  INFO destructibles_bevy::damage: damage #0151 [pane] ShatterPane(b1006857 f3·l1·c4)
+2026-11-16T16:48:12.224040Z  INFO destructibles_bevy::damage: damage #0152 [pane] ShatterPane(b1006857 f3·l2·c0)
+2026-11-16T16:48:12.224134Z  INFO destructibles_bevy::damage: damage #0153 [pane] ShatterPane(b1006857 f3·l2·c1)
+2026-11-16T16:48:12.224220Z  INFO destructibles_bevy::damage: damage #0154 [pane] ShatterPane(b1006857 f3·l2·c2)
+2026-11-16T16:48:12.224313Z  INFO destructibles_bevy::damage: damage #0155 [pane] ShatterPane(b1006857 f3·l2·c3)
+2026-11-16T16:48:12.224417Z  INFO destructibles_bevy::damage: damage #0156 [pane] ShatterPane(b1006857 f3·l2·c4)
+2026-11-16T16:48:12.224507Z  INFO destructibles_bevy::damage: damage #0157 [pane] ShatterPane(b1006857 f3·l3·c0)
+2026-11-16T16:48:12.224597Z  INFO destructibles_bevy::damage: damage #0158 [pane] ShatterPane(b1006857 f3·l3·c1)
+2026-11-16T16:48:12.224696Z  INFO destructibles_bevy::damage: damage #0159 [pane] ShatterPane(b1006857 f3·l3·c2)
+2026-11-16T16:48:12.224788Z  INFO destructibles_bevy::damage: damage #0160 [pane] ShatterPane(b1006857 f3·l3·c3)
+2026-11-16T16:48:12.224875Z  INFO destructibles_bevy::damage: damage #0161 [pane] ShatterPane(b1006857 f3·l3·c4)
+2026-11-16T16:48:12.224959Z  INFO destructibles_bevy::damage: damage #0162 [pane] ShatterPane(b1006857 f3·l4·c0)
+2026-11-16T16:48:12.225044Z  INFO destructibles_bevy::damage: damage #0163 [pane] ShatterPane(b1006857 f3·l4·c1)
+2026-11-16T16:48:12.225129Z  INFO destructibles_bevy::damage: damage #0164 [pane] ShatterPane(b1006857 f3·l4·c2)
+2026-11-16T16:48:12.225323Z  INFO destructibles_bevy::damage: damage #0165 [pane] ShatterPane(b1006857 f3·l4·c3)
+2026-11-16T16:48:12.227448Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6538 (1.87 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.228068Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6511 (0.59 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.230486Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6518 (2.24 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:12.231164Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6512 (0.65 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.234817Z  INFO manhattan_viewer::neighborhood: DETAIL b6511: Tier 1 ready at 47.2 m
+2026-11-16T16:48:12.238788Z  INFO manhattan_viewer::neighborhood: DETAIL b6512: Tier 1 ready at 56.1 m
+2026-11-16T16:48:12.375064Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.935 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.375129Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.063 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.375140Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.938 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.375149Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.987 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.375158Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.051 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.375167Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.091 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.375176Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.973 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.375184Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.942 vol=0.68 paused=false empty=false
+2026-11-16T16:48:12.375193Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.571 vol=0.34 paused=false empty=false
+2026-11-16T16:48:12.387276Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6534 (2.19 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.394028Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6530 (6.65 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:12.395276Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6182 (1.15 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:12.397687Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6163 (2.31 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:12.489595Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.644 vol=0.34 paused=false empty=false
+2026-11-16T16:48:12.494974Z  INFO destructibles_bevy::damage: damage #0166 [shard] BreachCell(b1006857 f1·l1·x1 r=2.2 partial=false seed=1006856 E=0.0 MJ)
+2026-11-16T16:48:12.495924Z  INFO destructibles_bevy::breach: BREACH building 1006857 cell f1·l1·x1: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T16:48:12.495946Z  INFO destructibles_bevy::damage: damage #0168 [shard] BreachCell(b1006857 f1·l2·x1 r=2.2 partial=false seed=1006859 E=0.0 MJ)
+2026-11-16T16:48:12.496353Z  INFO destructibles_bevy::breach: BREACH building 1006857 cell f1·l2·x1: 13 quads removed, 22 chunks (partial=false, radius=2.2, masonry blocks)
+2026-11-16T16:48:12.498499Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6535 (1.98 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.502483Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6533 (3.93 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.506103Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6531 (3.57 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.509480Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6529 (3.20 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:12.626646Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.542 vol=0.34 paused=false empty=false
+2026-11-16T16:48:12.638444Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6519 (2.19 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.643030Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6520 (4.51 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:12.643414Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6515 (0.34 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.644453Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6528 (1.02 ms) footprint PASS style=Some(BrickBrownstone)
+STREAM TIMING b1006127 evict: collect=0.7ms despawn=16.9ms total=17.6ms
+2026-11-16T16:48:12.708095Z  INFO manhattan_viewer::neighborhood: REGIME mach_1_92 speed=650.0 frames=7 worst_frame=126.7ms worst_swap=17.8ms worst_swap_frame=23.9ms live_max=25 swaps_in=330 swaps_out=125 pending_peak=68 behind_max=271.3m stray=0 tier1=3 tier1_max_approach=214.8m
+2026-11-16T16:48:12.780968Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=masonry_thud pitch=0.591 vol=0.34 paused=false empty=false
+2026-11-16T16:48:12.781024Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.923 vol=0.16 paused=false empty=false
+2026-11-16T16:48:12.805903Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6127 (19.73 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:12.910925Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6130 (7.63 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:12.920430Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6128 (9.16 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:13.006384Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6125 (8.55 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:13.013364Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6853 (6.67 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:13.119001Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6124 (2.16 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.120256Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6135 (1.21 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.122099Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6133 (1.75 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:13.122831Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6462 (0.69 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.213172Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6471 (2.86 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.219373Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6861 (5.95 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:13.219945Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6463 (0.53 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.223494Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6447 (3.46 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:13.318984Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6465 (2.46 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.321835Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6464 (2.76 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.332851Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6466 (10.92 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:13.421535Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6468 (6.36 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.425106Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6467 (3.49 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.431888Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6474 (6.60 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:13.432562Z  INFO manhattan_viewer::neighborhood: DETAIL b6135: Tier 1 ready at 48.4 m
+2026-11-16T16:48:13.521943Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6446 (2.22 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:13.523722Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6129 (1.74 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:13.525462Z  INFO manhattan_viewer::neighborhood: DETAIL b6133: Tier 1 ready at 49.1 m
+2026-11-16T16:48:13.683976Z  INFO manhattan_viewer::neighborhood: DETAIL b6130: Tier 1 ready at 90.1 m
+2026-11-16T16:48:13.925070Z  INFO manhattan_viewer::neighborhood: DETAIL b6128: Tier 1 ready at 92.8 m
+2026-11-16T16:48:14.030924Z  INFO manhattan_viewer::neighborhood: DETAIL b6853: Tier 1 ready at 107.7 m
+2026-11-16T16:48:14.130432Z  INFO manhattan_viewer::neighborhood: DETAIL b6125: Tier 1 ready at 104.8 m
+2026-11-16T16:48:14.173304Z  INFO manhattan_viewer::neighborhood: DETAIL b6124: Tier 1 ready at 47.2 m
+2026-11-16T16:48:14.174738Z  INFO manhattan_viewer::neighborhood: DETAIL b6463: Tier 1 ready at 94.9 m
+2026-11-16T16:48:14.226331Z  INFO manhattan_viewer::neighborhood: DETAIL b6462: Tier 1 ready at 100.4 m
+2026-11-16T16:48:14.288016Z  INFO manhattan_viewer::neighborhood: DETAIL b6465: Tier 1 ready at 103.7 m
+2026-11-16T16:48:14.390050Z  INFO manhattan_viewer::neighborhood: DETAIL b6464: Tier 1 ready at 103.7 m
+2026-11-16T16:48:14.493413Z  INFO manhattan_viewer::neighborhood: DETAIL b6127: Tier 1 ready at 74.1 m
+2026-11-16T16:48:14.497367Z  INFO manhattan_viewer::neighborhood: DETAIL b6447: Tier 1 ready at 103.2 m
+2026-11-16T16:48:14.619358Z  INFO manhattan_viewer::neighborhood: DETAIL b6471: Tier 1 ready at 111.6 m
+2026-11-16T16:48:14.774987Z  INFO manhattan_viewer::neighborhood: DETAIL b6861: Tier 1 ready at 116.7 m
+2026-11-16T16:48:14.778751Z  INFO manhattan_viewer::neighborhood: DETAIL b6468: Tier 1 ready at 111.7 m
+2026-11-16T16:48:14.888221Z  INFO manhattan_viewer::neighborhood: DETAIL b6466: Tier 1 ready at 110.0 m
+2026-11-16T16:48:14.888429Z  INFO manhattan_viewer::neighborhood: DETAIL b6467: Tier 1 ready at 111.7 m
+2026-11-16T16:48:15.005406Z  INFO manhattan_viewer::neighborhood: DETAIL b6446: Tier 1 ready at 113.8 m
+2026-11-16T16:48:15.258597Z  INFO manhattan_viewer::neighborhood: DETAIL b6129: Tier 1 ready at 119.2 m
+2026-11-16T16:48:15.382645Z  INFO manhattan_viewer::neighborhood: DETAIL b6474: Tier 1 ready at 112.3 m
+2026-11-16T16:48:16.192009Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [boundary hover] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_boundary_hover.png
+2026-11-16T16:48:16.192071Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD HOVER: 3 s steady, swaps=0 (expect 0)
+2026-11-16T16:48:16.192089Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD GAUNTLET SUMMARY: pedestrian_drone 15m/s worst 250.0ms swap 35.5ms live 75 pending 6 behind 228m stray 0 | fast_drone 30m/s worst 187.1ms swap 31.3ms live 73 pending 21 behind 228m stray 0 | hero 100m/s worst 184.2ms swap 20.2ms live 39 pending 51 behind 228m stray 0 | mach_1_92 650m/s worst 126.7ms swap 17.8ms live 25 pending 68 behind 271m stray 0
+2026-11-16T16:48:16.258650Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: approach b6460 height 58.8 m
+STREAM TIMING b1006447 evict: collect=1.2ms despawn=13.0ms total=14.2ms
+2026-11-16T16:48:16.333989Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6447 (14.28 ms)
+2026-11-16T16:48:16.345842Z  INFO manhattan_viewer::neighborhood: PERSIST b6127: damaged building frozen at 255 m hidden=true
+STREAM TIMING b1006474 evict: collect=0.9ms despawn=9.3ms total=10.2ms
+2026-11-16T16:48:16.426382Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6474 (10.32 ms)
+STREAM TIMING b1006853 evict: collect=0.6ms despawn=10.9ms total=11.5ms
+2026-11-16T16:48:16.438046Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6853 (11.64 ms)
+2026-11-16T16:48:16.463482Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_boundary_hover.png
+STREAM TIMING b1006861 evict: collect=0.9ms despawn=23.8ms total=24.7ms
+2026-11-16T16:48:16.567057Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6861 (24.86 ms)
+STREAM TIMING b1006128 evict: collect=1.6ms despawn=33.8ms total=35.4ms
+2026-11-16T16:48:16.704563Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6128 (35.52 ms)
+STREAM TIMING b1006133 evict: collect=0.9ms despawn=10.4ms total=11.3ms
+2026-11-16T16:48:16.816969Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6133 (11.39 ms)
+2026-11-16T16:48:16.822719Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6135 (5.72 ms)
+STREAM TIMING b1006125 evict: collect=1.4ms despawn=29.4ms total=30.9ms
+2026-11-16T16:48:16.951133Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6125 (31.02 ms)
+STREAM TIMING b1006129 evict: collect=0.7ms despawn=9.5ms total=10.2ms
+2026-11-16T16:48:17.052690Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6129 (10.31 ms)
+STREAM TIMING b1006130 evict: collect=1.4ms despawn=25.3ms total=26.6ms
+2026-11-16T16:48:17.079475Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6130 (26.75 ms)
+2026-11-16T16:48:17.160207Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6453 (2.37 ms) footprint PASS style=Some(ConcreteGrid)
+2026-11-16T16:48:17.161691Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6451 (1.43 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.167302Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6445 (5.42 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.169031Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6478 (1.58 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.268366Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6476: window (sill 0.55 + height 2.3) does not fit in floor height 2.8428571
+2026-11-16T16:48:17.271743Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6475 (3.16 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.273665Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6470 (1.88 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.277202Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6448 (3.47 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:17.281167Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5857 (3.85 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.376475Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6473 (1.72 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.378886Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6472 (2.35 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.383782Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6469 (4.83 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.385244Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6461 (1.42 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.387025Z  INFO manhattan_viewer::neighborhood: DETAIL b6453: Tier 1 ready at 33.4 m
+2026-11-16T16:48:17.388786Z  INFO manhattan_viewer::neighborhood: DETAIL b6478: Tier 1 ready at 33.5 m
+2026-11-16T16:48:17.388855Z  INFO manhattan_viewer::neighborhood: DETAIL b6451: Tier 1 ready at 37.0 m
+2026-11-16T16:48:17.495767Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6460 (7.30 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.504311Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6459 (8.38 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.621274Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6458 (13.70 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.730489Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6450: window (sill 1 + height 1.43) does not fit in floor height 2.35
+2026-11-16T16:48:17.735099Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5859 (4.53 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.738699Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5866 (3.51 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.740287Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5873 (1.52 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.742913Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5867 (2.58 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.743249Z  INFO manhattan_viewer::neighborhood: DETAIL b6475: Tier 1 ready at 37.6 m
+2026-11-16T16:48:17.744187Z  INFO manhattan_viewer::neighborhood: DETAIL b6470: Tier 1 ready at 44.3 m
+2026-11-16T16:48:17.855810Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5874 (4.24 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.859069Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5862 (3.17 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.862155Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5875 (2.88 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.865210Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5876 (2.87 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.865763Z  INFO manhattan_viewer::neighborhood: DETAIL b6448: Tier 1 ready at 52.4 m
+2026-11-16T16:48:17.871915Z  INFO manhattan_viewer::neighborhood: DETAIL b6472: Tier 1 ready at 62.9 m
+2026-11-16T16:48:17.982909Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b5868: window (sill 0.55 + height 2.3) does not fit in floor height 2.8142858
+2026-11-16T16:48:17.988257Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5877 (5.29 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:17.995134Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5869 (6.71 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:17.997937Z  INFO manhattan_viewer::neighborhood: DETAIL b6473: Tier 1 ready at 58.9 m
+2026-11-16T16:48:18.105539Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5878 (6.11 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:18.108594Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5870 (2.99 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:18.112935Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6116 (4.27 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:18.224252Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6433 (3.66 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:18.226208Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6430 (1.91 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:18.227412Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6117 (1.18 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:18.228678Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6118 (1.24 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:18.229170Z  INFO manhattan_viewer::neighborhood: DETAIL b6445: Tier 1 ready at 54.6 m
+2026-11-16T16:48:18.365255Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6432 (7.07 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:18.369295Z  INFO manhattan_viewer::neighborhood: DETAIL b6461: Tier 1 ready at 81.0 m
+2026-11-16T16:48:18.486126Z  INFO manhattan_viewer::neighborhood: DETAIL b6469: Tier 1 ready at 79.9 m
+2026-11-16T16:48:18.744151Z  INFO manhattan_viewer::neighborhood: DETAIL b6460: Tier 1 ready at 90.0 m
+2026-11-16T16:48:18.749986Z  INFO manhattan_viewer::neighborhood: DETAIL b5859: Tier 1 ready at 49.2 m
+2026-11-16T16:48:19.024608Z  INFO manhattan_viewer::neighborhood: DETAIL b6459: Tier 1 ready at 98.2 m
+2026-11-16T16:48:19.028411Z  INFO manhattan_viewer::neighborhood: DETAIL b5857: Tier 1 ready at 55.3 m
+2026-11-16T16:48:19.111435Z  INFO manhattan_viewer::neighborhood: DETAIL b5866: Tier 1 ready at 57.2 m
+2026-11-16T16:48:19.113049Z  INFO manhattan_viewer::neighborhood: DETAIL b5873: Tier 1 ready at 62.4 m
+2026-11-16T16:48:19.115489Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: street view at b6460 Some(("storefront", 58.8)), point Vec3(829.16, 2.4, -1062.6083)
+2026-11-16T16:48:19.175945Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b5869 (2.35 ms)
+2026-11-16T16:48:19.176958Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b5870 (0.95 ms)
+2026-11-16T16:48:19.178142Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b5878 (1.17 ms)
+2026-11-16T16:48:19.181239Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6457 (3.02 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:19.275415Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6452 (5.08 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:19.280038Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6456 (4.53 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:19.282180Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6479 (2.11 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:19.283869Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6454 (1.65 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:19.398656Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6477 (7.83 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:19.401302Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6474 (2.52 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:19.403390Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6447 (2.02 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:19.529754Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6455 (2.91 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:19.532207Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6438 (2.30 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:19.534226Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6437 (1.96 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:19.537433Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6429 (3.07 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:19.539343Z  INFO manhattan_viewer::neighborhood: DETAIL b6458: Tier 1 ready at 59.0 m
+2026-11-16T16:48:19.660486Z  INFO manhattan_viewer::neighborhood: DETAIL b6452: Tier 1 ready at 104.7 m
+2026-11-16T16:48:19.661499Z  INFO manhattan_viewer::neighborhood: DETAIL b6456: Tier 1 ready at 108.6 m
+2026-11-16T16:48:19.780774Z  INFO manhattan_viewer::neighborhood: DETAIL b6457: Tier 1 ready at 97.8 m
+2026-11-16T16:48:20.128830Z  INFO manhattan_viewer::neighborhood: DETAIL b6454: Tier 1 ready at 112.3 m
+2026-11-16T16:48:20.283761Z  INFO manhattan_viewer::neighborhood: DETAIL b6479: Tier 1 ready at 111.4 m
+2026-11-16T16:48:20.440017Z  INFO manhattan_viewer::neighborhood: DETAIL b6474: Tier 1 ready at 115.8 m
+2026-11-16T16:48:20.443343Z  INFO manhattan_viewer::neighborhood: DETAIL b6455: Tier 1 ready at 120.0 m
+2026-11-16T16:48:20.590155Z  INFO manhattan_viewer::neighborhood: DETAIL b6477: Tier 1 ready at 113.5 m
+2026-11-16T16:48:20.733299Z  INFO manhattan_viewer::neighborhood: DETAIL b6447: Tier 1 ready at 119.4 m
+2026-11-16T16:48:20.742240Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [storefront pristine] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_storefront_pristine.png
+2026-11-16T16:48:20.742298Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: car bomb queued at b6460
+2026-11-16T16:48:20.824951Z  INFO manhattan_viewer::neighborhood: DAMAGE car bomb at b1006460 (829.2,2.4,-1062.6)
+2026-11-16T16:48:20.894344Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=explosion pitch=1.091 vol=0.76 paused=false empty=false
+2026-11-16T16:48:20.895520Z  INFO destructibles_bevy::impact: IMPACT building 1006460: tier 1 (car-bomb) energy 22.24 MJ, yield 5.00 kg TNT
+2026-11-16T16:48:20.895651Z  INFO destructibles_bevy::impact: IMPACT: 0 breach cells (radius 8.4 m), 8 panes overpressure (radius 17.0 m)
+2026-11-16T16:48:20.895664Z  INFO destructibles_bevy::damage: damage #0170 [collapse] Shudder(b1006460 seed=2099637760 E=22.2 MJ)
+2026-11-16T16:48:20.896297Z  INFO destructibles_bevy::shudder: SHUDDER building 1006460: 0.07 shake strength, 176 pane rats, 2 dust vents
+2026-11-16T16:48:20.896311Z  INFO destructibles_bevy::damage: damage #0171 [collapse] Alarm(b1006460 active=true floor=0 seed=2099637760)
+2026-11-16T16:48:20.896346Z  INFO destructibles_bevy::alarm: ALARM building 1006460: on, floor 0, 2 sprinkler heads, 4 entities
+2026-11-16T16:48:20.896355Z  INFO destructibles_bevy::damage: damage #0172 [pane] ShatterPane(b1006460 f0·l0·c1)
+2026-11-16T16:48:20.896827Z  INFO destructibles_bevy::damage: damage #0173 [collapse] PowerLoss(b1006460 seed=1201014157)
+2026-11-16T16:48:20.896841Z  INFO destructibles_bevy::power: POWER loss building 1006460
+2026-11-16T16:48:20.896847Z  INFO destructibles_bevy::damage: damage #0174 [pane] ShatterPane(b1006460 f0·l0·c2)
+2026-11-16T16:48:20.897197Z  INFO destructibles_bevy::damage: damage #0175 [pane] ShatterPane(b1006460 f0·l0·c3)
+2026-11-16T16:48:20.897452Z  INFO destructibles_bevy::damage: damage #0176 [pane] ShatterPane(b1006460 f0·l0·c4)
+2026-11-16T16:48:20.897663Z  INFO destructibles_bevy::damage: damage #0177 [pane] ShatterPane(b1006460 f0·l1·c1)
+2026-11-16T16:48:20.897848Z  INFO destructibles_bevy::damage: damage #0178 [pane] ShatterPane(b1006460 f0·l1·c2)
+2026-11-16T16:48:20.898033Z  INFO destructibles_bevy::damage: damage #0179 [pane] ShatterPane(b1006460 f0·l1·c3)
+2026-11-16T16:48:20.898210Z  INFO destructibles_bevy::damage: damage #0180 [pane] ShatterPane(b1006460 f0·l1·c4)
+2026-11-16T16:48:20.900015Z  INFO manhattan_viewer::neighborhood: DETAIL b6438: Tier 1 ready at 104.3 m
+2026-11-16T16:48:20.926311Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_storefront_pristine.png
+2026-11-16T16:48:21.039755Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.025 vol=0.68 paused=false empty=false
+2026-11-16T16:48:21.039815Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=1.041 vol=0.28 paused=false empty=false
+2026-11-16T16:48:21.039824Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.083 vol=0.68 paused=false empty=false
+2026-11-16T16:48:21.039832Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.974 vol=0.68 paused=false empty=false
+2026-11-16T16:48:21.039839Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.929 vol=0.68 paused=false empty=false
+2026-11-16T16:48:21.039846Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.926 vol=0.68 paused=false empty=false
+2026-11-16T16:48:21.039853Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.028 vol=0.68 paused=false empty=false
+2026-11-16T16:48:21.039860Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=0.999 vol=0.68 paused=false empty=false
+2026-11-16T16:48:21.039867Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=glass_break pitch=1.014 vol=0.68 paused=false empty=false
+2026-11-16T16:48:21.184171Z  INFO manhattan_viewer::neighborhood: DETAIL b6437: Tier 1 ready at 110.1 m
+2026-11-16T16:48:21.279652Z  INFO manhattan_viewer::neighborhood: DETAIL b6430: Tier 1 ready at 112.5 m
+2026-11-16T16:48:21.398172Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.993 vol=0.16 paused=false empty=false
+2026-11-16T16:48:21.408366Z  INFO manhattan_viewer::neighborhood: DETAIL b6433: Tier 1 ready at 114.8 m
+2026-11-16T16:48:21.487196Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.051 vol=0.16 paused=false empty=false
+2026-11-16T16:48:21.491581Z  INFO manhattan_viewer::neighborhood: DETAIL b6429: Tier 1 ready at 111.5 m
+2026-11-16T16:48:21.604815Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.967 vol=0.16 paused=false empty=false
+2026-11-16T16:48:21.619652Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [storefront damage] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_storefront_damage.png
+2026-11-16T16:48:21.619685Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: b6460 journal head 53.77
+2026-11-16T16:48:21.708267Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.022 vol=0.16 paused=false empty=false
+2026-11-16T16:48:21.713630Z  INFO manhattan_viewer::neighborhood: DETAIL b5867: Tier 1 ready at 115.7 m
+2026-11-16T16:48:21.797382Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.930 vol=0.16 paused=false empty=false
+2026-11-16T16:48:21.833429Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_storefront_damage.png
+2026-11-16T16:48:21.918026Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.954 vol=0.16 paused=false empty=false
+2026-11-16T16:48:22.035529Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.080 vol=0.16 paused=false empty=false
+2026-11-16T16:48:22.046363Z  INFO manhattan_viewer::neighborhood: DETAIL b5862: Tier 1 ready at 125.8 m
+2026-11-16T16:48:22.048908Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [damage at nadir] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_damage_nadir.png
+2026-11-16T16:48:22.048962Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: b6460 halo capture
+2026-11-16T16:48:22.130375Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.033 vol=0.16 paused=false empty=false
+STREAM TIMING b1006429 evict: collect=1.0ms despawn=12.6ms total=13.6ms
+2026-11-16T16:48:22.151770Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6429 (13.74 ms)
+STREAM TIMING b1006452 evict: collect=0.9ms despawn=9.0ms total=9.9ms
+2026-11-16T16:48:22.304772Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6452 (10.02 ms)
+STREAM TIMING b1006454 evict: collect=0.9ms despawn=9.2ms total=10.1ms
+2026-11-16T16:48:22.314958Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6454 (10.15 ms)
+2026-11-16T16:48:22.322113Z  INFO manhattan_viewer::neighborhood: DETAIL b5874: Tier 1 ready at 138.9 m
+2026-11-16T16:48:22.326633Z  INFO manhattan_viewer::neighborhood: PERSIST b6460: damaged building frozen at 309 m hidden=true
+2026-11-16T16:48:22.345256Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_damage_nadir.png
+2026-11-16T16:48:22.468559Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.943 vol=0.16 paused=false empty=false
+2026-11-16T16:48:22.486220Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6455 (5.89 ms)
+STREAM TIMING b1006456 evict: collect=1.0ms despawn=9.5ms total=10.5ms
+2026-11-16T16:48:22.496835Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6456 (10.56 ms)
+2026-11-16T16:48:22.501767Z  INFO manhattan_viewer::neighborhood: DETAIL b5875: Tier 1 ready at 130.1 m
+2026-11-16T16:48:22.659056Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.970 vol=0.16 paused=false empty=false
+STREAM TIMING b1006457 evict: collect=0.6ms despawn=7.6ms total=8.3ms
+2026-11-16T16:48:22.699992Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6457 (8.38 ms)
+2026-11-16T16:48:22.705860Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6479 (5.84 ms)
+2026-11-16T16:48:22.711768Z  INFO manhattan_viewer::neighborhood: DETAIL b6118: Tier 1 ready at 232.8 m
+2026-11-16T16:48:22.894482Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.922 vol=0.16 paused=false empty=false
+STREAM TIMING b1006446 evict: collect=1.1ms despawn=11.2ms total=12.3ms
+2026-11-16T16:48:22.917569Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6446 (12.35 ms)
+2026-11-16T16:48:22.923297Z  INFO manhattan_viewer::neighborhood: DETAIL b6117: Tier 1 ready at 240.0 m
+2026-11-16T16:48:23.112285Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.046 vol=0.16 paused=false empty=false
+STREAM TIMING b1006447 evict: collect=0.9ms despawn=11.7ms total=12.6ms
+2026-11-16T16:48:23.131173Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6447 (12.67 ms)
+2026-11-16T16:48:23.319296Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6462 (7.09 ms)
+STREAM TIMING b1006474 evict: collect=1.0ms despawn=12.9ms total=13.9ms
+2026-11-16T16:48:23.333322Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6474 (13.98 ms)
+2026-11-16T16:48:23.521751Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=0.966 vol=0.16 paused=false empty=false
+STREAM TIMING b1006477 evict: collect=1.1ms despawn=14.1ms total=15.2ms
+2026-11-16T16:48:23.545007Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6477 (15.35 ms)
+2026-11-16T16:48:23.547180Z  INFO manhattan_viewer::neighborhood: DETAIL b5877: Tier 1 ready at 115.8 m
+2026-11-16T16:48:23.547602Z  INFO manhattan_viewer::neighborhood: DETAIL b5876: Tier 1 ready at 121.3 m
+2026-11-16T16:48:23.720041Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6463 (3.54 ms)
+STREAM TIMING b1006116 evict: collect=0.7ms despawn=8.7ms total=9.4ms
+2026-11-16T16:48:23.729661Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6116 (9.56 ms)
+2026-11-16T16:48:23.902923Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.093 vol=0.16 paused=false empty=false
+2026-11-16T16:48:23.919604Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6430 (6.11 ms)
+STREAM TIMING b1006432 evict: collect=1.0ms despawn=12.9ms total=13.9ms
+2026-11-16T16:48:23.933675Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6432 (14.02 ms)
+2026-11-16T16:48:24.108487Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6433 (7.12 ms)
+STREAM TIMING b1006437 evict: collect=0.9ms despawn=8.8ms total=9.7ms
+2026-11-16T16:48:24.118336Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6437 (9.79 ms)
+STREAM TIMING b1006438 evict: collect=1.0ms despawn=9.6ms total=10.6ms
+2026-11-16T16:48:24.306636Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6438 (10.73 ms)
+STREAM TIMING b1005859 evict: collect=0.9ms despawn=8.9ms total=9.8ms
+2026-11-16T16:48:24.316545Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b5859 (9.84 ms)
+STREAM TIMING b1005866 evict: collect=0.8ms despawn=9.4ms total=10.2ms
+2026-11-16T16:48:24.487666Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b5866 (10.37 ms)
+STREAM TIMING b1005867 evict: collect=1.2ms despawn=11.5ms total=12.7ms
+2026-11-16T16:48:24.500521Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b5867 (12.82 ms)
+2026-11-16T16:48:24.673734Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6117 (7.89 ms)
+2026-11-16T16:48:24.681292Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6118 (7.51 ms)
+2026-11-16T16:48:24.688933Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: horizon b6460 frozen=true host_smoke_quads=10
+2026-11-16T16:48:24.688992Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [horizon smoke] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_horizon_smoke.png
+STREAM TIMING b1006445 evict: collect=1.1ms despawn=14.4ms total=15.5ms
+2026-11-16T16:48:24.837361Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6445 (15.69 ms)
+STREAM TIMING b1006448 evict: collect=0.9ms despawn=10.0ms total=10.9ms
+2026-11-16T16:48:24.970976Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6448 (10.99 ms)
+2026-11-16T16:48:24.976133Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6451 (5.12 ms)
+2026-11-16T16:48:24.985519Z  INFO manhattan_viewer::neighborhood: PERSIST b6460: thawed on re-entry at 42 m
+2026-11-16T16:48:25.000322Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_horizon_smoke.png
+2026-11-16T16:48:25.124255Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6453 (4.45 ms)
+STREAM TIMING b1006459 evict: collect=0.6ms despawn=9.6ms total=10.2ms
+2026-11-16T16:48:25.134558Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6459 (10.27 ms)
+2026-11-16T16:48:25.283096Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6461 (7.72 ms)
+STREAM TIMING b1006466 evict: collect=0.8ms despawn=17.1ms total=17.9ms
+2026-11-16T16:48:25.301130Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6466 (18.00 ms)
+STREAM TIMING b1006467 evict: collect=0.7ms despawn=8.7ms total=9.5ms
+2026-11-16T16:48:25.442445Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6467 (9.55 ms)
+STREAM TIMING b1006468 evict: collect=0.8ms despawn=10.5ms total=11.3ms
+2026-11-16T16:48:25.453881Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6468 (11.41 ms)
+STREAM TIMING b1006469 evict: collect=1.0ms despawn=17.8ms total=18.8ms
+2026-11-16T16:48:25.610286Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6469 (19.05 ms)
+2026-11-16T16:48:25.753640Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6470 (4.19 ms)
+2026-11-16T16:48:25.759449Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6471 (5.77 ms)
+2026-11-16T16:48:25.763577Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6472 (4.10 ms)
+2026-11-16T16:48:25.905701Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6473 (4.67 ms)
+2026-11-16T16:48:25.912175Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6475 (6.44 ms)
+2026-11-16T16:48:25.919168Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6478 (6.96 ms)
+STREAM TIMING b1005857 evict: collect=0.9ms despawn=15.8ms total=16.8ms
+2026-11-16T16:48:26.051684Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b5857 (16.91 ms)
+2026-11-16T16:48:26.171256Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=shard_chatter pitch=1.050 vol=0.16 paused=false empty=false
+STREAM TIMING b1006124 evict: collect=0.8ms despawn=9.9ms total=10.7ms
+2026-11-16T16:48:26.192820Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6124 (10.75 ms)
+2026-11-16T16:48:26.200773Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6464 (7.92 ms)
+2026-11-16T16:48:26.324187Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6465 (7.39 ms)
+STREAM TIMING b1006458 evict: collect=2.0ms despawn=34.7ms total=36.7ms
+2026-11-16T16:48:26.361108Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_out b6458 (36.88 ms)
+2026-11-16T16:48:26.480779Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6445 (6.73 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:26.485948Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6469 (5.05 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:26.605303Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6461 (3.74 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:26.613542Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6459 (8.06 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:26.734954Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6471 (1.48 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:26.736970Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6468 (1.97 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:26.738307Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6467 (1.30 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:26.743773Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6458 (5.27 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:26.878000Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6466 (7.75 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:26.880031Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6465 (1.96 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:26.882222Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6464 (2.14 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.015775Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6446 (3.26 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:27.016768Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6463 (0.94 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.018728Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6462 (1.92 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.025342Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6457 (6.44 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:27.030420Z  INFO manhattan_viewer::neighborhood: DETAIL b6461: Tier 1 ready at 35.1 m
+2026-11-16T16:48:27.155106Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6452 (5.27 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.159968Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6456 (4.79 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.170959Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6432 (10.90 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:27.290420Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6479 (3.10 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.294903Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6454 (4.41 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.297796Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6477 (2.69 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:27.300264Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6474 (2.39 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:27.302728Z  INFO manhattan_viewer::neighborhood: DETAIL b6469: Tier 1 ready at 34.4 m
+2026-11-16T16:48:27.310046Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: re-entry b6460 journal 53.77 frozen=false
+2026-11-16T16:48:27.310088Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [storefront re-entry] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_storefront_return.png
+2026-11-16T16:48:27.310116Z  INFO destructibles_bevy::rewind: RESTORATION b1006460: volume 0.35 m3, rate 900.00 m3/s (explicit), height 58.8 m
+2026-11-16T16:48:27.426547Z  INFO destructibles_bevy::audio: AUDIO whoosh started rate=1.0x
+2026-11-16T16:48:27.442956Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6447 (5.56 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:27.445466Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6455 (2.44 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.448473Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6453 (2.95 ms) footprint PASS style=Some(ConcreteGrid)
+2026-11-16T16:48:27.452777Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6478 (4.01 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:27.454747Z  INFO manhattan_viewer::neighborhood: DETAIL b6445: Tier 1 ready at 18.5 m
+2026-11-16T16:48:27.546998Z  INFO destructibles_bevy::audio: AUDIO whoosh stopped
+2026-11-16T16:48:27.547046Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=electric_crackle pitch=1.072 vol=0.14 paused=false empty=false
+2026-11-16T16:48:27.547058Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=rewind_whoosh pitch=1.000 vol=0.18 paused=false empty=false
+2026-11-16T16:48:27.560830Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6451 (3.11 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.564321Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6475 (3.29 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:27.567122Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6472 (2.75 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.570250Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6473 (3.06 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.574166Z  INFO manhattan_viewer::neighborhood: DETAIL b6468: Tier 1 ready at 49.0 m
+2026-11-16T16:48:27.574663Z  INFO manhattan_viewer::neighborhood: DETAIL b6467: Tier 1 ready at 54.4 m
+2026-11-16T16:48:27.607858Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_storefront_return.png
+2026-11-16T16:48:27.695931Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6470 (2.71 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.700176Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6448 (4.15 ms) footprint PASS style=Some(GlassCurtainWall)
+2026-11-16T16:48:27.704991Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5859 (4.75 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.709246Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6438 (4.07 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:27.710069Z  INFO manhattan_viewer::neighborhood: DETAIL b6459: Tier 1 ready at 46.9 m
+2026-11-16T16:48:27.822552Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5857 (5.54 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:27.827405Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5866 (4.79 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.831193Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6437 (3.72 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:27.946800Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6429 (7.48 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T16:48:27.951572Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6430 (4.70 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:28.068508Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6433 (3.33 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:28.074396Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5867 (5.81 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:28.077339Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6124 (2.88 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T16:48:28.082104Z  INFO manhattan_viewer::neighborhood: DETAIL b6465: Tier 1 ready at 72.6 m
+2026-11-16T16:48:28.082623Z  INFO manhattan_viewer::neighborhood: DETAIL b6464: Tier 1 ready at 78.7 m
+2026-11-16T16:48:28.200316Z  INFO manhattan_viewer::neighborhood: DETAIL b6463: Tier 1 ready at 90.2 m
+2026-11-16T16:48:28.304526Z  INFO manhattan_viewer::neighborhood: DETAIL b6462: Tier 1 ready at 94.5 m
+2026-11-16T16:48:28.306798Z  INFO destructibles_bevy::rewind: RESTORATION finished
+PRE-EPILOGUE CHECK b1006460: PASS pre=a053b71db8d790ce pristine=a053b71db8d790ce regime=HOT
+EPILOGUE TRANSFORM b1006460: PASS
+PRISTINE RESET b1006460: regime=HOT pre=PASS post=PASS inventory=PASS regenerated=false 1.1ms NO-HITCH
+2026-11-16T16:48:28.397330Z  INFO manhattan_viewer::neighborhood: DETAIL b6446: Tier 1 ready at 86.4 m
+2026-11-16T16:48:28.623820Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [storefront restored] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_storefront_restored.png
+2026-11-16T16:48:28.623874Z  INFO manhattan_viewer::neighborhood: DAMAGE DEMO: b6460 restored, journal 0.00 at 1.4s minimap_fill=[255, 255, 255, 235] frozen=false swap_out_eligible=true
+2026-11-16T16:48:28.766128Z  INFO manhattan_viewer::neighborhood: DETAIL b6466: Tier 1 ready at 62.4 m
+2026-11-16T16:48:28.802626Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration18_storefront_restored.png
+2026-11-16T16:48:28.955749Z  INFO manhattan_viewer::neighborhood: DETAIL b6452: Tier 1 ready at 104.7 m
+2026-11-16T16:48:29.028378Z  INFO manhattan_viewer::neighborhood: DETAIL b6457: Tier 1 ready at 97.8 m
+2026-11-16T16:48:29.186737Z  INFO manhattan_viewer::neighborhood: DETAIL b6456: Tier 1 ready at 108.6 m
+2026-11-16T16:48:29.404473Z  INFO manhattan_viewer::neighborhood: DETAIL b6454: Tier 1 ready at 112.3 m
+2026-11-16T16:48:29.546447Z  INFO manhattan_viewer::neighborhood: DETAIL b6479: Tier 1 ready at 111.4 m
+2026-11-16T16:48:29.761992Z  INFO manhattan_viewer::neighborhood: DETAIL b6458: Tier 1 ready at 59.0 m
+2026-11-16T16:48:29.841243Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD GAUNTLET COMPLETE
+
+# destructibles damage journal — 170 command(s)
+0000 @  10.85s | collapse   | b1006127 | Shudder(b1006127 seed=4139454907 E=22.2 MJ)
+0001 @  10.85s | collapse   | b1006127 | Alarm(b1006127 active=true floor=0 seed=4139454907)
+0002 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c5)
+      volume 0.0442 m3
+0003 @  10.85s | collapse   | b1006127 | PowerLoss(b1006127 seed=2512201609)
+0004 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c6)
+      volume 0.0442 m3
+0005 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c7)
+      volume 0.0442 m3
+0006 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c8)
+      volume 0.0442 m3
+0007 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c9)
+      volume 0.0442 m3
+0008 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c10)
+      volume 0.0442 m3
+0009 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c11)
+      volume 0.0442 m3
+0010 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c5)
+      volume 0.0442 m3
+0011 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c6)
+      volume 0.0442 m3
+0012 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c7)
+      volume 0.0442 m3
+0013 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c8)
+      volume 0.0442 m3
+0014 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c9)
+      volume 0.0442 m3
+0015 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c10)
+      volume 0.0442 m3
+0016 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c11)
+      volume 0.0442 m3
+0017 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c5)
+      volume 0.0442 m3
+0018 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c6)
+      volume 0.0442 m3
+0019 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c7)
+      volume 0.0442 m3
+0020 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c8)
+      volume 0.0442 m3
+0021 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c9)
+      volume 0.0442 m3
+0022 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c10)
+      volume 0.0442 m3
+0023 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c6)
+      volume 0.0442 m3
+0024 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c7)
+      volume 0.0442 m3
+0025 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c8)
+      volume 0.0442 m3
+0026 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c9)
+      volume 0.0442 m3
+0027 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c10)
+      volume 0.0442 m3
+0028 @  10.85s | pane       | b1006127 | ShatterPane(b1006127 f3·l4·c8)
+      volume 0.0442 m3
+0029 @  29.88s | collapse   | b1006127 | Shudder(b1006127 seed=2436375847 E=22.2 MJ)
+0030 @  29.88s | collapse   | b1006127 | Alarm(b1006127 active=true floor=0 seed=2436375847)
+0031 @  29.88s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c5)
+      volume 0.0442 m3
+0032 @  29.88s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c6)
+      volume 0.0442 m3
+0033 @  29.88s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c7)
+      volume 0.0442 m3
+0034 @  29.88s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c8)
+      volume 0.0442 m3
+0035 @  29.88s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c9)
+      volume 0.0442 m3
+0036 @  29.88s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c10)
+      volume 0.0442 m3
+0037 @  29.88s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c11)
+      volume 0.0442 m3
+0038 @  29.88s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c5)
+      volume 0.0442 m3
+0039 @  29.88s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c6)
+      volume 0.0442 m3
+0040 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c7)
+      volume 0.0442 m3
+0041 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c8)
+      volume 0.0442 m3
+0042 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c9)
+      volume 0.0442 m3
+0043 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c10)
+      volume 0.0442 m3
+0044 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c11)
+      volume 0.0442 m3
+0045 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c5)
+      volume 0.0442 m3
+0046 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c6)
+      volume 0.0442 m3
+0047 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c7)
+      volume 0.0442 m3
+0048 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c8)
+      volume 0.0442 m3
+0049 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c9)
+      volume 0.0442 m3
+0050 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c10)
+      volume 0.0442 m3
+0051 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c6)
+      volume 0.0442 m3
+0052 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c7)
+      volume 0.0442 m3
+0053 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c8)
+      volume 0.0442 m3
+0054 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c9)
+      volume 0.0442 m3
+0055 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c10)
+      volume 0.0442 m3
+0056 @  29.96s | pane       | b1006127 | ShatterPane(b1006127 f3·l4·c8)
+      volume 0.0442 m3
+0057 @  39.95s | collapse   | b1006127 | Shudder(b1006127 seed=91883973 E=22.2 MJ)
+0058 @  39.95s | collapse   | b1006127 | Alarm(b1006127 active=true floor=0 seed=91883973)
+0059 @  39.95s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c5)
+      volume 0.0442 m3
+0060 @  39.95s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c6)
+      volume 0.0442 m3
+0061 @  39.95s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c7)
+      volume 0.0442 m3
+0062 @  39.95s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c8)
+      volume 0.0442 m3
+0063 @  39.95s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c9)
+      volume 0.0442 m3
+0064 @  39.95s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c10)
+      volume 0.0442 m3
+0065 @  39.95s | pane       | b1006127 | ShatterPane(b1006127 f3·l0·c11)
+      volume 0.0442 m3
+0066 @  39.95s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c5)
+      volume 0.0442 m3
+0067 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c6)
+      volume 0.0442 m3
+0068 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c7)
+      volume 0.0442 m3
+0069 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c8)
+      volume 0.0442 m3
+0070 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c9)
+      volume 0.0442 m3
+0071 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c10)
+      volume 0.0442 m3
+0072 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l1·c11)
+      volume 0.0442 m3
+0073 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c5)
+      volume 0.0442 m3
+0074 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c6)
+      volume 0.0442 m3
+0075 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c7)
+      volume 0.0442 m3
+0076 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c8)
+      volume 0.0442 m3
+0077 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c9)
+      volume 0.0442 m3
+0078 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l2·c10)
+      volume 0.0442 m3
+0079 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c6)
+      volume 0.0442 m3
+0080 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c7)
+      volume 0.0442 m3
+0081 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c8)
+      volume 0.0442 m3
+0082 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c9)
+      volume 0.0442 m3
+0083 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l3·c10)
+      volume 0.0442 m3
+0084 @  40.06s | pane       | b1006127 | ShatterPane(b1006127 f3·l4·c8)
+      volume 0.0442 m3
+0085 @  44.78s | collapse   | b1006857 | Shudder(b1006857 seed=1008520668 E=22.2 MJ)
+0086 @  44.78s | collapse   | b1006857 | Alarm(b1006857 active=true floor=0 seed=1008520668)
+0087 @  44.78s | shard      | b1006857 | BreachCell(b1006857 f1·l0·x1 r=8.4 partial=true seed=2720773221 E=22.2 MJ)
+      volume 4.3030 m3
+0088 @  44.78s | structural | b1006857 | FailNode(b1006857 facade f1·l0·x1 seed=2720773221)
+0089 @  44.78s | collapse   | b1006857 | PowerLoss(b1006857 seed=1019685449)
+0090 @  44.78s | shard      | b1006857 | BreachCell(b1006857 f1·l0·x2 r=8.4 partial=false seed=7487150 E=22.2 MJ)
+      volume 4.3030 m3
+0091 @  44.78s | structural | b1006857 | FailNode(b1006857 facade f1·l0·x2 seed=7487150)
+0092 @  44.78s | shard      | b1006857 | BreachCell(b1006857 f1·l0·x3 r=8.4 partial=true seed=3870990583 E=22.2 MJ)
+      volume 1.9003 m3
+0093 @  44.78s | structural | b1006857 | FailNode(b1006857 facade f1·l0·x3 seed=3870990583)
+0094 @  44.78s | shard      | b1006857 | BreachCell(b1006857 f1·l1·x2 r=8.4 partial=false seed=7487150 E=22.2 MJ)
+      volume 4.3030 m3
+0095 @  44.78s | structural | b1006857 | FailNode(b1006857 facade f1·l1·x2 seed=7487150)
+0096 @  44.78s | shard      | b1006857 | BreachCell(b1006857 f1·l1·x3 r=8.4 partial=true seed=3870990583 E=22.2 MJ)
+      volume 1.9003 m3
+0097 @  44.78s | structural | b1006857 | FailNode(b1006857 facade f1·l1·x3 seed=3870990583)
+0098 @  44.78s | shard      | b1006857 | BreachCell(b1006857 f1·l2·x2 r=8.4 partial=true seed=7487150 E=22.2 MJ)
+      volume 4.3030 m3
+0099 @  44.78s | structural | b1006857 | FailNode(b1006857 facade f1·l2·x2 seed=7487150)
+0100 @  44.78s | pane       | b1006857 | ShatterPane(b1006857 f1·l0·c1)
+      volume 0.0172 m3
+0101 @  44.78s | pane       | b1006857 | ShatterPane(b1006857 f1·l0·c2)
+      volume 0.0172 m3
+0102 @  44.78s | pane       | b1006857 | ShatterPane(b1006857 f1·l0·c3)
+      volume 0.0172 m3
+0103 @  44.78s | pane       | b1006857 | ShatterPane(b1006857 f1·l0·c4)
+      volume 0.0172 m3
+0104 @  44.78s | pane       | b1006857 | ShatterPane(b1006857 f1·l0·c5)
+      volume 0.0172 m3
+0105 @  44.78s | pane       | b1006857 | ShatterPane(b1006857 f1·l0·c6)
+      volume 0.0172 m3
+0106 @  44.78s | pane       | b1006857 | ShatterPane(b1006857 f1·l1·c1)
+      volume 0.0172 m3
+0107 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l1·c2)
+      volume 0.0172 m3
+0108 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l1·c3)
+      volume 0.0172 m3
+0109 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l1·c4)
+      volume 0.0172 m3
+0110 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l1·c5)
+      volume 0.0172 m3
+0111 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l1·c6)
+      volume 0.0172 m3
+0112 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l2·c1)
+      volume 0.0172 m3
+0113 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l2·c2)
+      volume 0.0172 m3
+0114 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l2·c3)
+      volume 0.0172 m3
+0115 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l2·c4)
+      volume 0.0172 m3
+0116 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l2·c5)
+      volume 0.0172 m3
+0117 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l2·c6)
+      volume 0.0172 m3
+0118 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l3·c2)
+      volume 0.0172 m3
+0119 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l3·c3)
+      volume 0.0172 m3
+0120 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l3·c4)
+      volume 0.0172 m3
+0121 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l3·c5)
+      volume 0.0172 m3
+0122 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l3·c6)
+      volume 0.0172 m3
+0123 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l4·c2)
+      volume 0.0172 m3
+0124 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l4·c3)
+      volume 0.0172 m3
+0125 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l4·c4)
+      volume 0.0172 m3
+0126 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l4·c5)
+      volume 0.0172 m3
+0127 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l4·c6)
+      volume 0.0172 m3
+0128 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l5·c3)
+      volume 0.0172 m3
+0129 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l5·c4)
+      volume 0.0172 m3
+0130 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l5·c5)
+      volume 0.0172 m3
+0131 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f1·l5·c6)
+      volume 0.0172 m3
+0132 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f2·l0·c0)
+      volume 0.0172 m3
+0133 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f2·l0·c1)
+      volume 0.0172 m3
+0134 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f2·l1·c0)
+      volume 0.0172 m3
+0135 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f2·l1·c1)
+      volume 0.0172 m3
+0136 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f2·l2·c0)
+      volume 0.0172 m3
+0137 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f2·l2·c1)
+      volume 0.0172 m3
+0138 @  44.86s | pane       | b1006857 | ShatterPane(b1006857 f2·l3·c0)
+      volume 0.0172 m3
+0139 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f2·l3·c1)
+      volume 0.0172 m3
+0140 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f2·l4·c0)
+      volume 0.0172 m3
+0141 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f2·l4·c1)
+      volume 0.0172 m3
+0142 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l0·c0)
+      volume 0.0172 m3
+0143 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l0·c1)
+      volume 0.0172 m3
+0144 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l0·c2)
+      volume 0.0172 m3
+0145 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l0·c3)
+      volume 0.0172 m3
+0146 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l0·c4)
+      volume 0.0172 m3
+0147 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l1·c0)
+      volume 0.0172 m3
+0148 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l1·c1)
+      volume 0.0172 m3
+0149 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l1·c2)
+      volume 0.0172 m3
+0150 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l1·c3)
+      volume 0.0172 m3
+0151 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l1·c4)
+      volume 0.0172 m3
+0152 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l2·c0)
+      volume 0.0172 m3
+0153 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l2·c1)
+      volume 0.0172 m3
+0154 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l2·c2)
+      volume 0.0172 m3
+0155 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l2·c3)
+      volume 0.0172 m3
+0156 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l2·c4)
+      volume 0.0172 m3
+0157 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l3·c0)
+      volume 0.0172 m3
+0158 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l3·c1)
+      volume 0.0172 m3
+0159 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l3·c2)
+      volume 0.0172 m3
+0160 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l3·c3)
+      volume 0.0172 m3
+0161 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l3·c4)
+      volume 0.0172 m3
+0162 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l4·c0)
+      volume 0.0172 m3
+0163 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l4·c1)
+      volume 0.0172 m3
+0164 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l4·c2)
+      volume 0.0172 m3
+0165 @  45.00s | pane       | b1006857 | ShatterPane(b1006857 f3·l4·c3)
+      volume 0.0172 m3
+0166 @  45.33s | shard      | b1006857 | BreachCell(b1006857 f1·l1·x1 r=2.2 partial=false seed=1006856 E=0.0 MJ)
+      volume 4.3030 m3
+0167 @  45.33s | structural | b1006857 | FailNode(b1006857 facade f1·l1·x1 seed=1006856)
+0168 @  45.33s | shard      | b1006857 | BreachCell(b1006857 f1·l2·x1 r=2.2 partial=false seed=1006859 E=0.0 MJ)
+      volume 4.3030 m3
+0169 @  45.33s | structural | b1006857 | FailNode(b1006857 facade f1·l2·x1 seed=1006859)
+

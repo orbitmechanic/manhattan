@@ -202,6 +202,7 @@ pub struct Neighborhood {
     pub behind_max: f32,
     pub last_zone_ms: f32,
     pub footprint_failures: u32,
+    pub height_failures: u32,
     pending_damage: Vec<PendingDamage>,
     pub dressing_panels: usize,
     pub dressing_plates: usize,
@@ -282,6 +283,7 @@ pub struct NeighborhoodDemo {
     perf_worst: f32,
     perf_sum: f32,
     perf_frames: u32,
+    perf_envelope_ms: f32,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -531,10 +533,23 @@ pub fn spec_for(meta: &BuildingMeta) -> Result<BuildingSpec, String> {
     let floor_height = (height / floor_count as f32).clamp(1.8, 12.0);
     let style = style_for(meta);
     let mut windows = style.windows();
-    // Fewer, wider bays than the standalone presets: the neighbourhood LOD
-    // keeps the silhouette and the material read without the pane count.
-    windows.column_spacing = windows.column_spacing.max(4.2);
-    windows.width = windows.width.min(1.6);
+    if style == FacadeStyle::GlassCurtainWall {
+        // Invert the old LOD shortcut: a curtain wall is mostly glass. Panes
+        // grow with height and the mullion stays a thin steel line, so a tall
+        // glass tower never reads as brick with pinholes.
+        let pane_width = 1.35 + (height / 300.0).min(0.45);
+        windows.width = pane_width;
+        windows.column_spacing = pane_width + 0.10;
+        windows.height = (floor_height - 0.08).max(1.4);
+        windows.sill_height = 0.03;
+        windows.edge_margin = 0.05;
+        windows.recess = 0.03;
+    } else {
+        // Fewer, wider bays than the standalone presets: the neighbourhood LOD
+        // keeps the silhouette and the material read without the pane count.
+        windows.column_spacing = windows.column_spacing.max(4.2);
+        windows.width = windows.width.min(1.6);
+    }
     let core = core_for_style(style, &footprint, meta.id as u32);
     let spec = BuildingSpec {
         footprint,
@@ -552,6 +567,13 @@ pub fn spec_for(meta: &BuildingMeta) -> Result<BuildingSpec, String> {
 /// Footprint gate: every record vertex must have a generated vertex within
 /// `FOOTPRINT_TOL_M`, the absolute area must agree within 0.1 %, and the
 /// generated height must match the record within `HEIGHT_TOL_M`.
+/// Height twin of the footprint acceptance check: a swap whose generated
+/// height drifts from the map record would leave map antennas and roof
+/// furniture floating (or bury them), so reject it and keep plain geometry.
+pub fn height_matches(meta: &BuildingMeta, layout: &destructibles_core::BuildingLayout) -> bool {
+    (layout.height - meta.height_m).abs() <= HEIGHT_TOL_M
+}
+
 pub fn footprint_matches(
     meta: &BuildingMeta,
     layout: &destructibles_core::BuildingLayout,
@@ -647,6 +669,45 @@ fn sync_host_camera(
     scene.auto = false;
 }
 
+fn visibility_class(ahead: bool, visible: bool) -> u8 {
+    match (ahead, visible) {
+        (true, true) => 0,
+        (true, false) | (false, true) => 1,
+        (false, false) => 2,
+    }
+}
+
+fn los_blocked(index: &BuildingIndex, from: Vec3, target: usize) -> bool {
+    let Some(meta) = index.buildings.get(target) else {
+        return false;
+    };
+    let to = Vec3::new(meta.centroid[0], meta.height_m * 0.5, meta.centroid[1]);
+    let delta = to - from;
+    let distance = delta.length();
+    if distance < 1.0 {
+        return false;
+    }
+    let direction = delta / distance;
+    let mid = Vec2::new((from.x + to.x) * 0.5, (from.z + to.z) * 0.5);
+    for candidate in index.candidates(mid, distance * 0.5 + 40.0) {
+        let Some(other) = index.buildings.get(candidate) else {
+            continue;
+        };
+        if other.id == target {
+            continue;
+        }
+        let (min, max) = meta_bounds(other, Vec3::new(other.centroid[0], 0.0, other.centroid[1]));
+        if let Some(t) = ray_aabb(from, direction, min, max)
+            && t > 2.0
+            && t < distance - 2.0
+        {
+            return true;
+        }
+    }
+    false
+}
+
+#[allow(clippy::too_many_arguments)]
 fn update_zone(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
@@ -654,6 +715,8 @@ fn update_zone(
     mut neighborhood: ResMut<Neighborhood>,
     config: Res<NeighborhoodConfig>,
     journal: Res<DamageJournal>,
+    motion: Res<crate::motion::MotionState>,
+    clock: Res<SimClock>,
 ) {
     let started = Instant::now();
     if !neighborhood.live.is_empty() {
@@ -668,6 +731,11 @@ fn update_zone(
         .max(config.ahead_half_width)
         + index.cell;
     let candidates = index.candidates(center, radius);
+    // Candidates are always rebuilt from the camera's CURRENT position; the
+    // queue below is replaced, never appended to, so a stale entry behind the
+    // camera can never be instantiated and then collected.
+    let mut desired_now: Vec<usize> = Vec::new();
+    let idle = motion.speed < 3.0 || !clock.playing;
     let mut seen = BTreeSet::new();
     for candidate in candidates {
         let Some(meta) = index.buildings.get(candidate) else {
@@ -686,14 +754,9 @@ fn update_zone(
         let damaged = live && journal.0.head_for(NEIGHBORHOOD_ID_BASE + id as u32) > 0.0;
         let desired = in_zone(distance, along, lateral, live, &config)
             || (damaged && config.damaged_persists);
-        if desired
-            && !live
-            && !neighborhood.queued_in.contains(&id)
-            && !neighborhood.failed.contains(&id)
-        {
-            neighborhood.pending_in.push_back(id);
-            neighborhood.queued_in.insert(id);
-        } else if !desired && live && !neighborhood.queued_out.contains(&id) {
+        if desired && !live && !neighborhood.failed.contains(&id) {
+            desired_now.push(id);
+        } else if !desired && live && idle && !neighborhood.queued_out.contains(&id) {
             neighborhood.pending_out.push_back(id);
             neighborhood.queued_out.insert(id);
         }
@@ -717,7 +780,8 @@ fn update_zone(
         // A damaged building persists in its damage-carrying state; zone exit
         // freezes it instead of demoting it to the plain map.
         let persists = damaged && config.damaged_persists;
-        if !in_zone(distance, along, lateral, true, &config)
+        if idle
+            && !in_zone(distance, along, lateral, true, &config)
             && !persists
             && !neighborhood.queued_out.contains(&id)
         {
@@ -725,6 +789,38 @@ fn update_zone(
             neighborhood.queued_out.insert(id);
         }
         neighborhood.behind_max = neighborhood.behind_max.max((-along).max(0.0));
+    }
+    if !idle {
+        // GC is idle-time work: while moving, queued exits are dropped rather
+        // than mass-despawned behind the camera.
+        neighborhood.pending_out.clear();
+        neighborhood.queued_out.clear();
+    }
+    // Line-of-sight weighted priority: visible ahead > visible/occluded ahead
+    // > behind. Distance is the tie-break.
+    let camera_pos = camera.translation;
+    let mut ranked: Vec<(u8, f32, usize)> = desired_now
+        .into_iter()
+        .map(|id| {
+            let meta = index.buildings.get(id);
+            let point = meta
+                .map(|meta| Vec2::new(meta.centroid[0], meta.centroid[1]))
+                .unwrap_or(center);
+            let delta = point - center;
+            let distance = delta.length();
+            let along = delta.dot(forward);
+            let ahead =
+                along >= 0.0 && (delta - forward * along).length() <= config.ahead_half_width * 1.5;
+            let visible = !los_blocked(&index, camera_pos, id);
+            (visibility_class(ahead, visible), distance, id)
+        })
+        .collect();
+    ranked.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.total_cmp(&b.1)));
+    neighborhood.pending_in.clear();
+    neighborhood.queued_in.clear();
+    for (_, _, id) in ranked {
+        neighborhood.pending_in.push_back(id);
+        neighborhood.queued_in.insert(id);
     }
     neighborhood.pending_peak = neighborhood.pending_peak.max(neighborhood.pending_in.len());
     neighborhood.last_zone_ms = started.elapsed().as_secs_f32() * 1000.0;
@@ -879,11 +975,13 @@ fn detail_tick(world: &mut World) {
             .partial_cmp(&detail_priority(b.4, b.3 > 0.0, b.2))
             .unwrap_or(std::cmp::Ordering::Equal)
     });
+    let catch_up = !world.resource::<SimClock>().playing;
+    let detail_budget = if catch_up { 8.0 } else { 4.0 };
     let started = Instant::now();
     let mut tier1 = 0usize;
     let mut tier2 = 0usize;
     for (id, _meta, distance, _along, _detail) in items {
-        if started.elapsed().as_secs_f32() * 1000.0 >= 4.0 {
+        if started.elapsed().as_secs_f32() * 1000.0 >= detail_budget {
             break;
         }
         let did = NEIGHBORHOOD_ID_BASE + id as u32;
@@ -1524,9 +1622,7 @@ fn spawn_storefront_parity(
             return 0;
         };
         let dressing = &state.assignments[index];
-        let Some(material) = state.materials.get(&dressing.category).cloned() else {
-            return 0;
-        };
+        let material = dressing.material.clone();
         (dressing.panels.clone(), material)
     };
     let mut groups: BTreeMap<u32, Vec<([[f32; 3]; 4], [f32; 3], [[f32; 2]; 4])>> = BTreeMap::new();
@@ -1702,14 +1798,21 @@ fn sync_dressing_damage(world: &mut World) {
 #[allow(clippy::drop_non_drop)]
 fn process_swaps(world: &mut World) {
     let started = Instant::now();
+    // A frozen game clock is extra budget: background processing keeps
+    // running and is allowed to catch up twice as fast.
+    let catch_up = !world.resource::<SimClock>().playing;
+    let scale = if catch_up { 2.0 } else { 1.0 };
     let budget = world
         .resource::<NeighborhoodConfig>()
         .swap_budget_ms
-        .max(0.5);
-    let max_swaps = world
+        .max(0.5)
+        * scale;
+    let max_swaps = ((world
         .resource::<NeighborhoodConfig>()
         .max_swaps_per_frame
-        .max(1);
+        .max(1) as f32)
+        * scale)
+        .round() as usize;
     let mut swaps = 0usize;
     let mut frame_swap_ms = 0.0f32;
     while swaps < max_swaps && started.elapsed().as_secs_f32() * 1000.0 < budget {
@@ -1792,14 +1895,22 @@ fn process_swaps(world: &mut World) {
             .resource::<Buildings>()
             .get(handle.building)
             .map(|record| record.layout.clone());
-        let verified = layout
+        let footprint_ok = layout
             .as_ref()
             .is_some_and(|layout| footprint_matches(&meta, layout, origin));
-        if !verified {
+        let height_ok = layout
+            .as_ref()
+            .is_some_and(|layout| height_matches(&meta, layout));
+        if !footprint_ok || !height_ok {
             let _ = swap_out(world, handle);
-            world.resource_mut::<Neighborhood>().footprint_failures += 1;
+            if !height_ok {
+                world.resource_mut::<Neighborhood>().height_failures += 1;
+            }
+            if !footprint_ok {
+                world.resource_mut::<Neighborhood>().footprint_failures += 1;
+            }
             world.resource_mut::<Neighborhood>().failed.insert(id);
-            info!("NEIGHBORHOOD footprint FAIL b{id}; returned to plain map");
+            info!("NEIGHBORHOOD footprint/height FAIL b{id}; returned to plain map");
             continue;
         }
         if let Some(mut streaming) = world.get_resource_mut::<Streaming>() {
@@ -3415,9 +3526,16 @@ fn run_neighborhood_demo(world: &mut World) {
                 demo.perf_worst = 0.0;
                 demo.perf_sum = 0.0;
                 demo.perf_frames = 0;
+                demo.perf_envelope_ms = 0.0;
                 return;
             }
             let elapsed = now as f64 - world.resource::<NeighborhoodDemo>().perf_start;
+            if world.resource::<NeighborhoodDemo>().perf_envelope_ms == 0.0
+                && world.resource::<Neighborhood>().live.len() >= 8
+            {
+                world.resource_mut::<NeighborhoodDemo>().perf_envelope_ms =
+                    (elapsed * 1000.0) as f32;
+            }
             if elapsed < 4.0 {
                 // settle the zone at the fixed pose before measuring
                 return;
@@ -3487,11 +3605,12 @@ fn run_neighborhood_demo(world: &mut World) {
             };
             let city = world.resource::<Neighborhood>();
             info!(
-                "PERF PROBE: frames {} avg {:.2} ms worst {:.2} ms vehicles {vehicles} pedestrians {pedestrians} ad_meshes {ad_meshes} mesh_entities {all_meshes} hidden_meshes {hidden_meshes} visible_meshes {visible} interior_meshes {interior_total} interior_hidden {interior_hidden} live {} frozen {}",
+                "PERF PROBE: frames {} avg {:.2} ms worst {:.2} ms teleport_envelope {:.0} ms vehicles {vehicles} pedestrians {pedestrians} ad_meshes {ad_meshes} mesh_entities {all_meshes} hidden_meshes {hidden_meshes} visible_meshes {visible} interior_meshes {interior_total} interior_hidden {interior_hidden} live {} frozen {}",
                 world.resource::<NeighborhoodDemo>().perf_frames,
                 world.resource::<NeighborhoodDemo>().perf_sum
                     / world.resource::<NeighborhoodDemo>().perf_frames.max(1) as f32,
                 world.resource::<NeighborhoodDemo>().perf_worst,
+                world.resource::<NeighborhoodDemo>().perf_envelope_ms,
                 city.live.len(),
                 city.frozen_count
             );
@@ -4034,6 +4153,23 @@ mod tests {
         assert!(!covered_by(&storefront, &[(1, 0)]));
         // Restoration empties the damaged-face list, so both come back.
         assert!(!covered_by(&storefront, &[]));
+    }
+
+    #[test]
+    fn swap_visibility_classes_are_los_weighted() {
+        assert!(visibility_class(true, true) < visibility_class(true, false));
+        assert_eq!(visibility_class(true, false), visibility_class(false, true));
+        assert!(visibility_class(false, true) < visibility_class(false, false));
+    }
+
+    #[test]
+    fn height_mismatch_is_rejected_like_a_footprint_mismatch() {
+        let meta = sample();
+        let spec = spec_for(&meta).expect("spec");
+        let mut layout = destructibles_core::BuildingLayout::generate(spec).expect("layout");
+        assert!(height_matches(&meta, &layout));
+        layout.height += 0.2;
+        assert!(!height_matches(&meta, &layout));
     }
 
     #[test]
