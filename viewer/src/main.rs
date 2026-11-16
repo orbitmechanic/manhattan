@@ -43,7 +43,8 @@ use manhattan_viewer::{
     collision::{CAMERA_RADIUS, CollisionGrid},
     detail::{DetailCull, update_detail_culling},
     details::{
-        SignMaterials, TreeData, spawn_antennas, spawn_signs, spawn_trees, update_sign_blink,
+        RoofFurniture, SignMaterials, TreeData, spawn_antennas, spawn_signs, spawn_trees,
+        update_sign_blink,
     },
     environment::{
         Environment, fog_cull_distance, setup_lighting, spawn_fog_banks, update_environment,
@@ -309,6 +310,7 @@ fn main() {
         .insert_resource(StorefrontState::default())
         .init_resource::<TreeData>()
         .init_resource::<SignMaterials>()
+        .init_resource::<RoofFurniture>()
         .init_resource::<Crowd>()
         .init_resource::<TrafficLanes>()
         .init_resource::<Traffic>()

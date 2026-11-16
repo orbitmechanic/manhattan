@@ -35,7 +35,7 @@ use crate::camera::FlyCamera;
 use crate::city_material::{CityMaterial, CityMaterialSetup};
 use crate::clock::SimClock;
 use crate::detail::HiddenByLive;
-use crate::details::SignMaterials;
+use crate::details::{RoofFurniture, SignMaterials};
 use crate::minimap::LiveFootprints;
 use crate::storefront::{BuildingMeta, StorefrontData, StorefrontState};
 
@@ -274,6 +274,12 @@ pub struct NeighborhoodDemo {
     wave_mid_captured: bool,
     wave_first_ms: f32,
     no_capture: bool,
+    roof_target: Option<usize>,
+    roof_view: (Vec3, Vec3),
+    perf_start: f64,
+    perf_worst: f32,
+    perf_sum: f32,
+    perf_frames: u32,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -299,6 +305,13 @@ enum DemoStage {
     WaveFire,
     WaveWatch,
     WavePlume,
+    RoofBoot,
+    RoofLive,
+    RoofRestore,
+    RoofPlain,
+    RoofStreet,
+    RoofAerial,
+    PerfProbe,
     ExitWait,
 }
 
@@ -362,13 +375,19 @@ impl NeighborhoodDemo {
             .and_then(|value| value.parse::<usize>().ok())
             .unwrap_or(10)
             .clamp(1, 64);
-        let stage = if wave_demo {
+        let roofs = std::env::var_os("MANHATTAN_ROOFS").is_some();
+        let perf_probe = std::env::var_os("MANHATTAN_PERF_PROBE").is_some();
+        let stage = if perf_probe {
+            DemoStage::PerfProbe
+        } else if roofs {
+            DemoStage::RoofBoot
+        } else if wave_demo {
             DemoStage::WaveBoot
         } else {
             DemoStage::Boot
         };
         Self {
-            active: active || wave_demo,
+            active: active || wave_demo || roofs || perf_probe,
             capture_dir,
             damage: std::env::var_os("MANHATTAN_DAMAGE").is_some(),
             wave_size,
@@ -1311,6 +1330,9 @@ fn set_plain_hidden(world: &mut World, id: usize, hidden: bool) {
         entities.push(entity);
     }
     if let Some(list) = world.resource::<SignMaterials>().entities.get(&id) {
+        entities.extend(list.iter().copied());
+    }
+    if let Some(list) = world.resource::<RoofFurniture>().entities.get(&id) {
         entities.extend(list.iter().copied());
     }
     for entity in entities {
@@ -3077,6 +3099,334 @@ fn run_neighborhood_demo(world: &mut World) {
             let mut demo = world.resource_mut::<NeighborhoodDemo>();
             demo.stage = DemoStage::ExitWait;
             demo.stage_at = now + 2.0;
+        }
+        DemoStage::RoofBoot => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.0
+                || !world.resource::<CityMaterialSetup>().done
+            {
+                return;
+            }
+            let (cell, _) = world.resource::<BuildingIndex>().densest_cell();
+            let center = Vec3::new(
+                (cell.0 as f32 + 0.5) * 100.0,
+                0.0,
+                (cell.1 as f32 + 0.5) * 100.0,
+            );
+            set_camera(
+                world,
+                center + Vec3::new(0.0, 150.0, 80.0),
+                Vec3::NEG_Y,
+                20.0,
+            );
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.wave_center = center;
+                demo.stage = DemoStage::RoofLive;
+                demo.stage_at = now;
+            }
+            info!("ROOF DEMO: center {center:?}");
+        }
+        DemoStage::RoofLive => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 3.0 {
+                return;
+            }
+            let center = world.resource::<NeighborhoodDemo>().wave_center;
+            let index = world.resource::<BuildingIndex>();
+            let tallest = world
+                .resource::<Neighborhood>()
+                .live
+                .keys()
+                .filter_map(|id| {
+                    index
+                        .buildings
+                        .get(*id)
+                        .map(|meta| (meta.height_m, *id, meta))
+                })
+                .filter(|(_, _, meta)| {
+                    Vec2::new(meta.centroid[0] - center.x, meta.centroid[1] - center.z).length()
+                        < 320.0
+                })
+                .max_by(|a, b| a.0.total_cmp(&b.0));
+            let Some((height, id, meta)) = tallest else {
+                world.resource_mut::<NeighborhoodDemo>().stage = DemoStage::ExitWait;
+                return;
+            };
+            let origin = Vec3::new(meta.centroid[0], 0.0, meta.centroid[1]);
+            let radius = meta
+                .perimeter
+                .iter()
+                .map(|point| {
+                    Vec2::new(point[0] - meta.centroid[0], point[1] - meta.centroid[1]).length()
+                })
+                .fold(6.0f32, f32::max);
+            let position =
+                origin + Vec3::new(radius * 1.15, height + radius * 0.75 + 6.0, radius * 1.15);
+            let look = origin + Vec3::Y * (height + 0.5);
+            set_camera(world, position, look - position, 8.0);
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration20_roof_live.png");
+            if !world.resource::<NeighborhoodDemo>().no_capture {
+                screenshot(world, &path, "live roof");
+            }
+            info!("ROOF DEMO: live b{id} height {height:.1} m");
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.roof_target = Some(id);
+                demo.roof_view = (position, look - position);
+                demo.stage = DemoStage::RoofRestore;
+                demo.stage_at = now;
+            }
+            let did = NEIGHBORHOOD_ID_BASE + id as u32;
+            queue_damage(
+                world,
+                id,
+                DamagePreset::CarBomb,
+                origin + Vec3::new(0.0, 2.2, radius * 0.8),
+            );
+            let _ = did;
+        }
+        DemoStage::RoofRestore => {
+            let Some(id) = world.resource::<NeighborhoodDemo>().roof_target else {
+                return;
+            };
+            let did = NEIGHBORHOOD_ID_BASE + id as u32;
+            let head = world.resource::<DamageJournal>().0.head_for(did);
+            if head > 0.0
+                && !world
+                    .resource::<destructibles_bevy::rewind::RewindState>()
+                    .is_restoring(did)
+                && now - world.resource::<NeighborhoodDemo>().stage_at > 0.8
+            {
+                destructibles_bevy::rewind::set_restoration_rate(world, did, 900.0);
+                begin_restoration(world, &[did]);
+            }
+            if head > 0.0 {
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.5 {
+                return;
+            }
+            let (position, direction) = world.resource::<NeighborhoodDemo>().roof_view;
+            set_camera(world, position, direction, 8.0);
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration20_roof_restored.png");
+            if !world.resource::<NeighborhoodDemo>().no_capture {
+                screenshot(world, &path, "restored roof");
+            }
+            info!("ROOF DEMO: restored b{id}");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::RoofPlain;
+            demo.stage_at = now;
+        }
+        DemoStage::RoofPlain => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.0 {
+                return;
+            }
+            let center = world.resource::<NeighborhoodDemo>().wave_center;
+            let live: BTreeSet<usize> = world
+                .resource::<Neighborhood>()
+                .live
+                .keys()
+                .copied()
+                .collect();
+            let candidate = world
+                .resource::<BuildingIndex>()
+                .buildings
+                .iter()
+                .filter(|meta| !live.contains(&meta.id) && meta.height_m > 18.0)
+                .map(|meta| {
+                    let distance =
+                        Vec2::new(meta.centroid[0] - center.x, meta.centroid[1] - center.z)
+                            .length();
+                    (distance, meta)
+                })
+                .filter(|(distance, _)| (500.0..1_600.0).contains(distance))
+                .map(|(distance, meta)| (distance, meta.clone()))
+                .min_by(|a, b| a.0.total_cmp(&b.0));
+            let Some((_distance, meta)) = candidate else {
+                world.resource_mut::<NeighborhoodDemo>().stage = DemoStage::RoofAerial;
+                world.resource_mut::<NeighborhoodDemo>().stage_at = now;
+                return;
+            };
+            let origin = Vec3::new(meta.centroid[0], 0.0, meta.centroid[1]);
+            let radius = meta
+                .perimeter
+                .iter()
+                .map(|point| {
+                    Vec2::new(point[0] - meta.centroid[0], point[1] - meta.centroid[1]).length()
+                })
+                .fold(6.0f32, f32::max);
+            let position = origin
+                + Vec3::new(
+                    radius * 1.15,
+                    meta.height_m + radius * 0.75 + 6.0,
+                    radius * 1.15,
+                );
+            let look = origin + Vec3::Y * (meta.height_m + 0.5);
+            set_camera(world, position, look - position, 8.0);
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration20_roof_plain.png");
+            if !world.resource::<NeighborhoodDemo>().no_capture {
+                screenshot(world, &path, "plain roof");
+            }
+            info!(
+                "ROOF DEMO: plain b{} height {:.1} m",
+                meta.id, meta.height_m
+            );
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::RoofStreet;
+            demo.stage_at = now;
+        }
+        DemoStage::RoofStreet => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.2 {
+                return;
+            }
+            let Some(id) = world.resource::<NeighborhoodDemo>().roof_target else {
+                return;
+            };
+            let origin = world
+                .resource::<Neighborhood>()
+                .live
+                .get(&id)
+                .map(|live| live.origin);
+            let Some(origin) = origin else {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.stage = DemoStage::RoofAerial;
+                demo.stage_at = now;
+                return;
+            };
+            let position = origin + Vec3::new(0.0, 7.0, 34.0);
+            set_camera(world, position, origin + Vec3::Y * 5.0 - position, 8.0);
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration20_interior_hidden_street.png");
+            if !world.resource::<NeighborhoodDemo>().no_capture {
+                screenshot(world, &path, "interior hidden");
+            }
+            info!("ROOF DEMO: interior-hidden street capture b{id}");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::RoofAerial;
+            demo.stage_at = now;
+        }
+        DemoStage::RoofAerial => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.2 {
+                return;
+            }
+            let center = world.resource::<NeighborhoodDemo>().wave_center;
+            let position = center + Vec3::new(0.0, 210.0, 180.0);
+            set_camera(world, position, center - position, 20.0);
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration20_roof_aerial.png");
+            if !world.resource::<NeighborhoodDemo>().no_capture {
+                screenshot(world, &path, "roof aerial");
+            }
+            info!("ROOF DEMO: aerial capture");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::ExitWait;
+            demo.stage_at = now + 1.0;
+        }
+        DemoStage::PerfProbe => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.0
+                || !world.resource::<CityMaterialSetup>().done
+            {
+                return;
+            }
+            if world.resource::<NeighborhoodDemo>().perf_start == 0.0 {
+                let (cell, _) = world.resource::<BuildingIndex>().densest_cell();
+                let center = Vec3::new(
+                    (cell.0 as f32 + 0.5) * 100.0,
+                    0.0,
+                    (cell.1 as f32 + 0.5) * 100.0,
+                );
+                set_camera(
+                    world,
+                    center + Vec3::new(0.0, 140.0, 120.0),
+                    Vec3::NEG_Y,
+                    20.0,
+                );
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.perf_start = now as f64;
+                demo.perf_worst = 0.0;
+                demo.perf_sum = 0.0;
+                demo.perf_frames = 0;
+                return;
+            }
+            let elapsed = now as f64 - world.resource::<NeighborhoodDemo>().perf_start;
+            if elapsed < 4.0 {
+                // settle the zone at the fixed pose before measuring
+                return;
+            }
+            if elapsed < 9.0 {
+                let dt = world.resource::<Time>().delta_secs();
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.perf_worst = demo.perf_worst.max(dt * 1000.0);
+                demo.perf_sum += dt * 1000.0;
+                demo.perf_frames += 1;
+                return;
+            }
+            let visible = {
+                let mut query = world.query_filtered::<&Mesh3d, With<ViewVisibility>>();
+                query.iter(world).filter(|_| true).count()
+            };
+            let all_meshes = {
+                let mut query = world.query::<&Mesh3d>();
+                query.iter(world).count()
+            };
+            let hidden_meshes = {
+                let mut query = world.query::<(&Mesh3d, &Visibility)>();
+                query
+                    .iter(world)
+                    .filter(|(_, visibility)| **visibility == Visibility::Hidden)
+                    .count()
+            };
+            let interior_total = {
+                let mut query = world.query_filtered::<&Visibility, Or<(
+                    With<destructibles_bevy::building::SlabVisual>,
+                    With<destructibles_bevy::building::ColumnVisual>,
+                    With<destructibles_bevy::building::ClutterFloor>,
+                    With<destructibles_bevy::building::InteriorShell>,
+                    With<destructibles_bevy::building::InteriorCore>,
+                    With<destructibles_bevy::building::InteriorLight>,
+                )>>();
+                query.iter(world).count()
+            };
+            let interior_hidden = {
+                let mut query = world.query_filtered::<&Visibility, Or<(
+                    With<destructibles_bevy::building::SlabVisual>,
+                    With<destructibles_bevy::building::ColumnVisual>,
+                    With<destructibles_bevy::building::ClutterFloor>,
+                    With<destructibles_bevy::building::InteriorShell>,
+                    With<destructibles_bevy::building::InteriorCore>,
+                    With<destructibles_bevy::building::InteriorLight>,
+                )>>();
+                query
+                    .iter(world)
+                    .filter(|visibility| **visibility == Visibility::Hidden)
+                    .count()
+            };
+            let city = world.resource::<Neighborhood>();
+            info!(
+                "PERF PROBE: frames {} avg {:.2} ms worst {:.2} ms mesh_entities {all_meshes} hidden_meshes {hidden_meshes} visible_meshes {visible} interior_meshes {interior_total} interior_hidden {interior_hidden} live {} frozen {}",
+                world.resource::<NeighborhoodDemo>().perf_frames,
+                world.resource::<NeighborhoodDemo>().perf_sum
+                    / world.resource::<NeighborhoodDemo>().perf_frames.max(1) as f32,
+                world.resource::<NeighborhoodDemo>().perf_worst,
+                city.live.len(),
+                city.frozen_count
+            );
+            if let Some(mut demo) = world.get_resource_mut::<NeighborhoodDemo>() {
+                demo.stage = DemoStage::ExitWait;
+                demo.stage_at = now + 0.5;
+            }
         }
         DemoStage::ExitWait => {
             if now - world.resource::<NeighborhoodDemo>().stage_at > 1.2 {

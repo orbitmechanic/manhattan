@@ -2780,7 +2780,7 @@ dependencies = [
 [[package]]
 name = "destructibles-bevy"
 version = "0.1.0"
-source = "git+https://github.com/orbitmechanic/destructibles?tag=manhattan-5#0137452bc8df251d97be706596621cf9a012ae2e"
+source = "git+https://github.com/orbitmechanic/destructibles?tag=manhattan-6#147118c671295f54d26572dcc3b785e09b6d7c27"
 dependencies = [
  "avian3d",
  "bevy",
@@ -2793,7 +2793,7 @@ dependencies = [
 [[package]]
 name = "destructibles-core"
 version = "0.1.0"
-source = "git+https://github.com/orbitmechanic/destructibles?tag=manhattan-5#0137452bc8df251d97be706596621cf9a012ae2e"
+source = "git+https://github.com/orbitmechanic/destructibles?tag=manhattan-6#147118c671295f54d26572dcc3b785e09b6d7c27"
 dependencies = [
  "serde",
 ]

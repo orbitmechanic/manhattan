@@ -406,3 +406,122 @@ Gauntlet spot-check with a wave running at hero speed
 - Networking note: a city wave is a journaled, serializable rate assignment
   (epicenter, radius, amplitude, profile, per-building rates and cutoffs). It
   replicates under the same contract as damage; no new network semantics.
+
+## Iteration 20 — visual parity: one skyline, two generators
+
+### Interior envelope and reveal
+
+**Root cause found:** the structural lattice was generated as an axis-aligned
+AABB grid over the footprint bounds and never clipped to the polygon. Almost
+every Manhattan footprint is rotated or concave, so slab rectangles, boundary
+columns, core columns and the whole-building interior shell extruded through
+the facade. Stacked across floors they read as balcony/chimney protrusions.
+
+**Fix:** slabs, columns, core columns and the shell now shrink to the largest
+inscribed rectangle around their centre (`fit_rect`); boundary supports keep a
+thin 0.03 m fallback so the support graph does not lose a ring. Clutter keeps a
+rotated-AABB containment filter, and service pipes are placed inside the
+footprint instead of at a fixed coordinate. Full-city audit over
+`building_perimeters.json`:
+
+| Check | Before | After |
+|---|---:|---:|
+| generated records | 9,678 | 9,678 |
+| slab out of envelope | 9,643 | 0 |
+| column out of envelope | 4,790 | 0 |
+| shell out of envelope | — (AABB shell) | 0 |
+| clutter out of envelope | 9,541* | 0 |
+| roof / height-above-roof / antenna allowance | 0 | 0 |
+
+\*before counts use the AABB containment check; after counts use the same
+rotated-AABB invariant as the generator. The remaining 1,354 records are
+rejected by pre-existing `BuildingSpec` validation (perimeter > 64 vertices,
+tiny footprints, floor/window mismatch) and never generated; the test asserts
+generated + rejected = 11,032.
+
+**Reveal model:** every interior component (slabs, columns, core shaft, shell,
+fill light, clutter) spawns `Visibility::Hidden`. A broken pane, removed wall
+cell or breach exposes exactly the storey it belongs to; shell/core/light reveal
+with any open storey. Restoration removes the breach and the same query hides
+everything again, so the pristine epilogue is naturally fully hidden — tested
+by `interior_reveal.rs` (pristine → hidden, floor-1 pane → only floor 1 shown,
+restoration → hidden).
+
+**Measured cost delta** (`MANHATTAN_PERF_PROBE=1`, fixed dense pose, 52 live
+buildings, 5 s window after zone settle):
+
+| Mode | avg frame | interior mesh entities | hidden |
+|---|---:|---:|---:|
+| pristine interiors hidden | 50.43 ms | 2,661 | 2,661 |
+| legacy always-visible | 57.01 ms | 2,318 | 13 |
+
+≈ **6.6 ms / 11.6 %** saved on the dense pristine neighborhood; roughly 2.3k
+interior mesh draws are removed at that pose.
+
+### Phantom-tower audit
+
+The height-derivation candidates (bulkhead/core/antenna divides) have **zero**
+offenders across the generated city; antenna masts stay within the documented
+6–12 % allowance. The chimney/balcony read was the out-of-envelope shell and
+stacked lattice described above. The batch invariant now checks footprint
+containment, shell containment, roof height, column top, core height and
+antenna allowance for every record.
+
+### Unified material strategy
+
+- **One palette, one source of truth:** `destructibles_core::palette` holds the
+  base colours both generators use. The map's lighter palette wins:
+  brick `0.82/0.75/0.65`, concrete `0.70/0.68/0.63`, glass `0.63/0.71/0.77`,
+  roof tan `0.64/0.60/0.51`, trim `0.36/0.29/0.23`, equipment `0.46/0.47/0.49`.
+  Destructibles' WorldAssets, map roof furniture and generated roofs all import
+  these constants.
+- **Textures:** both trees already load the same brick/concrete/glass texture
+  files; map facades additionally use their baked facade/roof atlas. Destructible
+  geometry keeps tiled UVs and trim detail on top of the same palette rather
+  than a second darker material family. Trade-off: map facade atlas cells and
+  destructible tiled walls are not byte-identical textures, so a swap still
+  reads as a **style/LOD shift** (accepted since iteration 17), never a dark→light
+  palette jump. The live↔plain pair shares palette, roof tan and furniture.
+
+### Roof recipe (both generators)
+
+- **Roof surface:** plain tan, metallic 0, roughness 1.0 — no directional
+  specular wedge. Map roofs keep their baked atlas within the same tan family.
+- **Parapet curb:** generated roofs bake a distance-from-edge vertex-colour
+  band (`curb_shade`: darker within ~1 m of the edge, ~0.62 deep on the field).
+  No extra geometry. Map roofs rely on the atlas' baked edge band; documented
+  trade-off (the band is not re-baked into the uploaded glTF).
+- **Equipment:** `roof_equipment(building, footprint, height)` is a seeded,
+  journal-transparent generation parameter (1–6 grey boxes scaled by roof area,
+  parapet-aware, deterministic). Generated buildings merge them into one mesh;
+  plain map buildings get one merged equipment mesh plus one merged antenna
+  mesh, hidden while the live record owns the footprint.
+- **Antennae/nav lights:** the destructible recipe wins. `antenna_heights` moved
+  to core and the map's pyramidal "pointy tree" antennas are retired; map
+  furniture uses the same deterministic mast heights and thin masts.
+- **Alignment:** both roofs are built from the true footprint polygon; the
+  generated roof curb and equipment use footprint-local coordinates, so roof
+  edges align on both sides.
+
+### Captures (iteration 20)
+
+- `iteration20_roof_live.png` — live generated roof: tan field, curb band,
+  equipment boxes, masts.
+- `iteration20_roof_plain.png` — plain map roof with the same furniture recipe.
+- `iteration20_roof_restored.png` — the same live roof after damage+restoration
+  (identical equipment arrangement; regeneration invariance).
+- `iteration20_roof_aerial.png` — mixed liveness block from altitude.
+- `iteration20_interior_hidden_street.png` — street face with zero protruding
+  slabs/shell.
+- `iteration20_mid_swap.png` / `_detail.png` — in-flight live/plain mix from the
+  gauntlet capture; palette reads as a style/LOD shift.
+
+### Verification (iteration 20)
+
+- Destructibles: fmt, clippy `-D warnings`, **168 tests** (envelope clipping,
+  reveal transitions/re-hide, equipment determinism, palette, antennas).
+- Manhattan: fmt, clippy `-D warnings`, **87 tests** (full-city audit 11,032
+  records, shared roof recipe/palette).
+- Gauntlet unchanged in structure: worst frames 160.1 / 141.1 / 125.3 / 97.6 ms,
+  `stray=0` each regime, hover swaps 0. Journal, audit, triple-restore and wave
+  battery untouched and green.
