@@ -205,6 +205,12 @@ impl DamagePreset {
 }
 
 #[derive(Resource, Default)]
+pub struct FireBadges {
+    pub line: String,
+    pub misses: u32,
+}
+
+#[derive(Resource, Default)]
 pub struct DamageAim {
     pub target: Option<usize>,
     pub point: Vec3,
@@ -394,6 +400,7 @@ impl Plugin for NeighborhoodPlugin {
             .init_resource::<BuildingIndex>()
             .init_resource::<LiveFootprints>()
             .init_resource::<DamageAim>()
+            .init_resource::<FireBadges>()
             .init_resource::<StreetParity>()
             .insert_resource(NeighborhoodDemo::from_env())
             .add_systems(Startup, (setup_neighborhood, setup_neighborhood_hud))
@@ -914,6 +921,7 @@ fn setup_neighborhood_hud(mut commands: Commands) {
 
 fn update_neighborhood_hud(
     neighborhood: Res<Neighborhood>,
+    badges: Res<FireBadges>,
     aim: Res<DamageAim>,
     index: Res<BuildingIndex>,
     mut texts: Query<&mut Text, With<NeighborhoodHud>>,
@@ -939,7 +947,7 @@ fn update_neighborhood_hud(
         levels[live.detail as usize] += 1;
     }
     let body = format!(
-        "DETAIL live={} T0={} T1={} T2={} built={}/{} frozen={} damage={} pending={} rej={}\nDRESS panels={} ads={}  target {target}  [1-4] {}  [X] fire  [Z]/[Shift+Z] restore",
+        "DETAIL live={} T0={} T1={} T2={} built={}/{} frozen={} damage={} pending={} rej={} miss={}\nFIRE {}\nDRESS panels={} ads={}  target {target}  [1-4] {}  [X] fire  [Z]/[Shift+Z] restore",
         neighborhood.live.len(),
         levels[0],
         levels[1],
@@ -950,6 +958,8 @@ fn update_neighborhood_hud(
         neighborhood.damage_events,
         neighborhood.pending_damage.len(),
         neighborhood.jit_rejected,
+        badges.misses,
+        badges.line,
         neighborhood.dressing_panels,
         neighborhood.dressing_plates,
         aim.preset.label()
@@ -1092,6 +1102,12 @@ fn detail_tick(world: &mut World) {
                 .map(|transform| transform.forward().as_vec3())
                 .unwrap_or(Vec3::NEG_Z);
             apply_preset(world, did, shot.preset, shot.point, direction);
+            let head = world.resource::<DamageJournal>().0.head_for(did);
+            let badges = world.resource::<FireBadges>().line.clone();
+            world.resource_mut::<FireBadges>().line = format!(
+                "{} → JOURNAL={head:.2} → WOUND VISIBLE",
+                badges.split(" → ADMITTED").next().unwrap_or(&badges)
+            );
             applied += 1;
         } else {
             keep.push(shot);
@@ -1286,16 +1302,32 @@ fn damage_input(world: &mut World) {
         aim.point = point;
         aim.preset = preset;
     }
-    if keys.just_pressed(KeyCode::KeyX) || mouse.just_pressed(MouseButton::Left) {
+    if keys.just_pressed(KeyCode::KeyG)
+        || keys.just_pressed(KeyCode::KeyX)
+        || mouse.just_pressed(MouseButton::Left)
+    {
+        let ray_len = origin.distance(point);
         info!(
-            "FIRE: key X target={:?} point={:?} ray_origin={origin:?}",
+            "FIRE: key G/X target={:?} point={:?} ray_origin={origin:?} forward={forward:?}",
             target, point
         );
+        {
+            let mut badges = world.resource_mut::<FireBadges>();
+            badges.line = format!(
+                "SOUND=heard → RAY o({:.0},{:.0},{:.0}) d({:.2},{:.2},{:.2})",
+                origin.x, origin.y, origin.z, forward.x, forward.y, forward.z
+            );
+        }
         let Some(id) = target else {
-            info!("FIRE: no building under the reticle");
+            world.resource_mut::<FireBadges>().misses += 1;
+            world.resource_mut::<FireBadges>().line =
+                "SOUND=heard → RAY cast → HIT=MISS".to_string();
             world.resource_mut::<Neighborhood>().jit_rejected += 1;
+            info!("FIRE: ray MISS (no footprint)");
             return;
         };
+        world.resource_mut::<FireBadges>().line =
+            format!("SOUND=heard → RAY {ray_len:.0}m → HIT=b{id} → GATE…");
         if !world.resource::<Neighborhood>().live.contains_key(&id) && !jit_swap(world, id) {
             info!("FIRE: JIT rejected b{id}");
             return;
@@ -1307,11 +1339,17 @@ fn damage_input(world: &mut World) {
                 .resource_mut::<Neighborhood>()
                 .pending_damage
                 .push(PendingDamage { id, preset, point });
+            let badges = world.resource::<FireBadges>().line.clone();
+            world.resource_mut::<FireBadges>().line = format!("{badges} → ADMITTED=queued(T1)");
             info!("FIRE: b{id} queued for Tier 1 (currently {level:?})");
         } else {
             let did = NEIGHBORHOOD_ID_BASE + id as u32;
             info!("FIRE: b{id} admitted immediately");
             apply_preset(world, did, preset, point, forward);
+            let head = world.resource::<DamageJournal>().0.head_for(did);
+            let badges = world.resource::<FireBadges>().line.clone();
+            world.resource_mut::<FireBadges>().line =
+                format!("{badges} → JOURNAL={head:.2} → WOUND VISIBLE");
         }
     }
     if keys.just_pressed(KeyCode::KeyZ) {
@@ -4260,7 +4298,11 @@ fn run_neighborhood_demo(world: &mut World) {
                     0.0,
                     index.buildings[id].centroid[1],
                 );
-                let position = origin + Vec3::new(0.0, 8.0, 42.0);
+                let height = std::env::var("MANHATTAN_INPUT_HEIGHT")
+                    .ok()
+                    .and_then(|value| value.parse::<f32>().ok())
+                    .unwrap_or(8.0);
+                let position = origin + Vec3::new(0.0, height, 42.0);
                 set_camera(world, position, origin + Vec3::Y * 12.0 - position, 8.0);
                 world.resource_mut::<NeighborhoodDemo>().roof_target = Some(id);
                 world.resource_mut::<NeighborhoodDemo>().golden_step = 1;
@@ -4273,7 +4315,7 @@ fn run_neighborhood_demo(world: &mut World) {
                 world.resource_mut::<NeighborhoodDemo>().golden_step = 2;
                 world
                     .resource_mut::<ButtonInput<KeyCode>>()
-                    .press(KeyCode::KeyX);
+                    .press(KeyCode::KeyG);
                 info!("INPUT TEST: synthesized X press");
                 damage_input(world);
                 return;

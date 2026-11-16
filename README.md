@@ -1060,3 +1060,8 @@ Every iteration report distinguishes features **exercised via real input**
 but not direct function calls) from **exercised via programmatic path**.
 Features without a real-input test are reported as **UNVERIFIED**, never as
 passing. Silent fallbacks must expose a visible rejection counter.
+
+Binding rule: the key the reviewer uses is the binding the acceptance tests
+must use. G is the authoritative fire key (X and left mouse are aliases);
+tests inject G. A fire key that only produces UI audio without a badge chain
+is a failure even if the mocked damage API works.
