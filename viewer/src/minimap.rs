@@ -16,8 +16,6 @@
 //! longitude −74.00087591003654, latitude 40.713460624392276, and one world
 //! unit is one mercator metre.
 
-use std::f32::consts::TAU;
-
 use bevy::{
     asset::RenderAssetUsages,
     image::{Image, ImageSampler},
@@ -62,12 +60,23 @@ const STREET_DATA: &str = include_str!("../assets/models/street_network.json");
 /// Buildings currently owned by the destructible subsystem, keyed by the
 /// Manhattan building id. Filled white on the minimap (or the health colour
 /// once damage exists) and used as the footprint-verification readout.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct WaveRing {
+    /// World-space epicenter (x, z).
+    pub center: [f32; 2],
+    /// Current contracting front radius, metres.
+    pub radius_m: f32,
+    pub revision: u64,
+}
+
 #[derive(Resource, Default)]
 pub struct LiveFootprints {
     pub live: std::collections::BTreeSet<usize>,
     pub colors: std::collections::BTreeMap<usize, [u8; 4]>,
     pub debug: bool,
     pub revision: u64,
+    /// Active city-restoration front, drawn as a translucent contracting ring.
+    pub wave: Option<WaveRing>,
 }
 
 #[derive(Resource)]
@@ -223,20 +232,31 @@ fn draw_line(data: &mut [u8], a: Vec2, b: Vec2, color: [u8; 4], thickness: i32) 
 }
 
 fn draw_ring(data: &mut [u8], radius: f32, width: f32, color: [u8; 4]) {
-    let steps = (radius * 8.0).max(360.0) as i32;
-    for i in 0..steps {
-        let a = i as f32 / steps as f32 * TAU;
-        let r0 = (radius - width).max(0.0);
-        let r1 = radius + width;
-        let mut r = r0;
-        while r <= r1 {
-            put(
-                data,
-                (MAP_CENTER + a.cos() * r).round() as i32,
-                (MAP_CENTER + a.sin() * r).round() as i32,
-                color,
-            );
-            r += 1.0;
+    draw_ring_at(data, MAP_CENTER, MAP_CENTER, radius, width, color);
+}
+
+fn draw_ring_at(
+    data: &mut [u8],
+    center_x: f32,
+    center_y: f32,
+    radius: f32,
+    width: f32,
+    color: [u8; 4],
+) {
+    let inner = (radius - width * 0.5).max(0.0);
+    let outer = radius + width * 0.5;
+    let min_x = (center_x - outer).floor().max(0.0) as i32;
+    let max_x = (center_x + outer).ceil().min((MAP_TEX - 1) as f32) as i32;
+    let min_y = (center_y - outer).floor().max(0.0) as i32;
+    let max_y = (center_y + outer).ceil().min((MAP_TEX - 1) as f32) as i32;
+    for y in min_y..=max_y {
+        for x in min_x..=max_x {
+            let dx = x as f32 + 0.5 - center_x;
+            let dy = y as f32 + 0.5 - center_y;
+            let distance = (dx * dx + dy * dy).sqrt();
+            if distance >= inner && distance <= outer {
+                put(data, x, y, color);
+            }
         }
     }
 }
@@ -464,6 +484,13 @@ fn render_map_layer(
                 .collect();
             fill_polygon(data, &polygon, color);
         }
+    }
+
+    if let Some(wave) = live.wave {
+        let centre = world_to_map(Vec2::from(wave.center), center);
+        let radius = wave.radius_m * (MAP_RADIUS / MAP_RADIUS_WORLD);
+        draw_ring_at(data, centre.x, centre.y, radius, 5.0, [96, 255, 178, 150]);
+        draw_ring_at(data, centre.x, centre.y, radius, 1.5, [190, 255, 220, 210]);
     }
 
     let outline = [148, 153, 160, 255];
@@ -824,21 +851,27 @@ fn update_minimap_map(
     nearest: Option<ResMut<NearestStreet>>,
     images: Option<Res<MinimapImages>>,
     mut assets: ResMut<Assets<Image>>,
-    mut last: Local<Option<(Vec2, f32, u64)>>,
+    mut last: Local<Option<(Vec2, f32, u64, u64)>>,
 ) {
     let Some(images) = images else {
         return;
     };
     let center = Vec2::new(camera.translation.x, camera.translation.z);
     let now = time.elapsed_secs();
-    if let Some((last_center, last_time, last_revision)) = *last
+    let wave_revision = live.wave.map(|wave| wave.revision).unwrap_or(0);
+    let interval = if live.wave.is_some() {
+        MAP_UPDATE_SECS * 0.5
+    } else {
+        MAP_UPDATE_SECS
+    };
+    if let Some((last_center, last_time, last_revision, last_wave)) = *last
         && live.revision == last_revision
-        && (now - last_time < MAP_UPDATE_SECS
-            || center.distance_squared(last_center) < MAP_MOVE_EPS_SQ)
+        && wave_revision == last_wave
+        && (now - last_time < interval || center.distance_squared(last_center) < MAP_MOVE_EPS_SQ)
     {
         return;
     }
-    *last = Some((center, now, live.revision));
+    *last = Some((center, now, live.revision, wave_revision));
     let Some(mut image) = assets.get_mut(&images.map) else {
         return;
     };
@@ -920,6 +953,7 @@ fn update_minimap_text(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::f32::consts::TAU;
 
     #[test]
     fn origin_matches_the_blend_scene_anchor() {

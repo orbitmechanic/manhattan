@@ -271,3 +271,138 @@ a shell, Tier 1/2 arrive over budgeted frames). `stray=0` every regime,
   participation`, `detail_priority`, `damaged_persistence_round_trip`.
 - Determinism/journal/audit battery unchanged (destructibles workspace suite).
 - Zero stray handles after every regime; hover swaps = 0.
+
+## Iteration 19 — city time-reversal controller and one far plume
+
+### CityRestorationController
+
+A single city-level invocation assigns every damaged building within a radius a
+per-building restoration rate through the destructibles volume ledger:
+
+```text
+restore_city(epicenter, radius, amplitude, profile)
+rate(b) = amplitude * profile(distance(b, epicenter) / radius)   for distance <= radius
+```
+
+Buildings outside the radius are untouched. The command works on the journal,
+not the render regime, so HOT, FROZEN and DORMANT records all receive an
+assignment. Overlapping invocations merge: a running assignment keeps its rate
+unless the new epicenter is strictly nearer; completed assignments are always
+replaceable; a completed ledger still resident during the animation settle is
+re-armed for fresh damage. No thrash.
+
+Falloff profiles (documented math, panel-selectable):
+
+| Profile | `f(t)` for `t = d / r` in 0..1 |
+|---|---|
+| flat | `1` |
+| linear (default) | `1 - t` |
+| inverse-square | `(1 / (1 + 15 t²) - 1/16) / (1 - 1/16)` |
+
+All profiles are clamped to 0..1; linear and inverse-square reach exactly zero
+at the radius. Because the nearest buildings receive the highest rate, they
+complete first and the healing front visibly radiates outward. Panes
+reassemble, rubble un-collapses, wounds seal in reverse choreography, halos
+sweep shut, and each building's terminal epilogue fires as its journal empties.
+
+### Scheduler and budget
+
+Destructibles owns the ledger; Manhattan owns the frame budget. Every update
+calls `advance_restoration_budget(5 ms)`:
+
+1. **Fair minimum pass** — every restoring building gets at most one journal
+   entry. A rotating cursor changes the starting building each frame.
+2. **Priority pass** — the remaining budget is spent highest-effective-rate
+   first, which is the wave front.
+3. Credit accrues for every building every frame, so an unserviced frame only
+   defers pops; it does not slow the mathematical schedule.
+
+A building can lag its scheduled completion by a frame, but cannot be starved
+permanently. `RestorationStep` reports serviced/completed/starved and measured
+slice time. The controller logs throughput (buildings/s), worst slice, and the
+number of budget-deferred (`starved`) frames per wave.
+
+### Controls and minimap
+
+| Input | Action |
+|---|---|
+| reticle | epicenter (building hit, or ground-plane intersection) |
+| `G` | fire city wave |
+| `[` / `]` | radius 80 / 150 / 250 / 400 / 600 / 900 / 1 400 m |
+| `-` / `=` | amplitude 100 / 250 / 500 / 1 000 / 2 000 / 4 000 m³/s |
+| `P` | profile flat / linear / inverse-square |
+| `Z` | single-building restore (unchanged) |
+| `Shift+Z` | **delegates** to the city controller: radius 250 m at the reticle, current amplitude/profile |
+
+The WAVE panel shows the configuration, epicenter, active count, contracting
+front radius, measured slice/peak, starved frames and last throughput. The
+minimap draws the front as a translucent green ring that contracts from the
+assignment radius to zero as buildings complete; live damaged footprints inside
+it bleed back to white.
+
+### Regime × restoration (wave variant)
+
+`wave_regimes.rs` spawns one building in each regime, damages all three, then
+evicts the DORMANT one and freezes the FROZEN one. One wave restores all three;
+per-building checksums return to pristine, and the DORMANT record reconstructs
+pristine from its spec on approach. `wave_scheduler.rs` covers tiny-budget
+fairness (no watchdog), high-rate-first order, extension preserving progress,
+overlap rate adoption, and damage arriving mid-wave: the first wave leaves
+exactly the newer journal entries, the second restores to pristine.
+
+### One far plume
+
+The host crossed-quad column is the **single** far-plume mechanism
+(`FAR_PLUME_OWNER = "manhattan-host-quads"`). Manhattan no longer spawns the
+destructibles far sprite for FAR duty; the destructibles sprite remains for the
+standalone demo only. The host plume is journal-derived (frozen damaged
+records only) and despawned on thaw/release. Edges are softened with a
+procedural radial-alpha texture (Gaussian-like falloff plus deterministic
+noise), replacing the hard card edges deferred since iteration 13. The softened
+column is still 10 quads per record.
+
+### Wave performance (release, damage active)
+
+Measured by `MANHATTAN_WAVE=1 MANHATTAN_WAVE_NOCAPTURE=1`; total frames include
+Manhattan city streaming (out of scope), the slice column isolates restoration
+machinery.
+
+| Requested / assigned | Radius | Duration | Throughput | Worst total frame | Worst restoration slice | Deferred frames |
+|---|---:|---:|---:|---:|---:|---:|
+| 5 / 5 | 150 m | 1.41 s | 3.56 buildings/s | 184.0 ms | 5.03 ms | 1 |
+| 20 / 20 | 150 m | 1.99 s | 10.07 buildings/s | 230.9 ms | 5.23 ms | 12 |
+| 50 / 38 (live cap) | 150 m | 5.95 s | 6.38 buildings/s | 250.0 ms | 5.69 ms | 35 |
+| 50 / 38 | 900 m | 5.56 s | 6.84 buildings/s | 250.0 ms | 6.65 ms | 32 |
+| 10 (capture run) | 150 m | 1.81 s | 5.52 buildings/s | 234.0 ms | 5.18 ms | 8 |
+
+No restoration slice exceeded 6.65 ms (one indivisible journal entry can
+overshoot the 5 ms target); nothing attributable to restoration approaches
+30 ms. The largest radius tested, **900 m**, completed every assigned building
+with no permanent starvation. Total worst frames remain city streaming and the
+screenshot request, as logged since iteration 17.
+
+Gauntlet spot-check with a wave running at hero speed
+(`MANHATTAN_GAUNTLET_WAVE=1`): worst slice 3.32 ms, hero worst frame 154.5 ms
+(vs 124.4 ms without the wave), `stray=0`, hover swaps 0.
+
+### Captures (iteration 19)
+
+- `iteration19_wave_mixed.png` — HOT/FROZEN mixed district before firing.
+- `iteration19_wave_ring_0.png` / `_1.png` — altitude signature: the green
+  minimap front contracts 125 m → 57 m as the white fills expand.
+- `iteration19_wave_hot_heal.png` — on-camera HOT record mid-restoration.
+- `iteration19_mid_wave_damage.png` — damage arriving during the wave (front
+  42 m, new smoke, remaining assignments).
+- `iteration19_wave_restored.png` — after the second (fresh-damage) wave.
+- `iteration19_soft_plume.png` — the single softened host plume from range.
+
+### Verification (iteration 19)
+
+- Manhattan: fmt, clippy `-D warnings`, **84 tests**, release build.
+- Destructibles: fmt, clippy `-D warnings`, **163 tests** (scheduler, mixed
+  regime wave, mid-wave journal arithmetic).
+- Determinism/audit/triple-restore/regime matrix battery unchanged.
+- Zero stray handles in every gauntlet regime; hover swaps 0.
+- Networking note: a city wave is a journaled, serializable rate assignment
+  (epicenter, radius, amplitude, profile, per-building rates and cutoffs). It
+  replicates under the same contract as damage; no new network semantics.

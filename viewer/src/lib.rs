@@ -14,6 +14,7 @@ pub mod minimap;
 pub mod motion;
 pub mod neighborhood;
 pub mod people;
+pub mod restoration;
 pub mod stationing;
 pub mod storefront;
 pub mod street_furniture;
