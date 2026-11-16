@@ -1136,7 +1136,8 @@ pub fn stream_traffic(
             )
             .dot(Vec2::from_array(tangent))
                 > 0.0;
-            let occupancy = city_rhythm::lane_occupancy(hour, toward);
+            // Iteration 28: halve vehicle density at every daily point.
+            let occupancy = city_rhythm::lane_occupancy(hour, toward) * 0.5;
             if let Some(stored) = traffic.occupancy.get(&lane_id) {
                 if (stored - occupancy).abs() > 0.12 {
                     if let Some(old) = traffic.active.remove(&lane_id) {

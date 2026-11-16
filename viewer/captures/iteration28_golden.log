@@ -1,0 +1,81 @@
+2026-11-16T23:01:07.329466Z  INFO bevy_diagnostic::system_information_diagnostics_plugin::internal: SystemInfo { os: "Linux (Omarchy 4.5.0)", kernel: "7.2.15-1-omarchy", cpu: "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx", core_count: "4", memory: "17.5 GiB" }
+2026-11-16T23:01:07.590007Z  INFO bevy_render::renderer: AdapterInfo { name: "AMD Radeon Vega 8 Graphics (RADV RAVEN)", vendor: 4098, device: 5592, device_type: IntegratedGpu, device_pci_bus_id: "0000:03:00.0", driver: "radv", driver_info: "Mesa 26.2.5-arch1.1", backend: Vulkan, subgroup_min_size: 64, subgroup_max_size: 64, transient_saves_memory: Some(false), limit_bucket: None }
+2026-11-16T23:01:07.749163Z  INFO bevy_pbr::cluster: GPU clustering is supported on this device.
+2026-11-16T23:01:07.749210Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+2026-11-16T23:01:07.749936Z  INFO bevy_hanabi::plugin: Initializing Hanabi for GPU adapter AMD Radeon Vega 8 Graphics (RADV RAVEN)
+2026-11-16T23:01:07.755583Z  INFO bevy_winit::system: Creating new window Manhattan — day/night fly-through (67v0)
+2026-11-16T23:01:07.759856Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 23 orthogonal masonry chunks per structural cell
+2026-11-16T23:01:07.760921Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 30 crystalline glass chunks per structural cell
+2026-11-16T23:01:07.774942Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD: feeder/index ready, mask 1024² @ 1200 m
+2026-11-16T23:01:07.775547Z  INFO destructibles_bevy::audio: AUDIO DEVICE: host=Alsa device='Default Audio Device' config=F32 44100 Hz 2 ch (Bevy/rodio default output)
+2026-11-16T23:01:07.953319Z  INFO manhattan_viewer::storefront: Storefronts: 11032 buildings, 4 categories, 0 repeat warnings, seed 273db329
+2026-11-16T23:01:07.954860Z  INFO manhattan_viewer::details: Trees: 3000
+2026-11-16T23:01:08.176811Z  INFO manhattan_viewer::details: Roof furniture: 39164 equipment boxes, 21633 masts on 10824 buildings
+2026-11-16T23:01:08.177434Z  INFO manhattan_viewer::people: People catalog ready
+2026-11-16T23:01:08.185525Z  INFO manhattan_viewer::traffic: Vehicle catalog: 150 variants
+2026-11-16T23:01:08.277463Z  INFO manhattan_viewer::details: Signs: 44164 on 5908 buildings
+2026-11-16T23:01:08.469328Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: glass_break.ogg (31276 bytes)
+2026-11-16T23:01:08.469361Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: impact.ogg (7792 bytes)
+2026-11-16T23:01:08.469366Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: shard_chatter.ogg (39114 bytes)
+2026-11-16T23:01:08.469370Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: chime.wav (79424 bytes)
+2026-11-16T23:01:08.469374Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: rewind_whoosh.wav (141164 bytes)
+2026-11-16T23:01:08.469378Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: explosion.wav (229364 bytes)
+2026-11-16T23:01:08.469382Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: klaxon.wav (176444 bytes)
+2026-11-16T23:01:08.469386Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: sprinkler_hiss.wav (176444 bytes)
+2026-11-16T23:01:08.469390Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: masonry_thud.wav (48554 bytes)
+2026-11-16T23:01:08.469414Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: collapse_rumble.wav (458684 bytes)
+2026-11-16T23:01:08.469418Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: structural_groan.wav (264644 bytes)
+2026-11-16T23:01:08.469422Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: concrete_crack.wav (19448 bytes)
+2026-11-16T23:01:08.469426Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: gas_hiss.wav (176444 bytes)
+2026-11-16T23:01:08.469430Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: fire_crackle.wav (176444 bytes)
+2026-11-16T23:01:08.469434Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: cascade_crackle.wav (352844 bytes)
+2026-11-16T23:01:08.469438Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: dust_hiss.wav (352844 bytes)
+2026-11-16T23:01:08.469442Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: breaker_pop.wav (39734 bytes)
+2026-11-16T23:01:08.469446Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: electric_crackle.wav (79424 bytes)
+2026-11-16T23:01:08.469450Z  INFO destructibles_bevy::audio: AUDIO CHAIN READY: device=Some("Default Audio Device") assets=18 master_volume=0.80
+2026-11-16T23:01:09.228828Z  INFO destructibles_bevy::audio: AUDIO startup chime requested
+2026-11-16T23:01:10.200798Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=chime pitch=0.900 vol=0.48 paused=false empty=false
+2026-11-16T23:01:10.772758Z ERROR bevy_render::render_resource::pipeline_cache: failed to create shader module: Validation Error
+
+Caused by:
+  In Device::create_shader_module
+    
+Shader validation error: Entry point fragment at Fragment is invalid
+   ┌─ :54:21
+   │
+54 │     let to_camera = in.world_position - camera.xyz;
+   │                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ naga::ir::Expression [74]
+   │
+   = Expression [74] is invalid
+   = Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+
+      Expression [74] is invalid
+        Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+2026-11-16T23:01:10.803982Z  INFO manhattan_viewer::city_material: City materials ready: 12 materials / 4353 primitives
+2026-11-16T23:01:13.741444Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [Times Square AM rush] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_times_square_am_rush.png
+2026-11-16T23:01:13.938808Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_times_square_am_rush.png
+2026-11-16T23:01:17.274521Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [Times Square PM rush] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_times_square_pm_rush.png
+2026-11-16T23:01:17.491865Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_times_square_pm_rush.png
+2026-11-16T23:01:20.338776Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [graveyard shift] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_graveyard_shift.png
+2026-11-16T23:01:20.563523Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_graveyard_shift.png
+2026-11-16T23:01:23.378263Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [distant no ads] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_distant_no_ads.png
+2026-11-16T23:01:23.491941Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_distant_no_ads.png
+2026-11-16T23:01:26.125551Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [glass core aerial] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_glass_core_aerial.png
+2026-11-16T23:01:26.378917Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_glass_core_aerial.png
+2026-11-16T23:01:28.533656Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [brick edge aerial] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_brick_edge_aerial.png
+2026-11-16T23:01:28.622573Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_brick_edge_aerial.png
+2026-11-16T23:01:30.998584Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [dawn] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_dawn.png
+2026-11-16T23:01:31.214477Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_dawn.png
+2026-11-16T23:01:33.441896Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [noon] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_noon.png
+2026-11-16T23:01:33.653834Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_noon.png
+2026-11-16T23:01:35.863478Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [dusk] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_dusk.png
+2026-11-16T23:01:36.111655Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_dusk.png
+2026-11-16T23:01:38.314096Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [night] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_night.png
+2026-11-16T23:01:38.552851Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_night.png
+2026-11-16T23:01:41.546007Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [overcast flythrough] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_overcast_flythrough.png
+2026-11-16T23:01:41.746033Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_overcast_flythrough.png
+2026-11-16T23:01:47.598179Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [smoke-tinted moon] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_smoke_moon.png
+2026-11-16T23:01:47.865631Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration21_smoke_moon.png
+2026-11-16T23:01:53.847014Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD GAUNTLET COMPLETE
