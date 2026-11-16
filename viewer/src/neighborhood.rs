@@ -24,7 +24,7 @@ use destructibles_bevy::health::HealthIndex;
 use destructibles_bevy::impact::apply_impact;
 use destructibles_bevy::night::SceneTime;
 use destructibles_bevy::puncture::apply_puncture;
-use destructibles_bevy::rewind::begin_restoration;
+use destructibles_bevy::rewind::{begin_restoration, set_restoration_rate};
 use destructibles_bevy::streaming::{
     HotZone, Regime, Streaming, freeze_building, register_building, spawn_far_marker, thaw_building,
 };
@@ -209,6 +209,7 @@ pub struct Neighborhood {
     pub tier1_built: usize,
     pub tier2_built: usize,
     pub frozen_count: usize,
+    smoke_markers: BTreeMap<u32, Vec<Entity>>,
 }
 
 /// Per-regime acceptance statistics.
@@ -226,6 +227,8 @@ pub struct RegimeStats {
     pub worst_swap_ms: f32,
     pub worst_swap_frame_ms: f32,
     pub stray_handles: usize,
+    pub tier1_count: usize,
+    pub tier1_max_m: f32,
 }
 
 #[derive(Resource, Default)]
@@ -243,6 +246,17 @@ pub struct NeighborhoodDemo {
     hover_swaps: u32,
     hover_start_swaps: u32,
     captured: bool,
+    captured_detail: bool,
+    damage: bool,
+    bombed: bool,
+    damage_building: Option<usize>,
+    damage_point: Vec3,
+    street_view: (Vec3, Vec3),
+    damage_view: (Vec3, Vec3),
+    horizon_armed: bool,
+    return_armed: bool,
+    damage_seen: bool,
+    restored_at: f32,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -254,6 +268,14 @@ enum DemoStage {
     RegimeEnd,
     Hover,
     HoverWait,
+    DamageFly,
+    DamageSetup,
+    StorefrontPristine,
+    StorefrontBomb,
+    StorefrontHalo,
+    Horizon,
+    Return,
+    Restored,
     ExitWait,
 }
 
@@ -311,6 +333,7 @@ impl NeighborhoodDemo {
         Self {
             active,
             capture_dir,
+            damage: std::env::var_os("MANHATTAN_DAMAGE").is_some(),
             ..default()
         }
     }
@@ -600,7 +623,12 @@ fn update_zone(
         let distance = delta.length();
         let along = delta.dot(forward);
         let lateral = (delta - forward * along).length();
+        let damaged = journal.0.head_for(NEIGHBORHOOD_ID_BASE + id as u32) > 0.0;
+        // A damaged building persists in its damage-carrying state; zone exit
+        // freezes it instead of demoting it to the plain map.
+        let persists = damaged && config.damaged_persists;
         if !in_zone(distance, along, lateral, true, &config)
+            && !persists
             && !neighborhood.queued_out.contains(&id)
         {
             neighborhood.pending_out.push_back(id);
@@ -643,7 +671,7 @@ fn setup_neighborhood_hud(mut commands: Commands) {
         Node {
             position_type: PositionType::Absolute,
             left: px(12),
-            bottom: px(168),
+            bottom: px(232),
             ..default()
         },
         Text::new("DETAIL —"),
@@ -684,7 +712,7 @@ fn update_neighborhood_hud(
         levels[live.detail as usize] += 1;
     }
     let body = format!(
-        "DETAIL live={} T0={} T1={} T2={} built={}/{} frozen={} damage={} pending={} panels={} ads={}  target {target}  [1-4] {}  [X] fire  [Z]/[Shift+Z] restore",
+        "DETAIL live={} T0={} T1={} T2={} built={}/{} frozen={} damage={} pending={}\nDRESS panels={} ads={}  target {target}  [1-4] {}  [X] fire  [Z]/[Shift+Z] restore",
         neighborhood.live.len(),
         levels[0],
         levels[1],
@@ -768,12 +796,12 @@ fn detail_tick(world: &mut World) {
         if started.elapsed().as_secs_f32() * 1000.0 >= 4.0 {
             break;
         }
-        let level = detail_level(world, id as u32);
         let did = NEIGHBORHOOD_ID_BASE + id as u32;
+        let level = detail_level(world, did);
         let damaged = world.resource::<DamageJournal>().0.head_for(did) > 0.0;
         if level < DetailTier::Structural {
-            begin_detail_upgrade(world, id as u32, DetailTier::Structural);
-            let reached = advance_detail(world, id as u32, 2.0);
+            begin_detail_upgrade(world, did, DetailTier::Structural);
+            let reached = advance_detail(world, did, 2.0);
             if reached >= DetailTier::Structural {
                 tier1 += 1;
                 info!("DETAIL b{id}: Tier 1 ready at {distance:.1} m");
@@ -786,8 +814,8 @@ fn detail_tick(world: &mut World) {
             }
             let _ = damaged;
         } else if level < DetailTier::Full && (damaged || distance < 150.0) {
-            begin_detail_upgrade(world, id as u32, DetailTier::Full);
-            let reached = advance_detail(world, id as u32, 1.5);
+            begin_detail_upgrade(world, did, DetailTier::Full);
+            let reached = advance_detail(world, did, 1.5);
             if reached >= DetailTier::Full {
                 tier2 += 1;
             }
@@ -808,7 +836,7 @@ fn detail_tick(world: &mut World) {
             keep.push(shot);
             continue;
         }
-        let level = detail_level(world, shot.id as u32);
+        let level = detail_level(world, NEIGHBORHOOD_ID_BASE + shot.id as u32);
         let live = world.resource::<Neighborhood>().live.contains_key(&shot.id);
         if live && level >= DetailTier::Structural {
             let did = NEIGHBORHOOD_ID_BASE + shot.id as u32;
@@ -990,7 +1018,7 @@ fn damage_input(world: &mut World) {
         let Some(id) = target else {
             return;
         };
-        let level = detail_level(world, id as u32);
+        let level = detail_level(world, NEIGHBORHOOD_ID_BASE + id as u32);
         if level < DetailTier::Structural {
             world
                 .resource_mut::<Neighborhood>()
@@ -1075,6 +1103,83 @@ fn persistence_action(
     }
 }
 
+/// Host-side far smoke: two crossed quads using the destructibles procedural
+/// puff texture, sized from the building height. The standalone far marker is
+/// intentionally subtle; the host keeps a brighter column so a damaged block
+/// reads from three blocks away. Tracked and despawned on thaw/release.
+fn spawn_host_smoke(world: &mut World, did: u32) -> Vec<Entity> {
+    let Some((origin, height)) = world
+        .resource::<Buildings>()
+        .get(did)
+        .map(|record| (record.origin, record.layout.height))
+    else {
+        return Vec::new();
+    };
+    let pane = world
+        .resource::<destructibles_bevy::assets::WorldAssets>()
+        .pane_mesh
+        .clone();
+    let puff = world
+        .resource::<destructibles_bevy::sprites::SpriteTables>()
+        .day
+        .first()
+        .cloned();
+    let Some(puff) = puff else {
+        return Vec::new();
+    };
+    let base = world
+        .resource::<Assets<StandardMaterial>>()
+        .get(&puff)
+        .cloned()
+        .unwrap_or_default();
+    let material = world
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(StandardMaterial {
+            base_color: Color::srgba(1.0, 1.0, 1.0, 0.95),
+            ..base
+        });
+    let width = (height * 0.75).clamp(16.0, 120.0);
+    let column = (height * 1.6).clamp(50.0, 420.0);
+    let levels = 5;
+    let mut spawned = Vec::new();
+    for level in 0..levels {
+        let t = level as f32 / (levels - 1) as f32;
+        let centre = origin + Vec3::Y * (height * 0.35 + column * (0.1 + 0.8 * t));
+        let size = width * (0.65 + 0.55 * t);
+        for yaw in [0.0f32, std::f32::consts::FRAC_PI_2] {
+            spawned.push(
+                world
+                    .spawn((
+                        Mesh3d(pane.clone()),
+                        MeshMaterial3d(material.clone()),
+                        Transform::from_translation(centre)
+                            .with_rotation(Quat::from_rotation_y(yaw))
+                            .with_scale(Vec3::new(size, size * 1.15, 1.0)),
+                        bevy::light::NotShadowCaster,
+                        Visibility::Inherited,
+                        Name::new(format!("far smoke b{did} l{level}")),
+                    ))
+                    .id(),
+            );
+        }
+    }
+    spawned
+}
+
+fn despawn_host_smoke(world: &mut World, did: u32) {
+    let markers = world
+        .resource_mut::<Neighborhood>()
+        .smoke_markers
+        .remove(&did);
+    if let Some(markers) = markers {
+        for marker in markers {
+            if let Ok(entity_mut) = world.get_entity_mut(marker) {
+                entity_mut.despawn();
+            }
+        }
+    }
+}
+
 fn persistence_tick(world: &mut World) {
     let Some(camera) = world
         .query_filtered::<&Transform, With<FlyCamera>>()
@@ -1107,6 +1212,14 @@ fn persistence_tick(world: &mut World) {
                 } else {
                     None
                 };
+                let _ = marker;
+                let smoke = spawn_host_smoke(world, did);
+                if !smoke.is_empty() {
+                    world
+                        .resource_mut::<Neighborhood>()
+                        .smoke_markers
+                        .insert(did, smoke);
+                }
                 register_building(world, did, Regime::Frozen);
                 if let Some(state) = world.resource_mut::<Streaming>().by_building.get_mut(&did) {
                     state.damaged = true;
@@ -1127,6 +1240,7 @@ fn persistence_tick(world: &mut World) {
             if let Some(cache) = cache {
                 thaw_building(world, &cache);
             }
+            despawn_host_smoke(world, did);
             let marker = world
                 .resource_mut::<Streaming>()
                 .by_building
@@ -1148,6 +1262,7 @@ fn persistence_tick(world: &mut World) {
             }
             info!("PERSIST b{id}: thawed on re-entry at {distance:.0} m");
         } else if action == PersistAction::Release {
+            despawn_host_smoke(world, did);
             let cache = world
                 .resource_mut::<Streaming>()
                 .by_building
@@ -1156,6 +1271,7 @@ fn persistence_tick(world: &mut World) {
             if let Some(cache) = cache {
                 thaw_building(world, &cache);
             }
+            despawn_host_smoke(world, did);
             let marker = world
                 .resource_mut::<Streaming>()
                 .by_building
@@ -1575,6 +1691,14 @@ fn process_swaps(world: &mut World) {
         let out = world.resource_mut::<Neighborhood>().pending_out.pop_front();
         if let Some(id) = out {
             world.resource_mut::<Neighborhood>().queued_out.remove(&id);
+            let did = NEIGHBORHOOD_ID_BASE + id as u32;
+            let damaged = world.resource::<DamageJournal>().0.head_for(did) > 0.0;
+            if damaged
+                && world.resource::<NeighborhoodConfig>().damaged_persists
+                && world.resource::<Neighborhood>().live.contains_key(&id)
+            {
+                continue;
+            }
             let live = world.resource_mut::<Neighborhood>().live.remove(&id);
             if let Some(live) = live {
                 let swap_started = Instant::now();
@@ -1888,6 +2012,79 @@ fn fill_mask_polygon(pixels: &mut [u8], polygon: &[Vec2]) {
 }
 
 #[allow(clippy::drop_non_drop)]
+fn demo_damage(world: &World) -> bool {
+    world
+        .get_resource::<NeighborhoodDemo>()
+        .is_some_and(|demo| demo.damage)
+}
+
+/// Pick a storefront-category block for the street-level capture, preferring a
+/// reasonably tall one so the same building reads as a plume from three blocks.
+fn nearest_demo_live(world: &World, point: Vec3) -> Option<(usize, Vec3)> {
+    let index = world.resource::<BuildingIndex>();
+    let mut best: Option<(u8, f32, usize, Vec3)> = None;
+    for (id, live) in &world.resource::<Neighborhood>().live {
+        let distance = live.origin.distance_squared(point);
+        let rank = index
+            .buildings
+            .get(live.meta)
+            .map(|meta| {
+                if meta.category == "storefront" {
+                    0
+                } else if meta.height_m >= 45.0 {
+                    1
+                } else {
+                    2
+                }
+            })
+            .unwrap_or(3);
+        if best
+            .as_ref()
+            .is_none_or(|(best_rank, best_distance, _, _)| {
+                (rank, distance) < (*best_rank, *best_distance)
+            })
+        {
+            best = Some((rank, distance, *id, live.origin));
+        }
+    }
+    best.map(|(_, _, id, origin)| (id, origin))
+}
+
+fn nearest_live(world: &World, point: Vec3) -> Option<(usize, Vec3)> {
+    world
+        .resource::<Neighborhood>()
+        .live
+        .iter()
+        .map(|(id, live)| (*id, live.origin))
+        .min_by(|a, b| {
+            a.1.distance_squared(point)
+                .total_cmp(&b.1.distance_squared(point))
+        })
+}
+
+fn queue_damage(world: &mut World, id: usize, preset: DamagePreset, point: Vec3) {
+    world
+        .resource_mut::<Neighborhood>()
+        .pending_damage
+        .push(PendingDamage { id, preset, point });
+    info!("DAMAGE DEMO: {} queued at b{id}", preset.label());
+}
+
+fn auto_bomb(world: &mut World, camera: Vec3) {
+    let Some((id, origin)) = nearest_live(world, camera) else {
+        return;
+    };
+    let away = Vec2::new(camera.x - origin.x, camera.z - origin.z).normalize_or_zero();
+    let away = if away.length_squared() < 0.01 {
+        Vec2::X
+    } else {
+        away
+    };
+    let point = origin + Vec3::new(away.x, 0.0, away.y) * 8.0 + Vec3::Y * 2.2;
+    queue_damage(world, id, DamagePreset::CarBomb, point);
+}
+
+#[allow(clippy::drop_non_drop)]
 fn run_neighborhood_demo(world: &mut World) {
     if !world.resource::<NeighborhoodDemo>().active {
         return;
@@ -1939,6 +2136,8 @@ fn run_neighborhood_demo(world: &mut World) {
             demo.stage_at = now;
             demo.distance = 0.0;
             demo.captured = false;
+            demo.captured_detail = false;
+            demo.bombed = false;
             demo.current = RegimeStats {
                 name: REGIMES[demo.regime].0.to_string(),
                 speed: REGIMES[demo.regime].1,
@@ -1970,12 +2169,29 @@ fn run_neighborhood_demo(world: &mut World) {
             // Let the zone/mask update with the new camera pose before the
             // screenshot.
             update_zone_snapshot(world);
+            if distance >= TRAVERSE_METERS * 0.12
+                && !world.resource::<NeighborhoodDemo>().captured_detail
+            {
+                world.resource_mut::<NeighborhoodDemo>().captured_detail = true;
+                let path = world
+                    .resource::<NeighborhoodDemo>()
+                    .capture_dir
+                    .join(format!("iteration18_detail_buildout_{name}.png"));
+                screenshot(world, &path, "detail build-out");
+            }
+            if demo_damage(world)
+                && !world.resource::<NeighborhoodDemo>().bombed
+                && distance >= TRAVERSE_METERS * 0.35
+            {
+                world.resource_mut::<NeighborhoodDemo>().bombed = true;
+                auto_bomb(world, position);
+            }
             if distance >= TRAVERSE_METERS * 0.5 && !world.resource::<NeighborhoodDemo>().captured {
                 world.resource_mut::<NeighborhoodDemo>().captured = true;
                 let path = world
                     .resource::<NeighborhoodDemo>()
                     .capture_dir
-                    .join(format!("iteration17_{name}.png"));
+                    .join(format!("iteration18_{name}.png"));
                 screenshot(world, &path, name);
             }
             if distance >= TRAVERSE_METERS {
@@ -2009,12 +2225,25 @@ fn run_neighborhood_demo(world: &mut World) {
             demo.current.worst_swap_ms = worst_swap_ms;
             demo.current.worst_swap_frame_ms = worst_swap_frame_ms;
             drop(demo);
+            {
+                let mut count = 0usize;
+                let mut max_m = 0.0f32;
+                for live in world.resource::<Neighborhood>().live.values() {
+                    if let Some(distance) = live.tier1_ready {
+                        count += 1;
+                        max_m = max_m.max(distance);
+                    }
+                }
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.current.tier1_count = count;
+                demo.current.tier1_max_m = max_m;
+            }
             let stray = force_clear(world);
             let mut demo = world.resource_mut::<NeighborhoodDemo>();
             demo.current.stray_handles = stray;
             let stats = demo.current.clone();
             info!(
-                "REGIME {} speed={:.1} frames={} worst_frame={:.1}ms worst_swap={:.1}ms worst_swap_frame={:.1}ms live_max={} swaps_in={} swaps_out={} pending_peak={} behind_max={:.1}m stray={}",
+                "REGIME {} speed={:.1} frames={} worst_frame={:.1}ms worst_swap={:.1}ms worst_swap_frame={:.1}ms live_max={} swaps_in={} swaps_out={} pending_peak={} behind_max={:.1}m stray={} tier1={} tier1_max_approach={:.1}m",
                 stats.name,
                 stats.speed,
                 stats.frames,
@@ -2026,7 +2255,9 @@ fn run_neighborhood_demo(world: &mut World) {
                 stats.swaps_out,
                 stats.pending_peak,
                 stats.behind_max,
-                stats.stray_handles
+                stats.stray_handles,
+                stats.tier1_count,
+                stats.tier1_max_m
             );
             demo.stats.push(stats);
             demo.regime += 1;
@@ -2069,7 +2300,7 @@ fn run_neighborhood_demo(world: &mut World) {
             let path = world
                 .resource::<NeighborhoodDemo>()
                 .capture_dir
-                .join("iteration17_boundary_hover.png");
+                .join("iteration18_boundary_hover.png");
             screenshot(world, &path, "boundary hover");
             let current_swaps = {
                 let neighborhood = world.resource::<Neighborhood>();
@@ -2100,6 +2331,340 @@ fn run_neighborhood_demo(world: &mut World) {
                 })
                 .collect();
             info!("NEIGHBORHOOD GAUNTLET SUMMARY: {}", summary.join(" | "));
+            if demo.damage {
+                demo.stage = DemoStage::DamageFly;
+            } else {
+                demo.stage = DemoStage::ExitWait;
+            }
+            demo.stage_at = now;
+        }
+        DemoStage::DamageFly => {
+            // The street/horizon proof reads best on a tower: a tall plume is
+            // visible over three blocks, and a tower's ground floor is a real
+            // storefront. Fly to the tallest building in the city and let the
+            // zone swap it in before framing it.
+            let start = world.resource::<NeighborhoodDemo>().start;
+            let pick = |min_height: f32, max_height: f32| {
+                world
+                    .resource::<BuildingIndex>()
+                    .buildings
+                    .iter()
+                    .filter(|meta| {
+                        meta.perimeter.len() >= 4
+                            && meta.height_m >= min_height
+                            && meta.height_m <= max_height
+                    })
+                    .map(|meta| {
+                        let distance =
+                            Vec2::new(meta.centroid[0] - start.x, meta.centroid[1] - start.z)
+                                .length();
+                        (distance, meta.centroid, meta.height_m, meta.id)
+                    })
+                    .filter(|(distance, ..)| *distance < 1_500.0)
+                    .min_by(|a, b| a.0.total_cmp(&b.0))
+            };
+            let selected = pick(55.0, 140.0).or_else(|| pick(35.0, 200.0)).or_else(|| {
+                world
+                    .resource::<BuildingIndex>()
+                    .buildings
+                    .iter()
+                    .filter(|meta| meta.perimeter.len() >= 4)
+                    .min_by(|a, b| {
+                        let da =
+                            Vec2::new(a.centroid[0] - start.x, a.centroid[1] - start.z).length();
+                        let db =
+                            Vec2::new(b.centroid[0] - start.x, b.centroid[1] - start.z).length();
+                        da.total_cmp(&db)
+                    })
+                    .map(|meta| {
+                        let distance =
+                            Vec2::new(meta.centroid[0] - start.x, meta.centroid[1] - start.z)
+                                .length();
+                        (distance, meta.centroid, meta.height_m, meta.id)
+                    })
+            });
+            let Some((_distance, centroid, height, id)) = selected else {
+                world.resource_mut::<NeighborhoodDemo>().stage = DemoStage::ExitWait;
+                return;
+            };
+            let origin = Vec3::new(centroid[0], 0.0, centroid[1]);
+            let position = origin + Vec3::new(0.0, 40.0, 90.0);
+            let look = origin + Vec3::Y * (height * 0.35);
+            set_camera(world, position, look - position, 15.0);
+            info!("DAMAGE DEMO: approach b{id} height {height:.1} m");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::DamageSetup;
+            demo.stage_at = now;
+        }
+        DemoStage::DamageSetup => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.8 {
+                return;
+            }
+            let camera = world
+                .query_filtered::<&Transform, With<FlyCamera>>()
+                .single(world)
+                .ok()
+                .map(|transform| transform.translation)
+                .unwrap_or(Vec3::ZERO);
+            let Some((id, origin)) = nearest_demo_live(world, camera) else {
+                info!("DAMAGE DEMO: no live building near the hover pose");
+                world.resource_mut::<NeighborhoodDemo>().stage = DemoStage::ExitWait;
+                return;
+            };
+            let away = Vec2::new(camera.x - origin.x, camera.z - origin.z).normalize_or_zero();
+            let away = if away.length_squared() < 0.01 {
+                Vec2::X
+            } else {
+                away
+            };
+            let radius = world
+                .resource::<BuildingIndex>()
+                .buildings
+                .get(id)
+                .map(|meta| {
+                    meta.perimeter
+                        .iter()
+                        .map(|point| {
+                            Vec2::new(point[0] - meta.centroid[0], point[1] - meta.centroid[1])
+                                .length()
+                        })
+                        .fold(4.0f32, f32::max)
+                })
+                .unwrap_or(6.0);
+            let direction = Vec3::new(away.x, 0.0, away.y);
+            let standoff = (radius * 1.9 + 12.0).max(34.0);
+            let position = origin + direction * standoff + Vec3::Y * 6.0;
+            let look = origin + Vec3::Y * 3.0;
+            let point = origin + direction * (radius * 0.95) + Vec3::Y * 2.4;
+            set_camera(world, position, look - position, 8.0);
+            let height = world
+                .resource::<BuildingIndex>()
+                .buildings
+                .get(id)
+                .map(|meta| meta.height_m)
+                .unwrap_or(20.0);
+            let high = origin + direction * (standoff * 2.2) + Vec3::Y * (height * 1.1 + 8.0);
+            let damage_view = (high, (origin + Vec3::Y * (height * 0.7)) - high);
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.damage_building = Some(id);
+                demo.damage_point = point;
+                demo.street_view = (position, look - position);
+                demo.damage_view = damage_view;
+                demo.horizon_armed = false;
+                demo.return_armed = false;
+                demo.damage_seen = false;
+                demo.restored_at = 0.0;
+                demo.stage = DemoStage::StorefrontPristine;
+                demo.stage_at = now;
+            }
+            let meta = world
+                .resource::<BuildingIndex>()
+                .buildings
+                .get(id)
+                .map(|meta| (meta.category.clone(), meta.height_m));
+            info!("DAMAGE DEMO: street view at b{id} {meta:?}, point {point:?}");
+        }
+        DemoStage::StorefrontPristine => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.6 {
+                return;
+            }
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration18_storefront_pristine.png");
+            screenshot(world, &path, "storefront pristine");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            if let Some(id) = demo.damage_building {
+                let point = demo.damage_point;
+                demo.stage = DemoStage::StorefrontBomb;
+                demo.stage_at = now;
+                drop(demo);
+                queue_damage(world, id, DamagePreset::CarBomb, point);
+            }
+        }
+        DemoStage::StorefrontBomb => {
+            let Some(id) = world.resource::<NeighborhoodDemo>().damage_building else {
+                return;
+            };
+            let head = world
+                .resource::<DamageJournal>()
+                .0
+                .head_for(NEIGHBORHOOD_ID_BASE + id as u32);
+            if head > 0.0 && !world.resource::<NeighborhoodDemo>().damage_seen {
+                world.resource_mut::<NeighborhoodDemo>().damage_seen = true;
+                world.resource_mut::<NeighborhoodDemo>().stage_at = now;
+            }
+            let elapsed = now - world.resource::<NeighborhoodDemo>().stage_at;
+            if head <= 0.0 && elapsed < 8.0 {
+                return;
+            }
+            if head > 0.0 && elapsed < 0.6 {
+                return;
+            }
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration18_storefront_damage.png");
+            screenshot(world, &path, "storefront damage");
+            info!("DAMAGE DEMO: b{id} journal head {head:.2}");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::StorefrontHalo;
+            demo.stage_at = now;
+        }
+        DemoStage::StorefrontHalo => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 0.4 {
+                return;
+            }
+            let Some(id) = world.resource::<NeighborhoodDemo>().damage_building else {
+                return;
+            };
+            {
+                let (position, direction) = world.resource::<NeighborhoodDemo>().damage_view;
+                if direction != Vec3::ZERO {
+                    set_camera(world, position, direction, 8.0);
+                }
+            }
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration18_damage_nadir.png");
+            screenshot(world, &path, "damage at nadir");
+            info!("DAMAGE DEMO: b{id} halo capture");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::Horizon;
+            demo.stage_at = now;
+        }
+        DemoStage::Horizon => {
+            let Some(id) = world.resource::<NeighborhoodDemo>().damage_building else {
+                return;
+            };
+            if !world.resource::<NeighborhoodDemo>().horizon_armed {
+                world.resource_mut::<NeighborhoodDemo>().horizon_armed = true;
+                world.resource_mut::<NeighborhoodDemo>().stage_at = now;
+                // Three blocks out, framing the smoke column itself.
+                let did = NEIGHBORHOOD_ID_BASE + id as u32;
+                let origin = world
+                    .resource::<Neighborhood>()
+                    .live
+                    .get(&id)
+                    .map(|live| live.origin)
+                    .unwrap_or(Vec3::ZERO);
+                let focus = world
+                    .resource::<Neighborhood>()
+                    .smoke_markers
+                    .get(&did)
+                    .and_then(|markers| markers.first().copied())
+                    .and_then(|marker| world.get::<Transform>(marker))
+                    .map(|transform| transform.translation)
+                    .unwrap_or(origin + Vec3::Y * 20.0);
+                let position = focus + Vec3::new(0.0, 55.0, 300.0);
+                set_camera(world, position, focus - position, 40.0);
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.4 {
+                return;
+            }
+            {
+                let did = NEIGHBORHOOD_ID_BASE + id as u32;
+                let frozen = world
+                    .resource::<Neighborhood>()
+                    .live
+                    .get(&id)
+                    .is_some_and(|live| live.frozen);
+                let smoke = world
+                    .resource::<Neighborhood>()
+                    .smoke_markers
+                    .get(&did)
+                    .map(|markers| markers.len())
+                    .unwrap_or(0);
+                info!("DAMAGE DEMO: horizon b{id} frozen={frozen} host_smoke_quads={smoke}");
+            }
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration18_horizon_smoke.png");
+            screenshot(world, &path, "horizon smoke");
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::Return;
+            demo.stage_at = now;
+        }
+        DemoStage::Return => {
+            if !world.resource::<NeighborhoodDemo>().return_armed {
+                world.resource_mut::<NeighborhoodDemo>().return_armed = true;
+                world.resource_mut::<NeighborhoodDemo>().stage_at = now;
+                let (position, direction) = world.resource::<NeighborhoodDemo>().street_view;
+                set_camera(world, position, direction, 8.0);
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.4 {
+                return;
+            }
+            if let Some(id) = world.resource::<NeighborhoodDemo>().damage_building {
+                let did = NEIGHBORHOOD_ID_BASE + id as u32;
+                let head = world.resource::<DamageJournal>().0.head_for(did);
+                let frozen = world
+                    .resource::<Neighborhood>()
+                    .live
+                    .get(&id)
+                    .is_some_and(|live| live.frozen);
+                info!("DAMAGE DEMO: re-entry b{id} journal {head:.2} frozen={frozen}");
+            }
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration18_storefront_return.png");
+            screenshot(world, &path, "storefront re-entry");
+            if let Some(id) = world.resource::<NeighborhoodDemo>().damage_building {
+                let did = NEIGHBORHOOD_ID_BASE + id as u32;
+                // The host owns the rate; a demo restoration should finish in
+                // seconds even after a car bomb on a mid-rise.
+                set_restoration_rate(world, did, 900.0);
+                begin_restoration(world, &[did]);
+            }
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::Restored;
+            demo.stage_at = now;
+        }
+        DemoStage::Restored => {
+            let Some(id) = world.resource::<NeighborhoodDemo>().damage_building else {
+                return;
+            };
+            let did = NEIGHBORHOOD_ID_BASE + id as u32;
+            let head = world.resource::<DamageJournal>().0.head_for(did);
+            let elapsed = now - world.resource::<NeighborhoodDemo>().stage_at;
+            if head <= 0.0 && world.resource::<NeighborhoodDemo>().restored_at == 0.0 {
+                world.resource_mut::<NeighborhoodDemo>().restored_at = now;
+            }
+            let restored_for = now - world.resource::<NeighborhoodDemo>().restored_at;
+            if head > 0.0 && elapsed < 30.0 {
+                return;
+            }
+            if head <= 0.0 && restored_for < 1.2 {
+                return;
+            }
+            let path = world
+                .resource::<NeighborhoodDemo>()
+                .capture_dir
+                .join("iteration18_storefront_restored.png");
+            screenshot(world, &path, "storefront restored");
+            let integrity = world
+                .get_resource::<HealthIndex>()
+                .and_then(|health| health.by_building.get(&did).map(|entry| entry.integrity))
+                .unwrap_or(1.0);
+            let fill = live_fill_color(head > 0.0, integrity);
+            let frozen = world
+                .resource::<Neighborhood>()
+                .live
+                .get(&id)
+                .is_some_and(|live| live.frozen);
+            info!(
+                "DAMAGE DEMO: b{id} restored, journal {head:.2} at {elapsed:.1}s minimap_fill={fill:?} frozen={frozen} swap_out_eligible={}",
+                head <= 0.0 && !frozen
+            );
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::ExitWait;
+            demo.stage_at = now;
         }
         DemoStage::ExitWait => {
             if now - world.resource::<NeighborhoodDemo>().stage_at > 1.2 {
@@ -2128,11 +2693,13 @@ fn force_clear(world: &mut World) -> usize {
         if let Some(live) = world.resource_mut::<Neighborhood>().live.remove(&id) {
             let _ = swap_out(world, live.handle);
         }
+        despawn_host_smoke(world, NEIGHBORHOOD_ID_BASE + id as u32);
     }
     {
         let mut neighborhood = world.resource_mut::<Neighborhood>();
         neighborhood.pending_in.clear();
         neighborhood.pending_out.clear();
+        neighborhood.pending_damage.clear();
         neighborhood.queued_in.clear();
         neighborhood.queued_out.clear();
         neighborhood.live_revision += 1;

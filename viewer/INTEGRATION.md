@@ -146,3 +146,128 @@ interior lattice/colliders) because a full-detail synchronous spawn was
 40–90 ms; upgrading to Full on first damage is the next integration step.
 Storefront/advertisement decals and the ground-floor detail question remain
 deferred. Multiplayer: never.
+
+
+## Iteration 18 — detail on demand, damage delivery, persistence, street parity
+
+### Detail tiers (destructibles `manhattan-3`)
+
+A live building enters as **Tier 0** (shell + a convex footprint collider, so a
+building is never walkthrough while detail is pending). Manhattan drives the
+generator every frame against a **4 ms** budget (`detail_tick`):
+
+- **Tier 1** — slabs, columns and per-pane wall colliders replace the coarse
+  collider.
+- **Tier 2** — core shaft, interior shell, fill light and clutter.
+
+Ordering is `(tier, corridor, distance)`: corridor buildings (ahead of the
+camera inside `ahead_half_width * 1.5`) are detailed before nadir edges, which
+pre-warms a high-speed approach. No synchronous full spawn exists anywhere.
+The HUD shows per-target `DetailLevel`, live `T0/T1/T2` counts, built totals,
+frozen and damage counters, and parity panel/ad counts.
+
+Measured Tier-1 readiness on the gauntlet (distance at which Tier 1 finished
+while approaching):
+
+| Regime | Tier 1 built | Farthest Tier-1-ready approach |
+|---|---:|---:|
+| pedestrian drone | 49 | 133.5 m |
+| fast drone | 35 | 91.8 m |
+| hero flight | 7 | 91.5 m |
+| mach 1.92 | 0 | — (camera outruns the generator) |
+
+### Damage delivery
+
+`damage_input` casts the reticle against live AABBs (with a forward-cone
+fallback) and routes the established arsenal through `ImpactSpec`:
+
+| Key | Preset |
+|---|---|
+| `1` | bullet (chip) |
+| `2` | car bomb (5 kg TNT, 1 500 kg) |
+| `3` | tier-3 (120 t, 120 m/s) |
+| `4` | hero punch (`apply_puncture`, 620 m/s) |
+| `X` | fire at the reticle |
+| `Z` | restore the target |
+| `Shift+Z` | restore damaged live buildings within 250 m |
+
+Damage is admitted only when the target has reached **Tier 1**; otherwise the
+shot is queued and applied on the frame the tier lands (never a hitch). The
+journal, halo, power rolls and audio inherit by construction. Restoration uses
+the host-controlled `begin_restoration`/`advance_restoration` API; the demo sets
+a host rate so a car-bombed mid-rise restores in ~1.3 s.
+
+### Damaged persistence
+
+`persistence_tick` freezes a damaged live record beyond the exit radius
+(`freeze_building`, far marker + host smoke quads beyond 250 m) and thaws it in
+place on re-entry; the live record is never demoted to the plain map while the
+journal is non-empty (`damaged_persists`). The minimap fill is re-derived every
+frame from journal presence and `HealthIndex`, so it stays colored at all
+ranges. When restoration empties the journal the record is released, the far
+marker/smoke are despawned, the fill returns to white, and swap-out becomes
+eligible again. The zone-exit sweep (`update_zone` second pass) and
+`process_swaps` both honour damaged persistence.
+
+### Street-level parity
+
+**Documented choice: re-projected quads parented to the destructible root**
+(not baked into facade materials). The plain map hides its `Storefront_*` and
+`Signs_*` meshes (new `HiddenByLive` marker; the culler skips them) while the
+live destructible carries the identical ground-floor panels and second-floor ad
+plates, built from the same atlas, UVs and corner geometry. Each panel/plate
+gets a `FacadeDressing { facade, floor }`; breached or removed wall cells hide
+it and restoration brings it back because visibility is re-derived from the live
+damage state every frame. Storefronts attach to the ground face, ad plates keep
+their own floor.
+
+### Gauntlet with damage active (`MANHATTAN_DAMAGE=1`)
+
+```bash
+cd viewer
+MANHATTAN_NEIGHBORHOOD=1 MANHATTAN_DAMAGE=1 ./target/release/manhattan-viewer
+```
+
+A car bomb is queued once per regime at 35 % of the traverse (and again at the
+street-level sequence). Worst frames include live damage and parity draw.
+
+| Regime | Speed | I17 worst | I18 worst | Δ | I17 swap | I18 swap | I17 behind | I18 behind |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| pedestrian drone | 15 m/s | 96.4 ms | 156.7 ms | +60.3 | 12.0 ms | 15.8 ms | 143.6 m | 226.7 m |
+| fast drone | 30 m/s | 74.2 ms | 126.7 ms | +52.5 | 9.9 ms | 19.3 ms | 144.1 m | 228.7 m |
+| hero flight | 100 m/s | 110.3 ms | 124.4 ms | +14.1 | 7.0 ms | 22.6 ms | 145.6 m | 229.9 m |
+| mach 1.92 | 650 m/s | 74.0 ms | 103.8 ms | +29.8 | 6.9 ms | 15.6 ms | 167.6 m | 253.5 m |
+
+The `behind` rise is expected: a damaged frozen building remains a live record
+beyond the zone, so the metric now includes persistence. Total worst frames
+still belong to Manhattan city streaming plus the screenshot request; the
+incremental generator has retired the 40–90 ms full-spawn cliff (Tier 0 swap is
+a shell, Tier 1/2 arrive over budgeted frames). `stray=0` every regime,
+`swaps=0` during the steady hover.
+
+### Captures (iteration 18)
+
+- `iteration18_detail_buildout_<regime>.png` — HUD `DetailLevel`/tier counts
+  during build-out.
+- `iteration18_storefront_pristine.png` — street-level storefront panel on a
+  live destructible.
+- `iteration18_storefront_damage.png` — the same block after a car bomb: the
+  storefront panel disappears with its breached face.
+- `iteration18_damage_nadir.png` — elevated view with halo and the green
+  damaged minimap footprint.
+- `iteration18_horizon_smoke.png` — three blocks away: host smoke column and
+  colored minimap fill while the record is frozen.
+- `iteration18_storefront_return.png` / `iteration18_storefront_restored.png` —
+  re-entry continuity and full restoration (journal 0, fill back to white,
+  swap-out eligible).
+
+### Verification (iteration 18)
+
+- Manhattan: fmt, clippy `-D warnings`, **78 tests**, release build.
+- Destructibles: fmt, clippy `-D warnings`, **157 tests**.
+- New tests: `detail_tiers.rs` (Tier-0 footprint collider present; Tier-1
+  removes it and spawns wall colliders; tier ordering/budget), Manhattan
+  `minimap_color_*`, `storefront panels/ad attachment`, `dressing damage
+  participation`, `detail_priority`, `damaged_persistence_round_trip`.
+- Determinism/journal/audit battery unchanged (destructibles workspace suite).
+- Zero stray handles after every regime; hover swaps = 0.
