@@ -127,8 +127,13 @@ generator next.
 - Manhattan: fmt, clippy `-D warnings`, **73 tests**, release build.
 - Destructibles at `manhattan-2`: fmt, clippy `-D warnings`, **155 tests**,
   iteration-15/16 audit and behavior unchanged (defaults are still Full/demo).
-- Destructibles audit smoke test: `CMD AUDIT 28/28`, `PUNCTURE AUDIT 11/11`,
-  `LIFT AUDIT 10/10`, determinism/replay green.
+- Destructibles audit smoke test at `manhattan-2`: `CMD AUDIT 28/28`,
+  `PUNCTURE AUDIT 11/11`, `LIFT AUDIT 10/10`.
+- Destructibles full autodemo at `manhattan-2` (same git tree): determinism
+  PASS, collapse replay 335 entries PASS, triple restoration PASS, regime
+  matrix 4/4, leftover sweep 5/5, epilogue transforms PASS. Stress 32.5 fps /
+  144.3 ms is the inherited gate miss; logged in
+  `viewer/captures/iteration17_destructibles_full.log`.
 - Footprint, style mapping, hysteresis and pristine-white tests are in
   `neighborhood.rs`.
 - Zero stray handles after every regime; hover swaps = 0.
