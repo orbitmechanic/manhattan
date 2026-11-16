@@ -14,6 +14,11 @@ pub const EMBELLISHMENT_RADIUS: f32 = 1_000.0;
 /// (304.8 m) detail radius.
 pub const NEAR_DETAIL_RADIUS: f32 = 304.8;
 
+/// Marks a plain-map embellishment that is hidden while a live destructible
+/// occupies the same footprint. Culling skips these so it cannot unhide them.
+#[derive(Component)]
+pub struct HiddenByLive;
+
 #[derive(Component, Clone, Copy, Debug)]
 pub struct DetailCull {
     pub min: Vec3,
@@ -43,7 +48,7 @@ impl DetailCull {
 pub fn update_detail_culling(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
-    mut items: Query<(&DetailCull, &mut Visibility)>,
+    mut items: Query<(&DetailCull, &mut Visibility), Without<HiddenByLive>>,
     mut last: Local<Option<(f32, Vec3)>>,
 ) {
     let now = time.elapsed_secs();

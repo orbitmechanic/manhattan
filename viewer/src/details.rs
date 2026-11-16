@@ -70,11 +70,26 @@ impl Default for TreeData {
     }
 }
 
+/// One advertisement plate, captured in world space at generation so the live
+/// destructible can re-project the identical quad onto its own root.
+#[derive(Clone, Debug)]
+pub struct AdQuad {
+    pub corners: [[f32; 3]; 4],
+    pub normal: [f32; 3],
+    pub uv: [[f32; 2]; 4],
+    pub material: usize,
+}
+
 #[derive(Resource, Default)]
 pub struct SignMaterials {
-    materials: Vec<Handle<StandardMaterial>>,
+    pub materials: Vec<Handle<StandardMaterial>>,
     blinking: Vec<Handle<StandardMaterial>>,
     phases: Vec<f32>,
+    /// Ad plates per building (second floor and up), world space.
+    pub plates: std::collections::HashMap<usize, Vec<AdQuad>>,
+    /// Plain map sign meshes per building, hidden while a live destructible
+    /// occupies the same footprint.
+    pub entities: std::collections::HashMap<usize, Vec<Entity>>,
 }
 
 const SQFT_PER_M2: f32 = 10.7639;
@@ -126,6 +141,8 @@ impl Default for SignBucket {
 #[allow(clippy::too_many_arguments)]
 fn add_sign_quad(
     bucket: &mut SignBucket,
+    plates: &mut Vec<AdQuad>,
+    material: usize,
     a: [f32; 3],
     b: [f32; 3],
     c: [f32; 3],
@@ -147,6 +164,12 @@ fn add_sign_quad(
         bucket.min = bucket.min.min(v);
         bucket.max = bucket.max.max(v);
     }
+    plates.push(AdQuad {
+        corners: [a, b, c, d],
+        normal: [n.x, n.y, n.z],
+        uv,
+        material,
+    });
 }
 
 fn point_in_poly(x: f32, z: f32, poly: &[[f32; 2]]) -> bool {
@@ -645,6 +668,8 @@ pub fn spawn_signs(
     });
     sign_materials.blinking.clear();
     sign_materials.phases.clear();
+    sign_materials.plates.clear();
+    sign_materials.entities.clear();
     for phase in 0..6 {
         sign_materials.phases.push(phase as f32 / 6.0);
         sign_materials
@@ -682,6 +707,7 @@ pub fn spawn_signs(
         let mut buckets: Vec<SignBucket> = (0..material_handles.len())
             .map(|_| SignBucket::default())
             .collect();
+        let mut plates: Vec<AdQuad> = Vec::new();
         let mut placed = 0usize;
 
         for _ in 0..sign_count {
@@ -759,6 +785,8 @@ pub fn spawn_signs(
                 let w = tangent * (width * 0.5);
                 add_sign_quad(
                     &mut buckets[bucket],
+                    &mut plates,
+                    bucket,
                     [base.x - w.x, y0, base.y - w.y],
                     [base.x + w.x, y0, base.y + w.y],
                     [base.x + w.x, y1, base.y + w.y],
@@ -773,6 +801,8 @@ pub fn spawn_signs(
                 let tip = wall + outward * projection;
                 add_sign_quad(
                     &mut buckets[bucket],
+                    &mut plates,
+                    bucket,
                     [wall.x, y0, wall.y],
                     [tip.x, y0, tip.y],
                     [tip.x, y0 + height, tip.y],
@@ -790,6 +820,8 @@ pub fn spawn_signs(
                 let p1 = a + (b - a) * t1 + outward * 0.14;
                 add_sign_quad(
                     &mut buckets[bucket],
+                    &mut plates,
+                    bucket,
                     [p0.x, y0, p0.y],
                     [p1.x, y0, p1.y],
                     [p1.x, y0 + height, p1.y],
@@ -803,6 +835,7 @@ pub fn spawn_signs(
         if placed == 0 {
             continue;
         }
+        let mut spawned: Vec<Entity> = Vec::new();
         for (index, bucket) in buckets.into_iter().enumerate() {
             if bucket.indices.is_empty() {
                 continue;
@@ -815,15 +848,21 @@ pub fn spawn_signs(
             .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, bucket.normals)
             .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, bucket.uvs)
             .with_inserted_indices(Indices::U32(bucket.indices));
-            commands.spawn((
-                NotShadowCaster,
-                Name::new(format!("Signs_{:05}_{index}", building.id)),
-                Mesh3d(meshes.add(mesh)),
-                MeshMaterial3d(material_handles[index].clone()),
-                Transform::IDENTITY,
-                DetailCull::new(bucket.min, bucket.max, NEAR_DETAIL_RADIUS),
-            ));
+            spawned.push(
+                commands
+                    .spawn((
+                        NotShadowCaster,
+                        Name::new(format!("Signs_{:05}_{index}", building.id)),
+                        Mesh3d(meshes.add(mesh)),
+                        MeshMaterial3d(material_handles[index].clone()),
+                        Transform::IDENTITY,
+                        DetailCull::new(bucket.min, bucket.max, NEAR_DETAIL_RADIUS),
+                    ))
+                    .id(),
+            );
         }
+        sign_materials.entities.insert(building.id, spawned);
+        sign_materials.plates.insert(building.id, plates);
         total += placed;
         buildings += 1;
     }

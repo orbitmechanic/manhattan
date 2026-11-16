@@ -101,6 +101,12 @@ pub struct PanelDressing {
     pub width_m: f32,
     /// Panel width divided by the catalog image's nominal width.
     pub scale: f32,
+    /// World-space corners in the same order as the rendered quad (bottom-left,
+    /// bottom-right, top-right, top-left). Kept so the live destructible can
+    /// re-project the identical panel onto its own root.
+    pub corners: [[f32; 3]; 4],
+    /// Atlas UVs for those corners.
+    pub uv: [[f32; 2]; 4],
 }
 
 #[derive(Clone, Debug)]
@@ -115,6 +121,13 @@ pub struct BuildingDressing {
 #[derive(Resource, Default)]
 pub struct StorefrontState {
     pub assignments: Vec<BuildingDressing>,
+    /// building id -> index in `assignments`.
+    pub index: HashMap<usize, usize>,
+    /// Category -> atlas material, reused by the live facade re-projection.
+    pub materials: HashMap<String, Handle<StandardMaterial>>,
+    /// The plain map mesh per building, hidden while a live destructible
+    /// occupies the same footprint.
+    pub entities: HashMap<usize, Entity>,
 }
 
 fn run_seed() -> u32 {
@@ -259,18 +272,17 @@ pub fn spawn_storefronts(
                 });
             })
             .load(path);
-        material_by_category.insert(
-            category.clone(),
-            materials.add(StandardMaterial {
-                base_color: Color::WHITE,
-                base_color_texture: Some(texture),
-                unlit: true,
-                double_sided: true,
-                cull_mode: None,
-                perceptual_roughness: 0.88,
-                ..default()
-            }),
-        );
+        let material = materials.add(StandardMaterial {
+            base_color: Color::WHITE,
+            base_color_texture: Some(texture),
+            unlit: true,
+            double_sided: true,
+            cull_mode: None,
+            perceptual_roughness: 0.88,
+            ..default()
+        });
+        material_by_category.insert(category.clone(), material.clone());
+        state.materials.insert(category.clone(), material);
     }
 
     let seed = run_seed();
@@ -347,6 +359,13 @@ pub fn spawn_storefronts(
                 offset_m: plan.offset_m,
                 width_m: plan.width_m,
                 scale: plan.width_m / image.width_m.max(1.0),
+                corners: [
+                    [p0.x, base_y, p0.y],
+                    [p1.x, base_y, p1.y],
+                    [p1.x, floor_height, p1.y],
+                    [p0.x, floor_height, p0.y],
+                ],
+                uv: [[u0, v1], [u1, v1], [u1, v0], [u0, v0]],
             });
         }
         if repeated {
@@ -369,15 +388,20 @@ pub fn spawn_storefronts(
         let max = verts.iter().fold(Vec3::splat(f32::NEG_INFINITY), |m, v| {
             m.max(Vec3::from_array(*v))
         });
-        commands.spawn((
-            NotShadowCaster,
-            Name::new(format!("Storefront_{:05}", building.id)),
-            Mesh3d(meshes.add(mesh)),
-            MeshMaterial3d(material.clone()),
-            Transform::IDENTITY,
-            Visibility::Inherited,
-            DetailCull::new(min, max, crate::detail::EMBELLISHMENT_RADIUS),
-        ));
+        let entity = commands
+            .spawn((
+                NotShadowCaster,
+                Name::new(format!("Storefront_{:05}", building.id)),
+                Mesh3d(meshes.add(mesh)),
+                MeshMaterial3d(material.clone()),
+                Transform::IDENTITY,
+                Visibility::Inherited,
+                DetailCull::new(min, max, crate::detail::EMBELLISHMENT_RADIUS),
+            ))
+            .id();
+        state.entities.insert(building.id, entity);
+        let index = state.assignments.len();
+        state.index.insert(building.id, index);
         state.assignments.push(BuildingDressing {
             building_id: building.id,
             block: building.block,
