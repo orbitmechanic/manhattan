@@ -786,11 +786,6 @@ pub fn stream_people(
     crowd.last_check = now;
 
     let hour = clock.minute_of_day.rem_euclid(1440.0) / 60.0;
-    let morning = (-((hour - 8.0) / 1.2).powi(2)).exp();
-    let evening = (-((hour - 17.5) / 1.2).powi(2)).exp();
-    let surge = morning.max(evening).clamp(0.0, 1.0);
-    // 1 per 5 ft nominal, 1 per 1 ft at rush hour.
-    let per_ft = 0.2f32 + 0.8f32 * surge as f32;
 
     let cam = camera.translation;
     let mut near: Vec<(f32, usize)> = data
@@ -838,6 +833,13 @@ pub fn stream_people(
         }
         let building = &data.buildings()[id];
         let perimeter_ft = perimeter_m(&building.perimeter) * FT_PER_M;
+        // Ads drive the crowd: normalized ad density × rush-hour pace.
+        let field = crate::city_rhythm::pedestrian_density(
+            building.centroid[0],
+            building.centroid[1],
+            hour as f32,
+        );
+        let per_ft = 0.03f32 + 0.97f32 * field;
         let target_walkers =
             ((perimeter_ft * per_ft).round() as usize).min(MAX_WALKERS_PER_BUILDING);
         let target_homeless = (perimeter_ft / 20.0).round() as usize;

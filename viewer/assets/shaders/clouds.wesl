@@ -8,6 +8,7 @@ import bevy_pbr::render::forward_io::{VertexOutput, FragmentOutput};
 @group(constants::MATERIAL_BIND_GROUP) @binding(1) var<uniform> lit: vec4<f32>;
 @group(constants::MATERIAL_BIND_GROUP) @binding(2) var<uniform> shade: vec4<f32>;
 @group(constants::MATERIAL_BIND_GROUP) @binding(3) var<uniform> extra: vec4<f32>;
+@group(constants::MATERIAL_BIND_GROUP) @binding(4) var<uniform> camera: vec4<f32>;
 
 fn hash21(p: vec2<f32>) -> f32 {
     return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453);
@@ -55,7 +56,12 @@ fn fragment(in: VertexOutput) -> FragmentOutput {
     // circular or square border at the horizon.
     let radial = length(in.uv - vec2<f32>(0.5, 0.5)) * 2.0;
     let rim_fade = 1.0 - smoothstep(0.72, 0.98, radial);
-    let faded_alpha = alpha * rim_fade;
+    // Soft-particle fade: flying through the deck dissolves the puffs
+    // instead of slicing a hard sheet across the camera.
+    let to_camera = in.world_position - camera.xyz;
+    let distance = length(to_camera);
+    let near_fade = smoothstep(10.0, 95.0, distance);
+    let faded_alpha = alpha * rim_fade * near_fade;
 
     if faded_alpha < 0.008 {
         discard;

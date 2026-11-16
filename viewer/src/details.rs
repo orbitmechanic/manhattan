@@ -760,7 +760,11 @@ pub fn spawn_signs(
             continue;
         }
         let antenna_count = antenna_count(building);
-        let sign_count = antenna_count * 4;
+        let density = crate::city_rhythm::ad_density(building.centroid[0], building.centroid[1]);
+        if density < 0.02 {
+            continue;
+        }
+        let sign_count = ((antenna_count * 4) as f32 * density).round() as usize;
         let cx =
             building.perimeter.iter().map(|p| p[0]).sum::<f32>() / building.perimeter.len() as f32;
         let cz =

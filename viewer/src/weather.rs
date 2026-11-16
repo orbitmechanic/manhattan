@@ -345,6 +345,9 @@ pub struct CloudMaterial {
     pub shade: Vec4,
     #[uniform(3)]
     pub extra: Vec4,
+    /// xyz = camera position; soft-particle fade near the deck.
+    #[uniform(4)]
+    pub camera: Vec4,
 }
 
 impl Material for CloudMaterial {
@@ -415,6 +418,9 @@ pub struct CloudLayer {
     /// Extra shader-space drift for this layer, independent of the weather wind.
     drift: Vec2,
     material: Handle<CloudMaterial>,
+    /// Overcast-only low deck: altitude follows the data-driven deck height.
+    low_deck: bool,
+    max_opacity: f32,
 }
 
 #[derive(Component)]
@@ -528,6 +534,7 @@ pub fn setup_weather(
             lit: Vec4::new(0.7, 0.74, 0.80, 0.0),
             shade: Vec4::new(0.35, 0.38, 0.44, 0.0),
             extra: Vec4::new(0.0, scale, 0.0, 0.0),
+            camera: Vec4::ZERO,
         });
         commands.spawn((
             Name::new(name),
@@ -536,12 +543,37 @@ pub fn setup_weather(
                 scale,
                 drift,
                 material: material.clone(),
+                low_deck: false,
+                max_opacity: 0.30,
             },
             Mesh3d(meshes.add(cloud_disc_mesh(size * 0.5, 72))),
             MeshMaterial3d(material),
             Transform::from_xyz(0.0, altitude, 0.0),
         ));
     }
+
+    // Overcast-only low deck: low enough to swallow the top of downtown towers.
+    let material = materials.add(CloudMaterial {
+        data: Vec4::new(0.0, 0.0, 0.0, 0.0),
+        lit: Vec4::new(0.7, 0.72, 0.76, 0.0),
+        shade: Vec4::new(0.34, 0.36, 0.40, 0.0),
+        extra: Vec4::new(0.0, 420.0, 0.0, 0.0),
+        camera: Vec4::ZERO,
+    });
+    commands.spawn((
+        Name::new("CloudDeckOvercastLow"),
+        CloudLayer {
+            altitude: 360.0,
+            scale: 420.0,
+            drift: Vec2::new(4.0, -6.0),
+            material: material.clone(),
+            low_deck: true,
+            max_opacity: 0.62,
+        },
+        Mesh3d(meshes.add(cloud_disc_mesh(13_000.0 * 0.5, 72))),
+        MeshMaterial3d(material),
+        Transform::from_xyz(0.0, 360.0, 0.0),
+    ));
 
     let material = precip_materials.add(PrecipMaterial {
         data: Vec4::ZERO,
@@ -598,12 +630,23 @@ pub fn update_weather_visuals(
         + Vec3::splat(flash * 0.8);
     let shade = sky * 0.46 + Vec3::new(0.018, 0.022, 0.030) * daylight + Vec3::splat(flash * 0.25);
 
+    let deck_altitude = crate::city_rhythm::cloud_deck_altitude(cover, 410.0);
     for (mut transform, layer) in &mut cloud_layers {
         transform.translation.x = cam.x;
         transform.translation.z = cam.z;
-        transform.translation.y = layer.altitude;
-        let altitude_fade = if cam.y > layer.altitude + 90.0 {
+        let layer_altitude = if layer.low_deck {
+            deck_altitude
+        } else {
+            layer.altitude
+        };
+        transform.translation.y = layer_altitude;
+        let altitude_fade = if cam.y > layer_altitude + 90.0 {
             0.30
+        } else {
+            1.0
+        };
+        let activation = if layer.low_deck {
+            smoothstep(0.42, 0.72, cover)
         } else {
             1.0
         };
@@ -615,8 +658,10 @@ pub fn update_weather_visuals(
                 weather.wind.y * weather.wind_kmh * 0.02 + layer.drift.y,
             );
             // Hard ceiling: no individual cloud deck may exceed 30% opacity.
-            let layer_opacity = ((0.70 + 0.30 * cover) * altitude_fade).min(0.30);
+            let layer_opacity =
+                ((0.70 + 0.30 * cover) * altitude_fade * activation).min(layer.max_opacity);
             material.lit = Vec4::new(lit.x, lit.y, lit.z, layer_opacity);
+            material.camera = Vec4::new(cam.x, cam.y, cam.z, 0.0);
             material.shade = Vec4::new(shade.x, shade.y, shade.z, 1.0);
             material.extra = Vec4::new(flash, layer.scale, 0.0, 0.0);
         }

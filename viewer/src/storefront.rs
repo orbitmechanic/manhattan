@@ -60,6 +60,9 @@ pub struct BuildingMeta {
     pub perimeter: Vec<[f32; 2]>,
     pub centroid: [f32; 2],
     pub category: String,
+    /// Baked construction year (see scripts/bake_year_built.py).
+    #[serde(default)]
+    pub year_built: u32,
 }
 
 #[derive(Deserialize)]

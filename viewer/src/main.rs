@@ -54,6 +54,7 @@ use manhattan_viewer::{
     minimap::MinimapPlugin,
     motion::{MotionPlugin, accessories_active},
     neighborhood::NeighborhoodPlugin,
+    night_ambient::NightAmbientPlugin,
     people::{Crowd, setup_people_catalog, stream_people, update_limbs, update_pedestrians},
     restoration::CityRestorationPlugin,
     stationing::{
@@ -281,6 +282,7 @@ fn main() {
         )
         .add_plugins(destructibles_bevy::destructibles_plugin_for_manhattan())
         .add_plugins(MaterialPlugin::<CityMaterial>::default())
+        .add_plugins(NightAmbientPlugin)
         .add_plugins(NeighborhoodPlugin)
         .add_plugins(CityRestorationPlugin)
         .add_plugins(WeatherPlugin)

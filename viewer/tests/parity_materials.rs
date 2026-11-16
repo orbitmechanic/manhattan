@@ -11,17 +11,13 @@ fn map_and_generated_roofs_share_the_recipe() {
         if building.perimeter.len() < 3 || building.height_m < 4.0 {
             continue;
         }
-        let a = roof::roof_equipment(
-            building.id as u32,
-            &building.perimeter,
-            building.height_m,
+        let a = roof::roof_equipment(building.id as u32, &building.perimeter, building.height_m);
+        let b = roof::roof_equipment(building.id as u32, &building.perimeter, building.height_m);
+        assert_eq!(
+            a, b,
+            "b{} equipment must regenerate identically",
+            building.id
         );
-        let b = roof::roof_equipment(
-            building.id as u32,
-            &building.perimeter,
-            building.height_m,
-        );
-        assert_eq!(a, b, "b{} equipment must regenerate identically", building.id);
         let masts = roof::antenna_heights(building.id as u32, building.height_m);
         assert!(!masts.is_empty());
         for mast in masts {

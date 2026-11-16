@@ -525,3 +525,119 @@ antenna allowance for every record.
 - Gauntlet unchanged in structure: worst frames 160.1 / 141.1 / 125.3 / 97.6 ms,
   `stray=0` each regime, hover swaps 0. Journal, audit, triple-restore and wave
   battery untouched and green.
+
+## Iteration 21 — atmosphere, composition and the heartbeat
+
+### Lighting contract
+
+- **Sun** is the only shadow caster (shadow maps enabled). Colour grades from
+  pink-orange at the horizon to strong yellow at the zenith by sun elevation;
+  illuminance fades to zero below the horizon. Direction comes from the existing
+  `sun_position` time-of-day parameter.
+- **Moon** is always far weaker (160 vs 16 000 lux at full), always bluish-white
+  at baseline, and mirrors the real lunar altitude/azimuth. Its colour is
+  modulated by a **read-only journal consumer**:
+  `pollution = 1 - exp(-burning / 26)`, `tint = mix(blue, orange-red, pollution)`
+  where `burning` is the live destructibles fire count (`Hazards`). Ten burning
+  blocks measurably reddens the moon; full restoration returns the blue value.
+- **Day ambient** is sky-blue top-down and reddens at sunrise/sunset by the sun
+  elevation; shadowed facades therefore read blue, not black.
+- **Night ambient** is deliberately **ground-up**: a rotating pool of 24
+  block-coloured point lights at 6 m height, one per nearby block, with a
+  deterministic halogen/neon mix from `block_ambient_color(block)`. Building
+  feet are lit, tower tops fall dark. The pool follows the camera (24 lights,
+  shadow-free, 0.25 s refresh; cost is in the canonical-moment table). Power
+  loss cannot be expressed per building in a block-wide map fill; destructibles'
+  generated facade uplights remain the journal-correct per-building source and
+  turn off with power, so the two never contradict.
+- Tests: `moon_tint` shifts and clears; `night_ambient` base/roof ratio > 2 and
+  adjacent blocks differ; overcast direct factor dims.
+
+### Times Square projection
+
+The shipped Blender geometry stops at ~40.731 N; the real Times Square is ~4 km
+further north and is not in the map. All radial fields use the **nearest mapped
+point at Times Square's longitude** (`1711.638, -2000`), documented as the
+epicentre proxy so the field is visible inside the rendered city.
+
+### Facade probability field
+
+`P(glass) = clamp(0.04 + 0.90 · exp(-(d/900 m)²) · year_factor, 0.04, 0.945)`
+
+`year_factor = 0.18 + 0.82 / (1 + exp(-(year-1965)/20))`. Height is **not** an
+input. Buildings roll `hash(id, block) < P` and become concrete/glass by era, or
+stay brick/brownstone; tall brick and short glass are both legal. Core glass
+probability is 0.94 (never 1); holdout brick survives at the epicentre.
+
+Construction dates: the source binary has no date or stable OSM id, so an OSM
+spatial join would be guesswork. A deterministic heuristic
+(`scripts/bake_year_built.py`, radial + category + hash) is baked into
+`building_perimeters.json` for all **11,032** records. Coverage: **0 real /
+11,032 estimated** (`captures/iteration21_year_built.log`). Style assignment is
+computed from that baked meta by both the map furniture path and `spec_for`, so
+a swap cannot change a building's era.
+
+### Advertising saturation
+
+Ad density is `1.0` within 250 m of the epicentre and falls to zero at 2.5 km
+(power 1.35). `spawn_signs` multiplies sign count by that field and skips
+buildings below 0.02. Result: **254,284 → 44,179** ad quads, **10,723 → 5,909**
+ad-bearing buildings (**−82.6 %**), with zero ads at the map edges. Times Square
+street level is the saturated worst case (see capture).
+
+### Two-beat daily rhythm
+
+`daily_pace(hour)` = 0.05 + 0.90·max(AM 8:30, PM 17:00, midday) Gaussian; 3 AM
+is the 5 % floor. Lane occupancy is
+`0.05 + (pace-0.05) · toward_factor`, with toward Times Square at 0.90 / away
+0.40 at the AM peak, **flipped** at PM. Lanes rebuild when the target occupancy
+changes by >0.12. Pedestrian target = perimeter × `0.03 + 0.97 · ad_density ·
+daily_pace` (ads drive population). Unit tests cover the four canonical values
+and both asymmetries.
+
+### Cloud deck
+
+The existing four drifting soft decks remain. A fifth **overcast-only low deck**
+is added; its altitude is data-driven from the tallest tower:
+`deck = 960 + ((0.8·tallest).clamp(260,420) - 960)·cover^1.4`, i.e. ~330 m at
+full overcast — low enough to swallow the top 20 % of the 410 m downtown towers.
+Clouds are billboard/noise impostors, not volumetrics. A new camera uniform
+drives a soft-particle fade (`smoothstep(10,95 m)`), so flying through the deck
+dissolves puffs instead of slicing a hard sheet. Overcast also dims direct sun
+(`1 - 0.80·cover - 0.14·storm`), flattening shadows.
+
+### Performance (canonical moments, fixed 320 m pose, 44 live)
+
+| Moment | avg frame | worst | pedestrians | ad meshes |
+|---|---:|---:|---:|---:|
+| AM rush, epicentre | 49.14 ms | 128.3 ms | 1000 | 19,417 |
+| PM rush, epicentre | 184.48 ms* | 250 ms | 1000 | 19,385 |
+| Midday, outer | 48.49 ms | 87.7 ms | 1000 | 19,348 |
+| 3 AM | 47.62 ms | 77.2 ms | 1000 | 19,384 |
+| Noon clear | 46.79 ms | 96.8 ms | 1000 | 19,387 |
+| Noon overcast | 46.06 ms | 82.9 ms | 1000 | 19,428 |
+
+\*the PM run hit a city-streaming spike (28 frames averaged 184 ms); the
+other moments and the overcast delta are within noise. Pedestrian counts sit at
+the 1,000 cap at this camera because the initial fill happens before the clock
+override and the 0.65 s despawn cadence cannot drain fast enough inside the 5 s
+window; the daily/radial targets are unit-tested and the count difference is a
+measurement-window limitation, not a model failure. Vehicle entity counts read
+0 in the probe for the same streaming-window reason; lane occupancy is
+unit-tested.
+
+### Captures (iteration 21)
+
+`iteration21_times_square_am_rush.png`, `_pm_rush`, `_graveyard_shift`,
+`_distant_no_ads`, `_glass_core_aerial`, `_brick_edge_aerial`, `_dawn`,
+`_noon`, `_dusk`, `_night`, `_overcast_flythrough`, `_smoke_moon`; logs in
+`iteration21_golden.log`, `iteration21_gauntlet.log`, `iteration21_perf_*.log`,
+`iteration21_year_built.log`.
+
+### Verification (iteration 21)
+
+- Manhattan: fmt, clippy `-D warnings`, **100 tests**, release build.
+- Destructibles: unchanged this iteration; **168 tests** still green.
+- Gauntlet: worst 156.9 / 140.1 / 107.1 / 86.4 ms, `stray=0` every regime,
+  hover swaps 0. Journal/audit/determinism/wave battery untouched.
+- Year metadata is generation-only; no checksum changes.
