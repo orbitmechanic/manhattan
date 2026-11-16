@@ -14,6 +14,7 @@ use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 
 use destructibles_bevy::HostCameraProbe;
+use destructibles_bevy::breach::BreachState;
 use destructibles_bevy::building::{
     BuildingDetail, Buildings, DetailTier, advance_detail, begin_detail_upgrade, detail_level,
 };
@@ -28,13 +29,15 @@ use destructibles_bevy::streaming::{
     HotZone, Regime, Streaming, freeze_building, register_building, spawn_far_marker, thaw_building,
 };
 use destructibles_bevy::swap::{DestructibleHandle, swap_in_lod, swap_out};
-use destructibles_core::{BuildingSpec, FacadeStyle, core_for_style};
+use destructibles_core::{BuildingSpec, FacadeStyle, WallQuad, core_for_style};
 
 use crate::camera::FlyCamera;
 use crate::city_material::{CityMaterial, CityMaterialSetup};
 use crate::clock::SimClock;
+use crate::detail::HiddenByLive;
+use crate::details::SignMaterials;
 use crate::minimap::LiveFootprints;
-use crate::storefront::{BuildingMeta, StorefrontData};
+use crate::storefront::{BuildingMeta, StorefrontData, StorefrontState};
 
 /// Stable id namespace for Manhattan-owned destructibles.
 pub const NEIGHBORHOOD_ID_BASE: u32 = 1_000_000;
@@ -141,6 +144,7 @@ pub struct LiveBuilding {
     pub entry_distance: f32,
     pub tier1_ready: Option<f32>,
     pub frozen: bool,
+    pub dressing: Vec<Entity>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -270,6 +274,7 @@ impl Plugin for NeighborhoodPlugin {
             .init_resource::<BuildingIndex>()
             .init_resource::<LiveFootprints>()
             .init_resource::<DamageAim>()
+            .init_resource::<StreetParity>()
             .insert_resource(NeighborhoodDemo::from_env())
             .add_systems(Startup, (setup_neighborhood, setup_neighborhood_hud))
             .add_systems(
@@ -281,6 +286,8 @@ impl Plugin for NeighborhoodPlugin {
                     detail_tick,
                     damage_input,
                     persistence_tick,
+                    sync_street_dressing,
+                    sync_dressing_damage,
                     refresh_footprints,
                     refresh_mask,
                     update_mask_texture,
@@ -1185,6 +1192,372 @@ fn refresh_footprints(world: &mut World) {
     update_live_footprints(world);
 }
 
+/// A re-projected Manhattan panel or ad plate riding on a live destructible.
+/// `facade`/`floor` identify the structural face it is attached to so it can
+/// disappear with the wall cells it covers and come back on restoration.
+#[derive(Component, Clone, Copy, Debug)]
+pub struct FacadeDressing {
+    pub building: u32,
+    pub facade: u32,
+    pub floor: u32,
+    pub storefront: bool,
+}
+
+#[derive(Resource, Default)]
+struct StreetParity {
+    dressed: BTreeSet<usize>,
+    hidden: usize,
+    panels: usize,
+    plates: usize,
+}
+
+fn set_plain_hidden(world: &mut World, id: usize, hidden: bool) {
+    let mut entities: Vec<Entity> = Vec::new();
+    if let Some(entity) = world
+        .resource::<StorefrontState>()
+        .entities
+        .get(&id)
+        .copied()
+    {
+        entities.push(entity);
+    }
+    if let Some(list) = world.resource::<SignMaterials>().entities.get(&id) {
+        entities.extend(list.iter().copied());
+    }
+    for entity in entities {
+        let Ok(mut entity_mut) = world.get_entity_mut(entity) else {
+            continue;
+        };
+        if hidden {
+            entity_mut.insert(HiddenByLive);
+            entity_mut.insert(Visibility::Hidden);
+        } else {
+            entity_mut.remove::<HiddenByLive>();
+            entity_mut.insert(Visibility::Inherited);
+        }
+    }
+}
+
+/// Keep the plain map's storefront panels and sign meshes hidden while the
+/// live destructible owns the footprint, and re-project the identical panels
+/// and ad plates onto the destructible root.
+#[allow(clippy::drop_non_drop)]
+fn sync_street_dressing(world: &mut World) {
+    let live: BTreeSet<usize> = world
+        .resource::<Neighborhood>()
+        .live
+        .keys()
+        .copied()
+        .collect();
+    let dressed: BTreeSet<usize> = world.resource::<StreetParity>().dressed.clone();
+    for id in dressed.difference(&live) {
+        set_plain_hidden(world, *id, false);
+    }
+    let to_dress: Vec<usize> = live.difference(&dressed).copied().collect();
+    if to_dress.is_empty() && live.len() == dressed.len() {
+        return;
+    }
+    let mut panels = 0usize;
+    let mut plates = 0usize;
+    for id in to_dress {
+        let Some((did, origin, root, quads)) =
+            world.resource::<Neighborhood>().live.get(&id).map(|live| {
+                let did = NEIGHBORHOOD_ID_BASE + id as u32;
+                let record = world.resource::<Buildings>().get(did);
+                (
+                    did,
+                    live.origin,
+                    record.map(|record| record.entity),
+                    record
+                        .map(|record| record.wall_quads.clone())
+                        .unwrap_or_default(),
+                )
+            })
+        else {
+            continue;
+        };
+        let Some(root) = root else {
+            continue;
+        };
+        set_plain_hidden(world, id, true);
+        panels += spawn_storefront_parity(world, id, did, origin, root, &quads);
+        plates += spawn_ad_parity(world, id, did, origin, root, &quads);
+    }
+    let mut parity = world.resource_mut::<StreetParity>();
+    parity.dressed = live;
+    parity.panels += panels;
+    parity.plates += plates;
+    {
+        let panels_total = parity.panels;
+        let plates_total = parity.plates;
+        drop(parity);
+        let mut neighborhood = world.resource_mut::<Neighborhood>();
+        neighborhood.dressing_panels = panels_total;
+        neighborhood.dressing_plates = plates_total;
+    }
+}
+
+fn panel_centre_normal(corners: &[[f32; 3]; 4]) -> (Vec3, Vec3) {
+    let p0 = Vec3::from_array(corners[0]);
+    let p1 = Vec3::from_array(corners[1]);
+    let p2 = Vec3::from_array(corners[2]);
+    let p3 = Vec3::from_array(corners[3]);
+    let centre = (p0 + p1 + p2 + p3) * 0.25;
+    let normal = (p1 - p0).cross(p3 - p0).normalize_or_zero();
+    (centre, normal)
+}
+
+/// Attach a panel or plate to the structural face it covers. Ground-floor
+/// storefronts prefer floor 0; ad plates pick the closest face at their height.
+fn nearest_face(centre: Vec3, normal: Vec3, quads: &[WallQuad], ground_only: bool) -> (u32, u32) {
+    let mut best: Option<(f32, u32, u32)> = None;
+    let mut fallback: Option<(f32, u32, u32)> = None;
+    for quad in quads {
+        let face_centre = quad.corners.iter().fold([0.0f32; 3], |acc, p| {
+            [acc[0] + p[0], acc[1] + p[1], acc[2] + p[2]]
+        });
+        let face_centre = Vec3::new(
+            face_centre[0] * 0.25,
+            face_centre[1] * 0.25,
+            face_centre[2] * 0.25,
+        );
+        let dot = normal.dot(Vec3::from_array(quad.normal));
+        if dot < 0.2 {
+            continue;
+        }
+        let score = face_centre.distance(centre) - dot * 2.0;
+        if fallback.is_none_or(|(best_score, _, _)| score < best_score) {
+            fallback = Some((score, quad.facade, quad.cell.floor));
+        }
+        if ground_only && quad.cell.floor != 0 {
+            continue;
+        }
+        if best.is_none_or(|(best_score, _, _)| score < best_score) {
+            best = Some((score, quad.facade, quad.cell.floor));
+        }
+    }
+    best.or(fallback)
+        .map(|(_, facade, floor)| (facade, floor))
+        .unwrap_or((0, 0))
+}
+
+fn quad_mesh(quads: &[([[f32; 3]; 4], [f32; 3], [[f32; 2]; 4])]) -> Option<Mesh> {
+    if quads.is_empty() {
+        return None;
+    }
+    let mut verts = Vec::with_capacity(quads.len() * 4);
+    let mut normals = Vec::with_capacity(quads.len() * 4);
+    let mut uvs = Vec::with_capacity(quads.len() * 4);
+    let mut indices = Vec::with_capacity(quads.len() * 6);
+    for (corners, normal, uv) in quads {
+        let base = verts.len() as u32;
+        verts.extend(corners.iter().copied());
+        normals.extend([*normal; 4]);
+        uvs.extend(uv.iter().copied());
+        indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    Some(
+        Mesh::new(
+            bevy::mesh::PrimitiveTopology::TriangleList,
+            bevy::asset::RenderAssetUsages::RENDER_WORLD
+                | bevy::asset::RenderAssetUsages::MAIN_WORLD,
+        )
+        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, verts)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs)
+        .with_inserted_indices(bevy::mesh::Indices::U32(indices)),
+    )
+}
+
+fn spawn_storefront_parity(
+    world: &mut World,
+    id: usize,
+    did: u32,
+    origin: Vec3,
+    root: Entity,
+    quads: &[WallQuad],
+) -> usize {
+    let (panels, material) = {
+        let state = world.resource::<StorefrontState>();
+        let Some(&index) = state.index.get(&id) else {
+            return 0;
+        };
+        let dressing = &state.assignments[index];
+        let Some(material) = state.materials.get(&dressing.category).cloned() else {
+            return 0;
+        };
+        (dressing.panels.clone(), material)
+    };
+    let mut groups: BTreeMap<u32, Vec<([[f32; 3]; 4], [f32; 3], [[f32; 2]; 4])>> = BTreeMap::new();
+    for panel in &panels {
+        let (centre, normal) = panel_centre_normal(&panel.corners);
+        let (facade, _floor) = nearest_face(centre, normal, quads, true);
+        let mut corners = panel.corners;
+        for corner in &mut corners {
+            corner[0] -= origin.x;
+            corner[1] -= origin.y;
+            corner[2] -= origin.z;
+        }
+        groups
+            .entry(facade)
+            .or_default()
+            .push((corners, normal.to_array(), panel.uv));
+    }
+    let mut spawned = 0usize;
+    for (facade, group) in groups {
+        let Some(mesh) = quad_mesh(&group) else {
+            continue;
+        };
+        let handle = world.resource_mut::<Assets<Mesh>>().add(mesh);
+        world.spawn((
+            Mesh3d(handle),
+            MeshMaterial3d(material.clone()),
+            Transform::default(),
+            bevy::light::NotShadowCaster,
+            FacadeDressing {
+                building: did,
+                facade,
+                floor: 0,
+                storefront: true,
+            },
+            ChildOf(root),
+            Name::new(format!("storefront parity b{id} f{facade}")),
+        ));
+        spawned += 1;
+    }
+    spawned
+}
+
+fn spawn_ad_parity(
+    world: &mut World,
+    id: usize,
+    did: u32,
+    origin: Vec3,
+    root: Entity,
+    quads: &[WallQuad],
+) -> usize {
+    let (plates, materials) = {
+        let signs = world.resource::<SignMaterials>();
+        let Some(plates) = signs.plates.get(&id) else {
+            return 0;
+        };
+        (plates.clone(), signs.materials.clone())
+    };
+    let mut groups: BTreeMap<(usize, u32, u32), Vec<([[f32; 3]; 4], [f32; 3], [[f32; 2]; 4])>> =
+        BTreeMap::new();
+    for plate in &plates {
+        let (centre, normal) = panel_centre_normal(&plate.corners);
+        let (facade, floor) = nearest_face(centre, normal, quads, false);
+        let mut corners = plate.corners;
+        for corner in &mut corners {
+            corner[0] -= origin.x;
+            corner[1] -= origin.y;
+            corner[2] -= origin.z;
+        }
+        groups
+            .entry((plate.material, facade, floor))
+            .or_default()
+            .push((corners, plate.normal, plate.uv));
+    }
+    let mut spawned = 0usize;
+    for ((material, facade, floor), group) in groups {
+        let Some(handle_material) = materials.get(material).cloned() else {
+            continue;
+        };
+        let Some(mesh) = quad_mesh(&group) else {
+            continue;
+        };
+        let handle = world.resource_mut::<Assets<Mesh>>().add(mesh);
+        world.spawn((
+            Mesh3d(handle),
+            MeshMaterial3d(handle_material),
+            Transform::default(),
+            bevy::light::NotShadowCaster,
+            FacadeDressing {
+                building: did,
+                facade,
+                floor,
+                storefront: false,
+            },
+            ChildOf(root),
+            Name::new(format!("ad parity b{id} f{facade} l{floor}")),
+        ));
+        spawned += 1;
+    }
+    spawned
+}
+
+/// Structural faces with removed wall cells or an active breach, keyed by
+/// (facade, floor). Re-derived every run, so restoration is automatic.
+fn damaged_faces(world: &World, did: u32) -> Vec<(u32, u32)> {
+    let mut faces = BTreeSet::new();
+    if let Some(record) = world.resource::<Buildings>().get(did) {
+        for index in &record.removed_quads {
+            if let Some(quad) = record.wall_quads.get(*index) {
+                faces.insert((quad.facade, quad.cell.floor));
+            }
+        }
+    }
+    if let Some(breach) = world.get_resource::<BreachState>() {
+        for (cell, _partial) in breach.cells_for(did) {
+            faces.insert((cell.facade, cell.floor));
+        }
+    }
+    faces.into_iter().collect()
+}
+
+fn covered_by(dressing: &FacadeDressing, faces: &[(u32, u32)]) -> bool {
+    faces.iter().any(|(facade, floor)| {
+        *facade == dressing.facade
+            && if dressing.storefront {
+                *floor == 0
+            } else {
+                *floor == dressing.floor
+            }
+    })
+}
+
+fn sync_dressing_damage(world: &mut World) {
+    let live: BTreeSet<usize> = world
+        .resource::<Neighborhood>()
+        .live
+        .keys()
+        .copied()
+        .collect();
+    if live.is_empty() {
+        return;
+    }
+    let mut damage: HashMap<u32, Vec<(u32, u32)>> = HashMap::new();
+    for id in &live {
+        let did = NEIGHBORHOOD_ID_BASE + *id as u32;
+        let faces = damaged_faces(world, did);
+        if !faces.is_empty() {
+            damage.insert(did, faces);
+        }
+    }
+    let hidden_before = world.resource::<StreetParity>().hidden;
+    if damage.is_empty() && hidden_before == 0 {
+        return;
+    }
+    let mut hidden = 0usize;
+    let mut query = world.query::<(Entity, &FacadeDressing, &mut Visibility)>();
+    for (_entity, dressing, mut visibility) in query.iter_mut(world) {
+        let covered = damage
+            .get(&dressing.building)
+            .is_some_and(|faces| covered_by(dressing, faces));
+        let desired = if covered {
+            hidden += 1;
+            Visibility::Hidden
+        } else {
+            Visibility::Inherited
+        };
+        if *visibility != desired {
+            *visibility = desired;
+        }
+    }
+    world.resource_mut::<StreetParity>().hidden = hidden;
+}
+
 #[allow(clippy::drop_non_drop)]
 fn process_swaps(world: &mut World) {
     let started = Instant::now();
@@ -1297,6 +1670,7 @@ fn process_swaps(world: &mut World) {
                     entry_distance: 0.0,
                     tier1_ready: None,
                     frozen: false,
+                    dressing: Vec::new(),
                 },
             );
             neighborhood.swaps_in += 1;
@@ -1902,6 +2276,63 @@ mod tests {
         assert!(broken[0] >= healthy[0]);
         assert!(broken[1] <= healthy[1]);
         assert_eq!(live_fill_color(false, 1.0), [255, 255, 255, 235]);
+    }
+
+    fn wall_quad(facade: u32, floor: u32, normal: [f32; 3], z: f32, y0: f32) -> WallQuad {
+        WallQuad {
+            corners: [
+                [-6.0, y0, z],
+                [6.0, y0, z],
+                [6.0, y0 + 3.0, z],
+                [-6.0, y0 + 3.0, z],
+            ],
+            normal,
+            uv: [[0.0, 0.0]; 4],
+            facade,
+            cell: destructibles_core::CellId::new(facade, floor, 0),
+            u_min: 0.0,
+            u_max: 12.0,
+            v_min: y0,
+            v_max: y0 + 3.0,
+        }
+    }
+
+    #[test]
+    fn storefront_panels_attach_to_the_nearest_ground_face() {
+        let quads = vec![
+            wall_quad(0, 0, [0.0, 0.0, -1.0], -6.0, 0.0),
+            wall_quad(1, 0, [0.0, 0.0, 1.0], 6.0, 0.0),
+            wall_quad(1, 3, [0.0, 0.0, 1.0], 6.0, 9.0),
+        ];
+        let (facade, floor) = nearest_face(Vec3::new(0.0, 1.5, 6.2), Vec3::Z, &quads, true);
+        assert_eq!((facade, floor), (1, 0), "ground storefront rides floor 0");
+        let (facade, floor) = nearest_face(Vec3::new(0.0, 10.0, 6.2), Vec3::Z, &quads, false);
+        assert_eq!((facade, floor), (1, 3), "second-floor ad keeps its floor");
+    }
+
+    #[test]
+    fn dressing_hides_with_the_face_it_rides() {
+        let storefront = FacadeDressing {
+            building: 1,
+            facade: 2,
+            floor: 0,
+            storefront: true,
+        };
+        let ad = FacadeDressing {
+            building: 1,
+            facade: 2,
+            floor: 3,
+            storefront: false,
+        };
+        assert!(covered_by(&storefront, &[(2, 0)]));
+        assert!(
+            !covered_by(&ad, &[(2, 0)]),
+            "a higher ad survives a lobby breach"
+        );
+        assert!(covered_by(&ad, &[(2, 3)]));
+        assert!(!covered_by(&storefront, &[(1, 0)]));
+        // Restoration empties the damaged-face list, so both come back.
+        assert!(!covered_by(&storefront, &[]));
     }
 
     #[test]
