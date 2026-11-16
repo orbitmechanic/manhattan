@@ -12,8 +12,8 @@ toml = "0.8"
 # Consumed from the destructibles source of truth, pinned to the host-embedding
 # tag. This survives a standalone clone of Manhattan (Cargo fetches the private
 # repo with the operator's git credentials); no sibling checkout is required.
-destructibles-bevy = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-7" }
-destructibles-core = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-7" }
+destructibles-bevy = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-8" }
+destructibles-core = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-8" }
 
 [profile.dev]
 opt-level = 1

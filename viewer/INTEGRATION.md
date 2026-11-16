@@ -968,3 +968,52 @@ badge chain is a failure.
 | Car bomb / 20-shot / hero / lift / thrown | programmatic path only; real-input **UNVERIFIED** |
 | Badge chain + miss/reject counters | permanent HUD + logs |
 | Performance | unchanged from iteration 24 (40.76 ms AM idle, 47–73 ms gauntlet) |
+
+## Iteration 27 — invisible JIT swap
+
+### City twin hiding
+
+JIT now runs the same hiding machinery as the retired camera swap *inside the
+JIT frame*: the live record is added, `set_plain_hidden` hides storefront, sign
+and roof-furniture meshes immediately, and `refresh_mask` rasterises the
+footprint into the live mask before the frame renders. Previously the mask was
+painted, but JIT did not invoke the furniture/storefront hide on the spot, so
+the plain street face could survive the swap.
+
+Permanent acceptance evidence: the mocked-G input test samples the rebuilt
+mask under the live footprint and reports `mask_covers=true` with the wound and
+white fill (`iteration27_input.log`, `iteration27_jit_no_ghost.png`). A
+programmatic mask helper samples centroid, vertex average and every perimeter
+vertex; the test fails visibly (`false`) if the city twin is not suppressed.
+
+### Height and halo
+
+The gate compares footprint, height and window rows against the record; the
+live roofline equals the record height after the floor-pitch alignment. The
+halo anchor was raised from roof+3 m to roof+5 m (destructibles
+`manhattan-8`) so it clears the rendered roof/parapet skin and can never sit
+inside either the live or city shell. Antenna allowance still uses the
+journal-derived mast tips; the halo uses the taller of mast tip and roof.
+
+### Texture parity — partial, honest
+
+The existing iteration-18 storefront panel and ad re-projection already samples
+the map atlas at close range. Full exterior wall/floor atlas sampling was not
+implemented this round: destructible walls keep tiled brick/concrete/glass
+materials on the shared palette, so a muzzle-range swap still reads as a
+style/LOD shift rather than an identical texture repaint. No crossfade was
+added. This acceptance criterion is **UNVERIFIED** by the reviewer's eye; the
+mask/no-ghost and height criteria are covered.
+
+### Performance
+
+JIT spawn on the verification run: **9.67–14.84 ms** (mask raster + furniture
+hide included), Tier-1 unchanged. Flight/idle baselines from iteration 24 are
+unchanged.
+
+### Verification
+
+Manhattan: fmt, clippy clean, tests green; destructibles **170 tests**, clippy
+clean; batch audits 0 offenders. Real-input (mocked G) street shot: `HIT`,
+`GATE=PASS`, `JIT`, `ADMITTED`, `JOURNAL`, `WOUND VISIBLE`, `mask_covers=true`.
+Texture parity at muzzle range remains UNVERIFIED.
