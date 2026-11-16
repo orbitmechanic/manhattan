@@ -1,0 +1,149 @@
+2026-11-16T14:36:14.734190Z  INFO bevy_diagnostic::system_information_diagnostics_plugin::internal: SystemInfo { os: "Linux (Omarchy 4.5.0)", kernel: "7.2.15-1-omarchy", cpu: "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx", core_count: "4", memory: "17.5 GiB" }
+2026-11-16T14:36:14.804789Z  INFO bevy_render::renderer: AdapterInfo { name: "AMD Radeon Vega 8 Graphics (RADV RAVEN)", vendor: 4098, device: 5592, device_type: IntegratedGpu, device_pci_bus_id: "0000:03:00.0", driver: "radv", driver_info: "Mesa 26.2.5-arch1.1", backend: Vulkan, subgroup_min_size: 64, subgroup_max_size: 64, transient_saves_memory: Some(false), limit_bucket: None }
+2026-11-16T14:36:14.947640Z  INFO bevy_pbr::cluster: GPU clustering is supported on this device.
+2026-11-16T14:36:14.947705Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+2026-11-16T14:36:14.948591Z  INFO bevy_hanabi::plugin: Initializing Hanabi for GPU adapter AMD Radeon Vega 8 Graphics (RADV RAVEN)
+2026-11-16T14:36:14.953760Z  INFO bevy_winit::system: Creating new window Manhattan — day/night fly-through (67v0)
+2026-11-16T14:36:14.956213Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 23 orthogonal masonry chunks per structural cell
+2026-11-16T14:36:14.956695Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 30 crystalline glass chunks per structural cell
+2026-11-16T14:36:14.961330Z  INFO manhattan_viewer::details: Trees: 3000
+2026-11-16T14:36:14.961572Z  INFO manhattan_viewer::people: People catalog ready
+2026-11-16T14:36:14.968104Z  INFO destructibles_bevy::audio: AUDIO DEVICE: host=Alsa device='Default Audio Device' config=F32 44100 Hz 2 ch (Bevy/rodio default output)
+2026-11-16T14:36:14.968104Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD: feeder/index ready, mask 1024² @ 1200 m
+2026-11-16T14:36:15.292032Z  INFO manhattan_viewer::details: Roof furniture: 39164 equipment boxes, 21633 masts on 10824 buildings
+2026-11-16T14:36:15.605762Z  INFO manhattan_viewer::details: Signs: 254315 on 10723 buildings
+2026-11-16T14:36:15.853567Z  INFO manhattan_viewer::storefront: Storefronts: 11032 buildings, 4 categories, 0 repeat warnings, seed 35ba77cd
+2026-11-16T14:36:15.864552Z  INFO manhattan_viewer::traffic: Vehicle catalog: 150 variants
+2026-11-16T14:36:16.138235Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: glass_break.ogg (31276 bytes)
+2026-11-16T14:36:16.138287Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: impact.ogg (7792 bytes)
+2026-11-16T14:36:16.138291Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: shard_chatter.ogg (39114 bytes)
+2026-11-16T14:36:16.138294Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: chime.wav (79424 bytes)
+2026-11-16T14:36:16.138297Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: rewind_whoosh.wav (141164 bytes)
+2026-11-16T14:36:16.138300Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: explosion.wav (229364 bytes)
+2026-11-16T14:36:16.138303Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: klaxon.wav (176444 bytes)
+2026-11-16T14:36:16.138306Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: sprinkler_hiss.wav (176444 bytes)
+2026-11-16T14:36:16.138309Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: masonry_thud.wav (48554 bytes)
+2026-11-16T14:36:16.138332Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: collapse_rumble.wav (458684 bytes)
+2026-11-16T14:36:16.138335Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: structural_groan.wav (264644 bytes)
+2026-11-16T14:36:16.138338Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: concrete_crack.wav (19448 bytes)
+2026-11-16T14:36:16.138341Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: gas_hiss.wav (176444 bytes)
+2026-11-16T14:36:16.138344Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: fire_crackle.wav (176444 bytes)
+2026-11-16T14:36:16.138347Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: cascade_crackle.wav (352844 bytes)
+2026-11-16T14:36:16.138350Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: dust_hiss.wav (352844 bytes)
+2026-11-16T14:36:16.138352Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: breaker_pop.wav (39734 bytes)
+2026-11-16T14:36:16.138355Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: electric_crackle.wav (79424 bytes)
+2026-11-16T14:36:16.138359Z  INFO destructibles_bevy::audio: AUDIO CHAIN READY: device=Some("Default Audio Device") assets=18 master_volume=0.80
+2026-11-16T14:36:17.021888Z  INFO destructibles_bevy::audio: AUDIO startup chime requested
+2026-11-16T14:36:18.067155Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=chime pitch=0.900 vol=0.48 paused=false empty=true
+2026-11-16T14:36:19.059893Z  INFO manhattan_viewer::city_material: City materials ready: 12 materials / 4353 primitives
+2026-11-16T14:36:19.943147Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6506 (4.79 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:19.948558Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5881 (5.28 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.026480Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5883 (3.33 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:20.028449Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5885 (1.89 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.157793Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5887 (3.98 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.161318Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5888 (3.42 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.359580Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5889 (0.92 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.360090Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6157 (0.43 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.484856Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6158 (1.34 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.485506Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD footprint FAIL b6159; returned to plain map
+2026-11-16T14:36:20.486812Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6160 (1.28 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.565172Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6161 (2.02 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.567419Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6162 (2.19 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.640711Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b5882: window (sill 0.55 + height 2.3) does not fit in floor height 2.8142858
+2026-11-16T14:36:20.642334Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5894 (1.55 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.643542Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5895 (1.15 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.644488Z  INFO manhattan_viewer::neighborhood: DETAIL b6158: Tier 1 ready at 86.2 m
+2026-11-16T14:36:20.645756Z  INFO manhattan_viewer::neighborhood: DETAIL b6160: Tier 1 ready at 88.1 m
+2026-11-16T14:36:20.647455Z  INFO manhattan_viewer::neighborhood: DETAIL b5885: Tier 1 ready at 93.3 m
+2026-11-16T14:36:20.713324Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5902 (5.50 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:20.718018Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5904 (4.62 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.801911Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6514 (4.16 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:20.807427Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6518 (5.07 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:20.875456Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6519 (5.15 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.879672Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6520 (4.14 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.965645Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6521 (3.69 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:20.969126Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6535 (3.41 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.047337Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b6536: window (sill 0.55 + height 2.3) does not fit in floor height 2.8142858
+2026-11-16T14:36:21.052966Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6538 (5.57 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.057106Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6539 (4.06 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.131439Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6540 (0.74 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.132134Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD skip b5614: footprint area is too small (2.7468085 m²)
+2026-11-16T14:36:21.137472Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5890 (5.21 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:21.203064Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5892 (4.70 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:21.205797Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5893 (2.67 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.284179Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5896 (4.36 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.288371Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5897 (4.10 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.358912Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5898 (3.54 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.363023Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5899 (4.04 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.438839Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5900 (4.79 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.445981Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5901 (6.62 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:21.520343Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5903 (1.27 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.521796Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5905 (1.40 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.594094Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5906 (3.08 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:21.595192Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6510 (1.05 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.664270Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD footprint FAIL b5601; returned to plain map
+2026-11-16T14:36:21.667013Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5602 (2.70 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.668766Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5625 (1.71 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.671639Z  INFO manhattan_viewer::neighborhood: DETAIL b5903: Tier 1 ready at 14.0 m
+2026-11-16T14:36:21.765867Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5891 (10.81 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:21.844191Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5907 (2.38 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.845337Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5908 (1.10 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.918256Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6189 (2.28 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:21.921550Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5596 (3.22 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:21.921931Z  INFO manhattan_viewer::neighborhood: DETAIL b5901: Tier 1 ready at 1.3 m
+2026-11-16T14:36:21.923111Z  INFO manhattan_viewer::neighborhood: DETAIL b5905: Tier 1 ready at 22.5 m
+2026-11-16T14:36:21.987641Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5597 (6.53 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:22.079357Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b5624 (1.50 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:22.082695Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6163 (3.18 ms) footprint PASS style=Some(BrickMidrise)
+2026-11-16T14:36:22.083544Z  INFO manhattan_viewer::neighborhood: DETAIL b5890: Tier 1 ready at 27.2 m
+2026-11-16T14:36:22.169830Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6193 (3.03 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:22.172428Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6194 (2.54 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:22.176206Z  INFO manhattan_viewer::neighborhood: DETAIL b5893: Tier 1 ready at 31.7 m
+2026-11-16T14:36:22.279285Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6195 (1.67 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:22.280537Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD swap_in b6196 (1.22 ms) footprint PASS style=Some(BrickBrownstone)
+2026-11-16T14:36:22.352159Z  INFO manhattan_viewer::neighborhood: DETAIL b5906: Tier 1 ready at 29.2 m
+2026-11-16T14:36:22.499600Z  INFO manhattan_viewer::neighborhood: DETAIL b5897: Tier 1 ready at 38.3 m
+2026-11-16T14:36:22.549484Z  INFO manhattan_viewer::neighborhood: DETAIL b5907: Tier 1 ready at 39.4 m
+2026-11-16T14:36:22.662140Z  INFO manhattan_viewer::neighborhood: DETAIL b5898: Tier 1 ready at 41.7 m
+2026-11-16T14:36:22.781149Z  INFO manhattan_viewer::neighborhood: DETAIL b5899: Tier 1 ready at 43.2 m
+2026-11-16T14:36:22.782958Z  INFO manhattan_viewer::neighborhood: DETAIL b5908: Tier 1 ready at 47.7 m
+2026-11-16T14:36:23.043624Z  INFO manhattan_viewer::neighborhood: DETAIL b5896: Tier 1 ready at 50.3 m
+2026-11-16T14:36:23.085147Z  INFO manhattan_viewer::neighborhood: DETAIL b5900: Tier 1 ready at 48.8 m
+2026-11-16T14:36:23.371031Z  INFO manhattan_viewer::neighborhood: DETAIL b5892: Tier 1 ready at 58.7 m
+2026-11-16T14:36:23.521309Z  INFO manhattan_viewer::neighborhood: DETAIL b6518: Tier 1 ready at 77.8 m
+2026-11-16T14:36:23.617924Z  INFO manhattan_viewer::neighborhood: DETAIL b6510: Tier 1 ready at 79.1 m
+2026-11-16T14:36:23.752267Z  INFO manhattan_viewer::neighborhood: DETAIL b5902: Tier 1 ready at 79.4 m
+2026-11-16T14:36:23.999777Z  INFO manhattan_viewer::neighborhood: DETAIL b6520: Tier 1 ready at 81.9 m
+2026-11-16T14:36:24.140308Z  INFO manhattan_viewer::neighborhood: DETAIL b5597: Tier 1 ready at 64.1 m
+2026-11-16T14:36:24.314065Z  INFO manhattan_viewer::neighborhood: DETAIL b6519: Tier 1 ready at 86.3 m
+2026-11-16T14:36:24.349403Z  INFO manhattan_viewer::neighborhood: DETAIL b5904: Tier 1 ready at 86.6 m
+2026-11-16T14:36:24.526552Z  INFO manhattan_viewer::neighborhood: DETAIL b6521: Tier 1 ready at 90.0 m
+2026-11-16T14:36:25.019792Z  INFO manhattan_viewer::neighborhood: DETAIL b6163: Tier 1 ready at 92.9 m
+2026-11-16T14:36:25.266013Z  INFO manhattan_viewer::neighborhood: DETAIL b6514: Tier 1 ready at 94.0 m
+2026-11-16T14:36:25.267690Z  INFO manhattan_viewer::neighborhood: DETAIL b6540: Tier 1 ready at 94.1 m
+2026-11-16T14:36:25.394538Z  INFO manhattan_viewer::neighborhood: DETAIL b5891: Tier 1 ready at 87.2 m
+2026-11-16T14:36:25.396024Z  INFO manhattan_viewer::neighborhood: DETAIL b5888: Tier 1 ready at 94.9 m
+2026-11-16T14:36:25.632783Z  INFO manhattan_viewer::neighborhood: DETAIL b6161: Tier 1 ready at 98.0 m
+2026-11-16T14:36:25.719391Z  INFO manhattan_viewer::neighborhood: DETAIL b5624: Tier 1 ready at 98.4 m
+2026-11-16T14:36:25.783668Z  INFO manhattan_viewer::neighborhood: DETAIL b5887: Tier 1 ready at 97.6 m
+2026-11-16T14:36:25.936336Z  INFO manhattan_viewer::neighborhood: DETAIL b6196: Tier 1 ready at 99.3 m
+2026-11-16T14:36:26.022795Z  INFO manhattan_viewer::neighborhood: DETAIL b6539: Tier 1 ready at 100.5 m
+2026-11-16T14:36:26.122889Z  INFO manhattan_viewer::neighborhood: DETAIL b5881: Tier 1 ready at 101.2 m
+2026-11-16T14:36:26.546168Z  INFO manhattan_viewer::neighborhood: DETAIL b5883: Tier 1 ready at 102.9 m
+2026-11-16T14:36:26.669069Z  INFO manhattan_viewer::neighborhood: DETAIL b5894: Tier 1 ready at 104.2 m
+2026-11-16T14:36:26.814006Z  INFO manhattan_viewer::neighborhood: DETAIL b5596: Tier 1 ready at 102.8 m
+2026-11-16T14:36:26.814967Z  INFO manhattan_viewer::neighborhood: DETAIL b6195: Tier 1 ready at 104.8 m
+2026-11-16T14:36:26.970537Z  INFO manhattan_viewer::neighborhood: DETAIL b5895: Tier 1 ready at 107.5 m
+2026-11-16T14:36:27.159004Z  INFO manhattan_viewer::neighborhood: DETAIL b6162: Tier 1 ready at 105.7 m
+2026-11-16T14:36:27.162640Z  INFO manhattan_viewer::neighborhood: DETAIL b6157: Tier 1 ready at 109.9 m
+2026-11-16T14:36:27.526132Z  INFO manhattan_viewer::neighborhood: DETAIL b5602: Tier 1 ready at 107.5 m
+2026-11-16T14:36:27.681891Z  INFO manhattan_viewer::neighborhood: DETAIL b6189: Tier 1 ready at 111.9 m
+2026-11-16T14:36:27.727396Z  INFO manhattan_viewer::neighborhood: DETAIL b6194: Tier 1 ready at 113.8 m
+2026-11-16T14:36:27.790691Z  INFO manhattan_viewer::neighborhood: DETAIL b5625: Tier 1 ready at 116.3 m
+2026-11-16T14:36:27.884086Z  INFO manhattan_viewer::neighborhood: DETAIL b6193: Tier 1 ready at 117.1 m
+2026-11-16T14:36:27.885537Z  INFO manhattan_viewer::neighborhood: DETAIL b5889: Tier 1 ready at 118.1 m
+2026-11-16T14:36:27.993815Z  INFO manhattan_viewer::neighborhood: DETAIL b6538: Tier 1 ready at 115.8 m
+2026-11-16T14:36:28.286383Z  INFO manhattan_viewer::neighborhood: DETAIL b6535: Tier 1 ready at 119.6 m
+2026-11-16T14:36:28.594782Z  INFO manhattan_viewer::neighborhood: DETAIL b6506: Tier 1 ready at 119.4 m
+2026-11-16T14:36:29.562986Z  INFO manhattan_viewer::neighborhood: PERF PROBE: frames 96 avg 50.43 ms worst 167.03 ms mesh_entities 117595 hidden_meshes 93465 visible_meshes 117595 interior_meshes 2661 interior_hidden 2661 live 52 frozen 0
+2026-11-16T14:36:32.094040Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD GAUNTLET COMPLETE

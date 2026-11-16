@@ -12,8 +12,9 @@ use bevy::{
 };
 use serde::Deserialize;
 
+use destructibles_core::{palette, roof};
+
 use crate::{
-    collision::CollisionGrid,
     detail::{DetailCull, NEAR_DETAIL_RADIUS},
     storefront::{BuildingMeta, StorefrontData},
 };
@@ -78,6 +79,13 @@ pub struct AdQuad {
     pub normal: [f32; 3],
     pub uv: [[f32; 2]; 4],
     pub material: usize,
+}
+
+/// Plain-map rooftop furniture entities, hidden while a live destructible
+/// occupies the footprint (the generated building carries its own recipe).
+#[derive(Resource, Default)]
+pub struct RoofFurniture {
+    pub entities: std::collections::HashMap<usize, Vec<Entity>>,
 }
 
 #[derive(Resource, Default)]
@@ -185,21 +193,6 @@ fn point_in_poly(x: f32, z: f32, poly: &[[f32; 2]]) -> bool {
         j = i;
     }
     inside
-}
-
-fn random_inside(poly: &[[f32; 2]], seed: &mut u32) -> [f32; 2] {
-    let min_x = poly.iter().map(|p| p[0]).fold(f32::INFINITY, f32::min);
-    let max_x = poly.iter().map(|p| p[0]).fold(f32::NEG_INFINITY, f32::max);
-    let min_z = poly.iter().map(|p| p[1]).fold(f32::INFINITY, f32::min);
-    let max_z = poly.iter().map(|p| p[1]).fold(f32::NEG_INFINITY, f32::max);
-    for _ in 0..48 {
-        let x = min_x + next_rand(seed) * (max_x - min_x);
-        let z = min_z + next_rand(seed) * (max_z - min_z);
-        if point_in_poly(x, z, poly) {
-            return [x, z];
-        }
-    }
-    [(min_x + max_x) * 0.5, (min_z + max_z) * 0.5]
 }
 
 // ---------------------------------------------------------------------------
@@ -454,68 +447,6 @@ fn tree_mesh(variant: usize) -> Mesh {
     .with_inserted_indices(Indices::U32(indices))
 }
 
-#[allow(clippy::too_many_arguments)]
-fn add_flat_quad(
-    verts: &mut Vec<[f32; 3]>,
-    normals: &mut Vec<[f32; 3]>,
-    indices: &mut Vec<u32>,
-    a: [f32; 3],
-    b: [f32; 3],
-    c: [f32; 3],
-    d: [f32; 3],
-) {
-    let ab = Vec3::from_array(b) - Vec3::from_array(a);
-    let ac = Vec3::from_array(c) - Vec3::from_array(a);
-    let n = ab.cross(ac).normalize_or_zero();
-    let base = verts.len() as u32;
-    verts.extend([a, b, c, d]);
-    normals.extend([[n.x, n.y, n.z]; 4]);
-    indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
-}
-
-fn add_antenna(
-    verts: &mut Vec<[f32; 3]>,
-    normals: &mut Vec<[f32; 3]>,
-    indices: &mut Vec<u32>,
-    x: f32,
-    base_y: f32,
-    z: f32,
-    height: f32,
-) {
-    let radius = (height * 0.035).max(0.02);
-    let apex = [x, base_y + height, z];
-    let base = [
-        [x - radius, base_y, z - radius],
-        [x + radius, base_y, z - radius],
-        [x + radius, base_y, z + radius],
-        [x - radius, base_y, z + radius],
-    ];
-    for i in 0..4 {
-        let a = base[i];
-        let b = base[(i + 1) % 4];
-        let ab = Vec3::from_array(a) - Vec3::from_array(apex);
-        let ac = Vec3::from_array(b) - Vec3::from_array(apex);
-        let n = ab.cross(ac).normalize_or_zero();
-        let first = verts.len() as u32;
-        verts.extend([apex, a, b]);
-        normals.extend([[n.x, n.y, n.z]; 3]);
-        indices.extend([first, first + 1, first + 2]);
-    }
-    // One small horizontal crossbar, kept cheap but visible from above.
-    let y = base_y + height * 0.72;
-    let w = (height * 0.12).max(0.06);
-    let d = (height * 0.012).max(0.01);
-    add_flat_quad(
-        verts,
-        normals,
-        indices,
-        [x - w, y, z - d],
-        [x - w, y, z + d],
-        [x + w, y, z + d],
-        [x + w, y, z - d],
-    );
-}
-
 // ---------------------------------------------------------------------------
 // startup systems
 // ---------------------------------------------------------------------------
@@ -557,78 +488,208 @@ pub fn spawn_trees(
 pub fn spawn_antennas(
     mut commands: Commands,
     data: Res<StorefrontData>,
-    grid: Res<CollisionGrid>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut furniture: ResMut<RoofFurniture>,
 ) {
-    let material = materials.add(StandardMaterial {
-        base_color: Color::srgb(0.30, 0.31, 0.33),
-        metallic: 0.65,
-        perceptual_roughness: 0.42,
-        ..default()
-    });
-    let mut seed = run_seed() ^ 0xA17E_55AA;
-    let mut total = 0usize;
-    let mut buildings = 0usize;
+    furniture.entities.clear();
+    let equipment = {
+        let p = palette::EQUIPMENT;
+        materials.add(StandardMaterial {
+            base_color: Color::srgb(p[0], p[1], p[2]),
+            perceptual_roughness: 0.78,
+            metallic: 0.15,
+            ..default()
+        })
+    };
+    let steel = {
+        let p = palette::ANTENNA;
+        materials.add(StandardMaterial {
+            base_color: Color::srgb(p[0], p[1], p[2]),
+            metallic: 0.7,
+            perceptual_roughness: 0.42,
+            ..default()
+        })
+    };
+    let mut total_boxes = 0usize;
+    let mut total_antennas = 0usize;
     for building in data.buildings() {
         if building.perimeter.len() < 3 || building.height_m < 4.0 {
             continue;
         }
-        let count = antenna_count(building);
-        let mut verts = Vec::new();
-        let mut normals = Vec::new();
-        let mut indices = Vec::new();
-        let mut min = Vec3::splat(f32::INFINITY);
-        let mut max = Vec3::splat(f32::NEG_INFINITY);
-        let mut placed = 0usize;
-        for _ in 0..count {
-            let mut rooted = None;
-            // The collision grid gives the actual roof height at this plan
-            // point, so antennas on setbacks and lower wings sit on the roof
-            // instead of floating at the building's maximum height.
-            for _ in 0..32 {
-                let [x, z] = random_inside(&building.perimeter, &mut seed);
-                let roof = grid.height_at(x, z);
-                if roof < 2.0 {
-                    continue;
-                }
-                let roof = roof.min(building.height_m + 0.5);
-                rooted = Some((x, roof, z));
-                break;
+        let mut spawned = Vec::new();
+        let boxes =
+            roof::roof_equipment(building.id as u32, &building.perimeter, building.height_m);
+        if !boxes.is_empty() {
+            let mut verts = Vec::new();
+            let mut normals = Vec::new();
+            let mut uvs = Vec::new();
+            let mut indices = Vec::new();
+            for unit in &boxes {
+                push_box(
+                    &mut verts,
+                    &mut normals,
+                    &mut uvs,
+                    &mut indices,
+                    Vec3::new(
+                        unit.center[0],
+                        building.height_m + unit.size[1] * 0.5,
+                        unit.center[1],
+                    ),
+                    Vec3::new(unit.size[0] * 0.5, unit.size[1] * 0.5, unit.size[2] * 0.5),
+                    Quat::from_rotation_y(unit.yaw),
+                );
             }
-            let Some((x, roof, z)) = rooted else {
-                continue;
-            };
-            let height = building.height_m * (0.01 + next_rand(&mut seed) * 0.07);
-            let base_y = roof - 0.04;
-            add_antenna(&mut verts, &mut normals, &mut indices, x, base_y, z, height);
-            let r = height * 0.18;
-            min = min.min(Vec3::new(x - r, base_y, z - r));
-            max = max.max(Vec3::new(x + r, base_y + height, z + r));
-            placed += 1;
+            let (min, max) = mesh_bounds(&verts);
+            spawned.push(
+                commands
+                    .spawn((
+                        NotShadowCaster,
+                        Name::new(format!("RoofEquipment_{:05}", building.id)),
+                        Mesh3d(meshes.add(simple_mesh(verts, normals, uvs, indices))),
+                        MeshMaterial3d(equipment.clone()),
+                        Transform::IDENTITY,
+                        DetailCull::new(min, max, NEAR_DETAIL_RADIUS),
+                    ))
+                    .id(),
+            );
+            total_boxes += boxes.len();
         }
-        if placed == 0 {
-            continue;
+        let masts = roof::antenna_heights(building.id as u32, building.height_m);
+        if !masts.is_empty() {
+            let mut seed = building.id as u32 ^ 0xA17E_55AA;
+            let mut verts = Vec::new();
+            let mut normals = Vec::new();
+            let mut uvs = Vec::new();
+            let mut indices = Vec::new();
+            for mast in masts {
+                let x = building.perimeter[0][0];
+                let z = building.perimeter[0][1];
+                let _ = (x, z, seed);
+                let point = deterministic_inside(&building.perimeter, &mut seed);
+                let base = building.height_m;
+                push_box(
+                    &mut verts,
+                    &mut normals,
+                    &mut uvs,
+                    &mut indices,
+                    Vec3::new(point[0], base + mast * 0.5, point[1]),
+                    Vec3::new(0.09, mast * 0.5, 0.09),
+                    Quat::IDENTITY,
+                );
+                total_antennas += 1;
+            }
+            let (min, max) = mesh_bounds(&verts);
+            spawned.push(
+                commands
+                    .spawn((
+                        NotShadowCaster,
+                        Name::new(format!("RoofAntennas_{:05}", building.id)),
+                        Mesh3d(meshes.add(simple_mesh(verts, normals, uvs, indices))),
+                        MeshMaterial3d(steel.clone()),
+                        Transform::IDENTITY,
+                        DetailCull::new(min, max, NEAR_DETAIL_RADIUS),
+                    ))
+                    .id(),
+            );
         }
-        let mesh = Mesh::new(
-            PrimitiveTopology::TriangleList,
-            RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-        )
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, verts)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-        .with_inserted_indices(Indices::U32(indices));
-        commands.spawn((
-            NotShadowCaster,
-            Name::new(format!("Antennas_{:05}", building.id)),
-            Mesh3d(meshes.add(mesh)),
-            MeshMaterial3d(material.clone()),
-            Transform::IDENTITY,
-            DetailCull::new(min, max, NEAR_DETAIL_RADIUS),
-        ));
-        total += placed;
-        buildings += 1;
+        if !spawned.is_empty() {
+            furniture.entities.insert(building.id, spawned);
+        }
     }
-    info!("Antennas: {total} on {buildings} buildings");
+    info!(
+        "Roof furniture: {total_boxes} equipment boxes, {total_antennas} masts on {} buildings",
+        furniture.entities.len()
+    );
+}
+
+fn deterministic_inside(poly: &[[f32; 2]], seed: &mut u32) -> [f32; 2] {
+    let min_x = poly.iter().map(|p| p[0]).fold(f32::INFINITY, f32::min);
+    let max_x = poly.iter().map(|p| p[0]).fold(f32::NEG_INFINITY, f32::max);
+    let min_z = poly.iter().map(|p| p[1]).fold(f32::INFINITY, f32::min);
+    let max_z = poly.iter().map(|p| p[1]).fold(f32::NEG_INFINITY, f32::max);
+    for _ in 0..48 {
+        let x = min_x + next_rand(seed) * (max_x - min_x);
+        let z = min_z + next_rand(seed) * (max_z - min_z);
+        if point_in_poly(x, z, poly) {
+            return [x, z];
+        }
+    }
+    [(min_x + max_x) * 0.5, (min_z + max_z) * 0.5]
+}
+
+fn simple_mesh(
+    positions: Vec<[f32; 3]>,
+    normals: Vec<[f32; 3]>,
+    uvs: Vec<[f32; 2]>,
+    indices: Vec<u32>,
+) -> Mesh {
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs)
+    .with_inserted_indices(Indices::U32(indices))
+}
+
+fn mesh_bounds(verts: &[[f32; 3]]) -> (Vec3, Vec3) {
+    let min = verts.iter().fold(Vec3::splat(f32::INFINITY), |m, v| {
+        m.min(Vec3::from_array(*v))
+    });
+    let max = verts.iter().fold(Vec3::splat(f32::NEG_INFINITY), |m, v| {
+        m.max(Vec3::from_array(*v))
+    });
+    (min, max)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_box(
+    positions: &mut Vec<[f32; 3]>,
+    normals: &mut Vec<[f32; 3]>,
+    uvs: &mut Vec<[f32; 2]>,
+    indices: &mut Vec<u32>,
+    centre: Vec3,
+    half: Vec3,
+    rotation: Quat,
+) {
+    let corners = [
+        Vec3::new(-half.x, -half.y, half.z),
+        Vec3::new(half.x, -half.y, half.z),
+        Vec3::new(half.x, half.y, half.z),
+        Vec3::new(-half.x, half.y, half.z),
+        Vec3::new(-half.x, -half.y, -half.z),
+        Vec3::new(half.x, -half.y, -half.z),
+        Vec3::new(half.x, half.y, -half.z),
+        Vec3::new(-half.x, half.y, -half.z),
+    ];
+    let normal = [
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, -1.0],
+        [1.0, 0.0, 0.0],
+        [-1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, -1.0, 0.0],
+    ];
+    let faces = [
+        [0, 1, 2, 3],
+        [5, 4, 7, 6],
+        [1, 5, 6, 2],
+        [4, 0, 3, 7],
+        [3, 2, 6, 7],
+        [4, 5, 1, 0],
+    ];
+    for (face, n) in faces.iter().zip(normal) {
+        let base = positions.len() as u32;
+        let rotated = rotation * Vec3::from_array(n);
+        for index in face {
+            positions.push((rotation * corners[*index] + centre).to_array());
+            normals.push(rotated.to_array());
+            uvs.push([0.0, 0.0]);
+        }
+        indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
 }
 
 pub fn spawn_signs(
