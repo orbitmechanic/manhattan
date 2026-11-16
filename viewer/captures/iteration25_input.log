@@ -1,0 +1,79 @@
+2026-11-16T19:19:48.322390Z  INFO bevy_diagnostic::system_information_diagnostics_plugin::internal: SystemInfo { os: "Linux (Omarchy 4.5.0)", kernel: "7.2.15-1-omarchy", cpu: "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx", core_count: "4", memory: "17.5 GiB" }
+2026-11-16T19:19:48.397882Z  INFO bevy_render::renderer: AdapterInfo { name: "AMD Radeon Vega 8 Graphics (RADV RAVEN)", vendor: 4098, device: 5592, device_type: IntegratedGpu, device_pci_bus_id: "0000:03:00.0", driver: "radv", driver_info: "Mesa 26.2.5-arch1.1", backend: Vulkan, subgroup_min_size: 64, subgroup_max_size: 64, transient_saves_memory: Some(false), limit_bucket: None }
+2026-11-16T19:19:48.548478Z  INFO bevy_pbr::cluster: GPU clustering is supported on this device.
+2026-11-16T19:19:48.548523Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+2026-11-16T19:19:48.549294Z  INFO bevy_hanabi::plugin: Initializing Hanabi for GPU adapter AMD Radeon Vega 8 Graphics (RADV RAVEN)
+2026-11-16T19:19:48.554323Z  INFO bevy_winit::system: Creating new window Manhattan — day/night fly-through (67v0)
+2026-11-16T19:19:48.556911Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 23 orthogonal masonry chunks per structural cell
+2026-11-16T19:19:48.557532Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 30 crystalline glass chunks per structural cell
+2026-11-16T19:19:48.570916Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD: feeder/index ready, mask 1024² @ 1200 m
+2026-11-16T19:19:48.572048Z  INFO destructibles_bevy::audio: AUDIO DEVICE: host=Alsa device='Default Audio Device' config=F32 44100 Hz 2 ch (Bevy/rodio default output)
+2026-11-16T19:19:48.869719Z  INFO manhattan_viewer::storefront: Storefronts: 11032 buildings, 4 categories, 0 repeat warnings, seed 58f867cf
+2026-11-16T19:19:48.871925Z  INFO manhattan_viewer::details: Trees: 3000
+2026-11-16T19:19:49.288113Z  INFO manhattan_viewer::details: Roof furniture: 39164 equipment boxes, 21633 masts on 10824 buildings
+2026-11-16T19:19:49.288345Z  INFO manhattan_viewer::people: People catalog ready
+2026-11-16T19:19:49.297840Z  INFO manhattan_viewer::traffic: Vehicle catalog: 150 variants
+2026-11-16T19:19:49.399340Z  INFO manhattan_viewer::details: Signs: 44167 on 5910 buildings
+2026-11-16T19:19:49.573880Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: glass_break.ogg (31276 bytes)
+2026-11-16T19:19:49.573921Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: impact.ogg (7792 bytes)
+2026-11-16T19:19:49.573931Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: shard_chatter.ogg (39114 bytes)
+2026-11-16T19:19:49.573939Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: chime.wav (79424 bytes)
+2026-11-16T19:19:49.573947Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: rewind_whoosh.wav (141164 bytes)
+2026-11-16T19:19:49.573955Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: explosion.wav (229364 bytes)
+2026-11-16T19:19:49.573963Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: klaxon.wav (176444 bytes)
+2026-11-16T19:19:49.573971Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: sprinkler_hiss.wav (176444 bytes)
+2026-11-16T19:19:49.573978Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: masonry_thud.wav (48554 bytes)
+2026-11-16T19:19:49.574009Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: collapse_rumble.wav (458684 bytes)
+2026-11-16T19:19:49.574018Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: structural_groan.wav (264644 bytes)
+2026-11-16T19:19:49.574025Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: concrete_crack.wav (19448 bytes)
+2026-11-16T19:19:49.574033Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: gas_hiss.wav (176444 bytes)
+2026-11-16T19:19:49.574040Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: fire_crackle.wav (176444 bytes)
+2026-11-16T19:19:49.574048Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: cascade_crackle.wav (352844 bytes)
+2026-11-16T19:19:49.574055Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: dust_hiss.wav (352844 bytes)
+2026-11-16T19:19:49.574062Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: breaker_pop.wav (39734 bytes)
+2026-11-16T19:19:49.574070Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: electric_crackle.wav (79424 bytes)
+2026-11-16T19:19:49.574079Z  INFO destructibles_bevy::audio: AUDIO CHAIN READY: device=Some("Default Audio Device") assets=18 master_volume=0.80
+2026-11-16T19:19:50.211067Z  INFO destructibles_bevy::audio: AUDIO startup chime requested
+2026-11-16T19:19:51.021123Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=chime pitch=0.900 vol=0.48 paused=false empty=false
+2026-11-16T19:19:51.793714Z  INFO manhattan_viewer::city_material: City materials ready: 12 materials / 4353 primitives
+2026-11-16T19:19:52.228839Z ERROR bevy_render::render_resource::pipeline_cache: failed to create shader module: Validation Error
+
+Caused by:
+  In Device::create_shader_module
+    
+Shader validation error: Entry point fragment at Fragment is invalid
+   ┌─ :54:21
+   │
+54 │     let to_camera = in.world_position - camera.xyz;
+   │                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ naga::ir::Expression [74]
+   │
+   = Expression [74] is invalid
+   = Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+
+      Expression [74] is invalid
+        Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+2026-11-16T19:19:52.947271Z  INFO manhattan_viewer::neighborhood: INPUT TEST: synthesized X press
+2026-11-16T19:19:52.947841Z  INFO manhattan_viewer::neighborhood: FIRE: key X target=Some(9634) point=Vec3(1627.3201, 10.381894, -2032.84) ray_origin=Vec3(1627.3201, 8.0, -2007.8301)
+2026-11-16T19:19:52.962760Z  INFO manhattan_viewer::neighborhood: JIT swap_in b9634 (14.88 ms) geometry PASS
+2026-11-16T19:19:52.962800Z  INFO manhattan_viewer::neighborhood: FIRE: target b9634 live; admitting
+2026-11-16T19:19:52.962810Z  INFO manhattan_viewer::neighborhood: FIRE: b9634 queued for Tier 1 (currently Shell)
+2026-11-16T19:19:53.085740Z  INFO manhattan_viewer::neighborhood: INPUT TEST RESULT: live=1 head=0.00 shots=0 rejected=0
+2026-11-16T19:19:54.074997Z  INFO manhattan_viewer::neighborhood: DETAIL b9634: Tier 1 ready at 42.4 m
+2026-11-16T19:19:54.075034Z  INFO manhattan_viewer::neighborhood: JIT READY b9634: Tier 1 in 1.26 s
+2026-11-16T19:19:54.075075Z  INFO destructibles_bevy::damage: damage #0000 [surface] ChipFacade(b1009634 pos=(1627.32,10.38,-2032.84) r=0.12)
+2026-11-16T19:19:54.075332Z  INFO destructibles_bevy::damage: damage #0001 [collapse] PowerLoss(b1009634 seed=1762558668)
+2026-11-16T19:19:54.075352Z  INFO destructibles_bevy::power: POWER loss building 1009634
+2026-11-16T19:19:54.075361Z  INFO manhattan_viewer::neighborhood: DAMAGE bullet at b1009634 (1627.3,10.4,-2032.8)
+2026-11-16T19:19:54.123576Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=impact pitch=0.984 vol=0.34 paused=false empty=false
+2026-11-16T19:19:54.123629Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=breaker_pop pitch=1.068 vol=0.28 paused=false empty=false
+2026-11-16T19:20:04.894050Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD capture [input fire] -> /home/orbit9/Work/games/Manhattan/viewer/captures/iteration25_input_fire.png
+2026-11-16T19:20:05.044420Z  INFO bevy_render::view::window::screenshot: Screenshot saved to /home/orbit9/Work/games/Manhattan/viewer/captures/iteration25_input_fire.png
+2026-11-16T19:20:07.127759Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD GAUNTLET COMPLETE
+
+# destructibles damage journal — 2 command(s)
+0000 @   3.33s | surface    | b1009634 | ChipFacade(b1009634 pos=(1627.32,10.38,-2032.84) r=0.12)
+      volume 0.0004 m3
+0001 @   3.33s | collapse   | b1009634 | PowerLoss(b1009634 seed=1762558668)
+
