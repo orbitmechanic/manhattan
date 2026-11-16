@@ -17,7 +17,7 @@ use bevy::{
 };
 use serde::Deserialize;
 
-use crate::{camera::FlyCamera, environment::Environment};
+use crate::{camera::FlyCamera, city_rhythm, clock::SimClock, environment::Environment};
 
 const LANE_DATA: &str = include_str!("../assets/models/traffic_lanes.json");
 
@@ -168,6 +168,9 @@ pub struct VehicleCatalog {
 pub struct Traffic {
     active: HashMap<usize, Vec<Entity>>,
     proxies: HashMap<usize, Entity>,
+    /// Last occupancy used to fill each active lane; the daily rhythm rebuilds
+    /// a lane when the target changes materially.
+    occupancy: HashMap<usize, f32>,
     last_check: f32,
 }
 
@@ -1041,9 +1044,11 @@ fn spawn_proxy(
     Some(entity)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn stream_traffic(
     mut commands: Commands,
     time: Res<Time>,
+    clock: Res<SimClock>,
     camera: Single<&Transform, With<FlyCamera>>,
     lanes: Res<TrafficLanes>,
     catalog: Res<VehicleCatalog>,
@@ -1055,6 +1060,7 @@ pub fn stream_traffic(
         return;
     }
     traffic.last_check = now;
+    let hour = (clock.minute_of_day.rem_euclid(1440.0) / 60.0) as f32;
     let cam = camera.translation;
     let mut near: Vec<(f32, usize)> = lanes
         .lanes
@@ -1122,13 +1128,34 @@ pub fn stream_traffic(
             if let Some(entity) = traffic.proxies.remove(&lane_id) {
                 commands.entity(entity).despawn();
             }
-            if traffic.active.contains_key(&lane_id) {
+            let lane = &lanes.lanes[lane_id];
+            let (mid, tangent) = lane_sample(lane, lane.length * 0.5);
+            let toward = Vec2::new(
+                city_rhythm::TIMES_SQUARE.x - mid[0],
+                city_rhythm::TIMES_SQUARE.y - mid[1],
+            )
+            .dot(Vec2::from_array(tangent))
+                > 0.0;
+            let occupancy = city_rhythm::lane_occupancy(hour, toward);
+            if let Some(stored) = traffic.occupancy.get(&lane_id) {
+                if (stored - occupancy).abs() > 0.12 {
+                    if let Some(old) = traffic.active.remove(&lane_id) {
+                        let removed = old.len();
+                        for entity in old {
+                            commands.entity(entity).despawn();
+                        }
+                        count = count.saturating_sub(removed);
+                    }
+                } else if traffic.active.contains_key(&lane_id) {
+                    continue;
+                }
+            } else if traffic.active.contains_key(&lane_id) {
                 continue;
             }
-            let lane = &lanes.lanes[lane_id];
+            traffic.occupancy.insert(lane_id, occupancy);
             let mut entities = Vec::new();
             let mut cursor = 1.2;
-            let limit = lane.length * OCCUPANCY;
+            let limit = lane.length * occupancy;
             while cursor < limit && count < MAX_NEAR_VEHICLES && vehicle_budget > 0 {
                 let mut variant = None;
                 for _ in 0..12 {

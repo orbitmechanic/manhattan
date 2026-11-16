@@ -276,6 +276,8 @@ pub struct NeighborhoodDemo {
     no_capture: bool,
     roof_target: Option<usize>,
     roof_view: (Vec3, Vec3),
+    golden_step: u8,
+    golden_shot: bool,
     perf_start: f64,
     perf_worst: f32,
     perf_sum: f32,
@@ -312,6 +314,19 @@ enum DemoStage {
     RoofStreet,
     RoofAerial,
     PerfProbe,
+    GoldenBoot,
+    GoldenAds,
+    GoldenPm,
+    GoldenGrave,
+    GoldenDistant,
+    GoldenAerial,
+    GoldenDawn,
+    GoldenNoon,
+    GoldenDusk,
+    GoldenNight,
+    GoldenDeck,
+    GoldenMoon,
+    GoldenSmokeMoon,
     ExitWait,
 }
 
@@ -377,7 +392,10 @@ impl NeighborhoodDemo {
             .clamp(1, 64);
         let roofs = std::env::var_os("MANHATTAN_ROOFS").is_some();
         let perf_probe = std::env::var_os("MANHATTAN_PERF_PROBE").is_some();
-        let stage = if perf_probe {
+        let golden = std::env::var_os("MANHATTAN_GOLDEN").is_some();
+        let stage = if golden {
+            DemoStage::GoldenBoot
+        } else if perf_probe {
             DemoStage::PerfProbe
         } else if roofs {
             DemoStage::RoofBoot
@@ -387,7 +405,7 @@ impl NeighborhoodDemo {
             DemoStage::Boot
         };
         Self {
-            active: active || wave_demo || roofs || perf_probe,
+            active: active || wave_demo || roofs || perf_probe || golden,
             capture_dir,
             damage: std::env::var_os("MANHATTAN_DAMAGE").is_some(),
             wave_size,
@@ -452,24 +470,36 @@ fn make_mask_image() -> Image {
 }
 
 /// Style mapping from Manhattan's first-floor wall categories.
-pub fn style_for(category: &str, height_m: f32) -> FacadeStyle {
+/// Facade style from the shared glass/brick probability field. Height only
+/// picks the brick/glass sub-variant; it never changes the glass probability.
+pub fn style_for(meta: &BuildingMeta) -> FacadeStyle {
+    let glassy = crate::city_rhythm::is_glassy(
+        meta.id,
+        meta.block,
+        meta.centroid[0],
+        meta.centroid[1],
+        meta.year_built,
+    );
+    style_for_parts(&meta.category, meta.height_m, meta.year_built, glassy)
+}
+
+pub fn style_for_parts(
+    category: &str,
+    height_m: f32,
+    year_built: u32,
+    glassy: bool,
+) -> FacadeStyle {
+    if glassy {
+        return if year_built >= 1975 {
+            FacadeStyle::GlassCurtainWall
+        } else {
+            FacadeStyle::ConcreteGrid
+        };
+    }
     match category {
-        "executive" => {
-            if height_m >= 90.0 {
-                FacadeStyle::GlassCurtainWall
-            } else {
-                FacadeStyle::ConcreteGrid
-            }
-        }
-        "residential" => {
-            if height_m <= 18.0 {
-                FacadeStyle::BrickBrownstone
-            } else {
-                FacadeStyle::BrickMidrise
-            }
-        }
-        "storefront" => FacadeStyle::BrickMidrise,
         "industrial" => FacadeStyle::ConcreteGrid,
+        "residential" if height_m <= 18.0 => FacadeStyle::BrickBrownstone,
+        "residential" => FacadeStyle::BrickMidrise,
         _ => FacadeStyle::BrickMidrise,
     }
 }
@@ -499,7 +529,7 @@ pub fn spec_for(meta: &BuildingMeta) -> Result<BuildingSpec, String> {
         floor_count = (height / 12.0).ceil().max(1.0) as u32;
     }
     let floor_height = (height / floor_count as f32).clamp(1.8, 12.0);
-    let style = style_for(&meta.category, height);
+    let style = style_for(meta);
     let mut windows = style.windows();
     // Fewer, wider bays than the standalone presets: the neighbourhood LOD
     // keeps the silhouette and the material read without the pane count.
@@ -2108,6 +2138,23 @@ fn auto_bomb(world: &mut World, camera: Vec3) {
     queue_damage(world, id, DamagePreset::CarBomb, point);
 }
 
+/// Two-phase screenshot helper: request on the first tick, then wait a couple
+/// of frames before the stage changes time/camera so the PNG matches the label.
+fn golden_take(world: &mut World, file: &str, label: &'static str, now: f32) -> bool {
+    if !world.resource::<NeighborhoodDemo>().golden_shot {
+        world.resource_mut::<NeighborhoodDemo>().golden_shot = true;
+        world.resource_mut::<NeighborhoodDemo>().stage_at = now;
+        let path = world.resource::<NeighborhoodDemo>().capture_dir.join(file);
+        screenshot(world, &path, label);
+        return false;
+    }
+    if now - world.resource::<NeighborhoodDemo>().stage_at < 0.45 {
+        return false;
+    }
+    world.resource_mut::<NeighborhoodDemo>().golden_shot = false;
+    true
+}
+
 #[allow(clippy::drop_non_drop)]
 fn run_neighborhood_demo(world: &mut World) {
     if !world.resource::<NeighborhoodDemo>().active {
@@ -3341,6 +3388,16 @@ fn run_neighborhood_demo(world: &mut World) {
                 return;
             }
             if world.resource::<NeighborhoodDemo>().perf_start == 0.0 {
+                if let Ok(hour) = std::env::var("MANHATTAN_PERF_HOUR")
+                    && let Ok(hour) = hour.parse::<f32>()
+                {
+                    world.resource_mut::<SimClock>().minute_of_day = hour as f64 * 60.0;
+                }
+                if std::env::var_os("MANHATTAN_PERF_OVERCAST").is_some() {
+                    world
+                        .resource_mut::<crate::weather::Weather>()
+                        .force(crate::weather::WeatherKind::Overcast);
+                }
                 let (cell, _) = world.resource::<BuildingIndex>().densest_cell();
                 let center = Vec3::new(
                     (cell.0 as f32 + 0.5) * 100.0,
@@ -3388,6 +3445,21 @@ fn run_neighborhood_demo(world: &mut World) {
                     .filter(|(_, visibility)| **visibility == Visibility::Hidden)
                     .count()
             };
+            let vehicles = {
+                let mut query = world.query::<&crate::traffic::Vehicle>();
+                query.iter(world).count()
+            };
+            let pedestrians = {
+                let mut query = world.query::<&crate::people::Pedestrian>();
+                query.iter(world).count()
+            };
+            let ad_meshes = {
+                let mut query = world.query::<&Name>();
+                query
+                    .iter(world)
+                    .filter(|name| name.as_str().starts_with("Signs_"))
+                    .count()
+            };
             let interior_total = {
                 let mut query = world.query_filtered::<&Visibility, Or<(
                     With<destructibles_bevy::building::SlabVisual>,
@@ -3415,7 +3487,7 @@ fn run_neighborhood_demo(world: &mut World) {
             };
             let city = world.resource::<Neighborhood>();
             info!(
-                "PERF PROBE: frames {} avg {:.2} ms worst {:.2} ms mesh_entities {all_meshes} hidden_meshes {hidden_meshes} visible_meshes {visible} interior_meshes {interior_total} interior_hidden {interior_hidden} live {} frozen {}",
+                "PERF PROBE: frames {} avg {:.2} ms worst {:.2} ms vehicles {vehicles} pedestrians {pedestrians} ad_meshes {ad_meshes} mesh_entities {all_meshes} hidden_meshes {hidden_meshes} visible_meshes {visible} interior_meshes {interior_total} interior_hidden {interior_hidden} live {} frozen {}",
                 world.resource::<NeighborhoodDemo>().perf_frames,
                 world.resource::<NeighborhoodDemo>().perf_sum
                     / world.resource::<NeighborhoodDemo>().perf_frames.max(1) as f32,
@@ -3427,6 +3499,285 @@ fn run_neighborhood_demo(world: &mut World) {
                 demo.stage = DemoStage::ExitWait;
                 demo.stage_at = now + 0.5;
             }
+        }
+        DemoStage::GoldenBoot => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.0
+                || !world.resource::<CityMaterialSetup>().done
+            {
+                return;
+            }
+            world.resource_mut::<SimClock>().minute_of_day = 8.0 * 60.0 + 30.0;
+            let epicenter = crate::city_rhythm::TIMES_SQUARE;
+            set_camera(
+                world,
+                Vec3::new(epicenter.x - 130.0, 9.0, epicenter.y + 20.0),
+                Vec3::new(1.0, 0.02, 0.18),
+                8.0,
+            );
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.wave_center = Vec3::new(epicenter.x, 0.0, epicenter.y);
+            demo.stage = DemoStage::GoldenAds;
+            demo.stage_at = now;
+        }
+        DemoStage::GoldenAds => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.0 {
+                return;
+            }
+            if !golden_take(
+                world,
+                "iteration21_times_square_am_rush.png",
+                "Times Square AM rush",
+                now,
+            ) {
+                return;
+            }
+            world.resource_mut::<SimClock>().minute_of_day = 17.0 * 60.0;
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.stage = DemoStage::GoldenPm;
+                demo.stage_at = now;
+            }
+        }
+        DemoStage::GoldenPm => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.5 {
+                return;
+            }
+            if !golden_take(
+                world,
+                "iteration21_times_square_pm_rush.png",
+                "Times Square PM rush",
+                now,
+            ) {
+                return;
+            }
+            world.resource_mut::<SimClock>().minute_of_day = 3.0 * 60.0;
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.stage = DemoStage::GoldenGrave;
+                demo.stage_at = now;
+            }
+        }
+        DemoStage::GoldenGrave => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.5 {
+                return;
+            }
+            if !golden_take(
+                world,
+                "iteration21_graveyard_shift.png",
+                "graveyard shift",
+                now,
+            ) {
+                return;
+            }
+            let epicenter = crate::city_rhythm::TIMES_SQUARE;
+            set_camera(
+                world,
+                Vec3::new(epicenter.x, 6.0, epicenter.y + 3_600.0),
+                Vec3::new(0.9, 0.02, 0.3),
+                8.0,
+            );
+            world.resource_mut::<SimClock>().minute_of_day = 8.0 * 60.0 + 30.0;
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.stage = DemoStage::GoldenDistant;
+                demo.stage_at = now;
+            }
+        }
+        DemoStage::GoldenDistant => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.5 {
+                return;
+            }
+            if !golden_take(
+                world,
+                "iteration21_distant_no_ads.png",
+                "distant no ads",
+                now,
+            ) {
+                return;
+            }
+            let epicenter = crate::city_rhythm::TIMES_SQUARE;
+            set_camera(
+                world,
+                Vec3::new(epicenter.x - 250.0, 300.0, epicenter.y + 380.0),
+                Vec3::new(0.0, -1.0, -0.6),
+                20.0,
+            );
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.stage = DemoStage::GoldenAerial;
+                demo.stage_at = now;
+            }
+        }
+        DemoStage::GoldenAerial => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.2 {
+                return;
+            }
+            if !golden_take(
+                world,
+                "iteration21_glass_core_aerial.png",
+                "glass core aerial",
+                now,
+            ) {
+                return;
+            }
+            let epicenter = crate::city_rhythm::TIMES_SQUARE;
+            set_camera(
+                world,
+                Vec3::new(epicenter.x - 400.0, 260.0, epicenter.y + 2_600.0),
+                Vec3::new(0.0, -1.0, 0.8),
+                20.0,
+            );
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::GoldenDawn;
+            demo.stage_at = now;
+        }
+        DemoStage::GoldenDawn => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.2 {
+                return;
+            }
+            if !golden_take(
+                world,
+                "iteration21_brick_edge_aerial.png",
+                "brick edge aerial",
+                now,
+            ) {
+                return;
+            }
+            let epicenter = crate::city_rhythm::TIMES_SQUARE;
+            set_camera(
+                world,
+                Vec3::new(epicenter.x - 700.0, 90.0, epicenter.y + 900.0),
+                Vec3::new(0.35, -0.25, -1.0),
+                20.0,
+            );
+            world.resource_mut::<SimClock>().minute_of_day = 6.0 * 60.0;
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::GoldenNoon;
+            demo.stage_at = now;
+        }
+        DemoStage::GoldenNoon => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.2 {
+                return;
+            }
+            if !golden_take(world, "iteration21_dawn.png", "dawn", now) {
+                return;
+            }
+            world.resource_mut::<SimClock>().minute_of_day = 12.0 * 60.0;
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::GoldenDusk;
+            demo.stage_at = now;
+        }
+        DemoStage::GoldenDusk => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.2 {
+                return;
+            }
+            if !golden_take(world, "iteration21_noon.png", "noon", now) {
+                return;
+            }
+            world.resource_mut::<SimClock>().minute_of_day = 19.0 * 60.0;
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::GoldenNight;
+            demo.stage_at = now;
+        }
+        DemoStage::GoldenNight => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.2 {
+                return;
+            }
+            if !golden_take(world, "iteration21_dusk.png", "dusk", now) {
+                return;
+            }
+            world.resource_mut::<SimClock>().minute_of_day = 0.0;
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::GoldenDeck;
+            demo.stage_at = now;
+        }
+        DemoStage::GoldenDeck => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 1.2 {
+                return;
+            }
+            if !golden_take(world, "iteration21_night.png", "night", now) {
+                return;
+            }
+            {
+                let mut weather = world.resource_mut::<crate::weather::Weather>();
+                weather.force(crate::weather::WeatherKind::Overcast);
+            }
+            let epicenter = crate::city_rhythm::TIMES_SQUARE;
+            world.resource_mut::<SimClock>().minute_of_day = 14.0 * 60.0;
+            let position = Vec3::new(epicenter.x, 365.0, epicenter.y + 600.0);
+            set_camera(world, position, Vec3::new(0.0, 0.0, -1.0), 100.0);
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::GoldenMoon;
+            demo.stage_at = now;
+        }
+        DemoStage::GoldenMoon => {
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 2.0 {
+                return;
+            }
+            if !golden_take(
+                world,
+                "iteration21_overcast_flythrough.png",
+                "overcast flythrough",
+                now,
+            ) {
+                return;
+            }
+            // Smoke-tinted moon: light a district, set night, look at the moon.
+            world
+                .resource_mut::<crate::weather::Weather>()
+                .force(crate::weather::WeatherKind::Fair);
+            world.resource_mut::<SimClock>().minute_of_day = 22.0 * 60.0;
+            let center = world.resource::<NeighborhoodDemo>().wave_center;
+            for id in nearest_live_ids(world, center, 10) {
+                let origin = world
+                    .resource::<Neighborhood>()
+                    .live
+                    .get(&id)
+                    .map(|live| live.origin)
+                    .unwrap_or(center);
+                queue_damage(
+                    world,
+                    id,
+                    DamagePreset::CarBomb,
+                    origin + Vec3::new(0.0, 2.2, 7.0),
+                );
+            }
+            {
+                let mut demo = world.resource_mut::<NeighborhoodDemo>();
+                demo.golden_step = 1;
+                demo.stage = DemoStage::GoldenSmokeMoon;
+                demo.stage_at = now;
+            }
+        }
+        DemoStage::GoldenSmokeMoon => {
+            // Find a time when the moon is actually above the horizon.
+            let moon_alt = world
+                .resource::<crate::environment::Environment>()
+                .moon
+                .altitude_deg;
+            if moon_alt < 14.0 {
+                let minute = world.resource::<SimClock>().minute_of_day;
+                world.resource_mut::<SimClock>().minute_of_day = (minute + 15.0) % 1440.0;
+                return;
+            }
+            if now - world.resource::<NeighborhoodDemo>().stage_at < 4.0 {
+                return;
+            }
+            let center = world.resource::<NeighborhoodDemo>().wave_center;
+            let direction = world.resource::<crate::environment::Environment>().moon_dir;
+            let position = center + Vec3::Y * 150.0;
+            set_camera(world, position, direction, 20.0);
+            if !golden_take(
+                world,
+                "iteration21_smoke_moon.png",
+                "smoke-tinted moon",
+                now,
+            ) {
+                return;
+            }
+            let mut demo = world.resource_mut::<NeighborhoodDemo>();
+            demo.stage = DemoStage::ExitWait;
+            demo.stage_at = now + 1.0;
         }
         DemoStage::ExitWait => {
             if now - world.resource::<NeighborhoodDemo>().stage_at > 1.2 {
@@ -3533,6 +3884,7 @@ mod tests {
             ],
             centroid: [638.06, 2368.9],
             category: "industrial".to_string(),
+            year_built: 1930,
         }
     }
 
@@ -3548,14 +3900,34 @@ mod tests {
     }
 
     #[test]
-    fn style_mapping_is_total() {
-        assert_eq!(style_for("executive", 200.0), FacadeStyle::GlassCurtainWall);
-        assert_eq!(style_for("executive", 40.0), FacadeStyle::ConcreteGrid);
-        assert_eq!(style_for("residential", 12.0), FacadeStyle::BrickBrownstone);
-        assert_eq!(style_for("residential", 40.0), FacadeStyle::BrickMidrise);
-        assert_eq!(style_for("storefront", 20.0), FacadeStyle::BrickMidrise);
-        assert_eq!(style_for("industrial", 20.0), FacadeStyle::ConcreteGrid);
-        assert_eq!(style_for("unknown", 20.0), FacadeStyle::BrickMidrise);
+    fn style_mapping_is_total_and_height_independent() {
+        // Brick variants by scale, glass variants by era. A tall brick and a
+        // short glass building are both legal.
+        assert_eq!(
+            style_for_parts("residential", 12.0, 1900, false),
+            FacadeStyle::BrickBrownstone
+        );
+        assert_eq!(
+            style_for_parts("residential", 80.0, 1900, false),
+            FacadeStyle::BrickMidrise
+        );
+        assert_eq!(
+            style_for_parts("residential", 80.0, 2020, true),
+            FacadeStyle::GlassCurtainWall
+        );
+        assert_eq!(
+            style_for_parts("executive", 40.0, 1950, true),
+            FacadeStyle::ConcreteGrid
+        );
+        assert_eq!(
+            style_for_parts("industrial", 20.0, 1900, false),
+            FacadeStyle::ConcreteGrid
+        );
+        // The probability field itself has no height input.
+        let a = crate::city_rhythm::glass_probability(0.0, 0.0, 2000);
+        let b = crate::city_rhythm::glass_probability(0.0, 0.0, 2000);
+        assert_eq!(a, b);
+        assert!(a < 1.0);
     }
 
     #[test]

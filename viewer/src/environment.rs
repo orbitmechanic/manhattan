@@ -102,7 +102,7 @@ pub fn setup_lighting(
         SunLight,
         DirectionalLight {
             illuminance: 10_000.0,
-            shadow_maps_enabled: false,
+            shadow_maps_enabled: true,
             ..default()
         },
         Transform::from_rotation(Quat::from_rotation_x(-0.7)),
@@ -194,6 +194,7 @@ pub fn update_environment(
     time: Res<Time>,
     clock: Res<SimClock>,
     weather: Res<Weather>,
+    hazards: Option<Res<destructibles_bevy::hazards::Hazards>>,
     mut env: ResMut<Environment>,
     mut clear_color: ResMut<ClearColor>,
     camera: Single<
@@ -347,20 +348,32 @@ pub fn update_environment(
     // Overcast skies scatter light, so keep the ambient fill up even as the
     // direct sun is attenuated; lightning adds a brief hemispheric flash.
     let grey_mix = cover * 0.55;
-    let ambient_rgb = Vec3::new(
-        0.14 + 0.40 * env.daylight,
-        0.18 + 0.50 * env.daylight,
-        0.30 + 0.58 * env.daylight,
-    )
-    .lerp(Vec3::splat(0.16 + 0.42 * env.daylight), grey_mix);
+    // Day ambient is sky-blue top-down, reddening at the horizon. Night keeps
+    // only a faint blue fill; the ground-up block lights (night_ambient.rs)
+    // take over the street-level illumination.
+    let horizon_ambient = Vec3::new(0.55, 0.34, 0.24);
+    let noon_ambient = Vec3::new(0.34, 0.52, 0.78);
+    let sun_warm = 1.0 - smoothstep(0.0, 26.0, sun_pos.altitude_deg);
+    let day_ambient = noon_ambient.lerp(horizon_ambient, sun_warm * 0.85);
+    let ambient_rgb = day_ambient
+        .lerp(Vec3::new(0.12, 0.14, 0.20), 1.0 - env.daylight)
+        .lerp(Vec3::splat(0.28 + 0.30 * env.daylight), grey_mix);
     ambient.color = Color::srgb(ambient_rgb.x, ambient_rgb.y, ambient_rgb.z);
-    ambient.brightness = 55.0 + 75.0 * env.daylight + 24.0 * cover + 320.0 * weather.flash;
+    ambient.brightness = 14.0 + 92.0 * env.daylight + 22.0 * cover + 320.0 * weather.flash;
 
     // ---- lights ---------------------------------------------------------
     let sun_up = sun_pos.altitude_deg.to_radians().sin().max(0.0);
     let sun_warmth = (1.0 - smoothstep(2.0, 24.0, sun_pos.altitude_deg)).clamp(0.0, 1.0);
     let moon_up = moon_pos.altitude_deg.to_radians().sin().max(0.0);
-    let sun_attenuation = (1.0 - 0.72 * cover - 0.16 * storm).clamp(0.05, 1.0);
+    let sun_attenuation = crate::city_rhythm::overcast_direct_factor(cover, storm);
+    let zenith = Vec3::new(1.0, 0.95, 0.78);
+    let horizon = Vec3::new(1.0, 0.50, 0.26);
+    let sun_tint = horizon.lerp(zenith, smoothstep(0.0, 34.0, sun_pos.altitude_deg));
+    let burning = hazards
+        .as_ref()
+        .map(|hazards| hazards.fires.len())
+        .unwrap_or(0);
+    let moon_colour = crate::city_rhythm::moon_tint(burning);
     #[cfg(target_arch = "wasm32")]
     {
         // One directional light only: use the sun when it is up, otherwise
@@ -392,17 +405,15 @@ pub fn update_environment(
     {
         for (mut light, mut transform) in &mut sun {
             light.illuminance = 16_000.0 * sun_up.powf(0.65) * sun_attenuation;
-            light.color = Color::srgb(
-                1.0,
-                0.58 + 0.38 * (1.0 - sun_warmth),
-                0.30 + 0.62 * (1.0 - sun_warmth),
-            );
+            light.color = Color::srgb(sun_tint.x, sun_tint.y, sun_tint.z);
             transform.rotation = Quat::from_rotation_arc(Vec3::NEG_Z, -env.sun_dir);
         }
         for (mut light, mut transform) in &mut moon {
             light.illuminance = 160.0 * moon_illum * moon_up.sqrt() * (1.0 - 0.6 * cover);
+            light.color = Color::srgb(moon_colour.x, moon_colour.y, moon_colour.z);
             transform.rotation = Quat::from_rotation_arc(Vec3::NEG_Z, -env.moon_dir);
         }
+        let _ = sun_warmth;
     }
 
     // ---- sky bodies -----------------------------------------------------
