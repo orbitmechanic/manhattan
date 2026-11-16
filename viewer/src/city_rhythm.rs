@@ -133,7 +133,12 @@ pub fn overcast_direct_factor(cover: f32, storm: f32) -> f32 {
 pub fn cloud_deck_altitude(cover: f32, tallest_m: f32) -> f32 {
     let base = (tallest_m * 0.80).clamp(260.0, 420.0);
     let high = 960.0;
-    high + (base - high) * cover.clamp(0.0, 1.0).powf(1.4)
+    let cover = cover.clamp(0.0, 1.0);
+    if cover >= 0.70 {
+        base
+    } else {
+        high + (base - high) * (cover / 0.70)
+    }
 }
 
 #[cfg(test)]
@@ -226,5 +231,7 @@ mod tests {
         assert!(deck < 410.0 * 0.9);
         assert!(deck > 300.0);
         assert!(cloud_deck_altitude(0.0, 410.0) > 900.0);
+        // A thunderstorm (cover ~0.96) must also sit at the low deck.
+        assert!(cloud_deck_altitude(0.96, 410.0) < 360.0);
     }
 }

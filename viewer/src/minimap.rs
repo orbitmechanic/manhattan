@@ -29,7 +29,7 @@ use crate::{camera::FlyCamera, motion::MotionState, storefront::StorefrontData};
 
 const MAP_TEX: usize = 512;
 /// World-space radius of the circular map, in mercator metres.
-const MAP_RADIUS_WORLD: f32 = 650.0;
+pub const MAP_RADIUS_WORLD: f32 = 650.0;
 const MAP_CENTER: f32 = MAP_TEX as f32 * 0.5;
 const MAP_RADIUS: f32 = MAP_TEX as f32 * 0.5 - 8.0;
 const ACCEL_RADIUS: f32 = MAP_RADIUS - 8.0;

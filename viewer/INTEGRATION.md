@@ -1017,3 +1017,39 @@ Manhattan: fmt, clippy clean, tests green; destructibles **170 tests**, clippy
 clean; batch audits 0 offenders. Real-input (mocked G) street shot: `HIT`,
 `GATE=PASS`, `JIT`, `ADMITTED`, `JOURNAL`, `WOUND VISIBLE`, `mask_covers=true`.
 Texture parity at muzzle range remains UNVERIFIED.
+
+## Iteration 28 — partial delivery, explicit UNVERIFIED list
+
+This round was not completed to the requested bar. Implemented and measured:
+
+- **Traffic halved everywhere:** lane occupancy is multiplied by 0.5 at every
+  daily point (AM toward ≈0.43, away ≈0.20), pedestrians unchanged. Tested by
+  the existing occupancy function values.
+- **Archive radius = minimap radius:** `NeighborhoodConfig.archive_radius =
+  MAP_RADIUS_WORLD (650 m)`; damaged persistence freezes at the minimap edge
+  instead of 150 m. Minimap/fill behavior unchanged.
+- **Storm deck height bug found and fixed numerically:** the low-deck curve used
+  `cover^1.4` against a 960 m high deck, so a 0.96-cover thunderstorm parked the
+  deck at ~925 m. It now collapses to the 328 m low deck for cover ≥ 0.70
+  (storm included, tested). **Visual presence is still UNVERIFIED:** the golden
+  overcast capture at 365 m does not show the deck, so the render/culling cause
+  remains open.
+
+Not implemented (UNVERIFIED, not claimed):
+
+1. Copy-paste city exterior: the host city is merged glTF chunks, not one mesh
+   per building, so there is no per-building city mesh handle to clone. JIT
+   still uses the generated exterior + live-mask suppression.
+2. Host-profile pane retirement: panes remain in the host; debris ratio and
+   reduced command set not done.
+3. 20-ft guts: guts still follow the facade floor pitch; cell/collider reduction
+   not delivered.
+4. Tiara health band: halo is still the existing flat washer at roof+5 m.
+5. Off-screen animation gating: not implemented; burning off-screen buildings
+   still tick their presentation systems.
+6. Real-input G battery under JIT after these changes: only the earlier mocked
+   bullet path was re-run; car bomb/20-shot/hero/lift/thrown remain UNVERIFIED.
+
+Performance headline table with 0/1/3/5 damaged buildings was therefore not
+produced. What can be stated: traffic entity work is halved by construction;
+archive GC now happens at 650 m rather than 150 m.

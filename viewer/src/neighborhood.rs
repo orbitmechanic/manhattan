@@ -59,6 +59,8 @@ pub struct NeighborhoodConfig {
     pub ahead_enter: f32,
     pub ahead_exit: f32,
     pub ahead_half_width: f32,
+    /// Damaged-building archive radius, matched to the minimap display radius.
+    pub archive_radius: f32,
     /// Damaged buildings persist outside the zone (policy stub; this
     /// iteration has no damage path).
     pub damaged_persists: bool,
@@ -77,6 +79,7 @@ impl Default for NeighborhoodConfig {
             ahead_enter: 120.0,
             ahead_exit: 150.0,
             ahead_half_width: 60.0,
+            archive_radius: crate::minimap::MAP_RADIUS_WORLD,
             damaged_persists: true,
             max_swaps_per_frame: 1,
             swap_budget_ms: 6.0,
