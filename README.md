@@ -71,7 +71,32 @@ The cap is applied after boost/analog scaling, so no mode can exceed its stated
 top speed.  Selecting a mode selects its base speed; the top-left status and
 bottom-left help panels show the active mode and cap.
 
-### Browser build / GitHub Pages
+### Destructible neighborhoods (iteration 17)
+
+The viewer is now a live host for the private `destructibles` subsystem, pinned
+to tag `manhattan-2` as a git dependency (no sibling checkout required). The
+camera-relative zone swaps Manhattan's real building records into generated
+`BuildingSpec`s near the nadir and ahead in the view direction, and restores
+the plain map geometry beyond a 25 % hysteresis band.
+
+- The live set is filled white on the mini map; `N` toggles the debug layer.
+- While a handle is live, a world-XZ mask discards the Manhattan draw under its
+  footprint; there is no doubled draw and no snapshot is spawned.
+- Footprint, area and height are self-checked against
+  `building_perimeters.json` on every swap (0.02 m / 0.1 % / 0.05 m); failures
+  return the building to the plain map.
+- One swap per frame, 6 ms budget; a 300 m gauntlet runs at 15, 30, 100 and
+  650 m/s with per-regime captures and a boundary-hover frame.
+
+```bash
+cd viewer
+MANHATTAN_NEIGHBORHOOD=1 ./target/release/manhattan-viewer
+```
+
+Evidence: `viewer/captures/iteration17_*.png`; contract, mapping table and the
+per-regime performance table are in [`viewer/INTEGRATION.md`](viewer/INTEGRATION.md).
+
+## Browser build / GitHub Pages
 
 Live: <https://orbitmechanic.github.io/manhattan/>
 
