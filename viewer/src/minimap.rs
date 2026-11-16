@@ -59,6 +59,17 @@ const GEO_ANCHOR_Y: f64 = 4_970_168.600_037_185;
 
 const STREET_DATA: &str = include_str!("../assets/models/street_network.json");
 
+/// Buildings currently owned by the destructible subsystem, keyed by the
+/// Manhattan building id. Filled white on the minimap (or the health colour
+/// once damage exists) and used as the footprint-verification readout.
+#[derive(Resource, Default)]
+pub struct LiveFootprints {
+    pub live: std::collections::BTreeSet<usize>,
+    pub colors: std::collections::BTreeMap<usize, [u8; 4]>,
+    pub debug: bool,
+    pub revision: u64,
+}
+
 #[derive(Resource)]
 struct MinimapImages {
     map: Handle<Image>,
@@ -141,6 +152,7 @@ impl Plugin for MinimapPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<StreetNetwork>()
             .init_resource::<NearestStreet>()
+            .init_resource::<LiveFootprints>()
             .add_systems(PostStartup, setup_minimap)
             .add_systems(
                 Update,
@@ -354,11 +366,49 @@ fn nearest_named_street(center: Vec2, streets: &[Street]) -> Option<String> {
     name
 }
 
+fn fill_polygon(data: &mut [u8], polygon: &[Vec2], color: [u8; 4]) {
+    if polygon.len() < 3 {
+        return;
+    }
+    let min_y = polygon.iter().map(|p| p.y).fold(f32::INFINITY, f32::min);
+    let max_y = polygon
+        .iter()
+        .map(|p| p.y)
+        .fold(f32::NEG_INFINITY, f32::max);
+    let y0 = min_y.floor() as i32;
+    let y1 = max_y.ceil() as i32;
+    let mut intersections: Vec<f32> = Vec::with_capacity(polygon.len());
+    for y in y0..=y1 {
+        let scan = y as f32 + 0.5;
+        intersections.clear();
+        for index in 0..polygon.len() {
+            let a = polygon[index];
+            let b = polygon[(index + 1) % polygon.len()];
+            if (a.y <= scan && b.y > scan) || (b.y <= scan && a.y > scan) {
+                let t = (scan - a.y) / (b.y - a.y);
+                intersections.push(a.x + (b.x - a.x) * t);
+            }
+        }
+        if intersections.len() < 2 {
+            continue;
+        }
+        intersections.sort_by(|a, b| a.total_cmp(b));
+        for pair in intersections.as_chunks::<2>().0 {
+            let x0 = pair[0].round() as i32;
+            let x1 = pair[1].round() as i32;
+            for x in x0..=x1 {
+                put(data, x, y, color);
+            }
+        }
+    }
+}
+
 fn render_map_layer(
     data: &mut [u8],
     center: Vec2,
     buildings: &[crate::storefront::BuildingMeta],
     streets: &[Street],
+    live: &LiveFootprints,
 ) -> Option<String> {
     // Dark slate ground so the black street lines read clearly.
     for y in 0..MAP_TEX as i32 {
@@ -387,6 +437,32 @@ fn render_map_layer(
                 black,
                 thickness,
             );
+        }
+    }
+
+    // Destructible-live footprints: filled white until damage exists. This is
+    // both the "what is destructible right now" readout and the footprint
+    // verification instrument.
+    if live.debug {
+        for building in buildings {
+            if !live.live.contains(&building.id) || building.perimeter.len() < 3 {
+                continue;
+            }
+            let centroid = Vec2::new(building.centroid[0], building.centroid[1]);
+            if centroid.distance_squared(center) > (MAP_RADIUS_WORLD + 80.0).powi(2) {
+                continue;
+            }
+            let color = live
+                .colors
+                .get(&building.id)
+                .copied()
+                .unwrap_or([255, 255, 255, 225]);
+            let polygon: Vec<Vec2> = building
+                .perimeter
+                .iter()
+                .map(|point| world_to_map(Vec2::from_array(*point), center))
+                .collect();
+            fill_polygon(data, &polygon, color);
         }
     }
 
@@ -577,6 +653,7 @@ fn setup_minimap(
         center,
         buildings.buildings(),
         &streets.streets,
+        &LiveFootprints::default(),
     );
     let map = images.add(make_image(map_data));
     let overlay = images.add(make_image(render_overlay_initial()));
@@ -743,23 +820,25 @@ fn update_minimap_map(
     camera: Single<&Transform, With<FlyCamera>>,
     buildings: Res<StorefrontData>,
     streets: Res<StreetNetwork>,
+    live: Res<LiveFootprints>,
     nearest: Option<ResMut<NearestStreet>>,
     images: Option<Res<MinimapImages>>,
     mut assets: ResMut<Assets<Image>>,
-    mut last: Local<Option<(Vec2, f32)>>,
+    mut last: Local<Option<(Vec2, f32, u64)>>,
 ) {
     let Some(images) = images else {
         return;
     };
     let center = Vec2::new(camera.translation.x, camera.translation.z);
     let now = time.elapsed_secs();
-    if let Some((last_center, last_time)) = *last
+    if let Some((last_center, last_time, last_revision)) = *last
+        && live.revision == last_revision
         && (now - last_time < MAP_UPDATE_SECS
             || center.distance_squared(last_center) < MAP_MOVE_EPS_SQ)
     {
         return;
     }
-    *last = Some((center, now));
+    *last = Some((center, now, live.revision));
     let Some(mut image) = assets.get_mut(&images.map) else {
         return;
     };
@@ -767,7 +846,8 @@ fn update_minimap_map(
         return;
     };
     data.fill(0);
-    let nearest_name = render_map_layer(data, center, buildings.buildings(), &streets.streets);
+    let nearest_name =
+        render_map_layer(data, center, buildings.buildings(), &streets.streets, &live);
     if let Some(mut nearest) = nearest {
         nearest.0 = nearest_name.unwrap_or_default();
     }

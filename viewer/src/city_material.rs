@@ -82,6 +82,15 @@ pub struct BlockExtension {
     /// x/y = facade UV inset, z = roof UV inset, w = roof UV scale
     #[uniform(113)]
     pub atlas_uv: Vec4,
+    /// R8 world-XZ mask of buildings currently owned by the destructible
+    /// subsystem. Sampled only to discard the Manhattan draw underneath a live
+    /// handle; the destructible itself uses StandardMaterial.
+    #[texture(118)]
+    #[sampler(119)]
+    pub live_mask: Option<Handle<Image>>,
+    /// xy = mask origin XZ, z = mask world size, w = enabled
+    #[uniform(120)]
+    pub live_mask_params: Vec4,
 }
 
 impl Default for BlockExtension {
@@ -98,6 +107,8 @@ impl Default for BlockExtension {
             facade_night_all: None,
             atlas_info: Vec4::new(10.0, 32.0, 16.0, 10.0),
             atlas_uv: Vec4::new(1.0 / 384.0, 1.0 / 96.0, 1.0 / 256.0, 0.5),
+            live_mask: None,
+            live_mask_params: Vec4::ZERO,
         }
     }
 }
@@ -284,6 +295,8 @@ pub fn setup_city_materials(
                 facade_night_all: Some(facade_night_all.clone()),
                 atlas_info: Vec4::new(FACADE_COLS, FACADE_ROWS, ROOF_COLS, ROOF_ROWS),
                 atlas_uv: Vec4::new(1.0 / 384.0, 1.0 / 96.0, 1.0 / 256.0, 0.5),
+                live_mask: None,
+                live_mask_params: Vec4::ZERO,
             },
         });
         map.insert(key, handle);

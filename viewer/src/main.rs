@@ -52,6 +52,7 @@ use manhattan_viewer::{
     lightning::LightningPlugin,
     minimap::MinimapPlugin,
     motion::{MotionPlugin, accessories_active},
+    neighborhood::NeighborhoodPlugin,
     people::{Crowd, setup_people_catalog, stream_people, update_limbs, update_pedestrians},
     stationing::{
         LineSet, MAX_COORDS_PER_SET, Stationing, StationingConfig, StationingState,
@@ -248,10 +249,19 @@ fn main() {
         ..default()
     };
 
+    #[cfg(not(target_arch = "wasm32"))]
+    let asset_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("assets")
+        .to_string_lossy()
+        .into_owned();
+    #[cfg(target_arch = "wasm32")]
+    let asset_path = "assets".to_string();
+
     App::new()
         .add_plugins(
             DefaultPlugins
                 .set(AssetPlugin {
+                    file_path: asset_path,
                     meta_check: AssetMetaCheck::Never,
                     ..default()
                 })
@@ -267,7 +277,9 @@ fn main() {
                     ..default()
                 }),
         )
+        .add_plugins(destructibles_bevy::destructibles_plugin_for_manhattan())
         .add_plugins(MaterialPlugin::<CityMaterial>::default())
+        .add_plugins(NeighborhoodPlugin)
         .add_plugins(WeatherPlugin)
         .add_plugins(MotionPlugin)
         .add_plugins(LightningPlugin)

@@ -8,6 +8,11 @@ description = "Fly-through day/night viewer for the Manhattan city model"
 bevy = { version = "0.20.1", features = ["jpeg"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Consumed from the destructibles source of truth, pinned to the host-embedding
+# tag. This survives a standalone clone of Manhattan (Cargo fetches the private
+# repo with the operator's git credentials); no sibling checkout is required.
+destructibles-bevy = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-2" }
+destructibles-core = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-2" }
 
 [profile.dev]
 opt-level = 1

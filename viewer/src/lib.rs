@@ -12,6 +12,7 @@ pub mod environment;
 pub mod lightning;
 pub mod minimap;
 pub mod motion;
+pub mod neighborhood;
 pub mod people;
 pub mod stationing;
 pub mod storefront;

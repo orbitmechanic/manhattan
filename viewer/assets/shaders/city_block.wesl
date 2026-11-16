@@ -117,12 +117,36 @@ var<uniform> atlas_info: vec4<f32>;
 @group(constants::MATERIAL_BIND_GROUP) @binding(113)
 var<uniform> atlas_uv: vec4<f32>;
 
+// Live destructible ownership mask (R8, world XZ). A live handle hides the
+// Manhattan building underneath it; the destructible draws itself.
+@group(constants::MATERIAL_BIND_GROUP) @binding(118)
+var live_mask_texture: texture_2d<f32>;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(119)
+var live_mask_sampler: sampler;
+
+@group(constants::MATERIAL_BIND_GROUP) @binding(120)
+var<uniform> live_mask_params: vec4<f32>;
+
 @fragment
 fn fragment(
     in: VertexOutput,
     @builtin(front_facing) is_front: bool,
 ) -> FragmentOutput {
     var pbr_input = pbr_input_from_standard_material(in, is_front);
+
+    // Suppress the Manhattan draw for any building currently owned by the
+    // destructible subsystem. Plain geometry resumes the moment the mask is
+    // cleared; there is never a doubled draw.
+    if (live_mask_params.w > 0.5) {
+        let mask_uv = (pbr_input.world_position.xz - live_mask_params.xy) / live_mask_params.z
+            + vec2<f32>(0.5);
+        if (all(mask_uv >= vec2<f32>(0.0)) && all(mask_uv <= vec2<f32>(1.0))) {
+            if (textureSampleLevel(live_mask_texture, live_mask_sampler, mask_uv, 0.0).r > 0.5) {
+                discard;
+            }
+        }
+    }
 
     // COLOR_0 RGB carries the per-building facade/roof choice, tint and U
     // offset.  Alpha carries the block id plus a few per-building flags:
