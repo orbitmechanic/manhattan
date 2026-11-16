@@ -1209,6 +1209,33 @@ fn ray_aabb(origin: Vec3, direction: Vec3, min: Vec3, max: Vec3) -> Option<f32> 
     (tmax >= 0.0).then_some(tmin.max(0.0))
 }
 
+fn mask_covers_building(world: &World, id: usize) -> bool {
+    let Some(meta) = world.resource::<BuildingIndex>().buildings.get(id) else {
+        return false;
+    };
+    let neighborhood = world.resource::<Neighborhood>();
+    let mut samples = vec![
+        Vec2::from_array(meta.centroid),
+        Vec2::new(
+            meta.perimeter.iter().map(|p| p[0]).sum::<f32>() / meta.perimeter.len() as f32,
+            meta.perimeter.iter().map(|p| p[1]).sum::<f32>() / meta.perimeter.len() as f32,
+        ),
+    ];
+    for point in &meta.perimeter {
+        samples.push(Vec2::from_array(*point));
+    }
+    samples.into_iter().any(|point| {
+        let x = point.x - neighborhood.mask_origin.x;
+        let z = point.y - neighborhood.mask_origin.y;
+        let px = ((x / MASK_WORLD + 0.5) * MASK_RES as f32) as isize;
+        let py = ((z / MASK_WORLD + 0.5) * MASK_RES as f32) as isize;
+        if px < 0 || py < 0 || px >= MASK_RES as isize || py >= MASK_RES as isize {
+            return false;
+        }
+        neighborhood.mask_pixels[py as usize * MASK_RES + px as usize] > 0
+    })
+}
+
 fn damage_input(world: &mut World) {
     let keys = world.resource::<ButtonInput<KeyCode>>().clone();
     let mouse = world.resource::<ButtonInput<MouseButton>>().clone();
@@ -2002,6 +2029,10 @@ fn jit_swap(world: &mut World, id: usize) -> bool {
         neighborhood.jit_target = Some(id);
         neighborhood.jit_started = now_secs;
     }
+    // Same hiding machinery as the retired camera swap: hide the plain
+    // storefront/sign/furniture immediately; refresh_mask later this frame
+    // rasterises the live footprint into the city shader mask.
+    set_plain_hidden(world, id, true);
     info!(
         "JIT swap_in b{id} ({:.2} ms) geometry PASS",
         started.elapsed().as_secs_f32() * 1000.0
@@ -4313,6 +4344,7 @@ fn run_neighborhood_demo(world: &mut World) {
             }
             if world.resource::<NeighborhoodDemo>().golden_step == 1 {
                 world.resource_mut::<NeighborhoodDemo>().golden_step = 2;
+                world.resource_mut::<NeighborhoodDemo>().stage_at = now;
                 world
                     .resource_mut::<ButtonInput<KeyCode>>()
                     .press(KeyCode::KeyG);
@@ -4336,9 +4368,16 @@ fn run_neighborhood_demo(world: &mut World) {
                 })
                 .fold(0.0f64, f64::max);
             let live = live_count > 0;
-            if world.resource::<NeighborhoodDemo>().golden_step == 2 && live {
+            if world.resource::<NeighborhoodDemo>().golden_step == 2
+                && live
+                && now - world.resource::<NeighborhoodDemo>().stage_at > 1.0
+            {
+                let mask = world
+                    .resource::<NeighborhoodDemo>()
+                    .roof_target
+                    .is_some_and(|id| mask_covers_building(world, id));
                 info!(
-                    "INPUT TEST RESULT: live={live_count} head={head:.2} shots={} rejected={}",
+                    "INPUT TEST RESULT: live={live_count} head={head:.2} mask_covers={mask} shots={} rejected={}",
                     world.resource::<Neighborhood>().damage_events,
                     world.resource::<Neighborhood>().jit_rejected,
                 );
