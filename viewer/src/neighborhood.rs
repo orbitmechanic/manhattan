@@ -791,6 +791,9 @@ fn update_zone(
     motion: Res<crate::motion::MotionState>,
     clock: Res<SimClock>,
 ) {
+    if std::env::var_os("MANHATTAN_PILOT").is_some() {
+        return;
+    }
     let started = Instant::now();
     if !neighborhood.live.is_empty() {
         neighborhood.behind_max = 0.0;
@@ -1240,6 +1243,9 @@ fn mask_covers_building(world: &World, id: usize) -> bool {
 }
 
 fn damage_input(world: &mut World) {
+    if std::env::var_os("MANHATTAN_PILOT").is_some() {
+        return;
+    }
     let keys = world.resource::<ButtonInput<KeyCode>>().clone();
     let mouse = world.resource::<ButtonInput<MouseButton>>().clone();
     let Some(camera) = world
@@ -2045,6 +2051,9 @@ fn jit_swap(world: &mut World, id: usize) -> bool {
 
 #[allow(clippy::drop_non_drop)]
 fn process_swaps(world: &mut World) {
+    if std::env::var_os("MANHATTAN_PILOT").is_some() {
+        return;
+    }
     let started = Instant::now();
     // A frozen game clock is extra budget: background processing keeps
     // running and is allowed to catch up twice as fast.

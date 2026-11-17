@@ -150,6 +150,7 @@ struct Args {
     show_ticks: bool,
     line_set: LineSet,
     weather: Option<String>,
+    pilot: bool,
 }
 
 impl Default for Args {
@@ -166,6 +167,7 @@ impl Default for Args {
             show_ticks: false,
             line_set: LineSet::Completed,
             weather: None,
+            pilot: false,
         }
     }
 }
@@ -182,6 +184,7 @@ fn parse_args() -> Args {
                 }
             }
             "--selftest" => args.selftest = true,
+            "--pilot" => args.pilot = true,
             "--lines" => args.show_lines = true,
             "--ticks" => args.show_ticks = true,
             "--set" => {
@@ -227,6 +230,12 @@ fn parse_args() -> Args {
 fn main() {
     #[allow(unused_mut)]
     let mut args = parse_args();
+    if args.pilot {
+        // single-threaded startup, before any plugin reads the environment
+        unsafe {
+            std::env::set_var("MANHATTAN_PILOT", "1");
+        }
+    }
     #[cfg(target_arch = "wasm32")]
     apply_web_args(&mut args);
     let mut clock = SimClock::default();
@@ -288,6 +297,8 @@ fn main() {
         .add_systems(Startup, setup_tuning)
         .add_systems(Update, tuning_keys)
         .add_plugins(NightAmbientPlugin)
+        .add_systems(Startup, manhattan_viewer::pilot::spawn_pilot)
+        .add_systems(Update, manhattan_viewer::pilot::pilot_camera)
         .add_plugins(NeighborhoodPlugin)
         .add_plugins(CityRestorationPlugin)
         .add_plugins(WeatherPlugin)
@@ -559,9 +570,15 @@ struct RoadwayChunk {
 const ROADWAY_MANIFEST: &str = include_str!("../assets/models/roadway_manifest.json");
 
 fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    for path in ["models/manhattan_ground.glb", "models/manhattan_city.glb"] {
+    let pilot = std::env::var_os("MANHATTAN_PILOT").is_some();
+    let paths: &[&str] = if pilot {
+        &["models/manhattan_ground.glb"]
+    } else {
+        &["models/manhattan_ground.glb", "models/manhattan_city.glb"]
+    };
+    for path in paths {
         commands.spawn(WorldAssetRoot(
-            asset_server.load(GltfAssetLabel::Scene(0).from_asset(path)),
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset(*path)),
         ));
     }
     let manifest: RoadwayManifest =

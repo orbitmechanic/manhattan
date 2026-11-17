@@ -1053,3 +1053,29 @@ Not implemented (UNVERIFIED, not claimed):
 Performance headline table with 0/1/3/5 damaged buildings was therefore not
 produced. What can be stated: traffic entity work is halved by construction;
 archive GC now happens at 650 m rather than 150 m.
+
+## Iteration 29a — pilot generator (Milestone A, partial gate)
+
+**Tool:** `viewer/src/bin/pilot_gen.rs` (`cargo run --release --bin pilot_gen`).
+It wraps the runtime `spec_for`/layout generator, selects a 840 m-wide mixed
+region centred at the mapped Times Square proxy, writes
+`assets/pilot/pilot_bundle.json`, and self-audits: selected 140, generated 131,
+rejected 9 → 9 fallback boxes, envelope 0, window rows 0, per-style batch counts
+(brick brownstone 2, brick mid-rise 2, concrete grid 12, glass curtain wall 115),
+triangles ≈234,026.
+
+**Runtime:** `--pilot` skips the merged city glTF (ground and roadways stay),
+spawns the bundle through `spawn_building_world`, disables JIT/zone/damage
+input, and places the camera at the pilot region.
+
+**Run/capture:** street and aerial captures at 12:00 and a night capture were
+produced (`captures/pilot_street.png`, `pilot_aerial.png`, `pilot_night.png`).
+Frame readings at capture time are startup-heavy (≈4 fps / 250 ms worst) and are
+not a valid pilot performance number.
+
+**Gate status:** the pilot exists and runs, but it does **not** satisfy the
+visual gate: the generated region is overwhelmingly glass (115/131), storefront
+and advertising placement are not part of the bundle, façades are per-building
+draws rather than batched per style, and the generated exterior still uses
+tiled destructible materials rather than the city atlas. Per the standing rule,
+Milestone A halts here: no B/C work.
