@@ -1,0 +1,189 @@
+2026-11-17T00:44:27.008738Z  INFO bevy_diagnostic::system_information_diagnostics_plugin::internal: SystemInfo { os: "Linux (Omarchy 4.5.0)", kernel: "7.2.15-1-omarchy", cpu: "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx", core_count: "4", memory: "17.5 GiB" }
+2026-11-17T00:44:27.089811Z  INFO bevy_render::renderer: AdapterInfo { name: "AMD Radeon Vega 8 Graphics (RADV RAVEN)", vendor: 4098, device: 5592, device_type: IntegratedGpu, device_pci_bus_id: "0000:03:00.0", driver: "radv", driver_info: "Mesa 26.2.5-arch1.1", backend: Vulkan, subgroup_min_size: 64, subgroup_max_size: 64, transient_saves_memory: Some(false), limit_bucket: None }
+2026-11-17T00:44:27.245971Z  INFO bevy_pbr::cluster: GPU clustering is supported on this device.
+2026-11-17T00:44:27.246028Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+2026-11-17T00:44:27.247076Z  INFO bevy_hanabi::plugin: Initializing Hanabi for GPU adapter AMD Radeon Vega 8 Graphics (RADV RAVEN)
+2026-11-17T00:44:27.252450Z  INFO bevy_winit::system: Creating new window Manhattan — day/night fly-through (67v0)
+2026-11-17T00:44:27.258982Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 23 orthogonal masonry chunks per structural cell
+2026-11-17T00:44:27.259551Z  INFO destructibles_bevy::fracture: Layer 3: pre-fractured 30 crystalline glass chunks per structural cell
+2026-11-17T00:44:27.265601Z  INFO manhattan_viewer::details: Trees: 3000
+2026-11-17T00:44:27.266871Z  INFO destructibles_bevy::audio: AUDIO DEVICE: host=Alsa device='Default Audio Device' config=F32 44100 Hz 2 ch (Bevy/rodio default output)
+2026-11-17T00:44:27.269747Z  INFO manhattan_viewer::neighborhood: NEIGHBORHOOD: feeder/index ready, mask 1024² @ 1200 m
+2026-11-17T00:44:27.273385Z  INFO manhattan_viewer::traffic: Vehicle catalog: 150 variants
+2026-11-17T00:44:29.106725Z  INFO manhattan_viewer::pilot: PILOT: spawned 140 generated buildings
+2026-11-17T00:44:29.107320Z  INFO manhattan_viewer::people: People catalog ready
+2026-11-17T00:44:29.190292Z  INFO manhattan_viewer::details: Signs: 44168 on 5910 buildings
+2026-11-17T00:44:29.343308Z  INFO manhattan_viewer::details: Roof furniture: 39164 equipment boxes, 21633 masts on 10824 buildings
+2026-11-17T00:44:29.486873Z  INFO manhattan_viewer::storefront: Storefronts: 11032 buildings, 4 categories, 0 repeat warnings, seed 12002be9
+2026-11-17T00:44:29.571217Z  INFO destructibles_bevy::structure: STRUCTURE building 9014: 234 nodes, 685 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.571457Z  INFO destructibles_bevy::structure: STRUCTURE building 9330: 262 nodes, 655 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.571552Z  INFO destructibles_bevy::structure: STRUCTURE building 9660: 117 nodes, 262 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.571886Z  INFO destructibles_bevy::structure: STRUCTURE building 9351: 218 nodes, 641 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.572111Z  INFO destructibles_bevy::structure: STRUCTURE building 9090: 234 nodes, 361 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.572382Z  INFO destructibles_bevy::structure: STRUCTURE building 9679: 274 nodes, 665 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.572696Z  INFO destructibles_bevy::structure: STRUCTURE building 9052: 242 nodes, 721 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.572904Z  INFO destructibles_bevy::structure: STRUCTURE building 9650: 135 nodes, 366 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.573207Z  INFO destructibles_bevy::structure: STRUCTURE building 9064: 256 nodes, 642 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.573387Z  INFO destructibles_bevy::structure: STRUCTURE building 9342: 160 nodes, 389 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.573562Z  INFO destructibles_bevy::structure: STRUCTURE building 9972: 182 nodes, 485 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.573743Z  INFO destructibles_bevy::structure: STRUCTURE building 9664: 125 nodes, 292 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.573962Z  INFO destructibles_bevy::structure: STRUCTURE building 9353: 210 nodes, 559 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.574068Z  INFO destructibles_bevy::structure: STRUCTURE building 9096: 100 nodes, 237 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.574310Z  INFO destructibles_bevy::structure: STRUCTURE building 9055: 190 nodes, 533 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.574749Z  INFO destructibles_bevy::structure: STRUCTURE building 9387: 298 nodes, 567 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.575013Z  INFO destructibles_bevy::structure: STRUCTURE building 9098: 156 nodes, 421 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.575087Z  INFO destructibles_bevy::structure: STRUCTURE building 9053: 56 nodes, 108 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.575262Z  INFO destructibles_bevy::structure: STRUCTURE building 9980: 140 nodes, 323 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.575477Z  INFO destructibles_bevy::structure: STRUCTURE building 9962: 164 nodes, 493 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.575753Z  INFO destructibles_bevy::structure: STRUCTURE building 9960: 210 nodes, 549 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.576076Z  INFO destructibles_bevy::structure: STRUCTURE building 9645: 262 nodes, 697 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.576315Z  INFO destructibles_bevy::structure: STRUCTURE building 9388: 194 nodes, 573 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.576523Z  INFO destructibles_bevy::structure: STRUCTURE building 9375: 182 nodes, 465 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.576825Z  INFO destructibles_bevy::structure: STRUCTURE building 9094: 250 nodes, 627 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.577159Z  INFO destructibles_bevy::structure: STRUCTURE building 9640: 240 nodes, 741 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.577315Z  INFO destructibles_bevy::structure: STRUCTURE building 9009: 128 nodes, 288 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.577636Z  INFO destructibles_bevy::structure: STRUCTURE building 9654: 240 nodes, 741 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.577951Z  INFO destructibles_bevy::structure: STRUCTURE building 9061: 247 nodes, 700 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.578294Z  INFO destructibles_bevy::structure: STRUCTURE building 9371: 275 nodes, 708 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.578583Z  INFO destructibles_bevy::structure: STRUCTURE building 9676: 262 nodes, 613 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.578798Z  INFO destructibles_bevy::structure: STRUCTURE building 9389: 170 nodes, 426 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.579056Z  INFO destructibles_bevy::structure: STRUCTURE building 9057: 214 nodes, 609 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.579299Z  INFO destructibles_bevy::structure: STRUCTURE building 9350: 194 nodes, 573 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.579731Z  INFO destructibles_bevy::structure: STRUCTURE building 9637: 350 nodes, 1027 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.579773Z  INFO destructibles_bevy::structure: STRUCTURE building 9380: 32 nodes, 52 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.579953Z  INFO destructibles_bevy::structure: STRUCTURE building 9339: 160 nodes, 389 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.580194Z  INFO destructibles_bevy::structure: STRUCTURE building 9087: 226 nodes, 607 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.580506Z  INFO destructibles_bevy::structure: STRUCTURE building 9366: 318 nodes, 664 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.580809Z  INFO destructibles_bevy::structure: STRUCTURE building 9673: 268 nodes, 606 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.581036Z  INFO destructibles_bevy::structure: STRUCTURE building 9091: 197 nodes, 530 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.581283Z  INFO destructibles_bevy::structure: STRUCTURE building 9086: 227 nodes, 348 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.581479Z  INFO destructibles_bevy::structure: STRUCTURE building 9392: 182 nodes, 485 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.581732Z  INFO destructibles_bevy::structure: STRUCTURE building 9364: 234 nodes, 361 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.581970Z  INFO destructibles_bevy::structure: STRUCTURE building 9349: 179 nodes, 516 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.582167Z  INFO destructibles_bevy::structure: STRUCTURE building 9719: 180 nodes, 465 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.582290Z  INFO destructibles_bevy::structure: STRUCTURE building 9092: 107 nodes, 269 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.582499Z  INFO destructibles_bevy::structure: STRUCTURE building 9408: 144 nodes, 351 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.582749Z  INFO destructibles_bevy::structure: STRUCTURE building 9378: 214 nodes, 573 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.583103Z  INFO destructibles_bevy::structure: STRUCTURE building 9367: 318 nodes, 664 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.583510Z  INFO destructibles_bevy::structure: STRUCTURE building 9411: 354 nodes, 908 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.583754Z  INFO destructibles_bevy::structure: STRUCTURE building 9699: 176 nodes, 401 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.584144Z  INFO destructibles_bevy::structure: STRUCTURE building 9672: 339 nodes, 704 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.584351Z  INFO destructibles_bevy::structure: STRUCTURE building 9695: 191 nodes, 592 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.584675Z  INFO destructibles_bevy::structure: STRUCTURE building 9386: 286 nodes, 569 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.584901Z  INFO destructibles_bevy::structure: STRUCTURE building 9089: 202 nodes, 541 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.585087Z  INFO destructibles_bevy::structure: STRUCTURE building 9718: 166 nodes, 459 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.585438Z  INFO destructibles_bevy::structure: STRUCTURE building 9370: 275 nodes, 694 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.585711Z  INFO destructibles_bevy::structure: STRUCTURE building 9421: 204 nodes, 601 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.585964Z  INFO destructibles_bevy::structure: STRUCTURE building 9080: 230 nodes, 605 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.586327Z  INFO destructibles_bevy::structure: STRUCTURE building 9729: 323 nodes, 742 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.586513Z  INFO destructibles_bevy::structure: STRUCTURE building 9381: 171 nodes, 424 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.587234Z  INFO destructibles_bevy::structure: STRUCTURE building 9054: 534 nodes, 1587 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.587451Z  INFO destructibles_bevy::structure: STRUCTURE building 9658: 135 nodes, 366 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.587688Z  INFO destructibles_bevy::structure: STRUCTURE building 9377: 144 nodes, 383 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.588029Z  INFO destructibles_bevy::structure: STRUCTURE building 9384: 286 nodes, 576 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.588327Z  INFO destructibles_bevy::structure: STRUCTURE building 9946: 216 nodes, 565 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.588367Z  INFO destructibles_bevy::structure: STRUCTURE building 9966: 28 nodes, 42 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.588678Z  INFO destructibles_bevy::structure: STRUCTURE building 9400: 194 nodes, 573 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.588936Z  INFO destructibles_bevy::structure: STRUCTURE building 9675: 227 nodes, 429 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.589124Z  INFO destructibles_bevy::structure: STRUCTURE building 9717: 166 nodes, 459 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.589426Z  INFO destructibles_bevy::structure: STRUCTURE building 9697: 242 nodes, 721 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.589707Z  INFO destructibles_bevy::structure: STRUCTURE building 9385: 268 nodes, 644 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.590099Z  INFO destructibles_bevy::structure: STRUCTURE building 9382: 298 nodes, 573 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.590227Z  INFO destructibles_bevy::structure: STRUCTURE building 9063: 119 nodes, 292 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.590506Z  INFO destructibles_bevy::structure: STRUCTURE building 9095: 240 nodes, 741 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.590762Z  INFO destructibles_bevy::structure: STRUCTURE building 9641: 220 nodes, 577 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.591051Z  INFO destructibles_bevy::structure: STRUCTURE building 9097: 240 nodes, 741 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.591222Z  INFO destructibles_bevy::structure: STRUCTURE building 9076: 178 nodes, 465 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.591284Z  INFO destructibles_bevy::structure: STRUCTURE building 9643: 50 nodes, 117 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.591508Z  INFO destructibles_bevy::structure: STRUCTURE building 9639: 230 nodes, 605 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.591725Z  INFO destructibles_bevy::structure: STRUCTURE building 9410: 196 nodes, 561 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.592831Z  INFO destructibles_bevy::structure: STRUCTURE building 9417: 573 nodes, 1479 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.593029Z  INFO destructibles_bevy::structure: STRUCTURE building 9728: 180 nodes, 433 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.593216Z  INFO destructibles_bevy::structure: STRUCTURE building 9656: 182 nodes, 485 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.593409Z  INFO destructibles_bevy::structure: STRUCTURE building 9335: 210 nodes, 549 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.593604Z  INFO destructibles_bevy::structure: STRUCTURE building 9341: 200 nodes, 521 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.593792Z  INFO destructibles_bevy::structure: STRUCTURE building 9659: 156 nodes, 421 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.594053Z  INFO destructibles_bevy::structure: STRUCTURE building 9088: 268 nodes, 572 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.594092Z  INFO destructibles_bevy::structure: STRUCTURE building 9663: 34 nodes, 53 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.594261Z  INFO destructibles_bevy::structure: STRUCTURE building 9413: 170 nodes, 467 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.594411Z  INFO destructibles_bevy::structure: STRUCTURE building 9715: 127 nodes, 336 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.594633Z  INFO destructibles_bevy::structure: STRUCTURE building 9957: 184 nodes, 535 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.594857Z  INFO destructibles_bevy::structure: STRUCTURE building 9974: 194 nodes, 573 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.595071Z  INFO destructibles_bevy::structure: STRUCTURE building 9661: 194 nodes, 563 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.595369Z  INFO destructibles_bevy::structure: STRUCTURE building 9634: 259 nodes, 725 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.595607Z  INFO destructibles_bevy::structure: STRUCTURE building 9950: 230 nodes, 590 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.595805Z  INFO destructibles_bevy::structure: STRUCTURE building 9977: 182 nodes, 485 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.596110Z  INFO destructibles_bevy::structure: STRUCTURE building 9698: 300 nodes, 811 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.596333Z  INFO destructibles_bevy::structure: STRUCTURE building 9343: 226 nodes, 595 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.596461Z  INFO destructibles_bevy::structure: STRUCTURE building 9348: 100 nodes, 238 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.596650Z  INFO destructibles_bevy::structure: STRUCTURE building 9079: 166 nodes, 459 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.597034Z  INFO destructibles_bevy::structure: STRUCTURE building 9077: 362 nodes, 921 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.597187Z  INFO destructibles_bevy::structure: STRUCTURE building 9422: 146 nodes, 373 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.597433Z  INFO destructibles_bevy::structure: STRUCTURE building 9678: 267 nodes, 612 support edges, 2 slabs/floor, clamp 1
+2026-11-17T00:44:29.597721Z  INFO destructibles_bevy::structure: STRUCTURE building 9696: 242 nodes, 721 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.598126Z  INFO destructibles_bevy::structure: STRUCTURE building 9418: 383 nodes, 1005 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.598394Z  INFO destructibles_bevy::structure: STRUCTURE building 9636: 247 nodes, 709 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.598578Z  INFO destructibles_bevy::structure: STRUCTURE building 9395: 182 nodes, 485 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.598819Z  INFO destructibles_bevy::structure: STRUCTURE building 9943: 230 nodes, 585 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.599099Z  INFO destructibles_bevy::structure: STRUCTURE building 9074: 282 nodes, 708 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.599283Z  INFO destructibles_bevy::structure: STRUCTURE building 9415: 202 nodes, 551 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.599412Z  INFO destructibles_bevy::structure: STRUCTURE building 9686: 125 nodes, 302 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.599793Z  INFO destructibles_bevy::structure: STRUCTURE building 9383: 280 nodes, 620 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.600193Z  INFO destructibles_bevy::structure: STRUCTURE building 9075: 346 nodes, 759 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.600520Z  INFO destructibles_bevy::structure: STRUCTURE building 9687: 238 nodes, 641 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.600919Z  INFO destructibles_bevy::structure: STRUCTURE building 9333: 318 nodes, 857 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.601227Z  INFO destructibles_bevy::structure: STRUCTURE building 9423: 250 nodes, 675 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.601592Z  INFO destructibles_bevy::structure: STRUCTURE building 9100: 280 nodes, 622 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.601811Z  INFO destructibles_bevy::structure: STRUCTURE building 9345: 130 nodes, 315 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.602269Z  INFO destructibles_bevy::structure: STRUCTURE building 9078: 369 nodes, 917 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.602481Z  INFO destructibles_bevy::structure: STRUCTURE building 9419: 138 nodes, 357 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.602870Z  INFO destructibles_bevy::structure: STRUCTURE building 9635: 271 nodes, 787 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.603351Z  INFO destructibles_bevy::structure: STRUCTURE building 9404: 184 nodes, 535 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.603730Z  INFO destructibles_bevy::structure: STRUCTURE building 9681: 264 nodes, 684 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.603880Z  INFO destructibles_bevy::structure: STRUCTURE building 9648: 103 nodes, 246 support edges, 4 slabs/floor, clamp 2
+2026-11-17T00:44:29.604195Z  INFO destructibles_bevy::structure: STRUCTURE building 9694: 238 nodes, 641 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.604379Z  INFO destructibles_bevy::structure: STRUCTURE building 9720: 138 nodes, 363 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.604874Z  INFO destructibles_bevy::structure: STRUCTURE building 9954: 290 nodes, 791 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.605754Z  INFO destructibles_bevy::structure: STRUCTURE building 9420: 373 nodes, 1020 support edges, 5 slabs/floor, clamp 2
+2026-11-17T00:44:29.606135Z  INFO destructibles_bevy::structure: STRUCTURE building 9374: 271 nodes, 637 support edges, 3 slabs/floor, clamp 2
+2026-11-17T00:44:29.896575Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: glass_break.ogg (31276 bytes)
+2026-11-17T00:44:29.896674Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: impact.ogg (7792 bytes)
+2026-11-17T00:44:29.896680Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: shard_chatter.ogg (39114 bytes)
+2026-11-17T00:44:29.896686Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: chime.wav (79424 bytes)
+2026-11-17T00:44:29.896691Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: rewind_whoosh.wav (141164 bytes)
+2026-11-17T00:44:29.896696Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: explosion.wav (229364 bytes)
+2026-11-17T00:44:29.896701Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: klaxon.wav (176444 bytes)
+2026-11-17T00:44:29.896706Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: sprinkler_hiss.wav (176444 bytes)
+2026-11-17T00:44:29.896711Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: masonry_thud.wav (48554 bytes)
+2026-11-17T00:44:29.896716Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: collapse_rumble.wav (458684 bytes)
+2026-11-17T00:44:29.896721Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: structural_groan.wav (264644 bytes)
+2026-11-17T00:44:29.896726Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: concrete_crack.wav (19448 bytes)
+2026-11-17T00:44:29.896731Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: gas_hiss.wav (176444 bytes)
+2026-11-17T00:44:29.896736Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: fire_crackle.wav (176444 bytes)
+2026-11-17T00:44:29.896741Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: cascade_crackle.wav (352844 bytes)
+2026-11-17T00:44:29.896746Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: dust_hiss.wav (352844 bytes)
+2026-11-17T00:44:29.896751Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: breaker_pop.wav (39734 bytes)
+2026-11-17T00:44:29.896756Z  INFO destructibles_bevy::audio: AUDIO ASSET loaded: electric_crackle.wav (79424 bytes)
+2026-11-17T00:44:29.896762Z  INFO destructibles_bevy::audio: AUDIO CHAIN READY: device=Some("Default Audio Device") assets=18 master_volume=0.80
+2026-11-17T00:44:31.350667Z  INFO destructibles_bevy::audio: AUDIO startup chime requested
+2026-11-17T00:44:31.997979Z  INFO destructibles_bevy::audio: AUDIO SINK playing kind=chime pitch=0.900 vol=0.48 paused=false empty=false
+2026-11-17T00:44:33.008983Z ERROR bevy_render::render_resource::pipeline_cache: failed to create shader module: Validation Error
+
+Caused by:
+  In Device::create_shader_module
+    
+Shader validation error: Entry point fragment at Fragment is invalid
+   ┌─ :54:21
+   │
+54 │     let to_camera = in.world_position - camera.xyz;
+   │                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ naga::ir::Expression [74]
+   │
+   = Expression [74] is invalid
+   = Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+
+      Expression [74] is invalid
+        Operation Subtract can't work with [70] (of type Vector { size: Quad, scalar: Scalar { kind: Float, width: 4 } }) and [73] (of type Vector { size: Tri, scalar: Scalar { kind: Float, width: 4 } })
+
+2026-11-17T00:44:46.105795Z  INFO manhattan_viewer: Capturing captures/pilot_street.png at frame 40
+2026-11-17T00:44:46.876913Z  INFO bevy_render::view::window::screenshot: Screenshot saved to captures/pilot_street.png
