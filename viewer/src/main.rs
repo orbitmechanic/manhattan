@@ -271,8 +271,8 @@ fn main() {
     #[cfg(target_arch = "wasm32")]
     let asset_path = "assets".to_string();
 
-    App::new()
-        .add_plugins(
+    let mut app = App::new();
+    app.add_plugins(
             DefaultPlugins
                 .set(AssetPlugin {
                     file_path: asset_path,
@@ -415,9 +415,21 @@ fn main() {
             (stream_street_furniture, update_street_lights)
                 .chain()
                 .run_if(accessories_active),
-        )
-        .run();
+        );
+
+    add_dev_brp(&mut app);
+    app.run();
 }
+
+#[cfg(feature = "dev-brp")]
+fn add_dev_brp(app: &mut App) {
+    app.add_plugins(bevy_brp_extras::BrpExtrasPlugin::with_http_plugin(
+        bevy::remote::http::RemoteHttpPlugin::default().with_address([127, 0, 0, 1]),
+    ));
+}
+
+#[cfg(not(feature = "dev-brp"))]
+fn add_dev_brp(_app: &mut App) {}
 
 fn tick_clock(time: Res<Time>, mut clock: ResMut<SimClock>) {
     clock.tick(time.delta_secs() as f64);
