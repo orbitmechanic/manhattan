@@ -1,0 +1,66 @@
+{
+  "generated_utc": "2026-11-21T14:02:12Z",
+  "scheme": "adaptive quadtree 2 km -> 250 m; split >750; no merge",
+  "partitions": 1096,
+  "buildings": 330330,
+  "size_histogram": {
+    "<250": 393,
+    "250-750": 703
+  },
+  "min_partition": 1,
+  "max_partition": 749,
+  "mean_partition": 301.4,
+  "named_areas": [
+    "Ballard",
+    "Beacon Hill",
+    "Bellevue CBD",
+    "Capitol Hill",
+    "Downtown",
+    "Eastside",
+    "Fremont",
+    "Queen Anne",
+    "Rainier Valley",
+    "Seattle South",
+    "South King",
+    "Tacoma Core",
+    "Tacoma North",
+    "Tacoma South",
+    "University District",
+    "West Seattle"
+  ],
+  "binary_bytes": 23838713,
+  "json_bytes": 146622761,
+  "single_partition_bytes": 7861,
+  "single_partition_json_bytes": 50467,
+  "first_partition": {
+    "name": "Seattle South 01",
+    "index": 0,
+    "center": [
+      -4016.57,
+      -10649.0
+    ],
+    "aabb": [
+      -4322.29,
+      -10815.19,
+      -3710.86,
+      -10482.81
+    ],
+    "buildings": 117,
+    "hints": {
+      "dominant_category": "residential",
+      "dominant_source": "real_surveyed",
+      "mean_height_m": 50.15,
+      "p95_height_m": 101.44,
+      "glass_pct": 3,
+      "category_counts": {
+        "residential": 110,
+        "commercial": 7
+      },
+      "source_counts": {
+        "real_surveyed": 93,
+        "lidar_overture": 24
+      }
+    }
+  },
+  "seconds": 22.6
+}
