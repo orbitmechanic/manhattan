@@ -1,0 +1,42 @@
+{
+  "datasets": [
+    {
+      "id": "rotterdam_delfshaven",
+      "file": "rotterdam_delfshaven.city.json",
+      "records_target": 600,
+      "objects": 1203,
+      "vertices": 28989
+    },
+    {
+      "id": "denhaag_centrum",
+      "file": "denhaag_centrum.city.json",
+      "records_target": 600,
+      "objects": 1205,
+      "vertices": 29392
+    },
+    {
+      "file": "vienna_102081.city.jsonl",
+      "features": 307
+    },
+    {
+      "file": "montreal_vm05.city.jsonl",
+      "features": 294
+    },
+    {
+      "file": "zurich_altstadt.city.jsonl",
+      "features": 499
+    },
+    {
+      "file": "plateau_takeshiba_bldg.city.jsonl",
+      "features": 300
+    },
+    {
+      "file": "overture_chicago_loop.geojson",
+      "features": 420
+    },
+    {
+      "file": "open_buildings_nairobi.geojson",
+      "features": 376
+    }
+  ]
+}

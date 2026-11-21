@@ -6,10 +6,10 @@ use std::fs;
 
 use destructibles_core::{BuildingLayout, FacadeStyle};
 use manhattan_viewer::neighborhood::spec_for;
-use manhattan_viewer::storefront::StorefrontData;
+use manhattan_viewer::storefront::BuildingMeta;
 use serde::Serialize;
 
-const CENTER: [f32; 2] = [1711.638, -2000.0];
+const CENTER: [f32; 2] = [1711.638, -1300.0];
 const HALF: f32 = 420.0;
 const MAX_BUILDINGS: usize = 140;
 
@@ -79,13 +79,36 @@ fn layout_envelope_ok(layout: &BuildingLayout) -> bool {
 }
 
 fn main() {
-    let data = StorefrontData::default();
-    let mut candidates: Vec<_> = data
-        .buildings()
+    // CityDataset v1.1 is the only input. Manhattan is just the adapter.
+    let dataset = std::env::var("PILOT_DATASET").unwrap_or_else(|_| {
+        "assets/datasets/manhattan_v11.json".to_string()
+    });
+    let text = fs::read_to_string(&dataset).expect("dataset");
+    let root: serde_json::Value = serde_json::from_str(&text).expect("dataset json");
+    let mut center = CENTER;
+    if root["city_id"].as_str() != Some("manhattan")
+        && let Some(ep) = root["fields"]["epicenter"].as_array()
+    {
+        center = [ep[0].as_f64().unwrap() as f32, ep[1].as_f64().unwrap() as f32];
+    }
+    let mut metas: Vec<BuildingMeta> = Vec::new();
+    for b in root["buildings"].as_array().expect("buildings") {
+        metas.push(BuildingMeta {
+            id: b["id"].as_u64().unwrap() as usize,
+            block: b["block"].as_u64().unwrap() as usize,
+            height_m: b["height_m"].as_f64().unwrap() as f32,
+            floor_height_m: b["floor_height_m"].as_f64().unwrap() as f32,
+            perimeter: serde_json::from_value(b["perimeter"].clone()).unwrap(),
+            centroid: serde_json::from_value(b["centroid"].clone()).unwrap(),
+            category: b["category"].as_str().unwrap().to_string(),
+            year_built: b["year_built"].as_u64().unwrap_or(0) as u32,
+        });
+    }
+    let mut candidates: Vec<_> = metas
         .iter()
         .map(|meta| {
-            let d = ((meta.centroid[0] - CENTER[0]).powi(2)
-                + (meta.centroid[1] - CENTER[1]).powi(2))
+            let d = ((meta.centroid[0] - center[0]).powi(2)
+                + (meta.centroid[1] - center[1]).powi(2))
             .sqrt();
             (d, meta)
         })
@@ -136,9 +159,21 @@ fn main() {
         }
     }
 
+    let glass = records
+        .iter()
+        .filter(|record| record.style == "glass curtain wall")
+        .count() as f32;
+    let fraction = if records.is_empty() { 0.0 } else { glass / records.len() as f32 };
+    println!("PILOT MIX: glass {:.2}, records {}", fraction, records.len());
+    if root["city_id"].as_str() == Some("manhattan") {
+        assert!(
+            (0.40..=0.60).contains(&fraction),
+            "mixed-region gate: glass fraction {fraction:.2} outside 0.40..=0.60"
+        );
+    }
     let bundle = Bundle {
         region: Region {
-            center: CENTER,
+            center,
             half_extent_m: HALF,
         },
         records,

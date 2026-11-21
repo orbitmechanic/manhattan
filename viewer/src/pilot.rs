@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use destructibles_bevy::assets::WorldAssets;
 use destructibles_bevy::building::spawn_building_world;
 use destructibles_core::{BuildingSpec, FacadeStyle, core_for_style};
+use destructibles_core::family::MaterialFamily;
 use serde::Deserialize;
 
 use crate::camera::FlyCamera;
@@ -81,7 +82,12 @@ pub fn spawn_pilot(world: &mut World) {
             continue;
         }
         let style = style_from(&record.style);
+        let family = match style {
+            FacadeStyle::GlassCurtainWall | FacadeStyle::ConcreteGrid => MaterialFamily::SteelFrame,
+            FacadeStyle::BrickBrownstone | FacadeStyle::BrickMidrise => MaterialFamily::MasonryStone,
+        };
         let spec = BuildingSpec {
+            family,
             footprint: record.footprint.clone(),
             floor_height: record.floor_height_m,
             floor_count: record.floor_count,
