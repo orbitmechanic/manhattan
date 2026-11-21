@@ -140,6 +140,10 @@ pub fn update_controls_text(
 }
 
 pub fn spawn_ui(mut commands: Commands) {
+    // Evidence captures can skip the instrument overlays with PILOT_CLEAN=1.
+    if std::env::var_os("PILOT_CLEAN").is_some() {
+        return;
+    }
     // top-left status panel
     commands
         .spawn((

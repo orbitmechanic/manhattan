@@ -1,7 +1,7 @@
 //! `--pilot` runtime: spawn the committed generated bundle only.
 
 use bevy::prelude::*;
-use bevy::render::view::screenshot::{Screenshot, save_to_disk};
+use bevy::render::view::screenshot::Screenshot;
 use destructibles_bevy::assets::WorldAssets;
 use destructibles_bevy::building::{BuildingDetail, spawn_building_world_lod};
 use destructibles_bevy::impact::apply_impact;
@@ -14,13 +14,27 @@ use crate::camera::FlyCamera;
 
 #[derive(Deserialize)]
 struct Bundle {
+    #[serde(default)]
+    city_id: String,
     region: Region,
     records: Vec<Record>,
+    #[serde(default)]
+    view: Option<View>,
+}
+
+#[derive(Deserialize)]
+struct View {
+    street_pos: [f32; 3],
+    street_look: [f32; 3],
+    aerial_pos: [f32; 3],
+    aerial_look: [f32; 3],
 }
 
 #[derive(Deserialize)]
 struct Region {
     center: [f32; 2],
+    #[serde(default)]
+    ground_elevation_m: f32,
 }
 
 #[derive(Deserialize)]
@@ -43,6 +57,51 @@ pub fn enabled() -> bool {
     std::env::var_os("MANHATTAN_PILOT").is_some()
 }
 
+/// Bundle filename override (`PILOT_BUNDLE`), defaulting to the Manhattan
+/// mixed-region pilot bundle. The Seattle S1 preview uses its own extract.
+pub fn bundle_path() -> std::path::PathBuf {
+    let name = std::env::var("PILOT_BUNDLE").unwrap_or_else(|_| "pilot_bundle.json".to_string());
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("assets/pilot")
+        .join(name)
+}
+
+pub fn bundle_city() -> Option<String> {
+    let text = std::fs::read_to_string(bundle_path()).ok()?;
+    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
+    value["city_id"].as_str().map(str::to_string)
+}
+
+pub fn bundle_center() -> [f32; 2] {
+    let Ok(text) = std::fs::read_to_string(bundle_path()) else {
+        return [0.0, 0.0];
+    };
+    let Ok(bundle) = serde_json::from_str::<Bundle>(&text) else {
+        return [0.0, 0.0];
+    };
+    bundle.region.center
+}
+
+/// Evidence captures: `PILOT_CLEAN=1` removes instrument UI every frame.
+pub fn hide_ui_nodes(mut commands: Commands, nodes: Query<Entity, With<Node>>) {
+    if std::env::var_os("PILOT_CLEAN").is_none() {
+        return;
+    }
+    for entity in &nodes {
+        commands.entity(entity).despawn();
+    }
+}
+
+pub fn bundle_ground() -> f32 {
+    let Ok(text) = std::fs::read_to_string(bundle_path()) else {
+        return 0.0;
+    };
+    let Ok(bundle) = serde_json::from_str::<Bundle>(&text) else {
+        return 0.0;
+    };
+    bundle.region.ground_elevation_m
+}
+
 fn style_from(label: &str) -> FacadeStyle {
     match label {
         "glass curtain wall" => FacadeStyle::GlassCurtainWall,
@@ -56,8 +115,7 @@ pub fn spawn_pilot(world: &mut World) {
     if !enabled() {
         return;
     }
-    let path =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/pilot/pilot_bundle.json");
+    let path = bundle_path();
     let Ok(text) = std::fs::read_to_string(&path) else {
         error!("PILOT: missing {}", path.display());
         return;
@@ -76,6 +134,13 @@ pub fn spawn_pilot(world: &mut World) {
                 perceptual_roughness: 0.35,
                 ..default()
             });
+    let plinth_material = world
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(StandardMaterial {
+            base_color: Color::srgb(0.28, 0.26, 0.24),
+            perceptual_roughness: 0.95,
+            ..default()
+        });
     let ad_material = world
         .resource_mut::<Assets<StandardMaterial>>()
         .add(StandardMaterial {
@@ -101,7 +166,11 @@ pub fn spawn_pilot(world: &mut World) {
             world.spawn((
                 Mesh3d(mesh),
                 MeshMaterial3d(material),
-                Transform::from_xyz(record.origin[0], size[1] * 0.5, record.origin[2]),
+                Transform::from_xyz(
+                    record.origin[0],
+                    record.origin[1] + size[1] * 0.5,
+                    record.origin[2],
+                ),
                 Name::new(format!("pilot fallback b{}", record.id)),
             ));
             spawned += 1;
@@ -138,6 +207,47 @@ pub fn spawn_pilot(world: &mut World) {
             BuildingDetail::Shell,
         );
         if !record.footprint.is_empty() {
+            let ground = bundle.region.ground_elevation_m;
+            if record.origin[1] > ground + 0.2 {
+                let minx = record
+                    .footprint
+                    .iter()
+                    .map(|p| p[0])
+                    .fold(f32::INFINITY, f32::min);
+                let maxx = record
+                    .footprint
+                    .iter()
+                    .map(|p| p[0])
+                    .fold(f32::NEG_INFINITY, f32::max);
+                let minz = record
+                    .footprint
+                    .iter()
+                    .map(|p| p[1])
+                    .fold(f32::INFINITY, f32::min);
+                let maxz = record
+                    .footprint
+                    .iter()
+                    .map(|p| p[1])
+                    .fold(f32::NEG_INFINITY, f32::max);
+                // Placeholder terrain: stepped plinth from the flat ground to the
+                // record's surveyed base elevation. This is not an S2 terrain mesh.
+                let height = record.origin[1] - ground;
+                let mesh = world.resource_mut::<Assets<Mesh>>().add(Cuboid::new(
+                    (maxx - minx).max(1.0),
+                    height,
+                    (maxz - minz).max(1.0),
+                ));
+                world.spawn((
+                    Mesh3d(mesh),
+                    MeshMaterial3d(plinth_material.clone()),
+                    Transform::from_xyz(
+                        record.origin[0] + (minx + maxx) * 0.5,
+                        ground + height * 0.5,
+                        record.origin[2] + (minz + maxz) * 0.5,
+                    ),
+                    Name::new(format!("pilot plinth b{}", record.id)),
+                ));
+            }
             let minx = record
                 .footprint
                 .iter()
@@ -201,8 +311,10 @@ pub fn spawn_pilot(world: &mut World) {
         camera.rotation = Quat::from_rotation_x(-0.25);
     }
     info!(
-        "PILOT: spawned {spawned} shell buildings in {:.2} s",
-        started.elapsed().as_secs_f32()
+        "PILOT: spawned {spawned} shell buildings for {} in {:.2} s (ground {:.1} m)",
+        bundle.city_id,
+        started.elapsed().as_secs_f32(),
+        bundle.region.ground_elevation_m
     );
 }
 
@@ -211,9 +323,7 @@ pub fn pilot_camera(mut done: Local<bool>, mut camera: Query<&mut Transform, Wit
     if *done || !enabled() {
         return;
     }
-    let path =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/pilot/pilot_bundle.json");
-    let Ok(text) = std::fs::read_to_string(path) else {
+    let Ok(text) = std::fs::read_to_string(bundle_path()) else {
         return;
     };
     let Ok(bundle) = serde_json::from_str::<Bundle>(&text) else {
@@ -223,16 +333,34 @@ pub fn pilot_camera(mut done: Local<bool>, mut camera: Query<&mut Transform, Wit
         return;
     };
     let aerial = std::env::var_os("PILOT_AERIAL").is_some();
+    if let Some(view) = &bundle.view {
+        let (position, look) = if aerial {
+            (view.aerial_pos, view.aerial_look)
+        } else {
+            (view.street_pos, view.street_look)
+        };
+        transform.translation = Vec3::from_array(position);
+        let direction = (Vec3::from_array(look) - transform.translation).normalize_or_zero();
+        transform.rotation = Quat::from_euler(
+            EulerRot::YXZ,
+            (-direction.x).atan2(-direction.z),
+            direction.y.asin(),
+            0.0,
+        );
+        *done = true;
+        return;
+    }
+    let ground = bundle.region.ground_elevation_m;
     let height = if aerial { 320.0 } else { 8.0 };
     let offset = if aerial { 420.0 } else { 95.0 };
     transform.translation = Vec3::new(
         bundle.region.center[0],
-        height,
+        ground + height,
         bundle.region.center[1] + offset,
     );
     let look = Vec3::new(
         bundle.region.center[0],
-        if aerial { 40.0 } else { 12.0 },
+        ground + if aerial { 40.0 } else { 12.0 },
         bundle.region.center[1],
     );
     let direction = (look - transform.translation).normalize_or_zero();
@@ -250,6 +378,7 @@ pub struct PerfState {
     settling: bool,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn pilot_perf(
     time: Res<Time>,
     mut state: Local<PerfState>,
@@ -278,21 +407,17 @@ pub fn pilot_perf(
         clock.minute_of_day = hour * 60.0;
         if let Ok(mut t) = camera.single_mut() {
             // region center from bundle
-            let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("assets/pilot/pilot_bundle.json");
-            if let Ok(text) = std::fs::read_to_string(path) {
-                if let Ok(b) = serde_json::from_str::<Bundle>(&text) {
-                    t.translation =
-                        Vec3::new(b.region.center[0], height, b.region.center[1] + offset);
-                    let look = Vec3::new(
-                        b.region.center[0],
-                        if height > 100.0 { 40.0 } else { 12.0 },
-                        b.region.center[1],
-                    );
-                    let d = (look - t.translation).normalize_or_zero();
-                    t.rotation =
-                        Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
-                }
+            if let Ok(text) = std::fs::read_to_string(bundle_path())
+                && let Ok(b) = serde_json::from_str::<Bundle>(&text)
+            {
+                t.translation = Vec3::new(b.region.center[0], height, b.region.center[1] + offset);
+                let look = Vec3::new(
+                    b.region.center[0],
+                    if height > 100.0 { 40.0 } else { 12.0 },
+                    b.region.center[1],
+                );
+                let d = (look - t.translation).normalize_or_zero();
+                t.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
             }
         }
         state.settling = true;
@@ -345,8 +470,7 @@ pub fn pilot_damage(world: &mut World) {
     }
     let now = world.resource::<Time>().elapsed_secs();
     let mut state = std::mem::take(&mut *world.resource_mut::<PilotDamageState>());
-    let path =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/pilot/pilot_bundle.json");
+    let path = bundle_path();
     match state.stage {
         0 => {
             if now < 4.0 {

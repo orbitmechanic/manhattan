@@ -15,15 +15,26 @@ const MAX_BUILDINGS: usize = 140;
 
 #[derive(Serialize)]
 struct Bundle {
+    city_id: String,
     region: Region,
     records: Vec<Record>,
     audits: Audits,
+    view: Option<View>,
+}
+
+#[derive(Serialize)]
+struct View {
+    street_pos: [f32; 3],
+    street_look: [f32; 3],
+    aerial_pos: [f32; 3],
+    aerial_look: [f32; 3],
 }
 
 #[derive(Serialize)]
 struct Region {
     center: [f32; 2],
     half_extent_m: f32,
+    ground_elevation_m: f32,
 }
 
 #[derive(Serialize)]
@@ -89,7 +100,14 @@ fn main() {
     let text = fs::read_to_string(&dataset).expect("dataset");
     let root: serde_json::Value = serde_json::from_str(&text).expect("dataset json");
     let mut center = CENTER;
-    if root["city_id"].as_str() != Some("manhattan")
+    if let Ok(raw) = std::env::var("PILOT_CENTER") {
+        if let Some((x, z)) = raw.split_once(',') {
+            center = [
+                x.trim().parse().unwrap_or(CENTER[0]),
+                z.trim().parse().unwrap_or(CENTER[1]),
+            ];
+        }
+    } else if root["city_id"].as_str() != Some("manhattan")
         && let Some(ep) = root["fields"]["epicenter"].as_array()
     {
         center = [
@@ -123,15 +141,30 @@ fn main() {
     candidates.sort_by(|a, b| a.0.total_cmp(&b.0));
     candidates.truncate(MAX_BUILDINGS);
 
+    let city_id = root["city_id"].as_str().unwrap_or("unknown").to_string();
     let epicenter = root["fields"]["epicenter"]
         .as_array()
         .map(|p| [p[0].as_f64().unwrap() as f32, p[1].as_f64().unwrap() as f32])
         .unwrap_or(CENTER);
+    let bases: std::collections::HashMap<usize, f32> = root["buildings"]
+        .as_array()
+        .map(|list| {
+            list.iter()
+                .filter_map(|b| {
+                    Some((
+                        b["id"].as_u64()? as usize,
+                        b["base_elevation_m"].as_f64().unwrap_or(0.0) as f32,
+                    ))
+                })
+                .collect()
+        })
+        .unwrap_or_default();
     let mut audits = Audits::default();
     let mut records = Vec::new();
     for (_, meta) in &candidates {
         audits.selected += 1;
-        let origin = [meta.centroid[0], 0.0, meta.centroid[1]];
+        let base = bases.get(&meta.id).copied().unwrap_or(0.0);
+        let origin = [meta.centroid[0], base, meta.centroid[1]];
         match spec_for(meta) {
             Ok(spec) => match BuildingLayout::generate(spec.clone()) {
                 Ok(layout) => {
@@ -181,9 +214,9 @@ fn main() {
                         fallback_box: None,
                     });
                 }
-                Err(_) => rejected(meta, &mut audits, &mut records),
+                Err(_) => rejected(meta, base, &mut audits, &mut records),
             },
-            Err(_) => rejected(meta, &mut audits, &mut records),
+            Err(_) => rejected(meta, base, &mut audits, &mut records),
         }
     }
 
@@ -207,17 +240,28 @@ fn main() {
             "mixed-region gate: glass fraction {fraction:.2} outside 0.40..=0.60"
         );
     }
+    let ground = records
+        .iter()
+        .map(|record| record.origin[1])
+        .fold(f32::INFINITY, f32::min);
+    let ground = if ground.is_finite() { ground } else { 0.0 };
+    let view = (city_id != "manhattan").then(|| plan_view(ground, &records));
     let bundle = Bundle {
+        city_id,
         region: Region {
             center,
             half_extent_m: HALF,
+            ground_elevation_m: ground,
         },
         records,
         audits,
+        view,
     };
     let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/pilot");
     fs::create_dir_all(&dir).expect("pilot dir");
-    let path = dir.join("pilot_bundle.json");
+    let out_name =
+        std::env::var("PILOT_BUNDLE_OUT").unwrap_or_else(|_| "pilot_bundle.json".to_string());
+    let path = dir.join(out_name);
     fs::write(&path, serde_json::to_string_pretty(&bundle).unwrap()).expect("write bundle");
     println!(
         "PILOT: selected={} generated={} rejected={} failures={} envelope={} rows={} batches={:?} triangles≈{} -> {}",
@@ -237,8 +281,89 @@ fn main() {
     );
 }
 
+fn plan_view(ground: f32, records: &[Record]) -> View {
+    let n = records.len().max(1) as f32;
+    let target = [
+        records.iter().map(|record| record.origin[0]).sum::<f32>() / n,
+        records.iter().map(|record| record.origin[2]).sum::<f32>() / n,
+    ];
+    let look_y = records
+        .iter()
+        .map(|record| record.origin[1])
+        .fold(f32::NEG_INFINITY, f32::max)
+        .min(ground + 40.0);
+    let blocked = |x: f32, z: f32| {
+        records.iter().any(|record| {
+            if record.footprint.is_empty() {
+                return false;
+            }
+            if destructibles_core::math::point_in_polygon([x, z], &record.footprint) {
+                return true;
+            }
+            if destructibles_core::math::distance_to_polygon_edges([x, z], &record.footprint) < 3.0
+            {
+                return true;
+            }
+            // Plinth bbox is a little larger than the footprint.
+            let minx = record
+                .footprint
+                .iter()
+                .map(|p| p[0])
+                .fold(f32::INFINITY, f32::min)
+                - 1.0;
+            let maxx = record
+                .footprint
+                .iter()
+                .map(|p| p[0])
+                .fold(f32::NEG_INFINITY, f32::max)
+                + 1.0;
+            let minz = record
+                .footprint
+                .iter()
+                .map(|p| p[1])
+                .fold(f32::INFINITY, f32::min)
+                - 1.0;
+            let maxz = record
+                .footprint
+                .iter()
+                .map(|p| p[1])
+                .fold(f32::NEG_INFINITY, f32::max)
+                + 1.0;
+            x > minx && x < maxx && z > minz && z < maxz
+        })
+    };
+    let corridor_clear = |x: f32, z: f32| {
+        (0..=32).all(|step| {
+            let t = step as f32 / 32.0;
+            let px = x + (target[0] - x) * t;
+            let pz = z + (target[1] - z) * t;
+            !blocked(px, pz)
+        })
+    };
+    let mut street = [target[0], ground + 8.0, target[1] + HALF * 0.95];
+    'outer: for radius_step in 0..6 {
+        for step in 0..96 {
+            let angle = std::f32::consts::PI * (0.10 + 0.80 * step as f32 / 95.0);
+            let radius = HALF * (0.42 + 0.06 * radius_step as f32);
+            let x = target[0] + radius * angle.sin();
+            let z = target[1] + radius * angle.cos();
+            if corridor_clear(x, z) {
+                street = [x, ground + 8.0, z];
+                break 'outer;
+            }
+        }
+    }
+    View {
+        street_pos: street,
+        street_look: [target[0], look_y, target[1]],
+        aerial_pos: [target[0], ground + 170.0, target[1] + HALF * 0.6],
+        aerial_look: [target[0], ground + 25.0, target[1]],
+    }
+}
+
 fn rejected(
     meta: &manhattan_viewer::storefront::BuildingMeta,
+    base: f32,
     audits: &mut Audits,
     records: &mut Vec<Record>,
 ) {
@@ -254,7 +379,7 @@ fn rejected(
     }
     records.push(Record {
         id: meta.id,
-        origin: [meta.centroid[0], 0.0, meta.centroid[1]],
+        origin: [meta.centroid[0], base, meta.centroid[1]],
         height_m: meta.height_m,
         style: FacadeStyle::BrickMidrise.label().to_string(),
         footprint: vec![],

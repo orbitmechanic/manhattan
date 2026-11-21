@@ -1,10 +1,12 @@
 {
+  "city_id": "manhattan",
   "region": {
     "center": [
       1711.638,
       -1300.0
     ],
-    "half_extent_m": 420.0
+    "half_extent_m": 420.0,
+    "ground_elevation_m": 0.0
   },
   "records": [
     {
@@ -7088,5 +7090,6 @@
     "triangles_estimate": 235238,
     "storefronts": 679,
     "ads": 405
-  }
+  },
+  "view": null
 }

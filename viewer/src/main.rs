@@ -310,6 +310,7 @@ fn main() {
             manhattan_viewer::pilot::pilot_camera,
             manhattan_viewer::pilot::pilot_perf,
             manhattan_viewer::pilot::pilot_damage,
+            manhattan_viewer::pilot::hide_ui_nodes,
         ),
     )
     .add_plugins(NeighborhoodPlugin)
@@ -595,8 +596,32 @@ struct RoadwayChunk {
 
 const ROADWAY_MANIFEST: &str = include_str!("../assets/models/roadway_manifest.json");
 
-fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_scene(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     let pilot = std::env::var_os("MANHATTAN_PILOT").is_some();
+    // Seattle S1 preview: no Manhattan ground/roads, a flat placeholder ground
+    // at the belt's minimum surveyed base elevation (stepped plinths are spawned
+    // per building by the pilot runtime). S2 owns real terrain/water/roads.
+    if pilot && manhattan_viewer::pilot::bundle_city().as_deref() == Some("seattle") {
+        let ground = manhattan_viewer::pilot::bundle_ground();
+        let center = manhattan_viewer::pilot::bundle_center();
+        let material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.20, 0.21, 0.20),
+            perceptual_roughness: 0.98,
+            ..default()
+        });
+        commands.spawn((
+            Name::new("Seattle pilot flat ground"),
+            Mesh3d(meshes.add(Cuboid::new(6000.0, 0.6, 6000.0))),
+            MeshMaterial3d(material),
+            Transform::from_xyz(center[0], ground - 0.3, center[1]),
+        ));
+        return;
+    }
     let paths: &[&str] = if pilot {
         &["models/manhattan_ground.glb"]
     } else {
