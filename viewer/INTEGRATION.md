@@ -1354,3 +1354,41 @@ considered.
 `--seattle-s3`, so the non-compliant path is loudly blocked rather than
 silently accepted. S3 is not a valid baseline for lever work until the
 dependency hook is corrected.
+
+### S3.1 fix — shell skeletons deferred to tier-up
+
+**Dependency fix** (`destructibles` branch `iteration-29a3`, tag `manhattan-s3b`
+@ `520c85e7`):
+- `ensure_structure_runtime` now queries `DetailLevel` and skips
+  `DetailTier::Shell` (`crates/bevy/src/structure.rs`).
+- `record_pristine` no longer calls `ensure_runtime_for`; pristine recording
+  cannot construct a skeleton (`crates/bevy/src/streaming.rs`).
+- `begin_detail_upgrade` calls `ensure_runtime_for` at Shell → Structural
+  promotion (`crates/bevy/src/building.rs`), matching the pilot/standalone
+  damage path.
+- Manhattan pins `manhattan-s3b` and the lockfile records `520c85e7`.
+
+**Enforcement now green.** `src/geology.rs` asserts `Structures::iter().count()
+== 0` after every streamed building chunk and after the full S3 load; the
+`--seattle-s3` run passes. Out-of-range/unloaded partitions contribute zero by
+construction (no chunk read → no building spawn → no graph).
+
+**Skeleton-tax isolation (same poses, fix alone, no levers):**
+
+| Pose | pre-fix avg ms | post-fix avg ms | Δ |
+|---|---:|---:|---:|
+| Elliott/Rainier | 73.27 | 44.40 | −39% |
+| Lake Washington | 101.19 | 45.04 | −55% |
+| Elliott dawn | 130.58 | 42.86 | −67% |
+| Elliott dusk | 133.40 | 42.22 | −68% |
+| Montlake | 177.97 | 72.87 | −59% |
+| Duwamish | 175.14 | 88.92 | −49% |
+| Capitol/Queen Anne/SODO/steep | 250 | 250 | unchanged (load stall) |
+
+The contraband was costing 30–55 % on the poses that were not clamped.
+
+**Still not passing:** the Seattle damage journal remains 0.00 after the
+20-shot smoke despite tier-up; the MaterialFamily trio, persistence cycle,
+repeat-fire gate and buildings-in gauntlet are not delivered. Levers were not
+started because item 2 (damage) is not green. `seattle-s3b` is **not tagged**;
+`seattle-s3` remains the prior (non-compliant) tag.

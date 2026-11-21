@@ -1470,6 +1470,14 @@ fn s3_buildings(world: &mut World) {
             }
         }
         let count = entities.len();
+        let chunk_structures = world
+            .resource::<destructibles_bevy::structure::Structures>()
+            .iter()
+            .count();
+        assert_eq!(
+            chunk_structures, 0,
+            "Shell Doctrine violation: graphs after a streamed chunk"
+        );
         let mut state = world.resource_mut::<Geology>();
         state.building_chunks.insert(index, entities);
         state.loaded_buildings += count;
@@ -1479,10 +1487,16 @@ fn s3_buildings(world: &mut World) {
         .resource::<destructibles_bevy::structure::Structures>()
         .iter()
         .count();
-    assert_eq!(
-        structures, 0,
-        "Shell Doctrine violation: structure graphs constructed at load"
-    );
+    if structures != 0 {
+        let ids = world
+            .resource::<destructibles_bevy::structure::Structures>()
+            .iter()
+            .map(|(id, _)| *id)
+            .take(8)
+            .collect::<Vec<_>>();
+        error!("Shell Doctrine violation: {structures} graphs, ids {ids:?}");
+        std::process::exit(1);
+    }
     let mut state = world.resource_mut::<Geology>();
     state.loaded_buildings = state.building_chunks.values().map(Vec::len).sum();
 }
