@@ -1,0 +1,87 @@
+{
+  "generated_utc": "2026-11-21T13:41:15Z",
+  "source": {
+    "elevation": "AWS Open Data Terrain Tiles (Mapzen Terrarium z8; SRTM/3DEP/GMTED composite)",
+    "landcover": "ESA WorldCover 2021 v200 (10 m, classes 10/20 = tree/shrub)",
+    "snow": "elevation >= 2400 m or WorldCover class 70 (coarse v1)"
+  },
+  "anchor": {
+    "lat": 47.6062,
+    "lon": -122.3355
+  },
+  "bbox_wgs84": [
+    -125.00791432672936,
+    45.8043981981982,
+    -119.66308567327063,
+    49.4080018018018
+  ],
+  "grid": {
+    "size": 400,
+    "spacing_m": 1000.0,
+    "radius_km": 200.0,
+    "crs": "+proj=aeqd +lat_0=47.6062 +lon_0=-122.3355 +datum=WGS84 +units=m +no_defs",
+    "encoding": "uint16: bits15..2 elev/0.5m, bit1 tree, bit0 snow",
+    "bytes": 320000
+  },
+  "profiles": {
+    "bins": 360,
+    "samples": 400,
+    "step_m": 500.0,
+    "bytes": 288000
+  },
+  "elevation_min_max_m": [
+    0.0,
+    4393.0
+  ],
+  "counts": {
+    "tree_cells": 89932,
+    "snow_cells": 578,
+    "water_cells": 24027
+  },
+  "rainier": {
+    "cell": [
+      283,
+      243
+    ],
+    "x_m": 43500.0,
+    "z_m": 83500.0,
+    "elevation_m": 4393.0,
+    "bearing_deg": 152.48,
+    "distance_km": 94.2,
+    "snow": true,
+    "tree": false,
+    "angle_deg_from_250m": 2.52
+  },
+  "test_cells": {
+    "rainier": [
+      283,
+      243,
+      4393.0
+    ],
+    "rainier_snow": true,
+    "forest": [
+      0,
+      0,
+      709.5
+    ],
+    "offshore": [
+      0,
+      40,
+      0.0
+    ],
+    "offshore_tree": false,
+    "offshore_snow": false
+  },
+  "summit_refinement": {
+    "z": 13,
+    "tiles": 9,
+    "source_max_m": 4392.91,
+    "cell": [
+      283,
+      243
+    ],
+    "before_m": 4180.5,
+    "after_m": 4392.9
+  },
+  "seconds": 112.7
+}

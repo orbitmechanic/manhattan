@@ -83,7 +83,10 @@ pub fn bundle_center() -> [f32; 2] {
 }
 
 /// Evidence captures: `PILOT_CLEAN=1` removes instrument UI every frame.
-pub fn hide_ui_nodes(mut commands: Commands, nodes: Query<Entity, With<Node>>) {
+pub fn hide_ui_nodes(
+    mut commands: Commands,
+    nodes: Query<Entity, (With<Node>, Without<crate::citypack::StreamHud>)>,
+) {
     if std::env::var_os("PILOT_CLEAN").is_none() {
         return;
     }
@@ -112,7 +115,10 @@ fn style_from(label: &str) -> FacadeStyle {
 }
 
 pub fn spawn_pilot(world: &mut World) {
-    if !enabled() {
+    if !enabled()
+        || std::env::var_os("SEATTLE_STREAM").is_some()
+        || std::env::var_os("SEATTLE_HORIZON").is_some()
+    {
         return;
     }
     let path = bundle_path();

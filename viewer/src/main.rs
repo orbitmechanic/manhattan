@@ -185,6 +185,22 @@ fn parse_args() -> Args {
             }
             "--selftest" => args.selftest = true,
             "--pilot" => args.pilot = true,
+            "--seattle-horizon" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_HORIZON", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("HORIZON_CAPTURE", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle-stream" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_STREAM", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
             "--pilot-damage" => unsafe {
                 std::env::set_var("PILOT_DAMAGE", "1");
             },
@@ -319,6 +335,8 @@ fn main() {
     .add_plugins(MotionPlugin)
     .add_plugins(LightningPlugin)
     .add_plugins(MinimapPlugin)
+    .add_plugins(manhattan_viewer::citypack::CityPackPlugin)
+    .add_plugins(manhattan_viewer::horizon::HorizonPlugin)
     .add_plugins(CityAudioPlugin)
     .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
     .insert_resource(clock)
@@ -377,7 +395,7 @@ fn main() {
             tick_clock,
             handle_calendar_keys,
             handle_station_keys,
-            fly_camera_system,
+            fly_camera_system.run_if(free_camera_mode),
             update_fog_banks,
             update_environment,
             update_fog_bank_materials,
@@ -501,6 +519,12 @@ fn apply_web_args(args: &mut Args) {
     }
 }
 
+fn free_camera_mode() -> bool {
+    std::env::var_os("MANHATTAN_PILOT").is_none()
+        && std::env::var_os("SEATTLE_STREAM").is_none()
+        && std::env::var_os("SEATTLE_HORIZON").is_none()
+}
+
 fn spawn_camera(mut commands: Commands, args: Res<Args>) {
     let (position, target) = match args.view {
         ViewPreset::Overview => (
@@ -603,6 +627,43 @@ fn spawn_scene(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let pilot = std::env::var_os("MANHATTAN_PILOT").is_some();
+    if std::env::var_os("SEATTLE_HORIZON").is_some() {
+        let material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.055, 0.085, 0.11),
+            perceptual_roughness: 0.35,
+            metallic: 0.0,
+            ..default()
+        });
+        commands.spawn((
+            Name::new("Seattle horizon water"),
+            Mesh3d(meshes.add(Cuboid::new(90_000.0, 0.4, 90_000.0))),
+            MeshMaterial3d(material),
+            Transform::from_xyz(
+                manhattan_viewer::horizon::HORIZON_WORLD_OFFSET - 5_500.0,
+                -0.2,
+                0.0,
+            ),
+        ));
+        return;
+    }
+    if std::env::var_os("SEATTLE_STREAM").is_some() {
+        let material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.18, 0.19, 0.18),
+            perceptual_roughness: 0.98,
+            ..default()
+        });
+        commands.spawn((
+            Name::new("Seattle stream ground"),
+            Mesh3d(meshes.add(Cuboid::new(24_000.0, 0.6, 24_000.0))),
+            MeshMaterial3d(material),
+            Transform::from_xyz(
+                manhattan_viewer::citypack::STREAM_WORLD_OFFSET + 5_000.0,
+                -0.3,
+                0.0,
+            ),
+        ));
+        return;
+    }
     // Seattle S1 preview: no Manhattan ground/roads, a flat placeholder ground
     // at the belt's minimum surveyed base elevation (stepped plinths are spawned
     // per building by the pilot runtime). S2 owns real terrain/water/roads.
