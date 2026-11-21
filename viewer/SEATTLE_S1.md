@@ -128,22 +128,22 @@ No version bump: consumers that read only `buildings[]` are unaffected.
 
 ## 8. Preview render (loadability proof, not S2)
 
-Belt selection: densest candidate with 20–60 m p95–p5 base relief inside 420 m
-(a Queen Anne/Capitol-Hill-style hillside, not a cliff).
+Belt selection: densest candidate whose 140 nearest buildings span 18–60 m
+p95–p5 base relief (a Phinney Ridge / Queen Anne-style hillside, not a cliff).
 
 | Item | Value |
 |---|---|
-| Belt centre (world) | `-2273.2, -3741.8` |
-| Buildings within 420 m | 1,197 |
-| Base range in belt | 58.6 – 125.5 m |
-| p95–p5 relief | 36.0 m |
-| Generated pilot records | **140 / 140, 0 rejects, 0 envelope/row offenders** |
-| Batches | 112 brick brownstone, 20 brick mid-rise, 8 concrete grid |
-| Triangles (estimate) | 96,966 |
-| Field wiring | 840 storefront panels, 560 ad panels |
-| Load time | 0.13 s (Shell tier; structure graphs deferred) |
+| Belt centre (world) | `-1103.6, -8367.4` |
+| Buildings within 420 m | 225 |
+| Base range in belt | 64.7 – 95.9 m |
+| Selected-140 p95–p5 relief | 27.0 m |
+| Generated pilot records | **139 / 140, 1 fallback box, 0 envelope/row offenders** |
+| Batches | 83 brick brownstone, 45 brick mid-rise, 11 concrete grid |
+| Triangles (estimate) | 160,504 |
+| Field wiring | 834 storefront panels, 556 ad panels |
+| Load time | 0.63 s (Shell tier; structure graphs deferred) |
 
-Preview ground is a **flat placeholder** at the belt's minimum base (101.7 m);
+Preview ground is a **flat placeholder** at the belt's minimum base (64.7 m);
 each building spawns a stepped plinth up to its surveyed 3DEP base, so the
 hillside steps uphill without an S2 terrain mesh. Captures:
 

@@ -113,7 +113,7 @@
       -1.5,
       489.9
     ],
-    "belt_relief_m": 119.4,
+    "belt_relief_m": 54.4,
     "belt_grid": {
       "rows": 120,
       "cols": 120,
@@ -122,15 +122,16 @@
   },
   "belt": {
     "center_world": [
-      -2273.2,
-      -3741.8
+      -1103.6,
+      -8367.4
     ],
-    "relief_p95_p5_m": 36.0,
-    "buildings_within_420m": 1197,
-    "median_height_m": 6.0,
-    "min_base_m": 58.6,
-    "max_base_m": 125.5,
-    "selection": "densest candidate with 20-60 m p95-p5 base relief inside 420 m"
+    "relief_p95_p5_m": 27.0,
+    "buildings_within_420m": 225,
+    "selected_140_relief_m": 27.0,
+    "median_height_m": 6.7,
+    "min_base_m": 64.7,
+    "max_base_m": 95.9,
+    "selection": "densest candidate whose 140 nearest buildings span 18-60 m p95-p5 relief"
   },
   "zones": {
     "downtown_core_le_2km": 2828,
@@ -140,7 +141,7 @@
     "rest_of_region": 231090
   },
   "buildings_total": 330330,
-  "belt_buildings": 1250,
+  "belt_buildings": 1188,
   "sizes_mb": {
     "seattle_v11.json": 135.8,
     "seattle_belt_v11.json": 0.4,

@@ -603,17 +603,18 @@ def _pick_belt(buildings):
     for index in range(0, len(points), stride):
         center = points[index]
         distance = np.sum((points - center) ** 2, axis=1)
-        nearest = np.flatnonzero(distance <= 420.0 * 420.0)
-        if len(nearest) < 140:
+        within = np.flatnonzero(distance <= 420.0 * 420.0)
+        if len(within) < 140:
             continue
+        nearest = np.argpartition(distance, 140)[:140]
         if np.median(heights[nearest]) < 6.0:
             continue
+        # The generator keeps the 140 nearest, so score the slope they span,
+        # not the whole 420 m disc: a readable hillside, not a cliff.
         relief = np.percentile(bases[nearest], 95) - np.percentile(bases[nearest], 5)
-        # A readable hillside belt, not a cliff: 20-60 m across 420 m, then the
-        # densest candidate (more buildings inside the generator's window).
-        if not (20.0 <= relief <= 60.0):
+        if not (18.0 <= relief <= 60.0):
             continue
-        score = len(nearest) + relief
+        score = len(within) + relief
         if best is None or score > best[0]:
             best = (float(score), center, nearest, relief)
     if best is None:
@@ -622,11 +623,12 @@ def _pick_belt(buildings):
     return [float(center[0]), float(center[1])], {
         "center_world": [round(float(center[0]), 1), round(float(center[1]), 1)],
         "relief_p95_p5_m": round(relief, 1),
-        "buildings_within_420m": int(len(nearest)),
+        "buildings_within_420m": int(len(within)),
+        "selected_140_relief_m": round(float(relief), 1),
         "median_height_m": round(float(np.median(heights[nearest])), 1),
         "min_base_m": round(float(np.min(bases[nearest])), 1),
         "max_base_m": round(float(np.max(bases[nearest])), 1),
-        "selection": "densest candidate with 20-60 m p95-p5 base relief inside 420 m",
+        "selection": "densest candidate whose 140 nearest buildings span 18-60 m p95-p5 relief",
     }
 
 
