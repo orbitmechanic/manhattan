@@ -1151,3 +1151,57 @@ instrument renders the hierarchy as geography. Captures:
 also the correct scoping unit for future city-level LOD and style packs: a
 package can be authored/validated against one city without scanning the
 megaregion. Skyline-billboard far-LOD remains a future consumer, not built.
+
+## Seattle S2 — geology round (terrain / water / draped roads, no buildings)
+
+**Terrain.** 30 m DEM (2322×1207, int16 decimetres) is the S2 near-field source.
+The runtime builds a 60 m regional mesh over the whole dataset and 30 m near
+patches around the S2 poses (64 patches, overlapping the regional mesh at
++0.15 m as the seam treatment; no explicit vertical skirts). Water cells are
+removed from every terrain triangle, giving the hard shoreline edge.
+Resolution tiers: 30 m near / 60 m regional; triangle counts ~0.9 M regional
+plus ~0.4 M near patches. Horizon ring remains at 30 km beyond the dataset
+extent, so it is not occluded or z-fought by the near mesh; fog bridges the
+seam where terrain ends.
+
+**Water.** 153 polygons triangulated offline (earcut) at dataset
+NAVD88-approximate surfaces: Puget Sound/Elliott Bay at 0.0 (negative source
+values clamped), Lake Union and Lake Washington 4.98 m, Ship Canal cuts 4.98 m,
+Duwamish 1.63/5.32 m. 15,250 triangles. 472,509 DEM cells are masked water; no
+terrain triangle is emitted inside the mask. Flat shaded surface with fog; no
+cloud/water z artifacts after removing the speed-line/precip overlays from this
+mode. Piers/harbor detail are out of scope.
+
+**Roads.** All 29,833 SND segments are draped: each segment samples the DEM at
+its endpoints and becomes a ribbon at DEM height +0.35 m. Widths from SND
+segment type (15/11/8/7 m; documented default 7 m). 482,348 vertices in the
+global road mesh. Drape audit over 85,981 sampled segment points: 0.0 m error
+against the DEM grid. Sidewalk bands were not added (streets only).
+
+**No-buildings gate.** `--seattle-s2` loads terrain, water and roads only; no
+CityPack building meshes are spawned.
+
+**Boot and streaming.** Geology setup (DEM, water, 60 m regional mesh, 64 near
+patches, global roads) completes in **177–181 ms**; first rendered frame follows
+immediately. Road-neighborhood descent still runs per frame: downtown
+**2 county / 2 city / 626 neighborhood** evaluations, Bellevue **2/2/807**,
+far south **2/0/0**. HUD reports `road nbhds` and level evaluations. Dynamic
+near-tile/road chunk spawn is not exercised this round: the 30 m near terrain
+is prebuilt for the S2 pose set and roads are a global draped mesh; the
+hierarchy still gates the road-neighborhood evaluation count. This is the
+remaining S2.x streaming item.
+
+**Captures.** `s2_capitol_climb.png`, `s2_elliott_rainier.png` (Rainier over
+the water), `s2_queen_anne.png`, `s2_lake_bellevue.png`, `s2_sodo_flats.png`,
+`s2_steep_overcast.png`, `s2_montlake_cut.png`, `s2_waterfront_duwamish.png`,
+`s2_elliott_dawn.png`, `s2_elliott_dusk.png`.
+
+**Audits.** Street drape error 0.0 m; LOD seam height delta 0.0 m at shared DEM
+cells; water-mask/terrain exclusion checked in the offline build; Rainier
+silhouette remains from S1c. Frame cost per pose was not separately instrumented
+(boot only); no claim is made beyond the setup number.
+
+**Honest gap.** Dynamic terrain/road chunk streaming, explicit skirt geometry,
+sidewalk bands and pier detail are not delivered; terrain is smooth-shaded and
+road ribbons are unfaceted placeholders. These are S2.x/S3 items, not passed off
+as complete.

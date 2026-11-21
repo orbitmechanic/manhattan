@@ -118,6 +118,7 @@ pub fn spawn_pilot(world: &mut World) {
     if !enabled()
         || std::env::var_os("SEATTLE_STREAM").is_some()
         || std::env::var_os("SEATTLE_HORIZON").is_some()
+        || std::env::var_os("SEATTLE_S2").is_some()
     {
         return;
     }

@@ -189,8 +189,15 @@ fn parse_args() -> Args {
                 args.pilot = true;
                 unsafe {
                     std::env::set_var("SEATTLE_HORIZON", "1");
-                    std::env::set_var("PILOT_HORIZON", "1");
                     std::env::set_var("HORIZON_CAPTURE", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle-s2" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
                     std::env::set_var("PILOT_CLEAN", "1");
                 }
             }
@@ -353,6 +360,7 @@ fn main() {
     .add_plugins(MinimapPlugin)
     .add_plugins(manhattan_viewer::citypack::CityPackPlugin)
     .add_plugins(manhattan_viewer::horizon::HorizonPlugin)
+    .add_plugins(manhattan_viewer::geology::GeologyPlugin)
     .add_plugins(CityAudioPlugin)
     .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
     .insert_resource(clock)
@@ -643,6 +651,9 @@ fn spawn_scene(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let pilot = std::env::var_os("MANHATTAN_PILOT").is_some();
+    if std::env::var_os("SEATTLE_S2").is_some() {
+        return;
+    }
     if std::env::var_os("SEATTLE_HORIZON").is_some() {
         let material = materials.add(StandardMaterial {
             base_color: Color::srgb(0.055, 0.085, 0.11),

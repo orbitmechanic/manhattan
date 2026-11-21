@@ -12,6 +12,7 @@ pub mod collision;
 pub mod detail;
 pub mod details;
 pub mod environment;
+pub mod geology;
 pub mod horizon;
 pub mod instrument;
 pub mod lightning;
