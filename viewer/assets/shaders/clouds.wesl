@@ -58,7 +58,7 @@ fn fragment(in: VertexOutput) -> FragmentOutput {
     let rim_fade = 1.0 - smoothstep(0.72, 0.98, radial);
     // Soft-particle fade: flying through the deck dissolves the puffs
     // instead of slicing a hard sheet across the camera.
-    let to_camera = in.world_position - camera.xyz;
+    let to_camera = in.world_position.xyz - camera.xyz;
     let distance = length(to_camera);
     let near_fade = smoothstep(10.0, 95.0, distance);
     let faded_alpha = alpha * rim_fade * near_fade;

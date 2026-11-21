@@ -29,6 +29,7 @@ use destructibles_bevy::streaming::{
     HotZone, Regime, Streaming, freeze_building, register_building, thaw_building,
 };
 use destructibles_bevy::swap::{DestructibleHandle, swap_in_lod, swap_out};
+use destructibles_core::family::MaterialFamily;
 use destructibles_core::{BuildingSpec, FacadeStyle, WallQuad, core_for_style};
 
 use crate::camera::FlyCamera;
@@ -615,7 +616,12 @@ pub fn spec_for(meta: &BuildingMeta) -> Result<BuildingSpec, String> {
         windows.width = windows.width.min(1.6);
     }
     let core = core_for_style(style, &footprint, meta.id as u32);
+    let family = match style {
+        FacadeStyle::GlassCurtainWall | FacadeStyle::ConcreteGrid => MaterialFamily::SteelFrame,
+        FacadeStyle::BrickBrownstone | FacadeStyle::BrickMidrise => MaterialFamily::MasonryStone,
+    };
     let spec = BuildingSpec {
+        family,
         footprint,
         floor_height,
         floor_count,

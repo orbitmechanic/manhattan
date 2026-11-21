@@ -1,0 +1,167 @@
+{
+  "generated_utc": "2026-11-21T05:13:03Z",
+  "layers": {
+    "seattle_buildings_2023": {
+      "raw_features": 205864,
+      "valid_geometry": 205861,
+      "inside_region": 205861,
+      "area_ge_300_sqft": 187053,
+      "rejected": {
+        "invalid_or_empty_geometry": 3,
+        "outside_region": 0,
+        "below_300_sqft": 18808,
+        "total": 18811
+      },
+      "base_elevation_coverage": 1.0,
+      "roof_apex_join_25ft": 0.7473,
+      "real_height_coverage": 0.4034,
+      "neighbour_inferred_coverage": 0.1729,
+      "area_estimated_coverage": 0.4237,
+      "height_note": "Building Outlines 2023 has no height/elevation attributes. Roof apex comes from Building Outline 2015 (BP99_APEX) within 25 ft; neighbours within 100 ft fill some gaps; the remainder uses a footprint-area estimate.",
+      "category_counts": {
+        "residential": 175426,
+        "commercial": 8424,
+        "industrial": 3203
+      },
+      "height_p05_p50_p95_m": [
+        6.0,
+        10.4,
+        85.6
+      ],
+      "base_p05_p50_p95_m": [
+        10.3,
+        75.7,
+        122.5
+      ]
+    },
+    "bellevue_buildings": {
+      "raw_features": 63574,
+      "inside_region": 63569,
+      "active_usable": 56856,
+      "rejected": {
+        "invalid_or_empty_geometry": 5,
+        "outside_region": 0,
+        "inactive_or_nonbuilding": 6713,
+        "total": 6718
+      },
+      "real_height_coverage": 0.0,
+      "base_elevation_coverage": 1.0,
+      "height_note": "Bellevue Buildings has no roof elevation/height attribute; all heights are footprint-area estimates and are never counted as real.",
+      "category_counts": {
+        "residential": 56856
+      },
+      "height_p05_p50_p95_m": [
+        6.0,
+        6.0,
+        6.0
+      ],
+      "base_p05_p50_p95_m": [
+        16.5,
+        93.8,
+        248.3
+      ]
+    },
+    "tacoma_buildings_2024": {
+      "raw_features": 91000,
+      "inside_region": 90984,
+      "area_ge_300_sqft": 86421,
+      "rejected": {
+        "invalid_or_empty_geometry": 0,
+        "outside_region": 16,
+        "below_300_sqft": 4563,
+        "total": 4579
+      },
+      "real_height_coverage": 1.0,
+      "height_note": "Tacoma 2024 average_z is roof height above lidar ground (metres): lidar 'lag' matches the 3DEP base within ~1 m.",
+      "base_elevation_coverage": 1.0,
+      "category_counts": {
+        "residential": 86421
+      },
+      "height_p05_p50_p95_m": [
+        8.8,
+        13.1,
+        22.6
+      ],
+      "base_p05_p50_p95_m": [
+        42.8,
+        107.0,
+        127.8
+      ]
+    }
+  },
+  "water": {
+    "polygons_ge_1ha": 153,
+    "total_area_km2": 719.72,
+    "bodies": 153,
+    "named": 103,
+    "kinds": {
+      "lake": 104,
+      "sound": 31,
+      "water": 11,
+      "stream": 4,
+      "canal": 3
+    }
+  },
+  "terrain": {
+    "coverage_pct": 100.0,
+    "grid": {
+      "rows": 2322,
+      "cols": 1207,
+      "spacing_m": 30.0
+    },
+    "elevation_min_max_m": [
+      -1.5,
+      489.9
+    ],
+    "belt_relief_m": 54.4,
+    "belt_grid": {
+      "rows": 120,
+      "cols": 120,
+      "spacing_m": 10.0
+    }
+  },
+  "belt": {
+    "center_world": [
+      -1103.6,
+      -8367.4
+    ],
+    "relief_p95_p5_m": 27.0,
+    "buildings_within_420m": 225,
+    "selected_140_relief_m": 27.0,
+    "median_height_m": 6.7,
+    "min_base_m": 64.7,
+    "max_base_m": 95.9,
+    "selection": "densest candidate whose 140 nearest buildings span 18-60 m p95-p5 relief"
+  },
+  "zones": {
+    "downtown_core_le_2km": 2828,
+    "bellevue_le_3km": 9685,
+    "tacoma_le_4km": 23676,
+    "south_corridor": 63051,
+    "rest_of_region": 231090
+  },
+  "buildings_total": 330330,
+  "belt_buildings": 1188,
+  "sizes_mb": {
+    "seattle_v11.json": 135.8,
+    "seattle_belt_v11.json": 0.4,
+    "terrain_30m.tif": 8.1,
+    "terrain_belt_10m.tif": 0.0,
+    "raw_total": 1360.8
+  },
+  "contract": {
+    "fields_used": [
+      "base_elevation_m",
+      "terrain",
+      "water_bodies",
+      "fields.epicenter"
+    ],
+    "extensions": [
+      "top-level region (polygon, anchor, world frame, charter)",
+      "top-level provenance (per-source attribution/license/service)",
+      "terrain.grid object (path, spacing, rows, cols, crs, world_origin_m, belt window)",
+      "water_bodies[].datum + surface_elevation_m + mtfcc"
+    ],
+    "note": "All extensions are optional/backward-compatible; v1.1 consumers that only read buildings keep working."
+  }
+}
