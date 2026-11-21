@@ -864,4 +864,45 @@ mod tests {
         assert_eq!(wider.len(), 10);
         assert!(LOADS_PER_FRAME < wider.len());
     }
+
+    #[test]
+    fn budget_sim_loads_capped_and_unloads_after_travel() {
+        let partitions = (0..120)
+            .map(|index| PartitionInfo {
+                name: format!("p{index}"),
+                offset: 0,
+                bytes: 0,
+            })
+            .collect::<Vec<_>>();
+        let centers = (0..120)
+            .map(|index| [index as f32 * 250.0, 0.0])
+            .collect::<Vec<_>>();
+        let wanted = wanted_partitions([0.0, 0.0], 1_000_000.0, &partitions, &centers);
+        assert_eq!(wanted.len(), 120);
+        let mut loaded = HashSet::new();
+        for _frame in 0..3 {
+            let next: Vec<usize> = wanted
+                .iter()
+                .copied()
+                .filter(|index| !loaded.contains(index))
+                .take(LOADS_PER_FRAME)
+                .collect();
+            for index in next {
+                loaded.insert(index);
+            }
+        }
+        assert_eq!(loaded.len(), 3 * LOADS_PER_FRAME);
+        // Travelling far away empties the wanted set; unloads are capped.
+        let far = wanted_partitions([9_000_000.0, 0.0], 2_600.0, &partitions, &centers);
+        assert!(far.is_empty());
+        let stale = loaded
+            .iter()
+            .copied()
+            .take(UNLOADS_PER_FRAME)
+            .collect::<Vec<_>>();
+        for index in stale {
+            loaded.remove(&index);
+        }
+        assert_eq!(loaded.len(), 3 * LOADS_PER_FRAME - UNLOADS_PER_FRAME);
+    }
 }
