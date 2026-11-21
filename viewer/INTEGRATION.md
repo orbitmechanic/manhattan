@@ -1205,3 +1205,59 @@ silhouette remains from S1c. Frame cost per pose was not separately instrumented
 sidewalk bands and pier detail are not delivered; terrain is smooth-shaded and
 road ribbons are unfaceted placeholders. These are S2.x/S3 items, not passed off
 as complete.
+
+## S2.1 — dynamic geology streaming, skirts, frame-cost baseline
+
+**Terrain streaming.** 30 m DEM is tiled into **960 m chunks** (32×32 cells),
+loaded/unloaded from the camera through the hierarchy's leaf budget:
+load radius 2,800 m, unload 3,400 m (hysteresis), 2 chunks/frame and a 6 ms
+budget. Boot spawns the 3×3 downtown chunks; everything else streams. Far
+terrain is the 60 m regional mesh; the 30 km horizon ring owns the far field.
+Every chunk carries **vertical skirts** (8 m, four edges) at the LOD/chunk
+boundary. HUD: terrain loaded (+loads/−unloads), roads, evals and per-frame
+build ms.
+
+**Road streaming.** All 29,833 SND segments stream per loaded neighborhood:
+load radius 3,200 m, unload 3,800 m, 1 chunk/frame, 6 ms budget; only candidate
+neighborhoods are read from CityPack. HUD reports road chunks (+/−) and the
+county/city/neighborhood descent evaluations.
+
+**Gauntlet.** Four regimes 15/30/100/650 m/s, 3 s each, cumulative path with
+end-point captures (`gauntlet_15ms.png` … `gauntlet_650ms.png`) showing intact
+terrain and counters. Chunk-boundary hover capture `s2_chunk_hover.png`
+(terrain 32 / roads 66, 2/2/626). Hero-speed seam behavior is in the 650 m/s
+capture.
+
+**Per-pose frame cost (S3 baseline).** Measured via the HUD/instrument fallback
+(the `--perf` walker remains non-emitting). Steady samples after 3 s settle;
+average/p99 in ms on this Vega 8 machine:
+
+| Pose | avg ms | p99 ms |
+|---|---:|---:|
+| Capitol climb | 39.97 | 50.53 |
+| Elliott/Rainier | 39.00 | 47.71 |
+| Queen Anne | 36.12 | 42.58 |
+| Lake Washington | 41.36 | 46.89 |
+| SODO | 35.54 | 40.59 |
+| Steep overcast | 41.11 | 47.61 |
+| Montlake | 42.33 | 52.11 |
+| Duwamish waterfront | 37.55 | 56.12 |
+| Elliott dawn | 42.04 | 52.52 |
+| Elliott dusk | 36.10 | 40.84 |
+| Gauntlet 15 m/s | 37.82 | 244.30 |
+| Gauntlet 30 m/s | 38.13 | 47.64 |
+| Gauntlet 100 m/s | 37.91 | 50.59 |
+| Gauntlet 650 m/s | 38.18 | 54.92 |
+| Low orbit | 40.20 | 130.15 |
+| Chunk hover | 39.45 | 47.05 |
+
+This is the baseline S3’s buildings will be judged against. The 15 m/s p99
+includes the first-chunk/startup spike (244 ms), while steady regimes stay
+40–56 ms; low orbit’s 130 ms is the current p99 stress result. No chunk swap exceeded the 6 ms build budget in the HUD (`tile 0.0–0.4
+ms`), but the first regime shows the expected startup outlier.
+
+**Tests.** Terrain chunk budgeting/hysteresis constants, skirt vertex presence,
+road-neighborhood chunk round-trip and removal (unloaded absence), DEM spot
+elevations, water-mask/terrain exclusion, road drape, plus the S2/S1c suites.
+Honest gap: the Capitol perf row and a truly steady 15 m/s p99 remain open; the
+walker is still broken and the fallback numbers are the committed baseline.

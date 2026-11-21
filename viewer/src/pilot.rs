@@ -85,7 +85,14 @@ pub fn bundle_center() -> [f32; 2] {
 /// Evidence captures: `PILOT_CLEAN=1` removes instrument UI every frame.
 pub fn hide_ui_nodes(
     mut commands: Commands,
-    nodes: Query<Entity, (With<Node>, Without<crate::citypack::StreamHud>)>,
+    nodes: Query<
+        Entity,
+        (
+            With<Node>,
+            Without<crate::citypack::StreamHud>,
+            Without<crate::geology::S2Hud>,
+        ),
+    >,
 ) {
     if std::env::var_os("PILOT_CLEAN").is_none() {
         return;

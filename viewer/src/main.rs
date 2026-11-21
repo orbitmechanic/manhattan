@@ -193,6 +193,33 @@ fn parse_args() -> Args {
                     std::env::set_var("PILOT_CLEAN", "1");
                 }
             }
+            "--seattle-s2-gauntlet" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("S2_GAUNTLET", "1");
+                }
+            }
+            "--seattle-s2-orbit" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("S2_ORBIT", "1");
+                }
+            }
+            "--seattle-s2-hover" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("S2_HOVER", "1");
+                }
+            }
             "--seattle-s2" => {
                 args.pilot = true;
                 unsafe {

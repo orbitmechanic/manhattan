@@ -5,7 +5,7 @@
 //! full resolution with skirts, water is a triangulated surface at dataset
 //! datums, and street ribbons drape the DEM per loaded neighborhood.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use bevy::prelude::*;
@@ -25,7 +25,13 @@ pub const WATER_PATH: &str = "assets/terrain/seattle_water.bin";
 pub const REPORT_PATH: &str = "datasets/seattle/s2_report.json";
 
 const TILE_CELLS: i32 = 32;
-const ROAD_RADIUS_M: f32 = 5200.0;
+const TERRAIN_LOAD_M: f32 = 2800.0;
+const TERRAIN_UNLOAD_M: f32 = 3400.0;
+const ROAD_LOAD_M: f32 = 3200.0;
+const ROAD_UNLOAD_M: f32 = 3800.0;
+const TILE_LOADS_PER_FRAME: usize = 2;
+const ROAD_LOADS_PER_FRAME: usize = 1;
+const LOAD_BUDGET_MS: f32 = 6.0;
 const FAR_STEP: i32 = 2;
 
 #[derive(Deserialize)]
@@ -46,7 +52,17 @@ pub struct GeologyPlugin;
 impl Plugin for GeologyPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_geology)
-            .add_systems(Update, (geology_stream, s2_capture).chain())
+            .add_systems(
+                Update,
+                (
+                    geology_stream,
+                    gauntlet_flight,
+                    orbit_flight,
+                    hover_flight,
+                    s2_capture,
+                )
+                    .chain(),
+            )
             .add_systems(PostUpdate, hide_precip);
     }
 }
@@ -95,7 +111,16 @@ pub struct Geology {
     pub terrain_material: Handle<StandardMaterial>,
     pub water_material: Handle<StandardMaterial>,
     pub road_material: Handle<StandardMaterial>,
+    pub terrain: HashMap<(i32, i32), Entity>,
+    pub roads: HashMap<usize, Entity>,
+    pub terrain_loads: usize,
+    pub terrain_unloads: usize,
+    pub road_loads_total: usize,
+    pub road_unloads: usize,
     pub loaded_roads: usize,
+    pub samples: Vec<f32>,
+    pub settled: bool,
+    pub perf: Vec<serde_json::Value>,
     pub boot_ms: f32,
     pub finished_at: f32,
     pub evaluations: Evaluations,
@@ -207,75 +232,27 @@ fn setup_geology(
         Transform::from_xyz(STREAM_WORLD_OFFSET, 0.0, 0.0),
         Name::new("S2 water"),
     ));
-    let mut global_positions = Vec::new();
-    let mut global_normals = Vec::new();
-    let mut global_colors = Vec::new();
-    let mut global_indices = Vec::new();
-    for index in pack.neighborhoods() {
-        if pack.nodes[index].streets == 0 {
-            continue;
-        }
-        if let Ok(chunk) = pack.read_chunk(index) {
-            let mesh = road_mesh(&dem, &chunk);
-            if let Some(positions) = mesh
-                .attribute(Mesh::ATTRIBUTE_POSITION)
-                .and_then(|a| a.as_float3())
-            {
-                let base = global_positions.len() as u32;
-                for p in positions {
-                    global_positions.push(*p);
-                    global_normals.push([0.0, 1.0, 0.0]);
-                    global_colors.push([0.18, 0.18, 0.19, 1.0]);
-                }
-                if let Some(bevy::render::mesh::Indices::U32(values)) = mesh.indices() {
-                    global_indices.extend(values.iter().map(|i| base + i));
-                }
-            }
-        }
-    }
-    info!("S2: global roads {} verts", global_positions.len());
-    commands.spawn((
-        Mesh3d(meshes.add(mesh(
-            global_positions,
-            global_normals,
-            global_colors,
-            global_indices,
-        ))),
-        MeshMaterial3d(road_material.clone()),
-        Transform::from_xyz(STREAM_WORLD_OFFSET, 0.0, 0.0),
-        Name::new("S2 global roads"),
-    ));
-    let pose_centers = [
-        (900.0, -3300.0),
-        (-5532.0, 245.0),
-        (-1548.0, -3455.0),
-        (6080.0, -1419.0),
-        (335.0, 4032.0),
-        (-1200.0, -2600.0),
-        (2455.0, -4490.0),
-        (-482.0, 7352.0),
-    ];
+    let mut terrain = HashMap::new();
     let tile_size = TILE_CELLS as f32 * dem.spacing;
-    let mut patches = HashSet::new();
-    for (cx, cz) in pose_centers {
-        let tx = ((cx - dem.origin[0]) / tile_size).floor() as i32;
-        let tz = ((cz - dem.origin[1]) / tile_size).floor() as i32;
-        for dx in -1..=1 {
-            for dz in -1..=1 {
-                patches.insert((tx + dx, tz + dz));
-            }
+    // Boot spawns the downtown-pose chunks; everything else streams.
+    let boot_tx = ((0.0 - dem.origin[0]) / tile_size).floor() as i32;
+    let boot_tz = ((0.0 - dem.origin[1]) / tile_size).floor() as i32;
+    for dx in -1..=1 {
+        for dz in -1..=1 {
+            let tx = boot_tx + dx;
+            let tz = boot_tz + dz;
+            let entity = commands
+                .spawn((
+                    Mesh3d(meshes.add(build_tile_mesh(&dem, &mask, tx, tz))),
+                    MeshMaterial3d(terrain_material.clone()),
+                    Transform::from_xyz(STREAM_WORLD_OFFSET, 0.0, 0.0),
+                    Name::new(format!("S2 terrain {tx},{tz}")),
+                ))
+                .id();
+            terrain.insert((tx, tz), entity);
         }
     }
-    for (tx, tz) in &patches {
-        let tile = build_tile_mesh(&dem, &mask, *tx, *tz);
-        commands.spawn((
-            Mesh3d(meshes.add(tile)),
-            MeshMaterial3d(terrain_material.clone()),
-            Transform::from_xyz(STREAM_WORLD_OFFSET, 0.0, 0.0),
-            Name::new(format!("S2 near terrain {tx},{tz}")),
-        ));
-    }
-    info!("S2: {} near terrain patches", patches.len());
+    info!("S2: boot terrain chunks {}", terrain.len());
     let boot_ms = started.elapsed().as_secs_f32() * 1000.0;
     info!(
         "S2: DEM {}x{} at {} m, water and far terrain in {:.1} ms",
@@ -288,7 +265,16 @@ fn setup_geology(
         terrain_material,
         water_material,
         road_material,
+        terrain,
+        roads: HashMap::new(),
+        terrain_loads: 0,
+        terrain_unloads: 0,
+        road_loads_total: 0,
+        road_unloads: 0,
         loaded_roads: 0,
+        samples: Vec::new(),
+        settled: false,
+        perf: Vec::new(),
         boot_ms,
         finished_at: 0.0,
         evaluations: Evaluations::default(),
@@ -472,6 +458,32 @@ fn build_tile_mesh(dem: &Dem, mask: &[u8], tx: i32, tz: i32) -> Mesh {
             ]);
         }
     }
+    // Vertical skirts at all four chunk edges hide the 30 m / 60 m LOD seam.
+    let stride = size + 1;
+    let drop = 8.0_f32;
+    let skirt_color = [0.10, 0.13, 0.09, 1.0];
+    for edge in 0..4 {
+        for step in 0..size {
+            let (a, b) = match edge {
+                0 => (step, step + 1),
+                1 => (size * stride + step, size * stride + step + 1),
+                2 => (step * stride, (step + 1) * stride),
+                _ => (step * stride + size, (step + 1) * stride + size),
+            };
+            let pa = positions[a];
+            let pb = positions[b];
+            let start = positions.len() as u32;
+            for point in [pa, pb] {
+                positions.push([point[0], point[1] - drop, point[2]]);
+                normals.push([0.0, 1.0, 0.0]);
+                colors.push(skirt_color);
+                positions.push(point);
+                normals.push([0.0, 1.0, 0.0]);
+                colors.push(skirt_color);
+            }
+            indices.extend([start, start + 1, start + 2, start + 1, start + 3, start + 2]);
+        }
+    }
     mesh(positions, normals, colors, indices)
 }
 
@@ -554,14 +566,15 @@ fn add_ribbon(
 
 #[allow(clippy::too_many_arguments)]
 fn geology_stream(
+    mut commands: Commands,
     mut state: Option<ResMut<Geology>>,
     time: Res<Time>,
     camera: Query<&Transform, With<FlyCamera>>,
     mut text: Query<&mut Text, With<S2Text>>,
     mut precip: Query<&mut Visibility, With<crate::weather::PrecipVolume>>,
     mut motion: Option<ResMut<crate::motion::MotionState>>,
+    mut meshes: ResMut<Assets<Mesh>>,
     mut ticks: Local<u32>,
-    mut frame: Local<(f32, u32)>,
 ) {
     if let Some(motion) = motion.as_mut() {
         motion.velocity = Vec3::ZERO;
@@ -583,34 +596,216 @@ fn geology_stream(
         transform.translation.x - STREAM_WORLD_OFFSET,
         transform.translation.z,
     ];
-    let mut evaluations = Evaluations::default();
-    let wanted = wanted_neighborhoods(&state.pack.nodes, center, ROAD_RADIUS_M, &mut evaluations);
-    state.evaluations = evaluations;
-    state.loaded_roads = wanted.len();
-    frame.0 += time.delta_secs() * 1000.0;
-    frame.1 += 1;
-    if frame.1 >= 60 {
-        info!("S2 frame avg {:.2} ms", frame.0 / frame.1 as f32);
-        frame.0 = 0.0;
-        frame.1 = 0;
+    state.samples.push(time.delta_secs() * 1000.0);
+    if state.samples.len() > 360 {
+        state.samples.remove(0);
     }
+    let tile_size = TILE_CELLS as f32 * state.dem.spacing;
+    let tile_x = ((center[0] - state.dem.origin[0]) / tile_size).floor() as i32;
+    let tile_z = ((center[1] - state.dem.origin[1]) / tile_size).floor() as i32;
+    let span = (TERRAIN_UNLOAD_M / tile_size).ceil() as i32 + 1;
+    let mut wanted: Vec<((i32, i32), f32)> = Vec::new();
+    for dx in -span..=span {
+        for dz in -span..=span {
+            let tx = tile_x + dx;
+            let tz = tile_z + dz;
+            if tx < 0 || tz < 0 {
+                continue;
+            }
+            let cx = state.dem.origin[0] + (tx as f32 + 0.5) * tile_size;
+            let cz = state.dem.origin[1] + (tz as f32 + 0.5) * tile_size;
+            let distance = (cx - center[0]).hypot(cz - center[1]);
+            if distance <= TERRAIN_LOAD_M {
+                wanted.push(((tx, tz), distance));
+            }
+        }
+    }
+    wanted.sort_by(|a, b| a.1.total_cmp(&b.1));
+    let wanted_set: HashSet<(i32, i32)> = wanted.iter().map(|(key, _)| *key).collect();
+    let mut unloads = 0;
+    let stale: Vec<(i32, i32)> = state
+        .terrain
+        .keys()
+        .copied()
+        .filter(|key| {
+            if wanted_set.contains(key) {
+                return false;
+            }
+            let cx = state.dem.origin[0] + (key.0 as f32 + 0.5) * tile_size;
+            let cz = state.dem.origin[1] + (key.1 as f32 + 0.5) * tile_size;
+            (cx - center[0]).hypot(cz - center[1]) > TERRAIN_UNLOAD_M
+        })
+        .take(4)
+        .collect();
+    for key in stale {
+        if let Some(entity) = state.terrain.remove(&key) {
+            commands.entity(entity).despawn();
+            state.terrain_unloads += 1;
+            unloads += 1;
+        }
+    }
+    let started = std::time::Instant::now();
+    let mut loads = 0;
+    for (key, _) in &wanted {
+        if state.terrain.contains_key(key) {
+            continue;
+        }
+        if loads >= TILE_LOADS_PER_FRAME
+            || started.elapsed().as_secs_f32() * 1000.0 > LOAD_BUDGET_MS
+        {
+            break;
+        }
+        let entity = commands
+            .spawn((
+                Mesh3d(meshes.add(build_tile_mesh(&state.dem, &state.mask, key.0, key.1))),
+                MeshMaterial3d(state.terrain_material.clone()),
+                Transform::from_xyz(STREAM_WORLD_OFFSET, 0.0, 0.0),
+                Name::new(format!("S2 terrain {},{}", key.0, key.1)),
+            ))
+            .id();
+        state.terrain.insert(*key, entity);
+        state.terrain_loads += 1;
+        loads += 1;
+    }
+    let tile_ms = started.elapsed().as_secs_f32() * 1000.0;
+
+    let mut evaluations = Evaluations::default();
+    let mut wanted_roads =
+        wanted_neighborhoods(&state.pack.nodes, center, ROAD_LOAD_M, &mut evaluations);
+    wanted_roads.sort_by(|a, b| {
+        let da = state.pack.nodes[*a].center;
+        let db = state.pack.nodes[*b].center;
+        let aa = (da[0] - center[0]).powi(2) + (da[1] - center[1]).powi(2);
+        let bb = (db[0] - center[0]).powi(2) + (db[1] - center[1]).powi(2);
+        aa.total_cmp(&bb)
+    });
+    let road_set: HashSet<usize> = wanted_roads.iter().copied().collect();
+    let stale_roads: Vec<usize> = state
+        .roads
+        .keys()
+        .copied()
+        .filter(|index| {
+            if road_set.contains(index) {
+                return false;
+            }
+            let c = state.pack.nodes[*index].center;
+            (c[0] - center[0]).hypot(c[1] - center[1]) > ROAD_UNLOAD_M
+        })
+        .take(3)
+        .collect();
+    for index in stale_roads {
+        if let Some(entity) = state.roads.remove(&index) {
+            commands.entity(entity).despawn();
+            state.road_unloads += 1;
+        }
+    }
+    let road_started = std::time::Instant::now();
+    let mut road_loads = 0;
+    for index in wanted_roads {
+        if state.roads.contains_key(&index) {
+            continue;
+        }
+        if road_loads >= ROAD_LOADS_PER_FRAME
+            || road_started.elapsed().as_secs_f32() * 1000.0 > LOAD_BUDGET_MS
+        {
+            break;
+        }
+        let Some(node) = state.pack.nodes.get(index) else {
+            continue;
+        };
+        if node.streets == 0 {
+            continue;
+        }
+        match state.pack.read_chunk(index) {
+            Ok(chunk) => {
+                let entity = commands
+                    .spawn((
+                        Mesh3d(meshes.add(road_mesh(&state.dem, &chunk))),
+                        MeshMaterial3d(state.road_material.clone()),
+                        Transform::from_xyz(STREAM_WORLD_OFFSET, 0.0, 0.0),
+                        Name::new(format!("S2 roads {}", node.name)),
+                    ))
+                    .id();
+                state.roads.insert(index, entity);
+                state.road_loads_total += 1;
+                road_loads += 1;
+            }
+            Err(error) => error!("S2 road {index}: {error}"),
+        }
+    }
+    let road_ms = road_started.elapsed().as_secs_f32() * 1000.0;
+    state.loaded_roads = state.roads.len();
+    state.evaluations = evaluations;
     *ticks += 1;
     if (*ticks).is_multiple_of(90) {
         info!(
-            "S2: road neighborhoods {} evals {}/{}/{}",
-            state.loaded_roads, evaluations.counties, evaluations.cities, evaluations.neighborhoods
+            "S2: terrain {} (+{}/-{}) roads {} (+{}/-{}) evals {}/{}/{} tile {:.1} ms road {:.1} ms",
+            state.terrain.len(),
+            loads,
+            unloads,
+            state.roads.len(),
+            road_loads,
+            state.road_unloads,
+            evaluations.counties,
+            evaluations.cities,
+            evaluations.neighborhoods,
+            tile_ms,
+            road_ms
         );
     }
     if let Ok(mut text) = text.single_mut() {
         text.0 = format!(
-            "S2  geology boot {:.0} ms  road nbhds {}  evals {}/{}/{}\n60 m regional + 30 m pose patches + global draped roads",
-            state.boot_ms,
-            state.loaded_roads,
+            "S2 terrain {} (+{}/-{})  roads {} (+{}/-{})  evals {}/{}/{}\n30 m streamed / 60 m regional / skirts / boot {:.0} ms / tile {:.1} ms road {:.1} ms",
+            state.terrain.len(),
+            loads,
+            unloads,
+            state.roads.len(),
+            road_loads,
+            state.road_unloads,
             evaluations.counties,
             evaluations.cities,
-            evaluations.neighborhoods
+            evaluations.neighborhoods,
+            state.boot_ms,
+            tile_ms,
+            road_ms
         );
     }
+}
+
+fn record_perf(state: &mut Geology, name: &str) {
+    if state.samples.len() < 2 {
+        return;
+    }
+    let mut samples = std::mem::take(&mut state.samples);
+    samples.sort_by(f32::total_cmp);
+    let avg = samples.iter().sum::<f32>() / samples.len() as f32;
+    let p99 = samples[((samples.len() - 1) as f32 * 0.99) as usize];
+    let row = serde_json::json!({
+        "pose": name,
+        "avg_ms": round2(avg),
+        "p99_ms": round2(p99),
+        "samples": samples.len(),
+    });
+    state.perf.retain(|item| item["pose"] != row["pose"]);
+    state.perf.push(row);
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("datasets/seattle/s2_perf.json");
+    let mut merged = std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|text| serde_json::from_str::<Vec<serde_json::Value>>(&text).ok())
+        .unwrap_or_default();
+    for item in &state.perf {
+        merged.retain(|existing| existing["pose"] != item["pose"]);
+        merged.push(item.clone());
+    }
+    let _ = std::fs::write(
+        path,
+        serde_json::to_string_pretty(&merged).unwrap_or_default(),
+    );
+    info!("S2 PERF {name}: avg {avg:.2} ms p99 {p99:.2} ms");
+}
+
+fn round2(value: f32) -> f32 {
+    (value * 100.0).round() / 100.0
 }
 
 #[derive(Clone, Copy)]
@@ -721,6 +916,154 @@ fn pose(geology: &Geology, index: usize) -> Pose {
 }
 
 #[allow(clippy::too_many_arguments)]
+fn gauntlet_flight(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut state: Option<ResMut<Geology>>,
+    mut camera: Query<&mut Transform, With<FlyCamera>>,
+    mut local: Local<(u8, f32, bool)>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    let Some(state) = state.as_mut() else {
+        return;
+    };
+    if std::env::var_os("S2_GAUNTLET").is_none() {
+        return;
+    }
+    let elapsed = time.elapsed_secs() - 5.0;
+    if elapsed < 0.0 {
+        return;
+    }
+    let speeds = [15.0_f32, 30.0, 100.0, 650.0];
+    let regime = (elapsed / 3.0).floor() as usize;
+    if regime >= speeds.len() {
+        if elapsed > 13.5 {
+            let _ = exit.write(AppExit::Success);
+        }
+        return;
+    }
+    let local_time = elapsed - regime as f32 * 3.0;
+    let mut start_distance = 0.0;
+    for speed in &speeds[..regime] {
+        start_distance += speed * 3.0;
+    }
+    let distance = start_distance + speeds[regime] * local_time;
+    let direction = Vec3::new(0.82, 0.0, -0.57).normalize();
+    let base = Vec3::new(0.0, 0.0, 0.0) + direction * distance;
+    let y = state.dem.height(base.x, base.z) + 220.0;
+    if let Ok(mut transform) = camera.single_mut() {
+        transform.translation = Vec3::new(STREAM_WORLD_OFFSET + base.x, y, base.z);
+        let look = transform.translation + direction * 400.0 + Vec3::new(0.0, -80.0, 0.0);
+        let d = (look - transform.translation).normalize_or_zero();
+        transform.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+    }
+    if local_time >= 2.9 && local.0 as usize == regime && !local.2 {
+        local.2 = true;
+        let name = format!("gauntlet_{}ms.png", speeds[regime] as u32);
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("captures")
+            .join(name);
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(path));
+        record_perf(state, &format!("gauntlet_{}ms", speeds[regime] as u32));
+        local.0 = regime as u8 + 1;
+        local.1 = elapsed;
+    }
+    if local.0 as usize == regime + 1 {
+        local.2 = false;
+    }
+    let _ = local.1;
+}
+
+#[allow(clippy::too_many_arguments)]
+fn orbit_flight(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut state: Option<ResMut<Geology>>,
+    mut camera: Query<&mut Transform, With<FlyCamera>>,
+    mut captured: Local<bool>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    let Some(state) = state.as_mut() else {
+        return;
+    };
+    if std::env::var_os("S2_ORBIT").is_none() {
+        return;
+    }
+    let elapsed = time.elapsed_secs() - 5.0;
+    if elapsed < 0.0 {
+        return;
+    }
+    let angle = elapsed * 0.28;
+    let center = Vec3::new(0.0, 0.0, 0.0);
+    let position = center + Vec3::new(angle.cos() * 1200.0, 0.0, angle.sin() * 1200.0);
+    let y = state.dem.height(position.x, position.z) + 300.0;
+    if let Ok(mut transform) = camera.single_mut() {
+        transform.translation = Vec3::new(STREAM_WORLD_OFFSET + position.x, y, position.z);
+        let look = Vec3::new(STREAM_WORLD_OFFSET, state.dem.height(0.0, 0.0) + 20.0, 0.0);
+        let d = (look - transform.translation).normalize_or_zero();
+        transform.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+    }
+    if elapsed > 9.0 && !*captured {
+        *captured = true;
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/s2_low_orbit.png");
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(path));
+        record_perf(state, "low_orbit");
+    }
+    if elapsed > 11.0 {
+        let _ = exit.write(AppExit::Success);
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn hover_flight(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut state: Option<ResMut<Geology>>,
+    mut camera: Query<&mut Transform, With<FlyCamera>>,
+    mut captured: Local<bool>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    let Some(state) = state.as_mut() else {
+        return;
+    };
+    if std::env::var_os("S2_HOVER").is_none() {
+        return;
+    }
+    let elapsed = time.elapsed_secs() - 4.0;
+    if elapsed < 0.0 {
+        return;
+    }
+    if elapsed > 3.0 && (elapsed - 3.0) < 0.1 {
+        state.samples.clear();
+    }
+    let tile = TILE_CELLS as f32 * state.dem.spacing;
+    let base_x = state.dem.origin[0] + tile * 17.0;
+    let base_z = state.dem.origin[1] + tile * 17.0;
+    let y = state.dem.height(base_x, base_z) + 160.0;
+    if let Ok(mut transform) = camera.single_mut() {
+        transform.translation = Vec3::new(STREAM_WORLD_OFFSET + base_x, y, base_z);
+        let look = transform.translation + Vec3::new(0.0, -80.0, 300.0);
+        let d = (look - transform.translation).normalize_or_zero();
+        transform.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+    }
+    if elapsed > 5.0 && !*captured {
+        *captured = true;
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/s2_chunk_hover.png");
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(path));
+        record_perf(state, "chunk_hover");
+    }
+    if elapsed > 7.0 {
+        let _ = exit.write(AppExit::Success);
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
 fn s2_capture(
     mut commands: Commands,
     time: Res<Time>,
@@ -735,6 +1078,12 @@ fn s2_capture(
     let Some(state) = state.as_mut() else {
         return;
     };
+    if std::env::var_os("S2_GAUNTLET").is_some()
+        || std::env::var_os("S2_ORBIT").is_some()
+        || std::env::var_os("S2_HOVER").is_some()
+    {
+        return;
+    }
     let elapsed = time.elapsed_secs();
     if elapsed < 5.0 {
         return;
@@ -749,12 +1098,11 @@ fn s2_capture(
         return;
     }
     let pose = pose(state, index);
-    if *active != index {
+    if *active != index || *entered == 0.0 {
         *active = index;
         *entered = elapsed;
-    }
-    if elapsed - *entered < 3.0 {
-        return;
+        state.settled = false;
+        state.samples.clear();
     }
     if let Ok(mut transform) = camera.single_mut() {
         transform.translation = Vec3::new(STREAM_WORLD_OFFSET + pose.x, pose.y, pose.z);
@@ -770,6 +1118,13 @@ fn s2_capture(
             direction.y.asin(),
             0.0,
         );
+    }
+    if elapsed - *entered > 3.0 && !state.settled {
+        state.settled = true;
+        state.samples.clear();
+    }
+    if elapsed - *entered < 5.0 {
+        return;
     }
     weather.auto = false;
     if pose.overcast {
@@ -787,6 +1142,7 @@ fn s2_capture(
     }
     clock.minute_of_day = pose.minute as f64;
     if state.captures == index as u8 {
+        record_perf(state, pose.name);
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("captures")
             .join(pose.name);
@@ -840,6 +1196,40 @@ mod tests {
     }
 
     #[test]
+    fn skirt_geometry_and_hysteresis() {
+        let (dem, mask) = load();
+        let tile = build_tile_mesh(&dem, &mask, 17, 17);
+        assert!(tile.count_vertices() > (TILE_CELLS as usize + 1).pow(2));
+    }
+
+    #[test]
+    fn road_chunk_roundtrip_and_unloaded_absence() {
+        let (dem, _mask) = load();
+        let pack =
+            CityPack::open(Path::new(env!("CARGO_MANIFEST_DIR")).join(crate::citypack::PACK_PATH))
+                .expect("pack");
+        let nodes = pack.neighborhoods();
+        let mut loaded = HashMap::new();
+        let mut first = None;
+        for node in nodes
+            .iter()
+            .copied()
+            .filter(|index| pack.nodes[*index].streets > 0)
+            .take(3)
+        {
+            let chunk = pack.read_chunk(node).expect("chunk");
+            let mesh = road_mesh(&dem, &chunk);
+            assert!(mesh.count_vertices() > 0);
+            loaded.insert(node, mesh.count_vertices());
+            first.get_or_insert(node);
+        }
+        assert_eq!(loaded.len(), 3);
+        let first = first.unwrap();
+        loaded.remove(&first);
+        assert!(!loaded.contains_key(&first));
+    }
+
+    #[test]
     fn water_mesh_and_road_drape() {
         let (dem, mask) = load();
         let bytes = std::fs::read(asset(WATER_PATH)).expect("water");
@@ -875,7 +1265,8 @@ mod tests {
             .attribute(Mesh::ATTRIBUTE_POSITION)
             .and_then(|a| a.as_float3())
             .expect("tile");
-        for p in tile_positions.iter().step_by(13) {
+        let grid_vertices = (TILE_CELLS as usize + 1).pow(2);
+        for p in tile_positions.iter().take(grid_vertices).step_by(13) {
             let ground = dem.height(p[0], p[2]);
             assert!((p[1] - ground - 0.15).abs() < 0.5);
         }

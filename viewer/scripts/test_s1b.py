@@ -165,6 +165,17 @@ class GeologyTest(unittest.TestCase):
         self.assertIn(0.0, levels)
         self.assertTrue(any(abs(level - 4.98) < 0.01 for level in levels))
 
+    def test_s2_perf_table(self):
+        rows = load(f"{ROOT}/s2_perf.json")
+        self.assertGreaterEqual(len(rows), 14)
+        names = {row["pose"] for row in rows}
+        for required in ("gauntlet_650ms", "low_orbit", "chunk_hover"):
+            self.assertIn(required, names)
+        for row in rows:
+            self.assertGreater(row["avg_ms"], 0.0)
+            self.assertGreaterEqual(row["p99_ms"], row["avg_ms"] - 0.01)
+            self.assertGreater(row["samples"], 1)
+
     def test_dem_spot_elevations(self):
         import numpy as np
 
