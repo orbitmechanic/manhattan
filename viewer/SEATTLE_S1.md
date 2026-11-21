@@ -56,6 +56,17 @@ avoid a 250k-polygon download; they are joined to the 2023 outlines by nearest
 centroid. Tacoma is queried with its own `maxRecordCount` (1000); the first
 attempt returned only the first page and was fixed before the final run.
 
+Intermediate sizes (human-readable, regenerable; bulk data is gitignored):
+
+| Artifact | Size |
+|---|---:|
+| Raw fetch cache (`datasets/seattle/raw/`) | 1,360.8 MB |
+| Full adapted dataset (`seattle_v11.json`) | 135.8 MB |
+| Regional terrain GeoTIFF (30 m) | 8.1 MB |
+| Belt terrain GeoTIFF (10 m) | 49 KB |
+| Committed belt extract (`assets/datasets/seattle_belt_v11.json`) | 0.4 MB |
+| Manifest + report + region polygon | 12 KB |
+
 ## 3. Adapter: parsed / rejected
 
 | Source | Parsed (after region clip) | Rejected | Reason accounting |
