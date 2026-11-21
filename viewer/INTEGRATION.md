@@ -1079,3 +1079,19 @@ and advertising placement are not part of the bundle, façades are per-building
 draws rather than batched per style, and the generated exterior still uses
 tiled destructible materials rather than the city atlas. Per the standing rule,
 Milestone A halts here: no B/C work.
+
+## Iteration 29a2a — pilot gate evidence
+
+| Pose | avg FPS | p50 ms | p99 ms | source |
+|---|---:|---:|---:|---|
+| street day | 21 | 46.8 | 55.0 | HUD in `pilot_a2a_street_day.png` |
+| aerial day | 17 | 60.0 | 68.9 | HUD in `pilot_a2a_aerial_day.png` |
+| street night | ~19 | 53.1 | 57.2 | HUD in `pilot_a2a_street_night.png` |
+| aerial night | ~14 | 71.1 | 74.8 | HUD in `pilot_a2a_aerial_night.png` |
+
+`--perf` walker remains non-emitting (scheduling bug); the table is produced by
+the screenshot/HUD instrumentation the reviewer accepted as fallback.
+Pilot load: 140 Shell buildings in 0.73 s; structures/interiors are deferred
+until damage. `--pilot-damage`: b7228 tiered to Structural in 27 ms, bullet
+admitted 0.3 ms, car bomb journal 5.63; captures `pilot_damage_bullet.png`,
+`pilot_damage_carbomb.png`. Other 139 buildings remain shell-tier.

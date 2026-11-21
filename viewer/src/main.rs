@@ -185,6 +185,9 @@ fn parse_args() -> Args {
             }
             "--selftest" => args.selftest = true,
             "--pilot" => args.pilot = true,
+            "--pilot-damage" => unsafe {
+                std::env::set_var("PILOT_DAMAGE", "1");
+            },
             "--perf" => unsafe {
                 std::env::set_var("PILOT_PERF", "1");
             },
@@ -306,6 +309,7 @@ fn main() {
         (
             manhattan_viewer::pilot::pilot_camera,
             manhattan_viewer::pilot::pilot_perf,
+            manhattan_viewer::pilot::pilot_damage,
         ),
     )
     .add_plugins(NeighborhoodPlugin)
@@ -319,6 +323,7 @@ fn main() {
     .insert_resource(clock)
     .insert_resource(capture)
     .insert_resource(FrameCounter::default())
+    .init_resource::<manhattan_viewer::pilot::PilotDamageState>()
     .insert_resource(selftest)
     .insert_resource(Environment::default())
     .insert_resource(weather)

@@ -1,8 +1,11 @@
 //! `--pilot` runtime: spawn the committed generated bundle only.
 
 use bevy::prelude::*;
+use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 use destructibles_bevy::assets::WorldAssets;
 use destructibles_bevy::building::{BuildingDetail, spawn_building_world_lod};
+use destructibles_bevy::impact::apply_impact;
+use destructibles_core::ImpactSpec;
 use destructibles_core::family::MaterialFamily;
 use destructibles_core::{BuildingSpec, FacadeStyle, core_for_style};
 use serde::Deserialize;
@@ -327,4 +330,149 @@ pub fn pilot_perf(
         state.elapsed = 0.0;
         state.samples.clear();
     }
+}
+
+#[derive(Resource, Default)]
+pub struct PilotDamageState {
+    stage: u8,
+    since: f32,
+    id: Option<usize>,
+}
+
+pub fn pilot_damage(world: &mut World) {
+    if !enabled() || std::env::var_os("PILOT_DAMAGE").is_none() {
+        return;
+    }
+    let now = world.resource::<Time>().elapsed_secs();
+    let mut state = std::mem::take(&mut *world.resource_mut::<PilotDamageState>());
+    let path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/pilot/pilot_bundle.json");
+    match state.stage {
+        0 => {
+            if now < 4.0 {
+                *world.resource_mut::<PilotDamageState>() = state;
+                return;
+            }
+            let Ok(text) = std::fs::read_to_string(&path) else {
+                return;
+            };
+            let Ok(bundle) = serde_json::from_str::<Bundle>(&text) else {
+                return;
+            };
+            let Some(record) = bundle.records.iter().find(|r| r.fallback_box.is_none()) else {
+                return;
+            };
+            let id = record.id;
+            let origin = Vec3::from_array(record.origin);
+            if let Ok(mut camera) = world
+                .query_filtered::<&mut Transform, With<FlyCamera>>()
+                .single_mut(world)
+            {
+                let p = origin + Vec3::new(0.0, 8.0, 42.0);
+                let look = origin + Vec3::Y * 12.0;
+                let d = (look - p).normalize_or_zero();
+                camera.translation = p;
+                camera.rotation =
+                    Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+            }
+            destructibles_bevy::building::begin_detail_upgrade(
+                world,
+                id as u32,
+                destructibles_bevy::building::DetailTier::Structural,
+            );
+            let started = std::time::Instant::now();
+            for _ in 0..80 {
+                let level = destructibles_bevy::building::advance_detail(world, id as u32, 50.0);
+                if level >= destructibles_bevy::building::DetailTier::Structural {
+                    break;
+                }
+            }
+            info!(
+                "PILOT DAMAGE: b{id} tiered to {:?} in {:.0} ms",
+                destructibles_bevy::building::detail_level(world, id as u32),
+                started.elapsed().as_secs_f32() * 1000.0
+            );
+            state.id = Some(id);
+            state.stage = 1;
+            state.since = now;
+        }
+        1 => {
+            let id = state.id.unwrap_or(0);
+            let origin = Vec3::new(0.0, 0.0, 0.0);
+            let record = std::fs::read_to_string(&path)
+                .ok()
+                .and_then(|t| serde_json::from_str::<Bundle>(&t).ok())
+                .and_then(|b| b.records.into_iter().find(|r| r.id == id));
+            if let Some(r) = record {
+                let o = Vec3::from_array(r.origin);
+                let impact = ImpactSpec {
+                    position: (o + Vec3::new(0.0, 6.0, 8.0)).to_array(),
+                    radius: 0.0,
+                    velocity: [0.0, -40.0, -300.0],
+                    mass_kg: 20.0,
+                    explosive_yield_kg_tnt: 0.0,
+                };
+                let started = std::time::Instant::now();
+                apply_impact(world, id as u32, impact);
+                info!(
+                    "PILOT DAMAGE: bullet b{id} admitted in {:.1} ms journal={:.2}",
+                    started.elapsed().as_secs_f32() * 1000.0,
+                    world
+                        .resource::<destructibles_bevy::damage::DamageJournal>()
+                        .0
+                        .head_for(id as u32)
+                );
+                let p = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("captures/pilot_damage_bullet.png");
+                world
+                    .spawn(Screenshot::primary_window())
+                    .observe(bevy::render::view::screenshot::save_to_disk(p));
+            }
+            let _ = origin;
+            state.stage = 2;
+            state.since = now;
+        }
+        2 => {
+            if now - state.since < 2.0 {
+                *world.resource_mut::<PilotDamageState>() = state;
+                return;
+            }
+            let id = state.id.unwrap_or(0);
+            let record = std::fs::read_to_string(&path)
+                .ok()
+                .and_then(|t| serde_json::from_str::<Bundle>(&t).ok())
+                .and_then(|b| b.records.into_iter().find(|r| r.id == id));
+            if let Some(r) = record {
+                let o = Vec3::from_array(r.origin);
+                let impact = ImpactSpec {
+                    position: (o + Vec3::new(0.0, 3.0, 8.0)).to_array(),
+                    radius: 0.0,
+                    velocity: [0.0, 0.0, -42.0],
+                    mass_kg: 1500.0,
+                    explosive_yield_kg_tnt: 5.0,
+                };
+                apply_impact(world, id as u32, impact);
+                info!(
+                    "PILOT DAMAGE: car bomb b{id} journal={:.2}",
+                    world
+                        .resource::<destructibles_bevy::damage::DamageJournal>()
+                        .0
+                        .head_for(id as u32)
+                );
+                let p = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("captures/pilot_damage_carbomb.png");
+                world
+                    .spawn(Screenshot::primary_window())
+                    .observe(bevy::render::view::screenshot::save_to_disk(p));
+            }
+            state.stage = 3;
+            state.since = now;
+        }
+        _ => {
+            if now - state.since > 3.0 {
+                world.write_message(AppExit::Success);
+            }
+        }
+    }
+    *world.resource_mut::<PilotDamageState>() = state;
 }
