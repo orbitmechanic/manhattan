@@ -136,9 +136,9 @@ call**. Render submission is negligible; no separate GPU timer is claimed.
 
 ## 4. Verification and honest labels
 
-- `cargo test --release citypack horizon`: 6 new tests (fixture round-trip,
-  at-scale lookup vs brute force, budget planner, packed cell contracts,
-  profile raycast comparison, Rainier apex/bearing).
+- `cargo test --release citypack horizon`: 7 new tests (fixture round-trip,
+  at-scale lookup vs brute force, budget planner + simulated load/unload cap,
+  packed cell contracts, profile raycast comparison, Rainier apex/bearing).
 - `python3 scripts/test_s1b.py`: 8 tests (provenance accounting, matcher sample
   recomputation, partition accounting/size, pack fixture, horizon packing,
   Rainier quadrant/angle, profile shape).
