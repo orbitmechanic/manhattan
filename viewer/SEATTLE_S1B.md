@@ -3,6 +3,10 @@
 Tag: `seattle-s1b`. Branch: `seattle`. Builds on S1 (`seattle-s1`); S2
 terrain/water/roads remain out of scope.
 
+> S1c supersedes the flat CityPack v1 in this document with the hierarchical
+> County -> City -> Neighborhood v2 (25.26 MB, 330,330 buildings + 29,833
+> streets). See the CityPack v2 section in `INTEGRATION.md`.
+
 Regenerate from `viewer/`:
 
 ```sh

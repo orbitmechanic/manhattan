@@ -1095,3 +1095,59 @@ Pilot load: 140 Shell buildings in 0.73 s; structures/interiors are deferred
 until damage. `--pilot-damage`: b7228 tiered to Structural in 27 ms, bullet
 admitted 0.3 ms, car bomb journal 5.63; captures `pilot_damage_bullet.png`,
 `pilot_damage_carbomb.png`. Other 139 buildings remain shell-tier.
+
+## CityPack v2 — hierarchical index
+
+**Level contract.** `county -> city -> neighborhood -> leaf records`:
+
+| Level | Count | Membership |
+|---|---:|---|
+| 0 county | 2 | King (Seattle + Bellevue = 243,909), Pierce (Tacoma = 86,421) |
+| 1 city | 3 | Seattle 187,053, Bellevue 56,856, Tacoma 86,421 (source-agency provenance) |
+| 2 neighborhood | 1,096 | Existing S1.5 quadtree partitions, re-parented |
+| leaves | 330,330 buildings + 29,833 street segments | Assigned to their neighborhood |
+
+Every node stores centre, AABB, roll-up count and style hints, parent index and
+child range. Child AABBs are strictly inside parent AABBs (max overflow 0.0 m).
+Names preserve the overlay with full ancestry (`King -> Seattle -> Capitol
+Hill 04`). County boundaries are Census TIGER/Line 2024; cities are the three
+source agencies, verified point-in-polygon against TIGER places (302,443
+centroids inside the agency polygon, 27,887 provenance_outside_polygon retained
+by source rather than re-bucketed; there are no unincorporated records in this
+extent). Snohomish has no records in the region polygon and is omitted.
+
+**Format.** CityPack v2 adds a node table (level, parent, first_child,
+child_count, roll-up counts, centre/AABB, hints, name, chunk offset/size) and
+street leaves in each neighborhood chunk. Per-chunk interning is unchanged.
+Binary 25.26 MB vs 146.6 MB JSON (5.8x); growth from v1 is +1.42 MB (6.0%),
+mostly the node table, street records and hierarchy indices.
+
+**Runtime descent and evaluation counts.** Streaming and point lookup start at
+county level; an out-of-range county terminates its subtree. Measured distance
+evaluations at 2.6 km radius (flat = 1,096 neighborhood tests):
+
+| Pose | flat | county/city/nb | total | ratio | 10× flat | 10× hier | 10× ratio |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| downtown | 1,096 | 2/2/626 | 630 | 1.74× | 10,960 | 648 | **16.9×** |
+| mid-lake | 1,096 | 2/2/807 | 811 | 1.35× | 10,960 | 829 | **13.2×** |
+| Bellevue | 1,096 | 2/2/807 | 811 | 1.35× | 10,960 | 829 | **13.2×** |
+| Tacoma corridor | 1,096 | 2/1/289 | 292 | 3.75× | 10,960 | 310 | **35.4×** |
+| far-south | 1,096 | 2/0/0 | 2 | 548× | 10,960 | 20 | **548×** |
+
+The 10× column builds ten spatial copies of the hierarchy and repeats the same
+descent; it is the megaregion extrapolation, not an adjective. At far-south no
+city or neighborhood is enumerated — the Tacoma gate proves subtree termination.
+The runtime HUD now shows `county/city/neighborhood` evaluations per frame and
+the loaded partition's full ancestry.
+
+**Minimap zooms.** `MapZoom` adds neighborhood (650 m) → city (15 km) → county
+(80 km); `O` cycles and `MINIMAP_ZOOM`/`MINIMAP_CAPTURE` drive evidence runs.
+Neighborhood AABBs aggregate to city outlines and county outlines, so the
+instrument renders the hierarchy as geography. Captures:
+`captures/minimap_neighborhood.png`, `minimap_city.png`, `minimap_county.png`.
+
+**Provenance alignment.** Counties and cities mirror the three source agencies
+(Seattle, Bellevue, Tacoma) that produced the footprints, so the hierarchy is
+also the correct scoping unit for future city-level LOD and style packs: a
+package can be authored/validated against one city without scanning the
+megaregion. Skyline-billboard far-LOD remains a future consumer, not built.

@@ -34,33 +34,39 @@ IoU ≥ 0.35, then MSML with area ratio 0.30–3.00 / IoU ≥ 0.35 / ≤10 m.
 2026-11-18.0 has no `start_date` column, so start-date coverage is 0 % in this
 round and the field is absent.
 
-## Binary CityPack v1 (S1.5)
+## Binary CityPack v2 (S1c)
 
-`assets/datasets/seattle.citypack` is the compiled streaming form of the
-enriched dataset. Little-endian:
+`assets/datasets/seattle.citypack` is the compiled hierarchy. Little-endian:
 
 ```
-header  b"CDPK" u16 version u32 header_bytes u32 partitions u32 buildings u32 reserved
-dir     [u32 offset u32 bytes u8 name_len name]*
-chunks  u32 chunk_bytes u32 building_count
-        f32 center_x f32 center_z f32 min_x f32 min_z f32 max_x f32 max_z
-        u8 dominant_category u8 dominant_source u16 mean_height_cm
-        u16 p95_height_cm u8 glass_pct u8 reserved
+header  b"CDPK" u16 2 u32 header_bytes u32 nodes u32 buildings u32 streets u32 chunks
+nodes   u8 level i32 parent u32 first_child u16 child_count
+        u32 buildings u32 streets f32 cx f32 cz f32 bounds[4]
+        u16 mean_height_cm u16 p95_height_cm u8 glass_pct
+        u8 dominant_category u8 dominant_source u8 name_len name
+        u32 chunk_offset u32 chunk_bytes
+chunks  (neighborhood nodes only)
+        u32 chunk_bytes u32 buildings u32 streets f32 center[2] f32 bounds[4]
+        u8 dominant_category u8 dominant_source u16 mean_h u16 p95 u8 glass u8 flags
         u16 string_count [u16 len bytes]*
-        buildings:
-          u32 id i16 qx i16 qz u16 height_cm u16 floor_height_cm
-          u16 base_cm u16 floor_count u16 year_built u8 levels
-          u8 source_idx u8 category_idx u16 vertex_count
-          [i16 qx i16 qz]*vertex_count
+        buildings: u32 id i16 qx i16 qz u16 height_cm u16 floor_height_cm
+                   u16 base_cm u16 floor_count u16 year_built u8 levels
+                   u8 source_idx u8 category_idx u16 vertex_count
+                   [i16 qx i16 qz]*vertex_count
+        streets:   u32 id u8 kind_idx u16 name_idx u16 point_count
+                   [i16 qx i16 qz]*point_count
 ```
 
-Coordinates are quantized at 0.25 m relative to the partition centre (centroid)
-or building centroid (vertices); heights are integer centimetres. Strings
-(category and height-source names) are interned per chunk. `src/citypack.rs`
-owns the reader, the partition index, the distance-budget streamer, and the
-two-level point resolver. `scripts/partition_city.py` writes the pack and the
-`datasets/seattle/partitions.json` named overlay (centre, AABB, count, style
-hints).
+Levels: 0 county, 1 city, 2 neighborhood; leaves are buildings and street
+segments. Parent AABBs are tight unions of children (strict containment),
+and names/ancestry are `County -> City -> Neighborhood`. Chunk coordinates are
+i16 at 0.25 m relative to the neighborhood centre (vertices relative to the
+building centroid); heights are u16 centimetres; category/source/street-kind/
+street-name strings are interned per chunk. `src/citypack.rs` owns the reader,
+four-level descent, gated streamer and point resolver; `src/bin/hierarchy_eval.rs`
+prints the evaluation-count table; `scripts/partition_city.py` writes the pack
+and `datasets/seattle/partitions.json` (all nodes with centre, AABB, counts,
+hints and parent).
 
 ## Horizon assets (S1.5)
 
