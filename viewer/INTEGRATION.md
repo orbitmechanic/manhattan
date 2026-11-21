@@ -1261,3 +1261,55 @@ road-neighborhood chunk round-trip and removal (unloaded absence), DEM spot
 elevations, water-mask/terrain exclusion, road drape, plus the S2/S1c suites.
 Honest gap: the Capitol perf row and a truly steady 15 m/s p99 remain open; the
 walker is still broken and the fallback numbers are the committed baseline.
+
+## Seattle S3 — buildings round (current status)
+
+**Style pack.** `assets/styles/seattle_pack.json` defines district grammar driven
+by CityPack ancestry + height: Downtown/Bellevue CBD (steel/glass, 82% glass),
+Pioneer Square (masonry/stone low-rise), Ballard/Fremont/Georgetown (timber
+low-rise), Capitol Hill/Queen Anne/residential belts (mixed masonry/timber),
+SODO/South King (concrete grid), Tacoma (masonry/concrete), Eastside (mixed).
+Epicenter is Downtown/Columbia Center at world (0,0). Completeness audit: 1096 /
+1096 neighborhoods mapped (default rule for unmatched Tacoma South King names),
+report in `datasets/seattle/style_pack_report.json`.
+
+**Streaming generation.** Buildings ride the CityPack neighborhood stream:
+radius 650 m load / 950 m unload, one neighborhood per frame. Shells (up to 6
+per chunk within 120 m) use `spawn_building_world_lod(..., Shell)` with
+footprint-local specs and the pack’s family/facade; farther buildings in the
+chunk become one merged LOD box mesh. Placement y = terrain DEM at the centroid
++ 0.03 m. HUD reports building count alongside terrain/roads/evals.
+
+**S3 frame cost (same poses, buildings streaming).** `datasets/seattle/s3_perf.json`:
+
+| Pose | avg ms | p99 ms | vs S2 baseline |
+|---|---:|---:|---:|
+| Elliott/Rainier | 73.27 | 87.40 | +1.9× |
+| Lake Washington | 101.19 | 110.45 | +2.4× |
+| Montlake | 177.97 | 181.38 | +4.2× |
+| Duwamish | 175.14 | 196.90 | +4.7× |
+| Elliott dawn | 130.58 | 133.99 | +3.1× |
+| Elliott dusk | 133.40 | 144.74 | +3.7× |
+| Queen Anne | 250.00 | 250.00 | 6 fps clamp |
+| SODO | 250.00 | 250.00 | 6 fps clamp |
+| Steep overcast | 250.00 | 250.00 | 6 fps clamp |
+| Capitol | 250.00 | 250.00 | 6 fps clamp |
+
+The near-field cost roughly doubles to quadruples, and four poses hit the
+6-fps clamp; the 650 m/s gauntlet with buildings was not completed. Levers:
+tighten the 650 m load radius, cut shells per chunk below 6, and replace the
+per-neighborhood box merge with a distance-decayed far shell. Boot with geology
+plus buildings: ~90–135 ms geology setup, first frame dominated by shell
+creation.
+
+**Damage smoke.** `--seattle-s3-damage` tiers a loaded shell and fires 20
+bullets: `b75134`, 20 shots in 0.4 ms, journal head 0.00; capture
+`captures/s3_damage_tower.png`. The wound did not register in this run, so the
+damage trio, MaterialFamily gut checks, full persistence cycle, and repeat-fire
+pass/fail gate are **not delivered**.
+
+**Captures.** S2 poses re-shot with buildings (some poses show the merged LOD
+boxes rather than shells), damage smoke. Queen Anne/SODO/steep/Capitol still
+show geometry/culling gaps. Honest verdict: style pack + streamed generation
+scaffolding are in place, but the S3 visual/damage/perf gate is not met; no S3
+tag should be inferred from this section.

@@ -18,6 +18,9 @@ use crate::citypack::{
 };
 use crate::clock::SimClock;
 use crate::weather::{Weather, WeatherKind};
+use destructibles_bevy::building::{BuildingDetail, spawn_building_world_lod};
+use destructibles_core::family::MaterialFamily;
+use destructibles_core::{BuildingSpec, FacadeStyle, core_for_style};
 
 pub const DEM_PATH: &str = "assets/terrain/seattle_dem_30m.bin";
 pub const MASK_PATH: &str = "assets/terrain/seattle_water_mask.bin";
@@ -37,6 +40,23 @@ const FAR_STEP: i32 = 2;
 #[derive(Deserialize)]
 struct S2Report {
     grid: GridReport,
+}
+
+#[derive(Clone, Deserialize)]
+struct StylePack {
+    rules: Vec<StyleRule>,
+    default: StyleRule,
+}
+
+#[derive(Clone, Deserialize)]
+struct StyleRule {
+    #[serde(default)]
+    cities: Vec<String>,
+    #[serde(default)]
+    neighborhood_any: Vec<String>,
+    family: String,
+    facade_style: String,
+    glass_probability: f32,
 }
 
 #[derive(Deserialize)]
@@ -63,6 +83,7 @@ impl Plugin for GeologyPlugin {
                 )
                     .chain(),
             )
+            .add_systems(Update, (s3_buildings, s3_damage))
             .add_systems(PostUpdate, hide_precip);
     }
 }
@@ -108,6 +129,11 @@ pub struct Geology {
     pub dem: Dem,
     pub mask: Vec<u8>,
     pub pack: CityPack,
+    style: StylePack,
+    pub building_chunks: HashMap<usize, Vec<Entity>>,
+    pub box_material: Handle<StandardMaterial>,
+    pub targets: Vec<(u32, Vec3)>,
+    pub loaded_buildings: usize,
     pub terrain_material: Handle<StandardMaterial>,
     pub water_material: Handle<StandardMaterial>,
     pub road_material: Handle<StandardMaterial>,
@@ -194,6 +220,10 @@ fn setup_geology(
     let mask = std::fs::read(asset(MASK_PATH)).expect("mask");
     let water_bytes = std::fs::read(asset(WATER_PATH)).expect("water");
     let water_mesh = parse_water(&water_bytes);
+    let style: StylePack = serde_json::from_str(
+        &std::fs::read_to_string(asset("assets/styles/seattle_pack.json")).expect("style pack"),
+    )
+    .expect("style pack json");
     let pack =
         CityPack::open(Path::new(env!("CARGO_MANIFEST_DIR")).join(crate::citypack::PACK_PATH))
             .expect("citypack for streets");
@@ -209,6 +239,12 @@ fn setup_geology(
         unlit: true,
         perceptual_roughness: 1.0,
         metallic: 0.0,
+        cull_mode: None,
+        ..default()
+    });
+    let box_material = materials.add(StandardMaterial {
+        base_color: Color::srgb(0.58, 0.52, 0.44),
+        perceptual_roughness: 0.95,
         cull_mode: None,
         ..default()
     });
@@ -262,6 +298,11 @@ fn setup_geology(
         dem,
         mask,
         pack,
+        style,
+        building_chunks: HashMap::new(),
+        box_material,
+        targets: Vec::new(),
+        loaded_buildings: 0,
         terrain_material,
         water_material,
         road_material,
@@ -755,13 +796,14 @@ fn geology_stream(
     }
     if let Ok(mut text) = text.single_mut() {
         text.0 = format!(
-            "S2 terrain {} (+{}/-{})  roads {} (+{}/-{})  evals {}/{}/{}\n30 m streamed / 60 m regional / skirts / boot {:.0} ms / tile {:.1} ms road {:.1} ms",
+            "S2 terrain {} (+{}/-{})  roads {} (+{}/-{})  buildings {}  evals {}/{}/{}\n30 m streamed / 60 m regional / skirts / boot {:.0} ms / tile {:.1} ms road {:.1} ms",
             state.terrain.len(),
             loads,
             unloads,
             state.roads.len(),
             road_loads,
             state.road_unloads,
+            state.loaded_buildings,
             evaluations.counties,
             evaluations.cities,
             evaluations.neighborhoods,
@@ -788,7 +830,14 @@ fn record_perf(state: &mut Geology, name: &str) {
     });
     state.perf.retain(|item| item["pose"] != row["pose"]);
     state.perf.push(row);
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("datasets/seattle/s2_perf.json");
+    let perf_name = if s3_enabled() {
+        "s3_perf.json"
+    } else {
+        "s2_perf.json"
+    };
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("datasets/seattle")
+        .join(perf_name);
     let mut merged = std::fs::read_to_string(&path)
         .ok()
         .and_then(|text| serde_json::from_str::<Vec<serde_json::Value>>(&text).ok())
@@ -1081,6 +1130,7 @@ fn s2_capture(
     if std::env::var_os("S2_GAUNTLET").is_some()
         || std::env::var_os("S2_ORBIT").is_some()
         || std::env::var_os("S2_HOVER").is_some()
+        || std::env::var_os("S3_DAMAGE").is_some()
     {
         return;
     }
@@ -1119,11 +1169,12 @@ fn s2_capture(
             0.0,
         );
     }
-    if elapsed - *entered > 3.0 && !state.settled {
+    let settle = if s3_enabled() { 2.5 } else { 5.0 };
+    if elapsed - *entered > settle * 0.6 && !state.settled {
         state.settled = true;
         state.samples.clear();
     }
-    if elapsed - *entered < 5.0 {
+    if elapsed - *entered < settle {
         return;
     }
     weather.auto = false;
@@ -1151,6 +1202,281 @@ fn s2_capture(
             .observe(save_to_disk(path));
         state.captures += 1;
     }
+}
+
+fn s3_damage(world: &mut World) {
+    if std::env::var_os("S3_DAMAGE").is_none() || !s3_enabled() {
+        return;
+    }
+    let elapsed = world.resource::<Time>().elapsed_secs();
+    let targets = world.resource::<Geology>().targets.clone();
+    if elapsed >= 5.0 && targets.len() < 3 {
+        let y = world.resource::<Geology>().dem.height(0.0, 0.0) + 30.0;
+        if let Ok(mut camera) = world
+            .query_filtered::<&mut Transform, With<FlyCamera>>()
+            .single_mut(world)
+        {
+            camera.translation = Vec3::new(STREAM_WORLD_OFFSET, y, 0.0);
+            camera.rotation = Quat::from_euler(EulerRot::YXZ, 0.0, -0.25, 0.0);
+        }
+        return;
+    }
+    if elapsed < 9.0 || targets.is_empty() {
+        return;
+    }
+    let mut done = world.resource_mut::<S3DamageState>();
+    if done.stage > 0 {
+        if elapsed - done.since > 4.0 {
+            world.write_message(AppExit::Success);
+        }
+        return;
+    }
+    done.stage = 1;
+    done.since = elapsed;
+    let target = targets[0];
+    if let Ok(mut camera) = world
+        .query_filtered::<&mut Transform, With<FlyCamera>>()
+        .single_mut(world)
+    {
+        camera.translation = target.1 + Vec3::new(0.0, 18.0, 45.0);
+        let look = target.1 + Vec3::Y * 10.0;
+        let d = (look - camera.translation).normalize_or_zero();
+        camera.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+    }
+    destructibles_bevy::building::begin_detail_upgrade(
+        world,
+        target.0,
+        destructibles_bevy::building::DetailTier::Structural,
+    );
+    for _ in 0..80 {
+        let level = destructibles_bevy::building::advance_detail(world, target.0, 50.0);
+        if level >= destructibles_bevy::building::DetailTier::Structural {
+            break;
+        }
+    }
+    let started = std::time::Instant::now();
+    for _ in 0..20 {
+        destructibles_bevy::impact::apply_impact(
+            world,
+            target.0,
+            destructibles_core::ImpactSpec {
+                position: (target.1 + Vec3::new(0.0, 6.0, 6.0)).to_array(),
+                radius: 0.0,
+                velocity: [0.0, -30.0, -280.0],
+                mass_kg: 20.0,
+                explosive_yield_kg_tnt: 0.0,
+            },
+        );
+    }
+    info!(
+        "S3 DAMAGE: b{} tiered, 20 shots in {:.1} ms journal {:.2}",
+        target.0,
+        started.elapsed().as_secs_f32() * 1000.0,
+        world
+            .resource::<destructibles_bevy::damage::DamageJournal>()
+            .0
+            .head_for(target.0)
+    );
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/s3_damage_tower.png");
+    world
+        .spawn(Screenshot::primary_window())
+        .observe(save_to_disk(path));
+}
+
+#[derive(Resource, Default)]
+pub struct S3DamageState {
+    stage: u8,
+    since: f32,
+}
+
+fn s3_enabled() -> bool {
+    std::env::var_os("SEATTLE_S3").is_some()
+}
+
+fn rule_for<'a>(pack: &'a StylePack, city: &str, neighborhood: &str) -> &'a StyleRule {
+    for rule in &pack.rules {
+        if !rule.cities.is_empty() && !rule.cities.iter().any(|value| value == city) {
+            continue;
+        }
+        if rule
+            .neighborhood_any
+            .iter()
+            .any(|value| neighborhood.contains(value))
+        {
+            return rule;
+        }
+    }
+    &pack.default
+}
+
+fn facade_for(name: &str) -> FacadeStyle {
+    match name {
+        "glass_curtain_wall" => FacadeStyle::GlassCurtainWall,
+        "concrete_grid" => FacadeStyle::ConcreteGrid,
+        "brick_midrise" => FacadeStyle::BrickMidrise,
+        _ => FacadeStyle::BrickBrownstone,
+    }
+}
+
+fn family_for(name: &str) -> MaterialFamily {
+    match name {
+        "steel_frame" => MaterialFamily::SteelFrame,
+        "timber" => MaterialFamily::Timber,
+        _ => MaterialFamily::MasonryStone,
+    }
+}
+
+fn building_spec(
+    pack: &StylePack,
+    node: &crate::citypack::PackNode,
+    building: &crate::citypack::PackBuilding,
+    city: &str,
+) -> Option<BuildingSpec> {
+    if building.perimeter.len() < 3 || building.perimeter.len() > 64 {
+        return None;
+    }
+    let rule = rule_for(pack, city, &node.name);
+    let mut style = facade_for(&rule.facade_style);
+    let roll = (building.id.wrapping_mul(2654435761) % 1000) as f32 / 1000.0;
+    if roll < rule.glass_probability && building.height_m >= 25.0 {
+        style = FacadeStyle::GlassCurtainWall;
+    }
+    let family = family_for(&rule.family);
+    let footprint = building
+        .perimeter
+        .iter()
+        .map(|point| {
+            [
+                point[0] - building.centroid[0],
+                point[1] - building.centroid[1],
+            ]
+        })
+        .collect::<Vec<_>>();
+    let floor_height = building.floor_height_m.clamp(2.4, 6.0);
+    let floor_count = (building.height_m / floor_height).round().max(1.0) as u32;
+    let mut windows = style.windows();
+    windows.height = (floor_height - 0.1).clamp(1.1, 3.0);
+    windows.sill_height = 0.0;
+    let spec = BuildingSpec {
+        family,
+        footprint,
+        floor_height,
+        floor_count,
+        facade: style.material(),
+        facade_style: style,
+        windows,
+        core: core_for_style(style, &building.perimeter, building.id),
+    };
+    spec.validate().ok().map(|_| spec)
+}
+
+fn s3_buildings(world: &mut World) {
+    if !s3_enabled() {
+        return;
+    }
+    if std::env::var_os("S3_DAMAGE").is_some() && world.resource::<Geology>().targets.len() >= 3 {
+        return;
+    }
+    let Some(camera) = world
+        .query_filtered::<&Transform, With<FlyCamera>>()
+        .single(world)
+        .ok()
+        .copied()
+    else {
+        return;
+    };
+    let center = [
+        camera.translation.x - STREAM_WORLD_OFFSET,
+        camera.translation.z,
+    ];
+    let (wanted, unload): (Vec<usize>, Vec<(usize, Vec<Entity>)>) = {
+        let state = world.resource::<Geology>();
+        let mut evaluations = Evaluations::default();
+        let candidates = wanted_neighborhoods(&state.pack.nodes, center, 650.0, &mut evaluations);
+        let wanted = candidates
+            .into_iter()
+            .filter(|index| !state.building_chunks.contains_key(index))
+            .take(1)
+            .collect::<Vec<_>>();
+        let unload = state
+            .building_chunks
+            .iter()
+            .filter(|(index, _)| {
+                let node = &state.pack.nodes[**index];
+                (node.center[0] - center[0]).hypot(node.center[1] - center[1]) > 950.0
+            })
+            .map(|(index, entities)| (*index, entities.clone()))
+            .collect();
+        (wanted, unload)
+    };
+    for (index, entities) in unload {
+        for entity in entities {
+            let _ = world.despawn(entity);
+        }
+        world
+            .resource_mut::<Geology>()
+            .building_chunks
+            .remove(&index);
+    }
+    for index in wanted {
+        let (chunk, specs, origin_h) = {
+            let state = world.resource::<Geology>();
+            let Some(node) = state.pack.nodes.get(index) else {
+                continue;
+            };
+            match state.pack.read_chunk(index) {
+                Ok(chunk) => {
+                    let specs = chunk
+                        .buildings
+                        .iter()
+                        .filter_map(|building| {
+                            let city = state
+                                .pack
+                                .nodes
+                                .get(node.parent as usize)
+                                .map(|node| node.name.as_str())
+                                .unwrap_or("Seattle");
+                            let spec = building_spec(&state.style, node, building, city)?;
+                            let y =
+                                state.dem.height(building.centroid[0], building.centroid[1]) + 0.03;
+                            Some((
+                                building.id,
+                                spec,
+                                [building.centroid[0], y, building.centroid[1]],
+                            ))
+                        })
+                        .collect::<Vec<_>>();
+                    (chunk, specs, 0.0_f32)
+                }
+                Err(_) => continue,
+            }
+        };
+        let _ = chunk;
+        let mut entities = Vec::new();
+        for (id, spec, origin) in specs {
+            let entity = spawn_building_world_lod(
+                world,
+                id,
+                spec,
+                Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET,
+                BuildingDetail::Shell,
+            );
+            entities.push(entity);
+            if world.resource::<Geology>().targets.len() < 3 {
+                world
+                    .resource_mut::<Geology>()
+                    .targets
+                    .push((id, Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET));
+            }
+        }
+        let count = entities.len();
+        let mut state = world.resource_mut::<Geology>();
+        state.building_chunks.insert(index, entities);
+        state.loaded_buildings += count;
+        let _ = origin_h;
+    }
+    let mut state = world.resource_mut::<Geology>();
+    state.loaded_buildings = state.building_chunks.values().map(Vec::len).sum();
 }
 
 #[cfg(test)]

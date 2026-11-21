@@ -1,0 +1,62 @@
+[
+  {
+    "avg_ms": 73.2699966430664,
+    "p99_ms": 87.4000015258789,
+    "pose": "s2_elliott_rainier.png",
+    "samples": 14
+  },
+  {
+    "avg_ms": 250.0,
+    "p99_ms": 250.0,
+    "pose": "s2_queen_anne.png",
+    "samples": 4
+  },
+  {
+    "avg_ms": 101.19000244140624,
+    "p99_ms": 110.4499969482422,
+    "pose": "s2_lake_bellevue.png",
+    "samples": 10
+  },
+  {
+    "avg_ms": 250.0,
+    "p99_ms": 250.0,
+    "pose": "s2_sodo_flats.png",
+    "samples": 4
+  },
+  {
+    "avg_ms": 250.0,
+    "p99_ms": 250.0,
+    "pose": "s2_steep_overcast.png",
+    "samples": 3
+  },
+  {
+    "avg_ms": 177.97000122070312,
+    "p99_ms": 181.3800048828125,
+    "pose": "s2_montlake_cut.png",
+    "samples": 6
+  },
+  {
+    "avg_ms": 175.13999938964844,
+    "p99_ms": 196.8999938964844,
+    "pose": "s2_waterfront_duwamish.png",
+    "samples": 6
+  },
+  {
+    "avg_ms": 130.5800018310547,
+    "p99_ms": 133.99000549316406,
+    "pose": "s2_elliott_dawn.png",
+    "samples": 8
+  },
+  {
+    "avg_ms": 133.39999389648438,
+    "p99_ms": 144.74000549316406,
+    "pose": "s2_elliott_dusk.png",
+    "samples": 7
+  },
+  {
+    "avg_ms": 250.0,
+    "p99_ms": 250.0,
+    "pose": "s2_capitol_climb.png",
+    "samples": 4
+  }
+]

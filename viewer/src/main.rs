@@ -220,6 +220,25 @@ fn parse_args() -> Args {
                     std::env::set_var("S2_HOVER", "1");
                 }
             }
+            "--seattle-s3-damage" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("S3_DAMAGE", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle-s3" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
             "--seattle-s2" => {
                 args.pilot = true;
                 unsafe {
@@ -394,6 +413,7 @@ fn main() {
     .insert_resource(capture)
     .insert_resource(FrameCounter::default())
     .init_resource::<manhattan_viewer::pilot::PilotDamageState>()
+    .init_resource::<manhattan_viewer::geology::S3DamageState>()
     .insert_resource(selftest)
     .insert_resource(Environment::default())
     .insert_resource(weather)
