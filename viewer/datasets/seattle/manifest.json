@@ -75,6 +75,14 @@
       "bytes": 109752280,
       "sha256": "d10953a09bb88c81b3fd1138d4824621b958674fbc0ed34b3ceea8ee20c6e687"
     },
+    "tl_2024_53_place.zip": {
+      "bytes": 2856695,
+      "sha256": "7da61ba276bfdd886ffeb36bf9af37a99a42f8c446e47c684ae48087d86657c6"
+    },
+    "tl_2024_us_county.zip": {
+      "bytes": 83913260,
+      "sha256": "04e668d3502757c837c13444730547cd967f28a2c49aeffb873d1792ab2cb97b"
+    },
     "water_areas.geojson": {
       "bytes": 1333966,
       "sha256": "c4cf1e620ce4472f6b69ce6f5bbb0b14e5be3fdf9e63004dda666fc4da695036"
@@ -242,6 +250,20 @@
       "layer": "msml_buildings",
       "license": "CDLA-Permissive-2.0",
       "service": "https://minedbuildings.z5.web.core.windows.net/global-buildings/2026-02-03/ (quadkeys 021230021/23/30/32)"
+    },
+    {
+      "attribution": "US Census Bureau TIGER/Line 2024 counties",
+      "crs": "EPSG:2926 (matched in world metres)",
+      "layer": "admin_counties",
+      "license": "Public domain (US Census Bureau)",
+      "service": "https://www2.census.gov/geo/tiger/TIGER2024/COUNTY/tl_2024_us_county.zip"
+    },
+    {
+      "attribution": "US Census Bureau TIGER/Line 2024 places",
+      "crs": "EPSG:2926 (matched in world metres)",
+      "layer": "admin_places",
+      "license": "Public domain (US Census Bureau)",
+      "service": "https://www2.census.gov/geo/tiger/TIGER2024/PLACE/tl_2024_53_place.zip"
     }
   ]
 }
