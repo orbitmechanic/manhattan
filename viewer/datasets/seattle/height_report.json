@@ -1,0 +1,105 @@
+{
+  "generated_utc": "2026-11-21T13:57:12Z",
+  "overture": {
+    "release": "2026-11-18.0",
+    "raw": 934201,
+    "usable": 732908,
+    "matched_ratio": 287916,
+    "matched_iou": 3810,
+    "coverage": 0.8831
+  },
+  "msml": {
+    "matched_ratio": 12855,
+    "matched_iou": 605
+  },
+  "baseline": {
+    "seattle": {
+      "area_heuristic": 111592,
+      "real_surveyed": 75461
+    },
+    "bellevue": {
+      "area_heuristic": 56856
+    },
+    "tacoma": {
+      "real_surveyed": 86421
+    }
+  },
+  "after": {
+    "seattle": {
+      "lidar_overture": 105522,
+      "real_surveyed": 75461,
+      "msml_estimate": 2346,
+      "area_heuristic": 3668,
+      "osm_levels_derived": 56
+    },
+    "bellevue": {
+      "area_heuristic": 10244,
+      "lidar_overture": 46101,
+      "msml_estimate": 501,
+      "osm_levels_derived": 10
+    },
+    "tacoma": {
+      "real_surveyed": 86421
+    }
+  },
+  "height_source_counts": {
+    "lidar_overture": 151623,
+    "real_surveyed": 161882,
+    "msml_estimate": 2847,
+    "area_heuristic": 13912,
+    "osm_levels_derived": 66
+  },
+  "levels_coverage": 0.0192,
+  "start_date_coverage": 0.0,
+  "spot_check_downtown": [
+    {
+      "id": 80153,
+      "centroid": [
+        -128.89,
+        -54.49
+      ],
+      "height_before_m": 66.87,
+      "height_after_m": 161.5,
+      "source_before": "area_heuristic",
+      "source_after": "lidar_overture"
+    },
+    {
+      "id": 84429,
+      "centroid": [
+        -89.12,
+        21.05
+      ],
+      "height_before_m": 93.41,
+      "height_after_m": 15.0,
+      "source_before": "area_heuristic",
+      "source_after": "lidar_overture"
+    },
+    {
+      "id": 87345,
+      "centroid": [
+        63.09,
+        -70.5
+      ],
+      "height_before_m": 11.16,
+      "height_after_m": 75.3,
+      "source_before": "area_heuristic",
+      "source_after": "lidar_overture"
+    },
+    {
+      "id": 110265,
+      "centroid": [
+        105.02,
+        -80.06
+      ],
+      "height_before_m": 7.75,
+      "height_after_m": 54.3,
+      "source_before": "area_heuristic",
+      "source_after": "lidar_overture"
+    }
+  ],
+  "sizes_mb": {
+    "enriched_json": 146.6,
+    "overture_parquet": 171.5,
+    "msml_raw": 158.6
+  }
+}

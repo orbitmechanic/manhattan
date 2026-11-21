@@ -303,7 +303,14 @@ def _seattle_layer(dem, to_lonlat, region_2926, zones):
         for v in np.nanpercentile(base[np.isfinite(base)], [5, 50, 95])
     ]
 
-    buildings = _buildings_from_frame(frame, base, height, category)
+    height_source = np.full(len(frame), "area_heuristic", dtype=object)
+    height_source[real] = "real_surveyed"
+    report["height_source_counts"] = {}
+    for value in height_source:
+        report["height_source_counts"][value] = (
+            report["height_source_counts"].get(value, 0) + 1
+        )
+    buildings = _buildings_from_frame(frame, base, height, category, height_source)
     return buildings, report
 
 
@@ -345,7 +352,9 @@ def _bellevue_layer(dem, to_lonlat, region_2926):
         for v in np.nanpercentile(base[np.isfinite(base)], [5, 50, 95])
     ]
     category = np.array(["residential"] * len(frame), dtype=object)
-    return _buildings_from_frame(frame, base, height, category), report
+    source = np.array(["area_heuristic"] * len(frame), dtype=object)
+    report["height_source_counts"] = {"area_heuristic": len(frame)}
+    return _buildings_from_frame(frame, base, height, category, source), report
 
 
 def _tacoma_layer(dem, to_lonlat, region_2926):
@@ -389,10 +398,17 @@ def _tacoma_layer(dem, to_lonlat, region_2926):
         for v in np.nanpercentile(base[np.isfinite(base)], [5, 50, 95])
     ]
     category = np.array(["residential"] * len(frame), dtype=object)
-    return _buildings_from_frame(frame, base, height, category), report
+    source = np.full(len(frame), "area_heuristic", dtype=object)
+    source[plausible] = "real_surveyed"
+    report["height_source_counts"] = {}
+    for value in source:
+        report["height_source_counts"][value] = (
+            report["height_source_counts"].get(value, 0) + 1
+        )
+    return _buildings_from_frame(frame, base, height, category, source), report
 
 
-def _buildings_from_frame(frame, base, height, category):
+def _buildings_from_frame(frame, base, height, category, height_source):
     import numpy as np
 
     _manifest, _polygon, origin, _region, _to_lonlat = _context()
@@ -416,6 +432,11 @@ def _buildings_from_frame(frame, base, height, category):
                 "year_built": 0,
                 "base_elevation_m": round(
                     float(base[i]) if np.isfinite(base[i]) else 0.0, 2
+                ),
+                "height_source": (
+                    str(height_source[i])
+                    if hasattr(height_source, "__len__")
+                    else str(height_source)
                 ),
             }
         )

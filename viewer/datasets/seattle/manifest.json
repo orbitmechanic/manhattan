@@ -2,6 +2,8 @@
   "city_id": "seattle",
   "counts": {
     "bellevue_buildings": 63574,
+    "msml_buildings": 757953,
+    "overture_buildings": 934201,
     "seattle_buildings_2015": 254464,
     "seattle_buildings_2023": 205864,
     "seattle_parks": 488,
@@ -24,6 +26,26 @@
     "bellevue_buildings.geojson": {
       "bytes": 55666373,
       "sha256": "ec9ff1fe6a22a3252695a290fa9af154dc2ca94c273f96f74f2358fc175888bc"
+    },
+    "msml_021230021.csv.gz": {
+      "bytes": 23346963,
+      "sha256": "ad605d5c1fc4e17ced34c697539ae4c215fc3327b9f72c4e54ab00de3ba541c2"
+    },
+    "msml_021230023.csv.gz": {
+      "bytes": 36240045,
+      "sha256": "c0ee61dc0d4fcbb61479b2a95b46692d580447d8543facd0f3fd7d8706da5c87"
+    },
+    "msml_021230030.csv.gz": {
+      "bytes": 58820958,
+      "sha256": "fbc0279db595b142ff8fa33f5e87e96d89b4c2a43c57d7c26c79fd2a32c67b40"
+    },
+    "msml_021230032.csv.gz": {
+      "bytes": 40231901,
+      "sha256": "03ffa8a9cb5072f822184a1399d95a0f3f8c9fefab00127f97fce37e0f084124"
+    },
+    "overture_buildings.parquet": {
+      "bytes": 171464296,
+      "sha256": "b9128c9f3969a1c27abd39e9863a271ca0eec4da143ce955842e774e821e5165"
     },
     "seattle_buildings_2015.geojson": {
       "bytes": 94349285,
@@ -206,6 +228,20 @@
         "n48w123",
         "n48w122"
       ]
+    },
+    {
+      "attribution": "Overture Maps Foundation - Buildings; heights from USGS Lidar and Microsoft ML Buildings, footprints also OpenStreetMap/Esri",
+      "crs": "EPSG:2926 (matched in world metres)",
+      "layer": "overture_buildings",
+      "license": "ODbL-1.0 (Overture Maps Foundation)",
+      "service": "overturemaps download --type=building (Overture release 2026-11-18.0)"
+    },
+    {
+      "attribution": "Microsoft Global ML Building Footprints",
+      "crs": "EPSG:2926",
+      "layer": "msml_buildings",
+      "license": "CDLA-Permissive-2.0",
+      "service": "https://minedbuildings.z5.web.core.windows.net/global-buildings/2026-02-03/ (quadkeys 021230021/23/30/32)"
     }
   ]
 }

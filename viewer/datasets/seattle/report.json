@@ -32,7 +32,11 @@
         10.3,
         75.7,
         122.5
-      ]
+      ],
+      "height_source_counts": {
+        "area_heuristic": 111592,
+        "real_surveyed": 75461
+      }
     },
     "bellevue_buildings": {
       "raw_features": 63574,
@@ -59,7 +63,10 @@
         16.5,
         93.8,
         248.3
-      ]
+      ],
+      "height_source_counts": {
+        "area_heuristic": 56856
+      }
     },
     "tacoma_buildings_2024": {
       "raw_features": 91000,
@@ -86,7 +93,10 @@
         42.8,
         107.0,
         127.8
-      ]
+      ],
+      "height_source_counts": {
+        "real_surveyed": 86421
+      }
     }
   },
   "water": {
@@ -143,11 +153,11 @@
   "buildings_total": 330330,
   "belt_buildings": 1188,
   "sizes_mb": {
-    "seattle_v11.json": 135.8,
-    "seattle_belt_v11.json": 0.4,
+    "seattle_v11.json": 146.5,
+    "seattle_belt_v11.json": 0.5,
     "terrain_30m.tif": 8.1,
     "terrain_belt_10m.tif": 0.0,
-    "raw_total": 1360.8
+    "raw_total": 1690.9
   },
   "contract": {
     "fields_used": [
