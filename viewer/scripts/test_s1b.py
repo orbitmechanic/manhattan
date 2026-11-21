@@ -145,6 +145,49 @@ class PartitionTest(unittest.TestCase):
         self.assertEqual(len(expected["samples"]), 12)
 
 
+class GeologyTest(unittest.TestCase):
+    def test_s2_assets_and_audits(self):
+        report = load(f"{ROOT}/s2_report.json")
+        self.assertEqual(report["grid"]["rows"], 2322)
+        self.assertEqual(report["grid"]["cols"], 1207)
+        self.assertEqual(report["grid"]["spacing_m"], 30.0)
+        self.assertEqual(os.path.getsize("assets/terrain/seattle_dem_30m.bin"), 2322 * 1207 * 2)
+        self.assertGreater(os.path.getsize("assets/terrain/seattle_water_mask.bin"), 2_000_000)
+        self.assertGreater(os.path.getsize("assets/terrain/seattle_water_mask.bin"), 2_700_000)
+        self.assertGreater(os.path.getsize("assets/terrain/seattle_water.bin"), 300_000)
+        self.assertEqual(report["streets"]["segments"], 29_833)
+        self.assertEqual(report["streets"]["max_drape_error_m"], 0.0)
+        self.assertEqual(report["lod"]["seam_max_height_delta_m"], 0.0)
+        self.assertGreater(report["water"]["bodies"], 100)
+        self.assertGreater(report["water"]["triangles"], 10_000)
+        self.assertGreater(report["water"]["mask_cells"], 400_000)
+        levels = report["water"]["surface_levels"]
+        self.assertIn(0.0, levels)
+        self.assertTrue(any(abs(level - 4.98) < 0.01 for level in levels))
+
+    def test_dem_spot_elevations(self):
+        import numpy as np
+
+        report = load(f"{ROOT}/s2_report.json")
+        grid = np.fromfile("assets/terrain/seattle_dem_30m.bin", dtype="<i2").reshape(
+            report["grid"]["rows"], report["grid"]["cols"]
+        ).astype(np.float32) / 10.0
+        origin = report["grid"]["origin_world"]
+        spacing = report["grid"]["spacing_m"]
+
+        def sample(x, z):
+            col = int(round((x - origin[0]) / spacing - 0.5))
+            row = int(round((z - origin[1]) / spacing - 0.5))
+            return float(grid[row, col])
+
+        for x, z, expected in [
+            (0.0, 0.0, 30.6),
+            (1224.3, -1866.7, 103.1),
+            (-1548.5, -3455.5, 117.9),
+        ]:
+            self.assertLess(abs(sample(x, z) - expected), 2.0)
+
+
 class HorizonTest(unittest.TestCase):
     GRID = 400
 
