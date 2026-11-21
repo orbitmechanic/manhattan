@@ -25,7 +25,14 @@ use bevy::{
 };
 use serde::Deserialize;
 
-use crate::{camera::FlyCamera, motion::MotionState, storefront::StorefrontData};
+use crate::{
+    camera::FlyCamera,
+    citypack::{
+        HierarchyMap, LEVEL_CITY, LEVEL_COUNTY, LEVEL_NEIGHBORHOOD, PackNode, stream_enabled,
+    },
+    motion::MotionState,
+    storefront::StorefrontData,
+};
 
 const MAP_TEX: usize = 512;
 /// World-space radius of the circular map, in mercator metres.
@@ -88,6 +95,22 @@ struct MinimapImages {
 /// Rotates with the camera heading (north-up texture shown heading-up).
 #[derive(Component)]
 struct MinimapMapImage;
+
+/// 0 = neighborhood (650 m), 1 = city, 2 = county.
+#[derive(Resource, Clone, Copy)]
+pub struct MapZoom(pub u8);
+
+impl Default for MapZoom {
+    fn default() -> Self {
+        Self(
+            std::env::var("MINIMAP_ZOOM")
+                .ok()
+                .and_then(|value| value.parse::<u8>().ok())
+                .unwrap_or(0)
+                .min(2),
+        )
+    }
+}
 
 #[derive(Component, Clone, Copy)]
 enum MinimapText {
@@ -162,7 +185,9 @@ impl Plugin for MinimapPlugin {
         app.init_resource::<StreetNetwork>()
             .init_resource::<NearestStreet>()
             .init_resource::<LiveFootprints>()
+            .init_resource::<MapZoom>()
             .add_systems(PostStartup, setup_minimap)
+            .add_systems(Update, cycle_minimap_zoom)
             .add_systems(
                 Update,
                 (
@@ -891,6 +916,98 @@ fn update_minimap_heading(
     map.rotation = minimap_rotation(camera.yaw);
 }
 
+fn cycle_minimap_zoom(keys: Res<ButtonInput<KeyCode>>, mut zoom: ResMut<MapZoom>) {
+    if keys.just_pressed(KeyCode::KeyO) {
+        zoom.0 = (zoom.0 + 1) % 3;
+        info!("MINIMAP: zoom level {}", zoom.0);
+    }
+}
+
+fn world_to_map_r(world: Vec2, center: Vec2, radius: f32) -> Vec2 {
+    Vec2::new(
+        MAP_CENTER + (world.x - center.x) / radius * MAP_RADIUS,
+        MAP_CENTER + (world.y - center.y) / radius * MAP_RADIUS,
+    )
+}
+
+fn draw_aabb(
+    data: &mut [u8],
+    bounds: &[f32; 4],
+    center: Vec2,
+    radius: f32,
+    color: [u8; 4],
+    thickness: i32,
+) {
+    let corners = [
+        Vec2::new(bounds[0], bounds[1]),
+        Vec2::new(bounds[2], bounds[1]),
+        Vec2::new(bounds[2], bounds[3]),
+        Vec2::new(bounds[0], bounds[3]),
+    ];
+    for index in 0..4 {
+        draw_line(
+            data,
+            world_to_map_r(corners[index], center, radius),
+            world_to_map_r(corners[(index + 1) % 4], center, radius),
+            color,
+            thickness,
+        );
+    }
+}
+
+fn render_hierarchy_layer(data: &mut [u8], center: Vec2, zoom: u8, nodes: &[PackNode]) {
+    for y in 0..MAP_TEX as i32 {
+        for x in 0..MAP_TEX as i32 {
+            put(data, x, y, [18, 24, 30, 255]);
+        }
+    }
+    let radius = match zoom {
+        0 => MAP_RADIUS_WORLD,
+        1 => 15_000.0,
+        _ => 80_000.0,
+    };
+    let mut drawn = 0usize;
+    for node in nodes {
+        let (color, thickness) = match node.level {
+            LEVEL_COUNTY => ([150, 195, 255, 255], 4),
+            LEVEL_CITY => ([150, 235, 185, 255], 3),
+            LEVEL_NEIGHBORHOOD => ([190, 205, 225, 235], 2),
+            _ => continue,
+        };
+        let visible = match zoom {
+            0 => node.level == LEVEL_NEIGHBORHOOD,
+            1 => node.level == LEVEL_CITY || node.level == LEVEL_NEIGHBORHOOD,
+            _ => node.level == LEVEL_COUNTY || node.level == LEVEL_CITY,
+        };
+        if !visible {
+            continue;
+        }
+        if node.bounds[2] < center.x - radius
+            || node.bounds[0] > center.x + radius
+            || node.bounds[3] < center.y - radius
+            || node.bounds[1] > center.y + radius
+        {
+            continue;
+        }
+        draw_aabb(data, &node.bounds, center, radius, color, thickness);
+        drawn += 1;
+    }
+    if zoom == 0 {
+        info!(
+            "MINIMAP: zoom0 drawn {drawn} nodes center {:?} radius {radius}",
+            center
+        );
+    }
+    let _ = drawn;
+    draw_dot(data, Vec2::splat(MAP_CENTER), 4.0, [255, 255, 255, 255]);
+    let label = match zoom {
+        0 => "NEIGHBORHOOD",
+        1 => "CITY",
+        _ => "COUNTY",
+    };
+    let _ = label;
+}
+
 #[allow(clippy::too_many_arguments)]
 fn update_minimap_map(
     time: Res<Time>,
@@ -900,8 +1017,10 @@ fn update_minimap_map(
     live: Res<LiveFootprints>,
     nearest: Option<ResMut<NearestStreet>>,
     images: Option<Res<MinimapImages>>,
+    zoom: Option<Res<MapZoom>>,
+    hierarchy: Option<Res<HierarchyMap>>,
     mut assets: ResMut<Assets<Image>>,
-    mut last: Local<Option<(Vec2, f32, u64, u64)>>,
+    mut last: Local<Option<(Vec2, f32, u64, u64, u8, bool)>>,
 ) {
     let Some(images) = images else {
         return;
@@ -914,14 +1033,27 @@ fn update_minimap_map(
     } else {
         MAP_UPDATE_SECS
     };
-    if let Some((last_center, last_time, last_revision, last_wave)) = *last
+    let zoom_key = zoom.as_ref().map(|zoom| zoom.0).unwrap_or(0);
+    let hierarchy_key = hierarchy.is_some();
+    if let Some((last_center, last_time, last_revision, last_wave, last_zoom, last_hierarchy)) =
+        *last
         && live.revision == last_revision
         && wave_revision == last_wave
-        && (now - last_time < interval || center.distance_squared(last_center) < MAP_MOVE_EPS_SQ)
+        && last_zoom == zoom_key
+        && last_hierarchy == hierarchy_key
+        && (now - last_time < interval
+            || (!stream_enabled() && center.distance_squared(last_center) < MAP_MOVE_EPS_SQ))
     {
         return;
     }
-    *last = Some((center, now, live.revision, wave_revision));
+    *last = Some((
+        center,
+        now,
+        live.revision,
+        wave_revision,
+        zoom_key,
+        hierarchy_key,
+    ));
     let Some(mut image) = assets.get_mut(&images.map) else {
         return;
     };
@@ -929,8 +1061,26 @@ fn update_minimap_map(
         return;
     };
     data.fill(0);
-    let nearest_name =
-        render_map_layer(data, center, buildings.buildings(), &streets.streets, &live);
+    if stream_enabled() && hierarchy.is_some() {
+        info!(
+            "MINIMAP: hierarchy render zoom {}",
+            zoom.as_ref().map(|z| z.0).unwrap_or(0)
+        );
+    }
+    let nearest_name = if stream_enabled()
+        && let Some(hierarchy) = hierarchy.as_ref()
+    {
+        let local_center = Vec2::new(center.x - crate::citypack::STREAM_WORLD_OFFSET, center.y);
+        render_hierarchy_layer(
+            data,
+            local_center,
+            zoom.as_ref().map(|z| z.0).unwrap_or(0),
+            &hierarchy.nodes,
+        );
+        None
+    } else {
+        render_map_layer(data, center, buildings.buildings(), &streets.streets, &live)
+    };
     if let Some(mut nearest) = nearest {
         nearest.0 = nearest_name.unwrap_or_default();
     }

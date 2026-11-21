@@ -194,6 +194,22 @@ fn parse_args() -> Args {
                     std::env::set_var("PILOT_CLEAN", "1");
                 }
             }
+            "--seattle-south" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_STREAM", "1");
+                    std::env::set_var("SOUTH_CAPTURE", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle-map" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_STREAM", "1");
+                    std::env::set_var("MINIMAP_CAPTURE", "1");
+                    std::env::set_var("MINIMAP_ZOOM", "0");
+                }
+            }
             "--seattle-stream" => {
                 args.pilot = true;
                 unsafe {
@@ -654,12 +670,12 @@ fn spawn_scene(
         });
         commands.spawn((
             Name::new("Seattle stream ground"),
-            Mesh3d(meshes.add(Cuboid::new(24_000.0, 0.6, 24_000.0))),
+            Mesh3d(meshes.add(Cuboid::new(140_000.0, 0.6, 140_000.0))),
             MeshMaterial3d(material),
             Transform::from_xyz(
                 manhattan_viewer::citypack::STREAM_WORLD_OFFSET + 5_000.0,
                 -0.3,
-                0.0,
+                20_000.0,
             ),
         ));
         return;

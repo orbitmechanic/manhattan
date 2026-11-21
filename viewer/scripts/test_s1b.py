@@ -88,26 +88,59 @@ class ProvenanceTest(unittest.TestCase):
 class PartitionTest(unittest.TestCase):
     def test_partition_accounting_and_size_win(self):
         report = load(f"{ROOT}/partition_report.json")
-        partitions = load(f"{ROOT}/partitions.json")["partitions"]
-        self.assertEqual(len(partitions), report["partitions"])
-        self.assertEqual(sum(row["buildings"] for row in partitions), 330_330)
+        nodes = load(f"{ROOT}/partitions.json")["nodes"]
+        neighborhoods = [row for row in nodes if row["level"] == 2]
+        self.assertEqual(len(neighborhoods), report["levels"]["neighborhoods"])
+        self.assertEqual(sum(row["buildings"] for row in neighborhoods), 330_330)
+        self.assertEqual(sum(row["streets"] for row in neighborhoods), 29_833)
         self.assertLess(report["binary_bytes"], report["json_bytes"] / 4.0)
         self.assertLess(
             report["single_partition_bytes"],
             report["single_partition_json_bytes"],
         )
-        for row in partitions:
+        for row in neighborhoods:
             self.assertGreater(row["buildings"], 0)
             self.assertEqual(len(row["center"]), 2)
             self.assertEqual(len(row["aabb"]), 4)
             self.assertIn("dominant_category", row["hints"])
             self.assertIn("dominant_source", row["hints"])
 
+    def test_hierarchy_paths_and_containment(self):
+        nodes = load(f"{ROOT}/partitions.json")["nodes"]
+        counties = [row for row in nodes if row["level"] == 0]
+        cities = [row for row in nodes if row["level"] == 1]
+        neighborhoods = [row for row in nodes if row["level"] == 2]
+        self.assertEqual(len(counties), 2)
+        self.assertEqual(len(cities), 3)
+        self.assertEqual(len(neighborhoods), 1096)
+        self.assertEqual({row["name"] for row in counties}, {"King", "Pierce"})
+        counts = {row["name"]: row["buildings"] for row in cities}
+        self.assertEqual(counts, {"Seattle": 187_053, "Bellevue": 56_856, "Tacoma": 86_421})
+        for row in neighborhoods:
+            parent = nodes[row["parent"]]
+            self.assertEqual(parent["level"], 1)
+            a, b = row["aabb"], parent["aabb"]
+            self.assertGreaterEqual(a[0], b[0] - 0.011)
+            self.assertGreaterEqual(a[1], b[1] - 0.011)
+            self.assertLessEqual(a[2], b[2] + 0.011)
+            self.assertLessEqual(a[3], b[3] + 0.011)
+
+    def test_evaluation_report_and_tacoma_gate(self):
+        report = load(f"{ROOT}/eval_report.json")
+        poses = {row["pose"]: row for row in report["poses"]}
+        self.assertEqual(report["flat"], 1096)
+        self.assertGreater(poses["downtown"]["ratio_10x"], 10.0)
+        far = poses["far-south"]
+        self.assertEqual(far["flat"], 1096)
+        self.assertEqual(far["hierarchical_10x"]["cities"], 0)
+        self.assertEqual(far["hierarchical_10x"]["neighborhoods"], 0)
+        self.assertGreater(far["ratio_10x"], 100.0)
+
     def test_pack_file_and_fixture_exist(self):
         self.assertGreater(os.path.getsize("assets/datasets/seattle.citypack"), 10_000_000)
         self.assertLess(os.path.getsize("assets/datasets/seattle.citypack"), 30_000_000)
         expected = load("assets/datasets/seattle_test_expected.json")
-        self.assertEqual(expected["partitions"], 3)
+        self.assertEqual(expected["nodes"], 3)
         self.assertGreater(expected["buildings"], 0)
         self.assertEqual(len(expected["samples"]), 12)
 
