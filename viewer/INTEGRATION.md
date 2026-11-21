@@ -1313,3 +1313,44 @@ boxes rather than shells), damage smoke. Queen Anne/SODO/steep/Capitol still
 show geometry/culling gaps. Honest verdict: style pack + streamed generation
 scaffolding are in place, but the S3 visual/damage/perf gate is not met; no S3
 tag should be inferred from this section.
+
+## Architecture invariants — the Shell Doctrine (Seattle)
+
+These three clauses are binding for Seattle and all future rounds. They are
+cited by name; any performance lever is evaluated against them before it is
+considered.
+
+1. **Buildings are textured hit-box shells until damaged.** The near-field
+   render is shells (wall/trim/roof meshes + footprint collider) plus
+   elevation-anchored LOD proxies. No interior lattice, slab/column/collider
+   per cell, or guts may exist in the pristine near field.
+2. **No mass spawn-in of destructible skeletons, ever** — at load or streaming
+   time. The zero-structure-graphs-at-load assertion is the enforcement point.
+   Shells are legitimate; skeleton material is not. The current S3
+   “6 shells per chunk” behavior must be audited against this clause: the six
+   are shells, so the cap is allowed **only if** no support graph is built.
+3. **Mass destructible escalation occurs only under mass-damage events**, which
+   run through the admission machinery as a scheduled wave in bullet time —
+   never as a synchronous per-building spawn.
+
+### Audit result (this amendment)
+
+- Clause 1: S3 spawns `BuildingDetail::Shell` and proxy boxes; wall/trim/roof
+  visuals are correct. **However**, the dependency’s
+  `ensure_structure_runtime` builds a `SupportGraph` for every `Added<Building>`
+  regardless of `DetailLevel`. The S3 load assertion in `src/geology.rs`
+  (`Structures::iter().count() == 0`) therefore **fails**: the resting state
+  currently contains skeleton graphs. Clause 1/2 are **NOT honoured**.
+- Clause 3: the S3 damage smoke applies 20 impacts synchronously; it is not a
+  scheduled admission wave. **NOT honoured** as a mass-escalation path.
+- The 6-shell-per-chunk cap is therefore **rejected as a compliant lever**:
+  shells are allowed, but the dependency’s added-building hook turns each into
+  a skeleton graph. Raising the cap, distance-decaying shells, or any lever
+  that increases shell/skeleton count is rejected until
+  `ensure_structure_runtime` skips `DetailTier::Shell` and the load assertion
+  passes. Tighter radii alone would reduce the count but not fix the invariant.
+
+**Enforcement status:** the assertion is committed and currently fails on
+`--seattle-s3`, so the non-compliant path is loudly blocked rather than
+silently accepted. S3 is not a valid baseline for lever work until the
+dependency hook is corrected.

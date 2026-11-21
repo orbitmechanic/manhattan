@@ -1475,6 +1475,14 @@ fn s3_buildings(world: &mut World) {
         state.loaded_buildings += count;
         let _ = origin_h;
     }
+    let structures = world
+        .resource::<destructibles_bevy::structure::Structures>()
+        .iter()
+        .count();
+    assert_eq!(
+        structures, 0,
+        "Shell Doctrine violation: structure graphs constructed at load"
+    );
     let mut state = world.resource_mut::<Geology>();
     state.loaded_buildings = state.building_chunks.values().map(Vec::len).sum();
 }
