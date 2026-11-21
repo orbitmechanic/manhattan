@@ -185,6 +185,9 @@ fn parse_args() -> Args {
             }
             "--selftest" => args.selftest = true,
             "--pilot" => args.pilot = true,
+            "--perf" => unsafe {
+                std::env::set_var("PILOT_PERF", "1");
+            },
             "--lines" => args.show_lines = true,
             "--ticks" => args.show_ticks = true,
             "--set" => {
@@ -273,149 +276,155 @@ fn main() {
 
     let mut app = App::new();
     app.add_plugins(
-            DefaultPlugins
-                .set(AssetPlugin {
-                    file_path: asset_path,
-                    meta_check: AssetMetaCheck::Never,
-                    ..default()
-                })
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "Manhattan — day/night fly-through".to_string(),
-                        resolution: (1440u32, 900u32).into(),
-                        canvas: Some("#manhattan-canvas".into()),
-                        fit_canvas_to_parent: false,
-                        prevent_default_event_handling: true,
-                        ..default()
-                    }),
+        DefaultPlugins
+            .set(AssetPlugin {
+                file_path: asset_path,
+                meta_check: AssetMetaCheck::Never,
+                ..default()
+            })
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "Manhattan — day/night fly-through".to_string(),
+                    resolution: (1440u32, 900u32).into(),
+                    canvas: Some("#manhattan-canvas".into()),
+                    fit_canvas_to_parent: false,
+                    prevent_default_event_handling: true,
                     ..default()
                 }),
+                ..default()
+            }),
+    )
+    .add_plugins(destructibles_bevy::destructibles_plugin_for_manhattan())
+    .add_plugins(MaterialPlugin::<CityMaterial>::default())
+    .add_plugins(InstrumentPlugin)
+    .add_systems(Startup, setup_tuning)
+    .add_systems(Update, tuning_keys)
+    .add_plugins(NightAmbientPlugin)
+    .add_systems(Startup, manhattan_viewer::pilot::spawn_pilot)
+    .add_systems(
+        Update,
+        (
+            manhattan_viewer::pilot::pilot_camera,
+            manhattan_viewer::pilot::pilot_perf,
+        ),
+    )
+    .add_plugins(NeighborhoodPlugin)
+    .add_plugins(CityRestorationPlugin)
+    .add_plugins(WeatherPlugin)
+    .add_plugins(MotionPlugin)
+    .add_plugins(LightningPlugin)
+    .add_plugins(MinimapPlugin)
+    .add_plugins(CityAudioPlugin)
+    .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
+    .insert_resource(clock)
+    .insert_resource(capture)
+    .insert_resource(FrameCounter::default())
+    .insert_resource(selftest)
+    .insert_resource(Environment::default())
+    .insert_resource(weather)
+    .insert_resource(BlockLights::default())
+    .insert_resource(CityMaterialSetup::default())
+    .insert_resource(CollisionGrid::default())
+    .insert_resource(Stationing::default())
+    .insert_resource(StationingConfig {
+        show_lines: args.show_lines,
+        show_ticks: args.show_ticks,
+        show_coords: true,
+        set: args.line_set,
+    })
+    .insert_resource(StationingState::default())
+    .insert_resource(StorefrontData::default())
+    .insert_resource(StorefrontState::default())
+    .init_resource::<TreeData>()
+    .init_resource::<SignMaterials>()
+    .init_resource::<RoofFurniture>()
+    .init_resource::<Crowd>()
+    .init_resource::<TrafficLanes>()
+    .init_resource::<Traffic>()
+    .init_resource::<Intersections>()
+    .init_resource::<StreetFurniture>()
+    .init_resource::<RoadMaterials>()
+    .init_resource::<ProcessingClock>()
+    .init_resource::<ControlLayout>()
+    .init_resource::<SpeedMode>()
+    .insert_resource(args)
+    .add_systems(
+        Startup,
+        (
+            setup_lighting,
+            spawn_camera,
+            spawn_scene,
+            spawn_fog_banks,
+            spawn_ui,
+            configure_station_gizmos,
+        ),
+    )
+    .add_systems(Startup, spawn_storefronts)
+    .add_systems(Startup, (spawn_trees, spawn_antennas, spawn_signs))
+    .add_systems(Startup, setup_people_catalog)
+    .add_systems(Startup, setup_vehicle_catalog)
+    .add_systems(Startup, setup_street_furniture)
+    .add_systems(Update, tick_processing_clock)
+    .add_systems(
+        Update,
+        (
+            tick_clock,
+            handle_calendar_keys,
+            handle_station_keys,
+            fly_camera_system,
+            update_fog_banks,
+            update_environment,
+            update_fog_bank_materials,
+            update_dof,
+            update_fog_culling,
+            setup_city_materials,
+            cull_web_buildings,
+            update_civil_coordinates,
+            draw_stationing,
+            update_station_text,
+            hide_web_loading,
+            update_blocks,
+            update_city_materials,
+            update_status,
+            run_selftest,
+            capture_system,
         )
-        .add_plugins(destructibles_bevy::destructibles_plugin_for_manhattan())
-        .add_plugins(MaterialPlugin::<CityMaterial>::default())
-        .add_plugins(InstrumentPlugin)
-        .add_systems(Startup, setup_tuning)
-        .add_systems(Update, tuning_keys)
-        .add_plugins(NightAmbientPlugin)
-        .add_systems(Startup, manhattan_viewer::pilot::spawn_pilot)
-        .add_systems(Update, manhattan_viewer::pilot::pilot_camera)
-        .add_plugins(NeighborhoodPlugin)
-        .add_plugins(CityRestorationPlugin)
-        .add_plugins(WeatherPlugin)
-        .add_plugins(MotionPlugin)
-        .add_plugins(LightningPlugin)
-        .add_plugins(MinimapPlugin)
-        .add_plugins(CityAudioPlugin)
-        .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
-        .insert_resource(clock)
-        .insert_resource(capture)
-        .insert_resource(FrameCounter::default())
-        .insert_resource(selftest)
-        .insert_resource(Environment::default())
-        .insert_resource(weather)
-        .insert_resource(BlockLights::default())
-        .insert_resource(CityMaterialSetup::default())
-        .insert_resource(CollisionGrid::default())
-        .insert_resource(Stationing::default())
-        .insert_resource(StationingConfig {
-            show_lines: args.show_lines,
-            show_ticks: args.show_ticks,
-            show_coords: true,
-            set: args.line_set,
-        })
-        .insert_resource(StationingState::default())
-        .insert_resource(StorefrontData::default())
-        .insert_resource(StorefrontState::default())
-        .init_resource::<TreeData>()
-        .init_resource::<SignMaterials>()
-        .init_resource::<RoofFurniture>()
-        .init_resource::<Crowd>()
-        .init_resource::<TrafficLanes>()
-        .init_resource::<Traffic>()
-        .init_resource::<Intersections>()
-        .init_resource::<StreetFurniture>()
-        .init_resource::<RoadMaterials>()
-        .init_resource::<ProcessingClock>()
-        .init_resource::<ControlLayout>()
-        .init_resource::<SpeedMode>()
-        .insert_resource(args)
-        .add_systems(
-            Startup,
-            (
-                setup_lighting,
-                spawn_camera,
-                spawn_scene,
-                spawn_fog_banks,
-                spawn_ui,
-                configure_station_gizmos,
-            ),
+            .chain(),
+    )
+    .add_systems(Update, update_controls_text.after(fly_camera_system))
+    .add_systems(Update, (setup_road_materials, update_road_colors))
+    .add_systems(
+        Update,
+        (handle_weather_keys, update_weather)
+            .chain()
+            .before(update_environment),
+    )
+    .add_systems(Update, update_weather_visuals.after(update_environment))
+    .add_systems(Update, update_detail_culling)
+    .add_systems(Update, update_sign_blink)
+    .add_systems(
+        Update,
+        (stream_people, update_pedestrians, update_limbs)
+            .chain()
+            .run_if(accessories_active),
+    )
+    .add_systems(
+        Update,
+        (
+            stream_traffic,
+            update_traffic,
+            update_vehicle_lights,
+            update_vehicle_light_lod,
         )
-        .add_systems(Startup, spawn_storefronts)
-        .add_systems(Startup, (spawn_trees, spawn_antennas, spawn_signs))
-        .add_systems(Startup, setup_people_catalog)
-        .add_systems(Startup, setup_vehicle_catalog)
-        .add_systems(Startup, setup_street_furniture)
-        .add_systems(Update, tick_processing_clock)
-        .add_systems(
-            Update,
-            (
-                tick_clock,
-                handle_calendar_keys,
-                handle_station_keys,
-                fly_camera_system,
-                update_fog_banks,
-                update_environment,
-                update_fog_bank_materials,
-                update_dof,
-                update_fog_culling,
-                setup_city_materials,
-                cull_web_buildings,
-                update_civil_coordinates,
-                draw_stationing,
-                update_station_text,
-                hide_web_loading,
-                update_blocks,
-                update_city_materials,
-                update_status,
-                run_selftest,
-                capture_system,
-            )
-                .chain(),
-        )
-        .add_systems(Update, update_controls_text.after(fly_camera_system))
-        .add_systems(Update, (setup_road_materials, update_road_colors))
-        .add_systems(
-            Update,
-            (handle_weather_keys, update_weather)
-                .chain()
-                .before(update_environment),
-        )
-        .add_systems(Update, update_weather_visuals.after(update_environment))
-        .add_systems(Update, update_detail_culling)
-        .add_systems(Update, update_sign_blink)
-        .add_systems(
-            Update,
-            (stream_people, update_pedestrians, update_limbs)
-                .chain()
-                .run_if(accessories_active),
-        )
-        .add_systems(
-            Update,
-            (
-                stream_traffic,
-                update_traffic,
-                update_vehicle_lights,
-                update_vehicle_light_lod,
-            )
-                .chain()
-                .run_if(accessories_active),
-        )
-        .add_systems(
-            Update,
-            (stream_street_furniture, update_street_lights)
-                .chain()
-                .run_if(accessories_active),
-        );
+            .chain()
+            .run_if(accessories_active),
+    )
+    .add_systems(
+        Update,
+        (stream_street_furniture, update_street_lights)
+            .chain()
+            .run_if(accessories_active),
+    );
 
     add_dev_brp(&mut app);
     app.run();

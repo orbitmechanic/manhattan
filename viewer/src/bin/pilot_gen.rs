@@ -37,6 +37,8 @@ struct Record {
     floor_count: u32,
     panes: usize,
     cells: usize,
+    storefronts: usize,
+    ads: usize,
     fallback_box: Option<[f32; 3]>,
 }
 
@@ -50,6 +52,8 @@ struct Audits {
     row_offenders: usize,
     batches: BTreeMap<String, usize>,
     triangles_estimate: usize,
+    storefronts: usize,
+    ads: usize,
 }
 
 fn layout_envelope_ok(layout: &BuildingLayout) -> bool {
@@ -80,16 +84,18 @@ fn layout_envelope_ok(layout: &BuildingLayout) -> bool {
 
 fn main() {
     // CityDataset v1.1 is the only input. Manhattan is just the adapter.
-    let dataset = std::env::var("PILOT_DATASET").unwrap_or_else(|_| {
-        "assets/datasets/manhattan_v11.json".to_string()
-    });
+    let dataset = std::env::var("PILOT_DATASET")
+        .unwrap_or_else(|_| "assets/datasets/manhattan_v11.json".to_string());
     let text = fs::read_to_string(&dataset).expect("dataset");
     let root: serde_json::Value = serde_json::from_str(&text).expect("dataset json");
     let mut center = CENTER;
     if root["city_id"].as_str() != Some("manhattan")
         && let Some(ep) = root["fields"]["epicenter"].as_array()
     {
-        center = [ep[0].as_f64().unwrap() as f32, ep[1].as_f64().unwrap() as f32];
+        center = [
+            ep[0].as_f64().unwrap() as f32,
+            ep[1].as_f64().unwrap() as f32,
+        ];
     }
     let mut metas: Vec<BuildingMeta> = Vec::new();
     for b in root["buildings"].as_array().expect("buildings") {
@@ -117,6 +123,10 @@ fn main() {
     candidates.sort_by(|a, b| a.0.total_cmp(&b.0));
     candidates.truncate(MAX_BUILDINGS);
 
+    let epicenter = root["fields"]["epicenter"]
+        .as_array()
+        .map(|p| [p[0].as_f64().unwrap() as f32, p[1].as_f64().unwrap() as f32])
+        .unwrap_or(CENTER);
     let mut audits = Audits::default();
     let mut records = Vec::new();
     for (_, meta) in &candidates {
@@ -140,6 +150,22 @@ fn main() {
                     audits.triangles_estimate += layout.panes.len() * 2
                         + layout.slabs.len() * 32
                         + layout.columns.len() * 12;
+                    let d = ((meta.centroid[0] - epicenter[0]).powi(2)
+                        + (meta.centroid[1] - epicenter[1]).powi(2))
+                    .sqrt();
+                    let density = if d <= 250.0 {
+                        1.0
+                    } else {
+                        ((2500.0 - d) / 2250.0).clamp(0.0, 1.0).powf(1.35)
+                    };
+                    let storefronts = if density > 0.05 {
+                        (2.0 + density * 4.0).round() as usize
+                    } else {
+                        0
+                    };
+                    let ads = (density * 4.0).round() as usize;
+                    audits.storefronts += storefronts;
+                    audits.ads += ads;
                     records.push(Record {
                         id: meta.id,
                         origin,
@@ -150,6 +176,8 @@ fn main() {
                         floor_count: layout.spec.floor_count,
                         panes: layout.panes.len(),
                         cells: layout.cells.len(),
+                        storefronts,
+                        ads,
                         fallback_box: None,
                     });
                 }
@@ -163,8 +191,16 @@ fn main() {
         .iter()
         .filter(|record| record.style == "glass curtain wall")
         .count() as f32;
-    let fraction = if records.is_empty() { 0.0 } else { glass / records.len() as f32 };
-    println!("PILOT MIX: glass {:.2}, records {}", fraction, records.len());
+    let fraction = if records.is_empty() {
+        0.0
+    } else {
+        glass / records.len() as f32
+    };
+    println!(
+        "PILOT MIX: glass {:.2}, records {}",
+        fraction,
+        records.len()
+    );
     if root["city_id"].as_str() == Some("manhattan") {
         assert!(
             (0.40..=0.60).contains(&fraction),
@@ -195,6 +231,10 @@ fn main() {
         bundle.audits.triangles_estimate,
         path.display()
     );
+    println!(
+        "PILOT PLACEMENTS: storefronts={} ads={} (region radial field)",
+        bundle.audits.storefronts, bundle.audits.ads
+    );
 }
 
 fn rejected(
@@ -222,6 +262,8 @@ fn rejected(
         floor_count: 1,
         panes: 0,
         cells: 0,
+        storefronts: 0,
+        ads: 0,
         fallback_box: Some([
             (max[0] - min[0]).max(2.0),
             meta.height_m.max(2.0),
