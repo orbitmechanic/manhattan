@@ -145,6 +145,25 @@ class PartitionTest(unittest.TestCase):
         self.assertEqual(len(expected["samples"]), 12)
 
 
+class S3Test(unittest.TestCase):
+    def test_style_pack_completeness(self):
+        pack = load("assets/styles/seattle_pack.json")
+        report = load(f"{ROOT}/style_pack_report.json")
+        self.assertEqual(pack["city_id"], "seattle")
+        self.assertEqual(pack["epicenter"]["world"], [0.0, 0.0])
+        self.assertEqual(report["neighborhoods"], 1096)
+        self.assertEqual(report["completeness"], 1.0)
+        self.assertIn("timber", report["families"])
+        self.assertIn("masonry_stone", report["families"])
+
+    def test_s3_perf_rows(self):
+        rows = load(f"{ROOT}/s3_perf.json")
+        self.assertGreaterEqual(len(rows), 10)
+        for row in rows:
+            self.assertGreater(row["avg_ms"], 0.0)
+            self.assertGreaterEqual(row["p99_ms"], row["avg_ms"] - 0.01)
+
+
 class GeologyTest(unittest.TestCase):
     def test_s2_assets_and_audits(self):
         report = load(f"{ROOT}/s2_report.json")
