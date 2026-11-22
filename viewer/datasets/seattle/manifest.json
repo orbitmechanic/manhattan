@@ -11,7 +11,8 @@
     "seattle_snd": 29833,
     "seattle_zoning": 3465,
     "tacoma_buildings_2024": 91000,
-    "water_areas": 432
+    "water_areas": 432,
+    "seattle_trees": 374849
   },
   "generated_utc": "2026-11-21T05:13:03Z",
   "raw": {
@@ -264,6 +265,231 @@
       "layer": "admin_places",
       "license": "Public domain (US Census Bureau)",
       "service": "https://www2.census.gov/geo/tiger/TIGER2024/PLACE/tl_2024_53_place.zip"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:53:36Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:53:36Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:53:36Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:57:10Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:57:10Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:57:10Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:59:38Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:59:38Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:59:38Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:11:21Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:11:21Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:11:21Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:13:50Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:13:50Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:13:50Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:20:59Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:20:59Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:20:59Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:33:56Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:33:56Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:33:56Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:42:15Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:42:15Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:42:15Z"
     }
-  ]
+  ],
+  "derived": {
+    "trees": {
+      "path": "assets/datasets/seattle_trees.bin",
+      "report": "datasets/seattle/trees_report.json",
+      "sha256": "b2a514289e3b53eb4dd505483476251aeca51c2934d2d806b70d9f4316203948",
+      "trees": 374849,
+      "keyed_by": "CityPack node index (neighborhood level)"
+    }
+  }
 }

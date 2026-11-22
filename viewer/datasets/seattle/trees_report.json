@@ -1,0 +1,120 @@
+{
+  "generated_utc": "2026-11-22T06:42:15Z",
+  "pack": {
+    "path": "assets/datasets/seattle.citypack",
+    "sha256": "9a589cd4f5af5181f9fd89ca67f2ce0b43b19f48ad9be4a0ad7a4430d19e251e",
+    "nodes": 1101,
+    "neighborhoods": 1096
+  },
+  "output": {
+    "path": "assets/datasets/seattle_trees.bin",
+    "sha256": "b2a514289e3b53eb4dd505483476251aeca51c2934d2d806b70d9f4316203948",
+    "bytes": 3757316,
+    "trees": 374849,
+    "record_bytes": 10,
+    "record": "x i16 dm, z i16 dm (chunk-centre relative), height u16 cm, species u8, tint u8, regime u8, pad u8"
+  },
+  "sources": {
+    "sdot_trees": {
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)"
+    },
+    "worldcover": {
+      "url": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "product": "ESA WorldCover 2021 v200, 10 m, classes 10/20",
+      "license": "CC BY 4.0 (ESA WorldCover)"
+    },
+    "parks": {
+      "path": "datasets/seattle/raw/seattle_parks_polygons.geojson",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "license": "City of Seattle open data",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)"
+    },
+    "water": {
+      "path": "datasets/seattle/raw/water_areas.geojson",
+      "sha256": "c4cf1e620ce4472f6b69ce6f5bbb0b14e5be3fdf9e63004dda666fc4da695036",
+      "license": "US Census TIGER/Line"
+    }
+  },
+  "regimes": {
+    "street_inventory": 139811,
+    "synthetic_street": 3588,
+    "park": 85844,
+    "residential": 147492
+  },
+  "caps": {
+    "street": 300,
+    "park": 320,
+    "residential": 160,
+    "synthetic": 160
+  },
+  "rejections": {
+    "rejected_building": 877,
+    "rejected_road": 28148,
+    "rejected_water": 206,
+    "rejected_spacing": 56677
+  },
+  "species": {
+    "douglas_fir": 75273,
+    "western_red_cedar": 36681,
+    "bigleaf_maple": 90700,
+    "pacific_madrone": 28469,
+    "cherry": 89474,
+    "london_plane": 54252
+  },
+  "species_palette": [
+    {
+      "key": "douglas_fir",
+      "archetype": 0,
+      "height_m": [
+        22.0,
+        45.0
+      ]
+    },
+    {
+      "key": "western_red_cedar",
+      "archetype": 0,
+      "height_m": [
+        18.0,
+        38.0
+      ]
+    },
+    {
+      "key": "bigleaf_maple",
+      "archetype": 1,
+      "height_m": [
+        12.0,
+        26.0
+      ]
+    },
+    {
+      "key": "pacific_madrone",
+      "archetype": 1,
+      "height_m": [
+        8.0,
+        20.0
+      ]
+    },
+    {
+      "key": "cherry",
+      "archetype": 2,
+      "height_m": [
+        5.0,
+        11.0
+      ]
+    },
+    {
+      "key": "london_plane",
+      "archetype": 1,
+      "height_m": [
+        12.0,
+        24.0
+      ]
+    }
+  ],
+  "seconds": 104.8
+}
