@@ -44,6 +44,10 @@ const S3_SHELL_CAP: usize = 24;
 /// Proxies beyond this distance merge into one mesh per chunk; closer ones
 /// stay individual so the near field keeps per-building silhouettes.
 const S3_PROXY_MERGE_M: f32 = 250.0;
+/// Unload margin over the 650 m load radius, and a hard resident cap so a
+/// teleporting capture walk cannot accumulate chunks faster than it drops them.
+const S3_UNLOAD_M: f32 = 800.0;
+const S3_MAX_RESIDENT_CHUNKS: usize = 12;
 const FAR_STEP: i32 = 2;
 
 #[derive(Deserialize)]
@@ -2146,15 +2150,36 @@ fn s3_buildings(world: &mut World) {
         // Load and unload must use the same metric: a sprawling neighbourhood
         // can have its AABB inside the load radius while its centre sits past
         // the unload radius, which made every frame respawn it.
-        let unload = state
+        let mut unload = state
             .building_chunks
             .iter()
             .filter(|(index, _)| {
                 let node = &state.pack.nodes[**index];
-                crate::citypack::aabb_distance2(&node.bounds, center) > 950.0 * 950.0
+                crate::citypack::aabb_distance2(&node.bounds, center) > S3_UNLOAD_M * S3_UNLOAD_M
             })
             .map(|(index, entities)| (*index, entities.clone()))
-            .collect();
+            .collect::<Vec<_>>();
+        let resident = state.building_chunks.len() - unload.len();
+        if resident > S3_MAX_RESIDENT_CHUNKS {
+            let mut farthest = state
+                .building_chunks
+                .iter()
+                .filter(|(index, _)| !unload.iter().any(|(other, _)| other == *index))
+                .map(|(index, entities)| {
+                    let node = &state.pack.nodes[*index];
+                    let distance = crate::citypack::aabb_distance2(&node.bounds, center);
+                    (*index, entities.clone(), distance)
+                })
+                .collect::<Vec<_>>();
+            farthest.sort_by(|a, b| b.2.total_cmp(&a.2));
+            let excess = resident - S3_MAX_RESIDENT_CHUNKS;
+            unload.extend(
+                farthest
+                    .into_iter()
+                    .take(excess)
+                    .map(|(index, entities, _)| (index, entities)),
+            );
+        }
         (wanted, unload)
     };
     for (index, entities) in unload {
@@ -2353,7 +2378,8 @@ fn s3_buildings(world: &mut World) {
             shells + proxies
         );
         info!(
-            "S3 chunk {target_name}: {count} entities -> {shells} shells, {proxies} proxies ({merged} merged) in {spawn_ms:.1} ms"
+            "S3 chunk {target_name}: {count} entities -> {shells} shells, {proxies} proxies ({merged} merged) in {spawn_ms:.1} ms; resident {} chunks",
+            world.resource::<Geology>().building_chunks.len() + 1
         );
         if !world.resource::<Geology>().first_chunk_reported {
             let boot_to_first = world

@@ -1,0 +1,98 @@
+[
+  {
+    "avg_ms": 50.75,
+    "p99_ms": 250.0,
+    "pose": "gauntlet_15ms",
+    "samples": 154
+  },
+  {
+    "avg_ms": 250.0,
+    "p99_ms": 250.0,
+    "pose": "gauntlet_30ms",
+    "samples": 12
+  },
+  {
+    "avg_ms": 229.22999572753903,
+    "p99_ms": 250.0,
+    "pose": "gauntlet_100ms",
+    "samples": 13
+  },
+  {
+    "avg_ms": 250.0,
+    "p99_ms": 250.0,
+    "pose": "gauntlet_650ms",
+    "samples": 12
+  },
+  {
+    "avg_ms": 66.81999969482422,
+    "p99_ms": 74.05999755859375,
+    "pose": "s2_capitol_climb.png",
+    "samples": 15
+  },
+  {
+    "avg_ms": 41.38999938964844,
+    "p99_ms": 44.81999969482422,
+    "pose": "s2_elliott_rainier.png",
+    "samples": 24
+  },
+  {
+    "avg_ms": 66.79000091552734,
+    "p99_ms": 71.30000305175781,
+    "pose": "s2_queen_anne.png",
+    "samples": 15
+  },
+  {
+    "avg_ms": 39.45000076293945,
+    "p99_ms": 44.369998931884766,
+    "pose": "s2_lake_bellevue.png",
+    "samples": 25
+  },
+  {
+    "avg_ms": 69.16000366210938,
+    "p99_ms": 77.93000030517578,
+    "pose": "s2_sodo_flats.png",
+    "samples": 15
+  },
+  {
+    "avg_ms": 62.560001373291016,
+    "p99_ms": 69.3499984741211,
+    "pose": "s2_steep_overcast.png",
+    "samples": 16
+  },
+  {
+    "avg_ms": 47.029998779296875,
+    "p99_ms": 54.209999084472656,
+    "pose": "s2_montlake_cut.png",
+    "samples": 22
+  },
+  {
+    "avg_ms": 49.970001220703125,
+    "p99_ms": 55.619998931884766,
+    "pose": "s2_waterfront_duwamish.png",
+    "samples": 20
+  },
+  {
+    "avg_ms": 39.060001373291016,
+    "p99_ms": 45.060001373291016,
+    "pose": "s2_elliott_dawn.png",
+    "samples": 26
+  },
+  {
+    "avg_ms": 40.0099983215332,
+    "p99_ms": 47.720001220703125,
+    "pose": "s2_elliott_dusk.png",
+    "samples": 25
+  },
+  {
+    "avg_ms": 33.220001220703125,
+    "p99_ms": 91.91999816894533,
+    "pose": "low_orbit",
+    "samples": 360
+  },
+  {
+    "avg_ms": 54.0,
+    "p99_ms": 98.95999908447266,
+    "pose": "chunk_hover",
+    "samples": 36
+  }
+]
