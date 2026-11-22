@@ -1284,6 +1284,7 @@ fn s2_capture(
         || std::env::var_os("S2_HOVER").is_some()
         || std::env::var_os("S3_DAMAGE").is_some()
         || std::env::var_os("TREES_CAPTURE").is_some()
+        || std::env::var_os("LANDMARK_GATE").is_some()
     {
         return;
     }

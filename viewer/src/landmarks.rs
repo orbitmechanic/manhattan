@@ -78,12 +78,12 @@ const fn comp(
     }
 }
 
-pub const NEEDLE: [ComponentDef; 4] = [
+pub const NEEDLE: [ComponentDef; 6] = [
     comp(
         "pedestal",
         [0.0, 0.0],
         0.0,
-        [40.0, 40.0],
+        [46.0, 46.0],
         12.0,
         Shape::Disc,
         MaterialFamily::MasonryStone,
@@ -95,8 +95,8 @@ pub const NEEDLE: [ComponentDef; 4] = [
         "stem",
         [0.0, 0.0],
         12.0,
-        [9.0, 9.0],
-        146.0,
+        [13.0, 13.0],
+        134.0,
         Shape::Disc,
         MaterialFamily::SteelFrame,
         FacadeStyle::GlassCurtainWall,
@@ -104,11 +104,23 @@ pub const NEEDLE: [ComponentDef; 4] = [
         true,
     ),
     comp(
+        "waist",
+        [0.0, 0.0],
+        146.0,
+        [26.0, 26.0],
+        10.0,
+        Shape::Disc,
+        MaterialFamily::SteelFrame,
+        FacadeStyle::GlassCurtainWall,
+        5,
+        false,
+    ),
+    comp(
         "saucer",
         [0.0, 0.0],
-        158.0,
-        [42.0, 42.0],
-        9.0,
+        156.0,
+        [48.0, 48.0],
+        14.0,
         Shape::Disc,
         MaterialFamily::SteelFrame,
         FacadeStyle::GlassCurtainWall,
@@ -118,12 +130,24 @@ pub const NEEDLE: [ComponentDef; 4] = [
     comp(
         "crown",
         [0.0, 0.0],
-        167.0,
-        [8.0, 8.0],
-        14.0,
+        170.0,
+        [12.0, 12.0],
+        10.0,
         Shape::Rect,
         MaterialFamily::SteelFrame,
         FacadeStyle::GlassCurtainWall,
+        3,
+        false,
+    ),
+    comp(
+        "spire",
+        [0.0, 0.0],
+        180.0,
+        [6.0, 6.0],
+        14.0,
+        Shape::Rect,
+        MaterialFamily::SteelFrame,
+        FacadeStyle::ConcreteGrid,
         3,
         false,
     ),
@@ -170,7 +194,7 @@ pub const MARKET: [ComponentDef; 5] = [
         "clock",
         [-8.0, -20.0],
         18.0,
-        [4.0, 4.0],
+        [7.0, 7.0],
         7.0,
         Shape::Rect,
         MaterialFamily::SteelFrame,
@@ -826,6 +850,51 @@ fn spawn_landmarks(world: &mut World) {
     world.resource_mut::<Landmarks>().instances = instances;
 }
 
+/// Drive the camera every frame; the pilot controller also writes it.
+fn apply_stage_pose(world: &mut World, stage: u8, target: usize) {
+    let needle = LANDMARKS[target].anchor;
+    if target != 0 {
+        // Generic landmark framing: 260 m south of the anchor, 45 m up,
+        // looking at the assembly centroid.
+        let top = LANDMARKS[target]
+            .components
+            .iter()
+            .map(|component| component.base_y + component.height)
+            .fold(0.0_f32, f32::max);
+        let ground = ground_at(world, needle[0], needle[1]);
+        set_camera(
+            world,
+            [needle[0] + 40.0, 45.0, needle[1] + 250.0],
+            [needle[0], ground + top * 0.45, needle[1]],
+        );
+        return;
+    }
+    let ground = ground_at(world, needle[0], needle[1]);
+    match stage {
+        1 => set_camera(
+            world,
+            [needle[0], 320.0, needle[1]],
+            [needle[0], ground + 90.0, needle[1]],
+        ),
+        2 => set_camera(
+            world,
+            [-3600.0, 55.0, -1500.0],
+            [needle[0], ground + 90.0, needle[1]],
+        ),
+        8 => set_camera(
+            world,
+            [-1489.8, 26.0, -2620.3],
+            [needle[0], ground + 95.0, needle[1]],
+        ),
+        3..=7 => set_camera(
+            world,
+            [-850.0, 95.0, -1350.0],
+            [needle[0], ground + 80.0, needle[1]],
+        ),
+        _ => {}
+    }
+}
+
 fn landmark_gate(world: &mut World) {
     if std::env::var_os("LANDMARK_GATE").is_none() || !s2_enabled() {
         return;
@@ -860,6 +929,7 @@ fn landmark_gate(world: &mut World) {
         state.since = since;
         state.act = act;
     };
+    apply_stage_pose(world, stage, target);
     let landmark = &LANDMARKS[target];
     let components: Vec<(u32, Vec3, f32, u8, bool)> = world.resource::<Landmarks>().instances
         [target]
@@ -903,6 +973,23 @@ fn landmark_gate(world: &mut World) {
                     .remove(id);
                 destructibles_bevy::streaming::record_pristine(world, *id);
             }
+            for (id, origin, _height, _phase, _sig) in &components {
+                let (record_origin, entity, layout_height) = world
+                    .resource::<destructibles_bevy::building::Buildings>()
+                    .get(*id)
+                    .map(|record| (record.origin, record.entity, record.layout.height))
+                    .unwrap_or((Vec3::ZERO, Entity::PLACEHOLDER, 0.0));
+                let transform = world
+                    .get::<Transform>(entity)
+                    .map(|transform| transform.translation);
+                let visibility = world.get::<Visibility>(entity).copied();
+                let aabb = world
+                    .get::<bevy::camera::primitives::Aabb>(entity)
+                    .map(|aabb| (aabb.center, aabb.half_extents));
+                info!(
+                    "LANDMARK component {id}: spawned origin {origin:?} record {record_origin:?} layout_h {layout_height} transform {transform:?} visibility {visibility:?} aabb {aabb:?}"
+                );
+            }
             info!(
                 "LANDMARK {}: tier-up complete, pristine recorded",
                 landmark.name
@@ -915,10 +1002,22 @@ fn landmark_gate(world: &mut World) {
             }
             set_camera(
                 world,
+                [-1006.1, 320.0, -1609.9],
+                [-1006.1, ground_at(world, -1006.1, -1609.9) + 90.0, -1609.9],
+            );
+            landmark_capture(world, target, "debug_topdown");
+            save(world, 8, elapsed, 0);
+        }
+        8 => {
+            if elapsed - since < 1.0 {
+                return;
+            }
+            set_camera(
+                world,
                 [-1489.8, 26.0, -2620.3],
                 [-1006.1, ground_at(world, -1006.1, -1609.9) + 95.0, -1609.9],
             );
-            capture(world, "landmarks_needle_pristine_kerry.png");
+            landmark_capture(world, target, "pristine_kerry");
             save(world, 2, elapsed, 0);
         }
         2 => {
@@ -930,7 +1029,7 @@ fn landmark_gate(world: &mut World) {
                 [-3600.0, 55.0, -1500.0],
                 [-1006.1, ground_at(world, -1006.1, -1609.9) + 90.0, -1609.9],
             );
-            capture(world, "landmarks_needle_pristine_elliott.png");
+            landmark_capture(world, target, "pristine_elliott");
             save(world, 3, elapsed, 0);
         }
         3 => {
@@ -939,7 +1038,7 @@ fn landmark_gate(world: &mut World) {
             }
             set_camera(
                 world,
-                [-1509.6, 40.0, -1619.9],
+                [-850.0, 95.0, -1350.0],
                 [-1006.1, ground_at(world, -1006.1, -1609.9) + 80.0, -1609.9],
             );
             info!("LANDMARK gate: scripted sequence start");
@@ -951,13 +1050,13 @@ fn landmark_gate(world: &mut World) {
             }
             // Capture the previous acts' result before the next impacts land.
             if act == 2 {
-                capture(world, "landmarks_needle_25.png");
+                landmark_capture(world, target, "25");
             }
             if act == 4 {
-                capture(world, "landmarks_needle_50.png");
+                landmark_capture(world, target, "50");
             }
             if act == 8 {
-                capture(world, "landmarks_needle_90.png");
+                landmark_capture(world, target, "90");
             }
             for (id, origin, height, phase, _signature) in &components {
                 if *phase > act {
@@ -987,13 +1086,13 @@ fn landmark_gate(world: &mut World) {
                 ACTS
             );
             if act == 2 {
-                capture(world, "landmarks_needle_25.png");
+                landmark_capture(world, target, "25");
             }
             if act == 4 {
-                capture(world, "landmarks_needle_50.png");
+                landmark_capture(world, target, "50");
             }
             if act == 8 {
-                capture(world, "landmarks_needle_90.png");
+                landmark_capture(world, target, "90");
             }
             act += 1;
             if act >= ACTS {
@@ -1004,7 +1103,7 @@ fn landmark_gate(world: &mut World) {
         }
         7 => {
             // Let the final collapse settle before asking the epilogue to undo.
-            if elapsed - since < 6.0 {
+            if elapsed - since < 10.0 {
                 return;
             }
             save(world, 5, elapsed, act);
@@ -1014,14 +1113,26 @@ fn landmark_gate(world: &mut World) {
                 .iter()
                 .map(|(id, _origin, _height, _phase, _signature)| *id)
                 .collect::<Vec<_>>();
-            destructibles_bevy::rewind::begin_restoration(world, &ids);
-            for _ in 0..4000 {
-                destructibles_bevy::rewind::advance_restoration(world);
-                if world
+            for _pass in 0..3 {
+                destructibles_bevy::rewind::begin_restoration(world, &ids);
+                for _ in 0..4000 {
+                    destructibles_bevy::rewind::advance_restoration(world);
+                    if world
+                        .resource::<destructibles_bevy::damage::DamageJournal>()
+                        .0
+                        .is_empty()
+                    {
+                        break;
+                    }
+                }
+                let volume = world
                     .resource::<destructibles_bevy::damage::DamageJournal>()
                     .0
-                    .is_empty()
-                {
+                    .entries()
+                    .iter()
+                    .filter(|entry| entry.volume > 0.0)
+                    .count();
+                if volume == 0 {
                     break;
                 }
             }
@@ -1064,7 +1175,7 @@ fn landmark_gate(world: &mut World) {
                 "LANDMARK PASS: {} volumetric journal 0 ({journal_len} theater entries), checksums match, structures {structures}",
                 landmark.name
             );
-            capture(world, "landmarks_needle_restored.png");
+            landmark_capture(world, target, "restored");
             save(world, 6, elapsed, act);
         }
         _ => {
@@ -1083,6 +1194,16 @@ struct LandmarkGate {
     since: f32,
     act: u8,
     done: bool,
+}
+
+fn landmark_capture(world: &mut World, target: usize, suffix: &str) {
+    let key = LANDMARKS[target].key;
+    let name = if target == 0 {
+        format!("landmarks_needle_{suffix}.png")
+    } else {
+        format!("landmarks_{key}_{suffix}.png")
+    };
+    capture(world, &name);
 }
 
 fn capture(world: &mut World, name: &str) {
