@@ -1,98 +1,98 @@
 [
   {
-    "avg_ms": 50.75,
-    "p99_ms": 250.0,
-    "pose": "gauntlet_15ms",
-    "samples": 154
-  },
-  {
-    "avg_ms": 250.0,
-    "p99_ms": 250.0,
-    "pose": "gauntlet_30ms",
-    "samples": 12
-  },
-  {
-    "avg_ms": 229.22999572753903,
-    "p99_ms": 250.0,
-    "pose": "gauntlet_100ms",
-    "samples": 13
-  },
-  {
-    "avg_ms": 250.0,
-    "p99_ms": 250.0,
-    "pose": "gauntlet_650ms",
-    "samples": 12
-  },
-  {
-    "avg_ms": 66.81999969482422,
-    "p99_ms": 74.05999755859375,
+    "avg_ms": 66.1500015258789,
+    "p99_ms": 78.80000305175781,
     "pose": "s2_capitol_climb.png",
     "samples": 15
   },
   {
-    "avg_ms": 41.38999938964844,
-    "p99_ms": 44.81999969482422,
+    "avg_ms": 40.65999984741211,
+    "p99_ms": 46.709999084472656,
     "pose": "s2_elliott_rainier.png",
-    "samples": 24
+    "samples": 25
   },
   {
-    "avg_ms": 66.79000091552734,
-    "p99_ms": 71.30000305175781,
+    "avg_ms": 69.18000030517578,
+    "p99_ms": 79.5,
     "pose": "s2_queen_anne.png",
-    "samples": 15
+    "samples": 14
   },
   {
-    "avg_ms": 39.45000076293945,
-    "p99_ms": 44.369998931884766,
+    "avg_ms": 40.0099983215332,
+    "p99_ms": 44.290000915527344,
     "pose": "s2_lake_bellevue.png",
     "samples": 25
   },
   {
-    "avg_ms": 69.16000366210938,
-    "p99_ms": 77.93000030517578,
+    "avg_ms": 64.72000122070312,
+    "p99_ms": 76.9800033569336,
     "pose": "s2_sodo_flats.png",
-    "samples": 15
-  },
-  {
-    "avg_ms": 62.560001373291016,
-    "p99_ms": 69.3499984741211,
-    "pose": "s2_steep_overcast.png",
     "samples": 16
   },
   {
-    "avg_ms": 47.029998779296875,
-    "p99_ms": 54.209999084472656,
+    "avg_ms": 56.720001220703125,
+    "p99_ms": 67.98999786376953,
+    "pose": "s2_steep_overcast.png",
+    "samples": 18
+  },
+  {
+    "avg_ms": 42.2599983215332,
+    "p99_ms": 51.25,
     "pose": "s2_montlake_cut.png",
-    "samples": 22
+    "samples": 24
   },
   {
-    "avg_ms": 49.970001220703125,
-    "p99_ms": 55.619998931884766,
+    "avg_ms": 46.099998474121094,
+    "p99_ms": 51.349998474121094,
     "pose": "s2_waterfront_duwamish.png",
-    "samples": 20
+    "samples": 21
   },
   {
-    "avg_ms": 39.060001373291016,
-    "p99_ms": 45.060001373291016,
+    "avg_ms": 39.36000061035156,
+    "p99_ms": 47.310001373291016,
     "pose": "s2_elliott_dawn.png",
     "samples": 26
   },
   {
-    "avg_ms": 40.0099983215332,
-    "p99_ms": 47.720001220703125,
+    "avg_ms": 39.11000061035156,
+    "p99_ms": 46.970001220703125,
     "pose": "s2_elliott_dusk.png",
     "samples": 25
   },
   {
-    "avg_ms": 33.220001220703125,
-    "p99_ms": 91.91999816894533,
-    "pose": "low_orbit",
-    "samples": 360
+    "avg_ms": 41.91999816894531,
+    "p99_ms": 250.0,
+    "pose": "gauntlet_15ms",
+    "samples": 182
   },
   {
-    "avg_ms": 54.0,
-    "p99_ms": 98.95999908447266,
+    "avg_ms": 48.970001220703125,
+    "p99_ms": 62.040000915527344,
+    "pose": "gauntlet_30ms",
+    "samples": 61
+  },
+  {
+    "avg_ms": 49.619998931884766,
+    "p99_ms": 60.2400016784668,
+    "pose": "gauntlet_100ms",
+    "samples": 61
+  },
+  {
+    "avg_ms": 56.900001525878906,
+    "p99_ms": 89.68000030517578,
+    "pose": "gauntlet_650ms",
+    "samples": 52
+  },
+  {
+    "avg_ms": 45.13999938964844,
+    "p99_ms": 143.52999877929688,
+    "pose": "low_orbit",
+    "samples": 311
+  },
+  {
+    "avg_ms": 46.4900016784668,
+    "p99_ms": 59.20000076293945,
     "pose": "chunk_hover",
-    "samples": 36
+    "samples": 42
   }
 ]

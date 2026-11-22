@@ -48,6 +48,10 @@ const S3_PROXY_MERGE_M: f32 = 250.0;
 /// teleporting capture walk cannot accumulate chunks faster than it drops them.
 const S3_UNLOAD_M: f32 = 800.0;
 const S3_MAX_RESIDENT_CHUNKS: usize = 12;
+/// Shell creation is the expensive part of a chunk spawn; keep a small
+/// immediate set for the near field and amortize the rest across frames.
+const S3_SHELL_IMMEDIATE: usize = 6;
+const S3_SHELLS_PER_FRAME: usize = 4;
 const FAR_STEP: i32 = 2;
 
 #[derive(Deserialize)]
@@ -151,6 +155,15 @@ pub struct SeattleFootprints {
     pub target: Option<u32>,
 }
 
+pub struct PendingShell {
+    chunk: usize,
+    id: u32,
+    spec: BuildingSpec,
+    origin: Vec3,
+    node_name: String,
+    mean_height: f32,
+}
+
 #[derive(Resource)]
 pub struct Geology {
     pub dem: Dem,
@@ -158,6 +171,7 @@ pub struct Geology {
     pub pack: CityPack,
     style: StylePack,
     pub building_chunks: HashMap<usize, Vec<Entity>>,
+    pending_shells: std::collections::VecDeque<PendingShell>,
     pub box_material: Handle<StandardMaterial>,
     pub box_mesh: Handle<Mesh>,
     pub targets: Vec<(u32, Vec3, f32)>,
@@ -331,6 +345,7 @@ fn setup_geology(
         pack,
         style,
         building_chunks: HashMap::new(),
+        pending_shells: std::collections::VecDeque::new(),
         box_material,
         box_mesh,
         targets: Vec::new(),
@@ -2126,6 +2141,53 @@ fn s3_buildings(world: &mut World) {
     if std::env::var_os("S3_DAMAGE").is_some() && world.resource::<Geology>().targets.len() >= 3 {
         return;
     }
+    {
+        let mut spawned = 0usize;
+        while spawned < S3_SHELLS_PER_FRAME {
+            let Some(job) = world.resource_mut::<Geology>().pending_shells.pop_front() else {
+                break;
+            };
+            if !world
+                .resource::<Geology>()
+                .building_chunks
+                .contains_key(&job.chunk)
+            {
+                continue;
+            }
+            let entity = spawn_building_world_lod(
+                world,
+                job.id,
+                job.spec,
+                job.origin,
+                BuildingDetail::Shell,
+            );
+            if let Some(entities) = world
+                .resource_mut::<Geology>()
+                .building_chunks
+                .get_mut(&job.chunk)
+            {
+                entities.push(entity);
+            }
+            let filter = std::env::var("S3_NODE").ok();
+            let min_height = std::env::var("S3_MIN_HEIGHT")
+                .ok()
+                .and_then(|value| value.parse::<f32>().ok())
+                .unwrap_or(0.0);
+            let matches_node = filter
+                .as_ref()
+                .is_none_or(|needle| job.node_name.contains(needle));
+            if matches_node
+                && job.mean_height >= min_height
+                && world.resource::<Geology>().targets.len() < 3
+            {
+                world
+                    .resource_mut::<Geology>()
+                    .targets
+                    .push((job.id, job.origin, job.mean_height));
+            }
+            spawned += 1;
+        }
+    }
     let Some(camera) = world
         .query_filtered::<&Transform, With<FlyCamera>>()
         .single(world)
@@ -2190,8 +2252,13 @@ fn s3_buildings(world: &mut World) {
             .resource_mut::<Geology>()
             .building_chunks
             .remove(&index);
+        world
+            .resource_mut::<Geology>()
+            .pending_shells
+            .retain(|job| job.chunk != index);
     }
     for index in wanted {
+        let index_chunk = index;
         let (target_name, target_mean) = {
             let state = world.resource::<Geology>();
             let node = &state.pack.nodes[index];
@@ -2266,6 +2333,21 @@ fn s3_buildings(world: &mut World) {
         let mut far_boxes: Vec<(Vec3, Vec3)> = Vec::new();
         for (index, (id, spec, origin, height, width, depth)) in specs.into_iter().enumerate() {
             if shell_set.contains(&index) {
+                shells += 1;
+                if shells > S3_SHELL_IMMEDIATE {
+                    world
+                        .resource_mut::<Geology>()
+                        .pending_shells
+                        .push_back(PendingShell {
+                            chunk: index_chunk,
+                            id,
+                            spec,
+                            origin: Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET,
+                            node_name: target_name.clone(),
+                            mean_height: target_mean,
+                        });
+                    continue;
+                }
                 let entity = spawn_building_world_lod(
                     world,
                     id,
@@ -2274,7 +2356,6 @@ fn s3_buildings(world: &mut World) {
                     BuildingDetail::Shell,
                 );
                 entities.push(entity);
-                shells += 1;
                 let filter = std::env::var("S3_NODE").ok();
                 let min_height = std::env::var("S3_MIN_HEIGHT")
                     .ok()
