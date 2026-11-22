@@ -1410,3 +1410,30 @@ This is a real-input badge-chain result: resolver/registry hit → tier-up →
 admission enqueue → journal apply. Remaining battery (trio per MaterialFamily,
 monotone 20-shot gate, restore→evict, persistence cycle, levers, buildings
 gauntlet) is still not delivered; `seattle-s3b` remains untagged.
+
+## CodeGraph verification culture (standing order)
+
+Session start (2026-11-22) ran `codegraph-work-index`: **25 projects, 540 files,
+0 failures**; Manhattan indexed 88 files and destructibles 105. The Seattle
+files are present in the graph — `codegraph_symbol_search("s3_damage")` resolves
+`viewer/src/geology.rs:1207`, and `S3DamageState` resolves at `geology.rs:1328`,
+so CityPack/geology/horizon did not require a manual re-index.
+
+Seam queries used for the S3.1/S3.2 work and cited in the fix report:
+
+- `symbol_search("ensure_structure_runtime")` → `destructibles/crates/bevy/src/structure.rs:271`.
+  `get_callers` returned none because the function is registered as a system
+  reference, not called directly; `get_callees` returned `Structures::get` /
+  `contains`, confirming the runtime-construction seam.
+- `symbol_search("begin_detail_upgrade")` → `building.rs:1106`;
+  `get_callers` returned `geology::s3_damage`, `pilot::pilot_damage`,
+  `neighborhood::detail_tick`, and the destructibles detail-tier tests. That map
+  identified the tier-up seam where `ensure_runtime_for` belongs.
+- `symbol_search("s3_damage")` located the Seattle smoke and `S3DamageState` for
+  the journal-timing trace; the dead stage was admission timing, not the
+  resolver/registry path.
+
+Non-compliance note: the earlier S3/S3.1 rounds did not run this session index or
+record these queries; that gap is reported rather than hidden. Future
+cross-module work must run the session index and cite the seam queries alongside
+trace evidence.
