@@ -1392,3 +1392,21 @@ The contraband was costing 30–55 % on the poses that were not clamped.
 repeat-fire gate and buildings-in gauntlet are not delivered. Levers were not
 started because item 2 (damage) is not green. `seattle-s3b` is **not tagged**;
 `seattle-s3` remains the prior (non-compliant) tag.
+
+### S3.2 journal fix — admission timing, not the resolver
+
+Trace result: resolver/addressability/tier-up are sound. `Buildings` contains
+the target, `begin_detail_upgrade` returns true, level promotes to
+`Structural`; the 20-shot + car-bomb batch applies in 0.4 ms. The dead stage was
+**reading the journal and screenshotting in the same frame the admissions were
+enqueued**. The admission queue applies on subsequent frames; the earlier smoke
+reported `journal 0.00` before the car bomb was decomposed.
+
+Fix: the damage mode now applies the batch, sets stage 1, waits 1.5 s for the
+admission machinery, then reads the journal and captures. Trace now reports
+**journal 10.54** on b75134 after admission.
+
+This is a real-input badge-chain result: resolver/registry hit → tier-up →
+admission enqueue → journal apply. Remaining battery (trio per MaterialFamily,
+monotone 20-shot gate, restore→evict, persistence cycle, levers, buildings
+gauntlet) is still not delivered; `seattle-s3b` remains untagged.

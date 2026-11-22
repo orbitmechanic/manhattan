@@ -1224,15 +1224,43 @@ fn s3_damage(world: &mut World) {
     if elapsed < 9.0 || targets.is_empty() {
         return;
     }
-    let mut done = world.resource_mut::<S3DamageState>();
-    if done.stage > 0 {
-        if elapsed - done.since > 4.0 {
+    let (mut stage, mut since) = {
+        let done = world.resource::<S3DamageState>();
+        (done.stage, done.since)
+    };
+    if stage == 1 {
+        if elapsed - since > 1.5 {
+            let journal = world
+                .resource::<destructibles_bevy::damage::DamageJournal>()
+                .0
+                .head_for(targets[0].0);
+            info!("S3 DAMAGE journal after admission: {journal:.2}");
+            let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/s3_damage_tower.png");
+            world
+                .spawn(Screenshot::primary_window())
+                .observe(save_to_disk(path));
+            stage = 2;
+            since = elapsed;
+            let mut done = world.resource_mut::<S3DamageState>();
+            done.stage = stage;
+            done.since = since;
+        } else {
+            return;
+        }
+    }
+    if stage == 2 {
+        if elapsed - since > 1.0 {
             world.write_message(AppExit::Success);
         }
         return;
     }
-    done.stage = 1;
-    done.since = elapsed;
+    stage = 1;
+    since = elapsed;
+    {
+        let mut done = world.resource_mut::<S3DamageState>();
+        done.stage = stage;
+        done.since = since;
+    }
     let target = targets[0];
     if let Ok(mut camera) = world
         .query_filtered::<&mut Transform, With<FlyCamera>>()
@@ -1243,7 +1271,7 @@ fn s3_damage(world: &mut World) {
         let d = (look - camera.translation).normalize_or_zero();
         camera.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
     }
-    destructibles_bevy::building::begin_detail_upgrade(
+    let began = destructibles_bevy::building::begin_detail_upgrade(
         world,
         target.0,
         destructibles_bevy::building::DetailTier::Structural,
@@ -1254,6 +1282,16 @@ fn s3_damage(world: &mut World) {
             break;
         }
     }
+    info!(
+        "S3 DAMAGE trace: id {} registered {} begin {} level {:?}",
+        target.0,
+        world
+            .resource::<destructibles_bevy::building::Buildings>()
+            .get(target.0)
+            .is_some(),
+        began,
+        destructibles_bevy::building::detail_level(world, target.0)
+    );
     let started = std::time::Instant::now();
     for _ in 0..20 {
         destructibles_bevy::impact::apply_impact(
@@ -1268,19 +1306,22 @@ fn s3_damage(world: &mut World) {
             },
         );
     }
-    info!(
-        "S3 DAMAGE: b{} tiered, 20 shots in {:.1} ms journal {:.2}",
+    destructibles_bevy::impact::apply_impact(
+        world,
         target.0,
-        started.elapsed().as_secs_f32() * 1000.0,
-        world
-            .resource::<destructibles_bevy::damage::DamageJournal>()
-            .0
-            .head_for(target.0)
+        destructibles_core::ImpactSpec {
+            position: (target.1 + Vec3::new(0.0, 4.0, 8.0)).to_array(),
+            radius: 0.0,
+            velocity: [0.0, 0.0, -420.0],
+            mass_kg: 1500.0,
+            explosive_yield_kg_tnt: 5.0,
+        },
     );
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/s3_damage_tower.png");
-    world
-        .spawn(Screenshot::primary_window())
-        .observe(save_to_disk(path));
+    info!(
+        "S3 DAMAGE: b{} 20 shots + car bomb applied in {:.1} ms",
+        target.0,
+        started.elapsed().as_secs_f32() * 1000.0
+    );
 }
 
 #[derive(Resource, Default)]
