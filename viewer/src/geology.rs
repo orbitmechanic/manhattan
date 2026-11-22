@@ -986,7 +986,7 @@ fn gauntlet_flight(
     time: Res<Time>,
     mut state: Option<ResMut<Geology>>,
     mut camera: Query<&mut Transform, With<FlyCamera>>,
-    mut local: Local<(u8, f32, bool)>,
+    mut captured: Local<[bool; 4]>,
     mut exit: MessageWriter<AppExit>,
 ) {
     let Some(state) = state.as_mut() else {
@@ -1022,8 +1022,10 @@ fn gauntlet_flight(
         let d = (look - transform.translation).normalize_or_zero();
         transform.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
     }
-    if local_time >= 2.9 && local.0 as usize == regime && !local.2 {
-        local.2 = true;
+    // Virtual frames clamp at 250 ms, so a fast regime can step over any fixed
+    // 2.9 s mark; capture once per regime at the first frame past 2.6 s.
+    if local_time >= 2.6 && !captured[regime] {
+        captured[regime] = true;
         let name = format!("gauntlet_{}ms.png", speeds[regime] as u32);
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("captures")
@@ -1032,13 +1034,7 @@ fn gauntlet_flight(
             .spawn(Screenshot::primary_window())
             .observe(save_to_disk(path));
         record_perf(state, &format!("gauntlet_{}ms", speeds[regime] as u32));
-        local.0 = regime as u8 + 1;
-        local.1 = elapsed;
     }
-    if local.0 as usize == regime + 1 {
-        local.2 = false;
-    }
-    let _ = local.1;
 }
 
 #[allow(clippy::too_many_arguments)]
