@@ -420,7 +420,7 @@ pub const BALLARD: [ComponentDef; 5] = [
 pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     comp(
         "span_00",
-        [-162.1, -642.4],
+        [442.8, 525.9],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -432,7 +432,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_01",
-        [-242.6, -738.0],
+        [362.3, 430.3],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -444,7 +444,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_02",
-        [-323.1, -833.6],
+        [281.8, 334.7],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -456,7 +456,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_03",
-        [-403.6, -929.3],
+        [201.3, 239.0],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -468,7 +468,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_04",
-        [-484.1, -1024.9],
+        [120.8, 143.4],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -480,7 +480,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_05",
-        [-564.6, -1120.5],
+        [40.3, 47.8],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -492,7 +492,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_06",
-        [-645.2, -1216.1],
+        [-40.3, -47.8],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -504,7 +504,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_07",
-        [-725.7, -1311.7],
+        [-120.8, -143.4],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -516,7 +516,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_08",
-        [-806.2, -1407.3],
+        [-201.3, -239.0],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -528,7 +528,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_09",
-        [-886.7, -1503.0],
+        [-281.8, -334.7],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -540,7 +540,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_10",
-        [-967.2, -1598.6],
+        [-362.3, -430.3],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -552,7 +552,7 @@ pub const MONORAIL_SPANS: [ComponentDef; 12] = [
     ),
     comp(
         "span_11",
-        [-1047.7, -1694.2],
+        [-442.8, -525.9],
         12.0,
         [18.0, 6.0],
         2.0,
@@ -876,12 +876,44 @@ fn spawn_landmarks(world: &mut World) {
 /// Drive the camera every frame; the pilot controller also writes it.
 fn apply_stage_pose(world: &mut World, stage: u8, target: usize) {
     let needle = LANDMARKS[target].anchor;
+    if LANDMARKS[target].key == "monorail" {
+        let ground = ground_at(world, needle[0], needle[1]);
+        set_camera(
+            world,
+            [needle[0] + 150.0, 35.0, needle[1] + 230.0],
+            [needle[0], ground + 12.0, needle[1] - 40.0],
+        );
+        return;
+    }
     if LANDMARKS[target].key == "market" {
         let ground = ground_at(world, needle[0], needle[1]);
         set_camera(
             world,
             [needle[0] + 26.0, 26.0, needle[1] + 95.0],
             [needle[0] + 6.0, ground + 23.0, needle[1] - 17.0],
+        );
+        return;
+    }
+    if matches!(LANDMARKS[target].key, "arena" | "tmobile") {
+        let ground = ground_at(world, needle[0], needle[1]);
+        set_camera(
+            world,
+            [needle[0] + 20.0, 250.0, needle[1] + 150.0],
+            [needle[0], ground + 8.0, needle[1]],
+        );
+        return;
+    }
+    if LANDMARKS[target].key == "lumen" {
+        let top = LANDMARKS[target]
+            .components
+            .iter()
+            .map(|component| component.base_y + component.height)
+            .fold(0.0_f32, f32::max);
+        let ground = ground_at(world, needle[0], needle[1]);
+        set_camera(
+            world,
+            [needle[0] + 40.0, 110.0, needle[1] + 330.0],
+            [needle[0], ground + top * 0.4, needle[1]],
         );
         return;
     }
@@ -980,6 +1012,7 @@ fn landmark_gate(world: &mut World) {
                 .iter()
                 .count();
             assert_eq!(graphs, 0, "Shell Doctrine violation at landmark load");
+            let tier_started = std::time::Instant::now();
             for (id, _origin, _height, _phase, _signature) in &components {
                 destructibles_bevy::building::begin_detail_upgrade(
                     world,
@@ -1026,8 +1059,10 @@ fn landmark_gate(world: &mut World) {
                 );
             }
             info!(
-                "LANDMARK {}: tier-up complete, pristine recorded",
-                landmark.name
+                "LANDMARK {}: tier-up {:.1} ms for {} components, pristine recorded",
+                landmark.name,
+                tier_started.elapsed().as_secs_f32() * 1000.0,
+                components.len()
             );
             save(world, 1, elapsed, 0);
         }
@@ -1138,7 +1173,7 @@ fn landmark_gate(world: &mut World) {
         }
         7 => {
             // Let the final collapse settle before asking the epilogue to undo.
-            if elapsed - since < 10.0 {
+            if elapsed - since < 25.0 + components.len() as f32 {
                 return;
             }
             save(world, 5, elapsed, act);
@@ -1148,7 +1183,7 @@ fn landmark_gate(world: &mut World) {
                 .iter()
                 .map(|(id, _origin, _height, _phase, _signature)| *id)
                 .collect::<Vec<_>>();
-            for _pass in 0..3 {
+            for _pass in 0..5 {
                 destructibles_bevy::rewind::begin_restoration(world, &ids);
                 for _ in 0..4000 {
                     destructibles_bevy::rewind::advance_restoration(world);
@@ -1449,7 +1484,7 @@ fn landmark_cycle(world: &mut World) {
             world.resource_mut::<LandmarkCycle>().since = elapsed;
         }
         _ => {
-            for _pass in 0..3 {
+            for _pass in 0..5 {
                 destructibles_bevy::rewind::begin_restoration(world, &ids);
                 for _ in 0..4000 {
                     destructibles_bevy::rewind::advance_restoration(world);
