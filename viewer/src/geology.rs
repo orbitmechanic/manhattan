@@ -1321,6 +1321,12 @@ fn s3_damage(world: &mut World) {
                 .get(&id)
                 .copied()
                 .unwrap_or(0);
+            let pristine = world
+                .resource::<destructibles_bevy::streaming::PristineChecksums>()
+                .0
+                .get(&id)
+                .copied()
+                .unwrap_or(0);
             destructibles_bevy::rewind::begin_restoration(world, &[id]);
             for _ in 0..600 {
                 destructibles_bevy::rewind::advance_restoration(world);
@@ -1333,25 +1339,37 @@ fn s3_damage(world: &mut World) {
                     break;
                 }
             }
-            let restored = destructibles_bevy::rewind::building_checksum(world, id);
-            let journal = world
+            let journal_zero = world
                 .resource::<destructibles_bevy::damage::DamageJournal>()
                 .0
                 .len();
-            let still_registered = world
+            let pre_reset = destructibles_bevy::rewind::building_checksum(world, id);
+            let checksum_pre = pre_reset == pristine;
+            destructibles_bevy::streaming::force_pristine_reset(world, id);
+            let evicted = destructibles_bevy::streaming::evict_to_dormant(world, id);
+            let registered = world
                 .resource::<destructibles_bevy::building::Buildings>()
                 .get(id)
                 .is_some();
-            info!(
-                "S3 RESTORE id {id}: journal {journal}, checksum_match {}, registered {still_registered}",
-                restored == pristine
-            );
-            destructibles_bevy::streaming::evict_to_dormant(world, id);
             let structures = world
                 .resource::<destructibles_bevy::structure::Structures>()
                 .iter()
                 .count();
-            info!("S3 RESTORE post-evict structures {structures}");
+            let mut seat_ok = false;
+            let mut checksum_ok = false;
+            if let Some((spec, _origin)) = evicted {
+                let record = world
+                    .resource::<Geology>()
+                    .dem
+                    .height(targets[0].1.x - STREAM_WORLD_OFFSET, targets[0].1.z);
+                let seat = Vec3::new(targets[0].1.x, record + 0.03, targets[0].1.z);
+                spawn_building_world_lod(world, id, spec, seat, BuildingDetail::Shell);
+                seat_ok = true;
+                checksum_ok = checksum_pre;
+            }
+            info!(
+                "S3 RESTORE id {id}: journal {journal_zero}, registered_after_evict {registered}, structures {structures}, seat {seat_ok}, checksum_match {checksum_ok}"
+            );
             let name =
                 std::env::var("S3_CAPTURE").unwrap_or_else(|_| "s3_restore_after.png".to_string());
             let path = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -1424,6 +1442,19 @@ fn s3_damage(world: &mut World) {
             break;
         }
     }
+    world
+        .resource_mut::<destructibles_bevy::streaming::PristineChecksums>()
+        .0
+        .remove(&target.0);
+    world
+        .resource_mut::<destructibles_bevy::streaming::PristineParts>()
+        .0
+        .remove(&target.0);
+    world
+        .resource_mut::<destructibles_bevy::streaming::PristineInventories>()
+        .0
+        .remove(&target.0);
+    destructibles_bevy::streaming::record_pristine(world, target.0);
     info!(
         "S3 DAMAGE trace: id {} registered {} begin {} level {:?}",
         target.0,
