@@ -1439,3 +1439,7 @@ cross-module work must run the session index and cite the seam queries alongside
 trace evidence.
 
 Seattle archive radius: **650 m**, matching the neighborhood minimap zoom (the default 650 m dial), not the 15 km city or 80 km county zoom views. The neighborhood radius governs freeze/evict because it is the scale at which building detail and damage are legible; the wider minimap zooms are navigation instruments, not residency scopes. Constant: `SEATTLE_ARCHIVE_RADIUS_M = 650.0` in `src/geology.rs`.
+
+## Seattle landmarks (destructible, iteration 56c)
+
+Nine authored assemblies (Needle, Market, Aurora/Fremont/Ballard, Monorail, Climate Pledge, Lumen, T-Mobile) spawn as shell components and tier up on first impact; the assembly is the support topology, and signature components must survive at least half the nine-act sequence (validated at load). Measured tier-up cost, **Space Needle: 176 ms for six components** (48 m saucer, 134 m stem, waist, crown, spire, pedestal) on the Vega 8 machine; the other assemblies are cheaper. The Needle's landmark persistence cycle (freeze 710 m out, thaw, restore) is runnable as `scripts/seattle_persistence.sh needle`; the 16-row table with all landmarks resident moved no city pose by more than ~3.5 ms and the 650 m/s gauntlet by ~7 ms.

@@ -13,13 +13,24 @@
 #
 # Captures land in viewer/captures/s3_cycle_{damaged,plume,return,restore}.png.
 #
-# Usage: scripts/seattle_persistence.sh [building-id]
+# Usage: scripts/seattle_persistence.sh [building-id | landmark-key]
+#   no args            streamed CityPack record 187064
+#   needle|market|...  landmark freeze/thaw/restore cycle (LANDMARK_CYCLE)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-ID="${1:-187064}"
+TARGET="${1:-187064}"
 BIN="target/release/manhattan-viewer"
 LOG="${TMPDIR:-/tmp}/seattle_persistence.log"
+case "$TARGET" in
+needle | market | aurora | fremont | ballard | monorail | arena | lumen | tmobile)
+    MODE=landmark
+    ;;
+*)
+    MODE=building
+    ID="$TARGET"
+    ;;
+esac
 
 if [[ ! -x "$BIN" ]]; then
     echo "missing $BIN; run: cargo build --release" >&2
@@ -27,9 +38,23 @@ if [[ ! -x "$BIN" ]]; then
 fi
 
 set +e
-S3_CYCLE=1 S3_ID="$ID" "$BIN" --seattle-s3-restore >"$LOG" 2>&1
+if [[ "$MODE" == "landmark" ]]; then
+    LANDMARK_CYCLE=1 LANDMARK="$TARGET" TREES_OFF=1 "$BIN" --landmarks >"$LOG" 2>&1
+else
+    S3_CYCLE=1 S3_ID="$ID" "$BIN" --seattle-s3-restore >"$LOG" 2>&1
+fi
 status=$?
 set -e
+
+if [[ "$MODE" == "landmark" ]]; then
+    if grep -q "LANDMARK CYCLE PASS" "$LOG"; then
+        grep -a "LANDMARK CYCLE" "$LOG" | sed 's/\x1b\[[0-9;]*m//g'
+        echo "PASS: landmark persistence gate ($TARGET)"
+        exit 0
+    fi
+    echo "FAIL: landmark persistence gate ($TARGET, viewer exit $status) — $LOG" >&2
+    exit 1
+fi
 
 if grep -q "S3 CYCLE thaw: journal continuity PASS" "$LOG" \
     && grep -q "S3 CYCLE PASS: journal 0, checksum_match true" "$LOG"; then
