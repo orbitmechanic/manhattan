@@ -38,9 +38,12 @@ const TILE_LOADS_PER_FRAME: usize = 2;
 const ROAD_LOADS_PER_FRAME: usize = 1;
 const LOAD_BUDGET_MS: f32 = 6.0;
 /// Lever (a): full shells cover the near field; everything else is a proxy box.
-const S3_SHELL_NEAR_M: f32 = 160.0;
+const S3_SHELL_NEAR_M: f32 = 120.0;
 const S3_SHELL_FLOOR: usize = 6;
 const S3_SHELL_CAP: usize = 24;
+/// Proxies beyond this distance merge into one mesh per chunk; closer ones
+/// stay individual so the near field keeps per-building silhouettes.
+const S3_PROXY_MERGE_M: f32 = 250.0;
 const FAR_STEP: i32 = 2;
 
 #[derive(Deserialize)]
@@ -568,6 +571,81 @@ fn mesh(
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
+    mesh.insert_indices(bevy::render::mesh::Indices::U32(indices));
+    mesh
+}
+
+/// Five-face boxes merged into one mesh: the bottom face is never visible and
+/// is dropped, so far proxies cost 20 vertices each instead of 24.
+fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3)]) -> Mesh {
+    let mut positions = Vec::new();
+    let mut normals = Vec::new();
+    let mut indices = Vec::new();
+    for (center, size) in boxes {
+        let h = *size * 0.5;
+        let c = *center;
+        let faces = [
+            (
+                Vec3::X,
+                [
+                    Vec3::new(h.x, -h.y, -h.z),
+                    Vec3::new(h.x, h.y, -h.z),
+                    Vec3::new(h.x, h.y, h.z),
+                    Vec3::new(h.x, -h.y, h.z),
+                ],
+            ),
+            (
+                -Vec3::X,
+                [
+                    Vec3::new(-h.x, -h.y, h.z),
+                    Vec3::new(-h.x, h.y, h.z),
+                    Vec3::new(-h.x, h.y, -h.z),
+                    Vec3::new(-h.x, -h.y, -h.z),
+                ],
+            ),
+            (
+                Vec3::Y,
+                [
+                    Vec3::new(-h.x, h.y, -h.z),
+                    Vec3::new(-h.x, h.y, h.z),
+                    Vec3::new(h.x, h.y, h.z),
+                    Vec3::new(h.x, h.y, -h.z),
+                ],
+            ),
+            (
+                Vec3::Z,
+                [
+                    Vec3::new(-h.x, -h.y, h.z),
+                    Vec3::new(h.x, -h.y, h.z),
+                    Vec3::new(h.x, h.y, h.z),
+                    Vec3::new(-h.x, h.y, h.z),
+                ],
+            ),
+            (
+                -Vec3::Z,
+                [
+                    Vec3::new(h.x, -h.y, -h.z),
+                    Vec3::new(-h.x, -h.y, -h.z),
+                    Vec3::new(-h.x, h.y, -h.z),
+                    Vec3::new(h.x, h.y, -h.z),
+                ],
+            ),
+        ];
+        for (normal, corners) in faces {
+            let base = positions.len() as u32;
+            for corner in corners {
+                positions.push((c + corner).to_array());
+                normals.push(normal.to_array());
+            }
+            indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+        }
+    }
+    let mut mesh = Mesh::new(
+        bevy::render::mesh::PrimitiveTopology::TriangleList,
+        bevy::asset::RenderAssetUsages::RENDER_WORLD | bevy::asset::RenderAssetUsages::MAIN_WORLD,
+    );
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_indices(bevy::render::mesh::Indices::U32(indices));
     mesh
 }
@@ -2160,6 +2238,7 @@ fn s3_buildings(world: &mut World) {
         let mut entities = Vec::with_capacity(specs.len());
         let mut shells = 0usize;
         let mut proxies = 0usize;
+        let mut far_boxes: Vec<(Vec3, Vec3)> = Vec::new();
         for (index, (id, spec, origin, height, width, depth)) in specs.into_iter().enumerate() {
             if shell_set.contains(&index) {
                 let entity = spawn_building_world_lod(
@@ -2191,29 +2270,37 @@ fn s3_buildings(world: &mut World) {
                     ));
                 }
             } else {
-                let (mesh, material) = {
-                    let state = world.resource::<Geology>();
-                    (state.box_mesh.clone(), state.box_material.clone())
-                };
-                let entity = world
-                    .spawn((
-                        Mesh3d(mesh),
-                        MeshMaterial3d(material),
-                        Transform::from_translation(
-                            Vec3::from_array(origin)
-                                + Vec3::X * STREAM_WORLD_OFFSET
-                                + Vec3::Y * height * 0.5,
-                        )
-                        .with_scale(Vec3::new(
-                            width,
-                            height.max(2.0),
-                            depth,
-                        )),
-                        Name::new(format!("S3 proxy b{id}")),
-                    ))
-                    .id();
-                entities.push(entity);
                 proxies += 1;
+                let distance = (origin[0] - center[0]).hypot(origin[2] - center[1]);
+                if distance > S3_PROXY_MERGE_M {
+                    far_boxes.push((
+                        Vec3::new(origin[0], origin[1] + height * 0.5, origin[2]),
+                        Vec3::new(width, height.max(2.0), depth),
+                    ));
+                } else {
+                    let (mesh, material) = {
+                        let state = world.resource::<Geology>();
+                        (state.box_mesh.clone(), state.box_material.clone())
+                    };
+                    let entity = world
+                        .spawn((
+                            Mesh3d(mesh),
+                            MeshMaterial3d(material),
+                            Transform::from_translation(
+                                Vec3::from_array(origin)
+                                    + Vec3::X * STREAM_WORLD_OFFSET
+                                    + Vec3::Y * height * 0.5,
+                            )
+                            .with_scale(Vec3::new(
+                                width,
+                                height.max(2.0),
+                                depth,
+                            )),
+                            Name::new(format!("S3 proxy b{id}")),
+                        ))
+                        .id();
+                    entities.push(entity);
+                }
             }
         }
         {
@@ -2242,15 +2329,31 @@ fn s3_buildings(world: &mut World) {
             chunk_structures, 0,
             "Shell Doctrine violation: graphs after a streamed chunk"
         );
+        let merged = far_boxes.len();
+        if !far_boxes.is_empty() {
+            let handle = world
+                .resource_mut::<Assets<Mesh>>()
+                .add(proxy_boxes_mesh(&far_boxes));
+            let material = world.resource::<Geology>().box_material.clone();
+            let entity = world
+                .spawn((
+                    Mesh3d(handle),
+                    MeshMaterial3d(material),
+                    Transform::from_xyz(STREAM_WORLD_OFFSET, 0.0, 0.0),
+                    Name::new(format!("S3 far proxies {target_name}")),
+                ))
+                .id();
+            entities.push(entity);
+        }
         let spawn_ms = spawn_started.elapsed().as_secs_f32() * 1000.0;
         assert_eq!(
-            entities.len(),
+            shells + proxies,
             spec_count,
-            "proxy hole: {} entities for {spec_count} records in {target_name}",
-            entities.len()
+            "proxy hole: {} covered records for {spec_count} in {target_name}",
+            shells + proxies
         );
         info!(
-            "S3 chunk {target_name}: {count} entities -> {shells} shells, {proxies} proxies in {spawn_ms:.1} ms"
+            "S3 chunk {target_name}: {count} entities -> {shells} shells, {proxies} proxies ({merged} merged) in {spawn_ms:.1} ms"
         );
         if !world.resource::<Geology>().first_chunk_reported {
             let boot_to_first = world
