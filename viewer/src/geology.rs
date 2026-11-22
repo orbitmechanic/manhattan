@@ -132,7 +132,7 @@ pub struct Geology {
     style: StylePack,
     pub building_chunks: HashMap<usize, Vec<Entity>>,
     pub box_material: Handle<StandardMaterial>,
-    pub targets: Vec<(u32, Vec3)>,
+    pub targets: Vec<(u32, Vec3, f32)>,
     pub loaded_buildings: usize,
     pub terrain_material: Handle<StandardMaterial>,
     pub water_material: Handle<StandardMaterial>,
@@ -1210,12 +1210,57 @@ fn s3_damage(world: &mut World) {
     }
     let elapsed = world.resource::<Time>().elapsed_secs();
     let targets = world.resource::<Geology>().targets.clone();
-    let target_limit = if std::env::var_os("S3_NODE").is_some() {
-        1
-    } else {
-        3
-    };
-    if elapsed >= 5.0 && targets.len() < target_limit {
+    let target_limit =
+        if std::env::var_os("S3_ID").is_some() || std::env::var_os("S3_NODE").is_some() {
+            1
+        } else {
+            3
+        };
+    if std::env::var_os("S3_ID").is_some() && targets.is_empty() && elapsed >= 4.0 {
+        if let Ok(raw) = std::env::var("S3_ID")
+            && let Ok(wanted_id) = raw.trim().parse::<u32>()
+        {
+            let mut found = None;
+            {
+                let state = world.resource::<Geology>();
+                for index in state.pack.neighborhoods() {
+                    let Ok(chunk) = state.pack.read_chunk(index) else {
+                        continue;
+                    };
+                    if let Some(building) = chunk.buildings.iter().find(|b| b.id == wanted_id) {
+                        let node = &state.pack.nodes[index];
+                        let city = state
+                            .pack
+                            .nodes
+                            .get(node.parent as usize)
+                            .map(|node| node.name.as_str())
+                            .unwrap_or("Seattle");
+                        if let Some(spec) = building_spec(&state.style, node, building, city) {
+                            let y =
+                                state.dem.height(building.centroid[0], building.centroid[1]) + 0.03;
+                            found = Some((
+                                building.id,
+                                spec,
+                                Vec3::new(building.centroid[0], y, building.centroid[1])
+                                    + Vec3::X * STREAM_WORLD_OFFSET,
+                                building.height_m,
+                            ));
+                        }
+                        break;
+                    }
+                }
+            }
+            if let Some((id, spec, origin, height)) = found {
+                spawn_building_world_lod(world, id, spec, origin, BuildingDetail::Shell);
+                world
+                    .resource_mut::<Geology>()
+                    .targets
+                    .push((id, origin, height));
+            }
+        }
+        return;
+    }
+    if std::env::var_os("S3_ID").is_none() && elapsed >= 5.0 && targets.len() < target_limit {
         let center = std::env::var("S3_CENTER")
             .ok()
             .and_then(|raw| {
@@ -1281,6 +1326,7 @@ fn s3_damage(world: &mut World) {
         done.since = since;
     }
     let target = targets[0];
+    let target_height = target.2;
     if let Some(record) = world
         .resource::<destructibles_bevy::building::Buildings>()
         .get(target.0)
@@ -1303,8 +1349,9 @@ fn s3_damage(world: &mut World) {
         .query_filtered::<&mut Transform, With<FlyCamera>>()
         .single_mut(world)
     {
-        camera.translation = target.1 + Vec3::new(0.0, 22.0, 48.0);
-        let look = target.1 + Vec3::Y * 12.0;
+        let distance = (target_height * 2.0).max(60.0);
+        camera.translation = target.1 + Vec3::new(0.0, target_height * 0.5, distance);
+        let look = target.1 + Vec3::Y * (target_height * 0.66);
         let d = (look - camera.translation).normalize_or_zero();
         camera.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
     }
@@ -1511,6 +1558,9 @@ fn s3_buildings(world: &mut World) {
     if !s3_enabled() {
         return;
     }
+    if std::env::var_os("S3_ID").is_some() {
+        return;
+    }
     if std::env::var_os("S3_DAMAGE").is_some() && world.resource::<Geology>().targets.len() >= 3 {
         return;
     }
@@ -1617,10 +1667,11 @@ fn s3_buildings(world: &mut World) {
                 && spec_height >= min_height
                 && world.resource::<Geology>().targets.len() < 3
             {
-                world
-                    .resource_mut::<Geology>()
-                    .targets
-                    .push((id, Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET));
+                world.resource_mut::<Geology>().targets.push((
+                    id,
+                    Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET,
+                    spec_height,
+                ));
             }
         }
         let count = entities.len();
