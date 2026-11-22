@@ -26,6 +26,8 @@ pub const DEM_PATH: &str = "assets/terrain/seattle_dem_30m.bin";
 pub const MASK_PATH: &str = "assets/terrain/seattle_water_mask.bin";
 pub const WATER_PATH: &str = "assets/terrain/seattle_water.bin";
 pub const REPORT_PATH: &str = "datasets/seattle/s2_report.json";
+/// Seattle archive radius; the neighborhood minimap zoom (650 m) governs.
+pub const SEATTLE_ARCHIVE_RADIUS_M: f32 = 650.0;
 
 const TILE_CELLS: i32 = 32;
 const TERRAIN_LOAD_M: f32 = 2800.0;
@@ -1442,6 +1444,15 @@ fn s3_damage(world: &mut World) {
             break;
         }
     }
+    {
+        let state = world.resource::<S3DamageState>();
+        assert!(
+            !state.baseline_recorded,
+            "baseline re-record attempted more than once (would launder damage)"
+        );
+        let mut state = world.resource_mut::<S3DamageState>();
+        state.baseline_recorded = true;
+    }
     world
         .resource_mut::<destructibles_bevy::streaming::PristineChecksums>()
         .0
@@ -1501,6 +1512,7 @@ fn s3_damage(world: &mut World) {
 pub struct S3DamageState {
     stage: u8,
     since: f32,
+    baseline_recorded: bool,
 }
 
 fn family_name(family: MaterialFamily) -> &'static str {

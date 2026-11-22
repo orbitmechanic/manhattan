@@ -94,6 +94,9 @@ struct MinimapImages {
 
 /// Rotates with the camera heading (north-up texture shown heading-up).
 #[derive(Component)]
+pub struct MinimapRoot;
+
+#[derive(Component)]
 struct MinimapMapImage;
 
 /// 0 = neighborhood (650 m), 1 = city, 2 = county.
@@ -186,7 +189,7 @@ impl Plugin for MinimapPlugin {
             .init_resource::<NearestStreet>()
             .init_resource::<LiveFootprints>()
             .init_resource::<MapZoom>()
-            .add_systems(PostStartup, setup_minimap)
+            .add_systems(PostStartup, (setup_minimap, mark_minimap_tree).chain())
             .add_systems(Update, cycle_minimap_zoom)
             .add_systems(
                 Update,
@@ -768,6 +771,7 @@ fn setup_minimap(
     commands
         .spawn((
             Name::new("Minimap"),
+            MinimapRoot,
             Node {
                 position_type: PositionType::Absolute,
                 right: px(16),
@@ -1009,6 +1013,28 @@ fn render_hierarchy_layer(data: &mut [u8], center: Vec2, zoom: u8, nodes: &[Pack
 }
 
 #[allow(clippy::too_many_arguments)]
+fn mark_minimap_tree(
+    mut commands: Commands,
+    roots: Query<Entity, With<MinimapRoot>>,
+    children: Query<&Children>,
+) {
+    fn mark(entity: Entity, commands: &mut Commands, children: &Query<&Children>) {
+        commands.entity(entity).insert(MinimapRoot);
+        if let Ok(list) = children.get(entity) {
+            for child in list.iter() {
+                mark(child, commands, children);
+            }
+        }
+    }
+    for root in &roots {
+        if let Ok(list) = children.get(root) {
+            for child in list.iter() {
+                mark(child, &mut commands, &children);
+            }
+        }
+    }
+}
+
 fn update_minimap_map(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,

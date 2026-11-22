@@ -1437,3 +1437,5 @@ Non-compliance note: the earlier S3/S3.1 rounds did not run this session index o
 record these queries; that gap is reported rather than hidden. Future
 cross-module work must run the session index and cite the seam queries alongside
 trace evidence.
+
+Seattle archive radius: **650 m**, matching the neighborhood minimap zoom (the default 650 m dial), not the 15 km city or 80 km county zoom views. The neighborhood radius governs freeze/evict because it is the scale at which building detail and damage are legible; the wider minimap zooms are navigation instruments, not residency scopes. Constant: `SEATTLE_ARCHIVE_RADIUS_M = 650.0` in `src/geology.rs`.

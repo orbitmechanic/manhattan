@@ -91,6 +91,7 @@ pub fn hide_ui_nodes(
             With<Node>,
             Without<crate::citypack::StreamHud>,
             Without<crate::geology::S2Hud>,
+            Without<crate::minimap::MinimapRoot>,
         ),
     >,
 ) {
