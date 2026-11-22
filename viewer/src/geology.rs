@@ -1313,6 +1313,64 @@ fn s3_damage(world: &mut World) {
         }
     }
     if stage == 2 {
+        if std::env::var_os("S3_RESTORE").is_some() && since > 0.0 {
+            let id = targets[0].0;
+            let pristine = world
+                .resource::<destructibles_bevy::streaming::PristineChecksums>()
+                .0
+                .get(&id)
+                .copied()
+                .unwrap_or(0);
+            destructibles_bevy::rewind::begin_restoration(world, &[id]);
+            for _ in 0..600 {
+                destructibles_bevy::rewind::advance_restoration(world);
+                if world
+                    .resource::<destructibles_bevy::damage::DamageJournal>()
+                    .0
+                    .len()
+                    == 0
+                {
+                    break;
+                }
+            }
+            let restored = destructibles_bevy::rewind::building_checksum(world, id);
+            let journal = world
+                .resource::<destructibles_bevy::damage::DamageJournal>()
+                .0
+                .len();
+            let still_registered = world
+                .resource::<destructibles_bevy::building::Buildings>()
+                .get(id)
+                .is_some();
+            info!(
+                "S3 RESTORE id {id}: journal {journal}, checksum_match {}, registered {still_registered}",
+                restored == pristine
+            );
+            destructibles_bevy::streaming::evict_to_dormant(world, id);
+            let structures = world
+                .resource::<destructibles_bevy::structure::Structures>()
+                .iter()
+                .count();
+            info!("S3 RESTORE post-evict structures {structures}");
+            let name =
+                std::env::var("S3_CAPTURE").unwrap_or_else(|_| "s3_restore_after.png".to_string());
+            let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("captures")
+                .join(name);
+            world
+                .spawn(Screenshot::primary_window())
+                .observe(save_to_disk(path));
+            let mut done = world.resource_mut::<S3DamageState>();
+            done.stage = 3;
+            done.since = elapsed;
+            return;
+        }
+        if elapsed - since > 1.0 {
+            world.write_message(AppExit::Success);
+        }
+        return;
+    }
+    if stage == 3 {
         if elapsed - since > 1.0 {
             world.write_message(AppExit::Success);
         }

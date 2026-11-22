@@ -220,6 +220,17 @@ fn parse_args() -> Args {
                     std::env::set_var("S2_HOVER", "1");
                 }
             }
+            "--seattle-s3-restore" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("S3_DAMAGE", "1");
+                    std::env::set_var("S3_RESTORE", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
             "--seattle-s3-damage" => {
                 args.pilot = true;
                 unsafe {
