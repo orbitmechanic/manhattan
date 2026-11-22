@@ -15,6 +15,7 @@ pub mod environment;
 pub mod geology;
 pub mod horizon;
 pub mod instrument;
+pub mod landmarks;
 pub mod lightning;
 pub mod minimap;
 pub mod motion;

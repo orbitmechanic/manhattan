@@ -2434,6 +2434,7 @@ fn s3_buildings(world: &mut World) {
         let chunk_structures = world
             .resource::<destructibles_bevy::structure::Structures>()
             .iter()
+            .filter(|(id, _)| **id < crate::landmarks::LANDMARK_ID_BASE)
             .count();
         assert_eq!(
             chunk_structures, 0,
@@ -2486,12 +2487,14 @@ fn s3_buildings(world: &mut World) {
     let structures = world
         .resource::<destructibles_bevy::structure::Structures>()
         .iter()
+        .filter(|(id, _)| **id < crate::landmarks::LANDMARK_ID_BASE)
         .count();
     if structures != 0 {
         let ids = world
             .resource::<destructibles_bevy::structure::Structures>()
             .iter()
             .map(|(id, _)| *id)
+            .filter(|id| *id < crate::landmarks::LANDMARK_ID_BASE)
             .take(8)
             .collect::<Vec<_>>();
         error!("Shell Doctrine violation: {structures} graphs, ids {ids:?}");
