@@ -136,6 +136,8 @@ pub struct SeattleFootprint {
 #[derive(Resource, Default)]
 pub struct SeattleFootprints {
     pub buildings: Vec<SeattleFootprint>,
+    /// Instrument marker: the S3 target under test, ringed on the dial.
+    pub target: Option<u32>,
 }
 
 #[derive(Resource)]
@@ -1218,6 +1220,24 @@ fn s2_capture(
     }
 }
 
+fn despawn_skyline_smoke(world: &mut World) {
+    let mut query = world.query::<(Entity, &destructibles_bevy::hazards::SkylineSmoke)>();
+    let columns = query
+        .iter(world)
+        .map(|(entity, column)| (entity, column.parts.clone()))
+        .collect::<Vec<_>>();
+    for (root, parts) in columns {
+        for part in parts {
+            if let Ok(entity) = world.get_entity_mut(part) {
+                entity.despawn();
+            }
+        }
+        if let Ok(entity) = world.get_entity_mut(root) {
+            entity.despawn();
+        }
+    }
+}
+
 fn s3_damage(world: &mut World) {
     if std::env::var_os("S3_DAMAGE").is_none() || !s3_enabled() {
         return;
@@ -1258,38 +1278,39 @@ fn s3_damage(world: &mut World) {
                                 Vec3::new(building.centroid[0], y, building.centroid[1])
                                     + Vec3::X * STREAM_WORLD_OFFSET,
                                 building.height_m,
+                                index,
                             ));
                         }
                         break;
                     }
                 }
             }
-            if let Some((id, spec, origin, height)) = found {
+            if let Some((id, spec, origin, height, chunk_index)) = found {
                 spawn_building_world_lod(world, id, spec, origin, BuildingDetail::Shell);
                 world
                     .resource_mut::<Geology>()
                     .targets
                     .push((id, origin, height));
+                // The minimap instrument sees the whole neighbourhood chunk;
+                // only the target gets geometry (Shell Doctrine isolation).
                 let state = world.resource::<Geology>();
-                let mut footprint = None;
-                for index in state.pack.neighborhoods() {
-                    let Ok(chunk) = state.pack.read_chunk(index) else {
-                        continue;
-                    };
-                    if let Some(building) = chunk.buildings.iter().find(|b| b.id == id) {
-                        footprint = Some(SeattleFootprint {
-                            id,
+                if let Ok(chunk) = state.pack.read_chunk(chunk_index) {
+                    let mut footprints = world.resource_mut::<SeattleFootprints>();
+                    footprints.target = Some(id);
+                    for building in &chunk.buildings {
+                        if footprints
+                            .buildings
+                            .iter()
+                            .any(|entry| entry.id == building.id)
+                        {
+                            continue;
+                        }
+                        footprints.buildings.push(SeattleFootprint {
+                            id: building.id,
                             centroid: building.centroid,
                             perimeter: building.perimeter.clone(),
                         });
-                        break;
                     }
-                }
-                if let Some(footprint) = footprint {
-                    world
-                        .resource_mut::<SeattleFootprints>()
-                        .buildings
-                        .push(footprint);
                 }
             }
         }
@@ -1330,6 +1351,12 @@ fn s3_damage(world: &mut World) {
                 .0
                 .head_for(targets[0].0);
             info!("S3 DAMAGE journal after admission: {journal:.2}");
+            if std::env::var_os("S3_CYCLE").is_some() {
+                let mut done = world.resource_mut::<S3DamageState>();
+                done.stage = 6;
+                done.since = elapsed;
+                return;
+            }
             let name =
                 std::env::var("S3_CAPTURE").unwrap_or_else(|_| "s3_damage_tower.png".to_string());
             let path = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -1416,6 +1443,277 @@ fn s3_damage(world: &mut World) {
         }
         return;
     }
+    if stage == 6 {
+        let id = targets[0].0;
+        let origin = targets[0].1;
+        let height = targets[0].2;
+        let snapshot = world
+            .resource::<destructibles_bevy::damage::DamageJournal>()
+            .0
+            .entries_for(id)
+            .map(|entry| entry.seq)
+            .collect::<Vec<_>>();
+        let changed = {
+            let state = world.resource::<S3DamageState>();
+            state.journal_snapshot != snapshot
+        };
+        if changed {
+            let mut done = world.resource_mut::<S3DamageState>();
+            done.journal_snapshot = snapshot;
+            done.since = elapsed;
+            return;
+        }
+        if elapsed - since < 1.0 || snapshot.is_empty() {
+            return;
+        }
+        // Near-frame anti-occlusion: the city-scale skyline smoke is suppressed
+        // for the damage evidence shot; the far plume is the host column.
+        despawn_skyline_smoke(world);
+        if let Ok(mut camera) = world
+            .query_filtered::<&mut Transform, With<FlyCamera>>()
+            .single_mut(world)
+        {
+            let distance = (height * 3.0).max(18.0);
+            camera.translation = origin + Vec3::new(0.0, height * 0.5, distance);
+            let look = origin + Vec3::Y * (height * 0.66);
+            let d = (look - camera.translation).normalize_or_zero();
+            camera.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+        }
+        let name = "s3_cycle_damaged.png";
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("captures")
+            .join(name);
+        world
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(path));
+        let mut done = world.resource_mut::<S3DamageState>();
+        done.stage = 8;
+        done.since = elapsed;
+        return;
+    }
+    if stage == 8 {
+        let id = targets[0].0;
+        let origin = targets[0].1;
+        let height = targets[0].2;
+        if elapsed - since > 0.1 {
+            let checksum = destructibles_bevy::rewind::building_checksum(world, id);
+            let snapshot = world.resource::<S3DamageState>().journal_snapshot.clone();
+            assert!(
+                snapshot.len() >= 10,
+                "damage gate: journal {} below 10 before freeze",
+                snapshot.len()
+            );
+            info!(
+                "S3 CYCLE damage: journal {} entries, checksum {checksum:016x}, freezing",
+                snapshot.len()
+            );
+            let frozen = destructibles_bevy::streaming::freeze_building(world, id, true);
+            assert!(frozen.is_some(), "freeze failed for the cycle target");
+            info!(
+                "S3 CYCLE freeze: journal continuity snapshot {} entries, checksum {checksum:016x}",
+                snapshot.len()
+            );
+            if let Ok(mut camera) = world
+                .query_filtered::<&mut Transform, With<FlyCamera>>()
+                .single_mut(world)
+            {
+                camera.translation =
+                    origin + Vec3::new(0.0, height + 14.0, SEATTLE_ARCHIVE_RADIUS_M + 60.0);
+                let look = origin + Vec3::Y * (height * 0.8);
+                let d = (look - camera.translation).normalize_or_zero();
+                camera.rotation =
+                    Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+            }
+            let smoke = crate::restoration::spawn_host_smoke(world, id);
+            info!("S3 CYCLE plume: {} host puffs", smoke.len());
+            let mut done = world.resource_mut::<S3DamageState>();
+            done.frozen = frozen;
+            done.plume = smoke;
+            done.checksum_snapshot = checksum;
+            done.stage = 7;
+            done.since = elapsed;
+        }
+        return;
+    }
+    if stage == 7 {
+        if elapsed - since > 0.5 {
+            let captured = world.resource::<S3DamageState>().plume_captured;
+            if !captured {
+                let path =
+                    Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/s3_cycle_plume.png");
+                world
+                    .spawn(Screenshot::primary_window())
+                    .observe(save_to_disk(path));
+                let mut done = world.resource_mut::<S3DamageState>();
+                done.plume_captured = true;
+                done.since = elapsed;
+                return;
+            }
+            let mut done = world.resource_mut::<S3DamageState>();
+            done.stage = 4;
+            done.since = elapsed;
+        }
+        return;
+    }
+    if stage == 4 {
+        if elapsed - since > 1.5 {
+            let id = targets[0].0;
+            let origin = targets[0].1;
+            let height = targets[0].2;
+            let plume = std::mem::take(&mut world.resource_mut::<S3DamageState>().plume);
+            for entity in plume {
+                if let Ok(entity_mut) = world.get_entity_mut(entity) {
+                    entity_mut.despawn();
+                }
+            }
+            let frozen = world.resource_mut::<S3DamageState>().frozen.take();
+            if let Some(cache) = frozen {
+                destructibles_bevy::streaming::thaw_building(world, &cache);
+            }
+            if let Ok(mut camera) = world
+                .query_filtered::<&mut Transform, With<FlyCamera>>()
+                .single_mut(world)
+            {
+                camera.translation =
+                    origin + Vec3::new(0.0, height * 0.5, (height * 3.0).max(18.0));
+                let look = origin + Vec3::Y * (height * 0.66);
+                let d = (look - camera.translation).normalize_or_zero();
+                camera.rotation =
+                    Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+            }
+            let snapshot = world
+                .resource::<destructibles_bevy::damage::DamageJournal>()
+                .0
+                .entries_for(id)
+                .map(|entry| entry.seq)
+                .collect::<Vec<_>>();
+            let checksum = destructibles_bevy::rewind::building_checksum(world, id);
+            let state = world.resource::<S3DamageState>();
+            assert_eq!(
+                snapshot, state.journal_snapshot,
+                "journal changed across freeze/thaw"
+            );
+            assert_eq!(
+                checksum, state.checksum_snapshot,
+                "checksum changed across freeze/thaw"
+            );
+            info!(
+                "S3 CYCLE thaw: journal continuity PASS ({} entries, checksum {checksum:016x})",
+                snapshot.len()
+            );
+            let mut done = world.resource_mut::<S3DamageState>();
+            done.stage = 10;
+            done.since = elapsed;
+            return;
+        }
+        return;
+    }
+    if stage == 10 {
+        if elapsed - since > 0.5 {
+            let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/s3_cycle_return.png");
+            world
+                .spawn(Screenshot::primary_window())
+                .observe(save_to_disk(path));
+            let mut done = world.resource_mut::<S3DamageState>();
+            done.stage = 5;
+            done.since = elapsed;
+        }
+        return;
+    }
+    if stage == 5 {
+        if elapsed - since > 1.5 {
+            let id = targets[0].0;
+            let origin = targets[0].1;
+            let height = targets[0].2;
+            destructibles_bevy::rewind::begin_restoration(world, &[id]);
+            for _ in 0..600 {
+                destructibles_bevy::rewind::advance_restoration(world);
+                if world
+                    .resource::<destructibles_bevy::damage::DamageJournal>()
+                    .0
+                    .is_empty()
+                {
+                    break;
+                }
+            }
+            let journal_zero = world
+                .resource::<destructibles_bevy::damage::DamageJournal>()
+                .0
+                .is_empty();
+            let pristine = world
+                .resource::<destructibles_bevy::streaming::PristineChecksums>()
+                .0
+                .get(&id)
+                .copied()
+                .unwrap_or(0);
+            let restored = destructibles_bevy::rewind::building_checksum(world, id);
+            assert!(journal_zero, "restore left journal entries");
+            assert_eq!(
+                restored, pristine,
+                "restore checksum does not match the pristine baseline"
+            );
+            destructibles_bevy::streaming::force_pristine_reset(world, id);
+            let evicted = destructibles_bevy::streaming::evict_to_dormant(world, id);
+            let registered = world
+                .resource::<destructibles_bevy::building::Buildings>()
+                .get(id)
+                .is_some();
+            let structures = world
+                .resource::<destructibles_bevy::structure::Structures>()
+                .iter()
+                .count();
+            let mut seat = false;
+            if let Some((spec, _)) = evicted {
+                let ground = world
+                    .resource::<Geology>()
+                    .dem
+                    .height(origin.x - STREAM_WORLD_OFFSET, origin.z);
+                spawn_building_world_lod(
+                    world,
+                    id,
+                    spec,
+                    Vec3::new(origin.x, ground + 0.03, origin.z),
+                    BuildingDetail::Shell,
+                );
+                seat = true;
+            }
+            assert!(!registered, "eviction left the building registered");
+            assert_eq!(structures, 0, "eviction left structure graphs");
+            assert!(seat, "re-seat after eviction failed");
+            // Pull back to the derived trio camera so the restored record and
+            // its dial footprint are both legible in the final frame.
+            if let Ok(mut camera) = world
+                .query_filtered::<&mut Transform, With<FlyCamera>>()
+                .single_mut(world)
+            {
+                let distance = (height * 2.0).max(60.0);
+                camera.translation = origin + Vec3::new(0.0, height * 0.5, distance);
+                let look = origin + Vec3::Y * (height * 0.66);
+                let d = (look - camera.translation).normalize_or_zero();
+                camera.rotation =
+                    Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+            }
+            info!(
+                "S3 CYCLE PASS: journal 0, checksum_match true ({restored:016x}), registered {registered}, structures {structures}, seat {seat}"
+            );
+            let mut done = world.resource_mut::<S3DamageState>();
+            done.stage = 9;
+            done.since = elapsed;
+        }
+        return;
+    }
+    if stage == 9 {
+        if elapsed - since > 0.5 {
+            let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/s3_cycle_restore.png");
+            world
+                .spawn(Screenshot::primary_window())
+                .observe(save_to_disk(path));
+            let mut done = world.resource_mut::<S3DamageState>();
+            done.stage = 3;
+            done.since = elapsed;
+        }
+        return;
+    }
     if stage == 3 {
         if elapsed - since > 1.0 {
             world.write_message(AppExit::Success);
@@ -1471,10 +1769,17 @@ fn s3_damage(world: &mut World) {
         }
     }
     {
+        let entries = world
+            .resource::<destructibles_bevy::damage::DamageJournal>()
+            .0
+            .entries_for(target.0)
+            .count();
         let state = world.resource::<S3DamageState>();
         assert!(
-            !state.baseline_recorded,
-            "baseline re-record attempted more than once (would launder damage)"
+            baseline_record_allowed(state.baseline_recorded, entries),
+            "baseline re-record must fire exactly once, at tier-up before any damage entry (recorded {}, entries {})",
+            state.baseline_recorded,
+            entries
         );
         let mut state = world.resource_mut::<S3DamageState>();
         state.baseline_recorded = true;
@@ -1534,11 +1839,23 @@ fn s3_damage(world: &mut World) {
     );
 }
 
+/// The pristine baseline is re-recorded exactly once, at Structural tier-up and
+/// before the first impact. Any later attempt would launder damage into the
+/// baseline the epilogue compares against.
+fn baseline_record_allowed(recorded: bool, journal_entries: usize) -> bool {
+    !recorded && journal_entries == 0
+}
+
 #[derive(Resource, Default)]
 pub struct S3DamageState {
     stage: u8,
     since: f32,
     baseline_recorded: bool,
+    frozen: Option<destructibles_bevy::streaming::FrozenCache>,
+    plume: Vec<Entity>,
+    journal_snapshot: Vec<u64>,
+    checksum_snapshot: u64,
+    plume_captured: bool,
 }
 
 fn family_name(family: MaterialFamily) -> &'static str {
@@ -1873,6 +2190,14 @@ mod tests {
         };
         let mask = std::fs::read(asset(MASK_PATH)).expect("mask");
         (dem, mask)
+    }
+
+    #[test]
+    fn baseline_record_is_once_before_damage() {
+        assert!(baseline_record_allowed(false, 0));
+        assert!(!baseline_record_allowed(true, 0));
+        assert!(!baseline_record_allowed(false, 1));
+        assert!(!baseline_record_allowed(true, 3));
     }
 
     #[test]

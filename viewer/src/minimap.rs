@@ -1038,11 +1038,25 @@ fn mark_minimap_tree(
     }
 }
 
+fn stroke_polygon(data: &mut [u8], polygon: &[Vec2], color: [u8; 4]) {
+    for index in 0..polygon.len() {
+        let start = polygon[index];
+        let end = polygon[(index + 1) % polygon.len()];
+        let delta = end - start;
+        let steps = delta.length().ceil().max(1.0) as i32;
+        for step in 0..=steps {
+            let point = start + delta * (step as f32 / steps as f32);
+            put(data, point.x.round() as i32, point.y.round() as i32, color);
+        }
+    }
+}
+
 fn render_seattle_layer(
     data: &mut [u8],
     center: Vec2,
     buildings: &[crate::geology::SeattleFootprint],
     journal: Option<&DamageJournal>,
+    target: Option<u32>,
 ) {
     let started = std::time::Instant::now();
     for y in 0..MAP_TEX as i32 {
@@ -1051,6 +1065,8 @@ fn render_seattle_layer(
         }
     }
     let mut drawn = 0usize;
+    let mut damaged = 0usize;
+    let outline_lod = buildings.len() > 300;
     for building in buildings {
         let centroid = Vec2::from_array(building.centroid);
         if centroid.distance_squared(center) > (MAP_RADIUS_WORLD + 80.0).powi(2) {
@@ -1062,6 +1078,9 @@ fn render_seattle_layer(
         let head = journal
             .map(|journal| journal.0.head_for(building.id))
             .unwrap_or(0.0);
+        if head > 0.0 {
+            damaged += 1;
+        }
         let color = if head <= 0.0 {
             [255, 255, 255, 230]
         } else if head < 5.0 {
@@ -1076,12 +1095,52 @@ fn render_seattle_layer(
             .iter()
             .map(|point| world_to_map_r(Vec2::from_array(*point), center, MAP_RADIUS_WORLD))
             .collect::<Vec<_>>();
-        fill_polygon(data, &polygon, color);
+        let mut min = Vec2::splat(f32::MAX);
+        let mut max = Vec2::splat(f32::MIN);
+        for point in &polygon {
+            min = min.min(*point);
+            max = max.max(*point);
+        }
+        if (max - min).max_element() < 3.0 || (outline_lod && (max - min).max_element() < 8.0) {
+            // Low-rise footprints shrink below a pixel at the 650 m dial;
+            // every building stays readable as a minimum marker.
+            let centroid =
+                polygon.iter().fold(Vec2::ZERO, |sum, point| sum + *point) / polygon.len() as f32;
+            let x = centroid.x.round() as i32;
+            let y = centroid.y.round() as i32;
+            for dy in -1..=1 {
+                for dx in -1..=1 {
+                    put(data, x + dx, y + dy, color);
+                }
+            }
+        } else if outline_lod {
+            stroke_polygon(data, &polygon, color);
+        } else {
+            fill_polygon(data, &polygon, color);
+        }
         drawn += 1;
+    }
+    if let Some(target) = target
+        && let Some(building) = buildings.iter().find(|building| building.id == target)
+    {
+        let center_px = world_to_map_r(
+            Vec2::from_array(building.centroid),
+            center,
+            MAP_RADIUS_WORLD,
+        );
+        let cx = center_px.x.round() as i32;
+        let cy = center_px.y.round() as i32;
+        let ring = [0, 255, 255, 255];
+        for offset in -7..=7 {
+            put(data, cx + offset, cy - 7, ring);
+            put(data, cx + offset, cy + 7, ring);
+            put(data, cx - 7, cy + offset, ring);
+            put(data, cx + 7, cy + offset, ring);
+        }
     }
     let elapsed = started.elapsed().as_secs_f32() * 1000.0;
     if elapsed > 1.0 {
-        info!("MINIMAP seattle: {drawn} buildings in {elapsed:.2} ms");
+        info!("MINIMAP seattle: {drawn} buildings ({damaged} damaged) in {elapsed:.2} ms");
     }
 }
 
@@ -1121,7 +1180,9 @@ fn update_minimap_map(
         && last_zoom == zoom_key
         && last_hierarchy == hierarchy_key
         && (now - last_time < interval
-            || (!stream_enabled() && center.distance_squared(last_center) < MAP_MOVE_EPS_SQ))
+            || (!stream_enabled()
+                && !s3_enabled()
+                && center.distance_squared(last_center) < MAP_MOVE_EPS_SQ))
     {
         return;
     }
@@ -1150,7 +1211,13 @@ fn update_minimap_map(
         && let Some(seattle) = seattle.as_ref()
     {
         let local_center = Vec2::new(center.x - STREAM_WORLD_OFFSET, center.y);
-        render_seattle_layer(data, local_center, &seattle.buildings, journal.as_deref());
+        render_seattle_layer(
+            data,
+            local_center,
+            &seattle.buildings,
+            journal.as_deref(),
+            seattle.target,
+        );
         None
     } else if stream_enabled()
         && let Some(hierarchy) = hierarchy.as_ref()
