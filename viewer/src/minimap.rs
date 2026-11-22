@@ -23,13 +23,16 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
+use destructibles_bevy::damage::DamageJournal;
 use serde::Deserialize;
 
 use crate::{
     camera::FlyCamera,
     citypack::{
-        HierarchyMap, LEVEL_CITY, LEVEL_COUNTY, LEVEL_NEIGHBORHOOD, PackNode, stream_enabled,
+        HierarchyMap, LEVEL_CITY, LEVEL_COUNTY, LEVEL_NEIGHBORHOOD, PackNode, STREAM_WORLD_OFFSET,
+        stream_enabled,
     },
+    geology::{SeattleFootprints, s3_enabled},
     motion::MotionState,
     storefront::StorefrontData,
 };
@@ -1035,6 +1038,53 @@ fn mark_minimap_tree(
     }
 }
 
+fn render_seattle_layer(
+    data: &mut [u8],
+    center: Vec2,
+    buildings: &[crate::geology::SeattleFootprint],
+    journal: Option<&DamageJournal>,
+) {
+    let started = std::time::Instant::now();
+    for y in 0..MAP_TEX as i32 {
+        for x in 0..MAP_TEX as i32 {
+            put(data, x, y, [22, 27, 33, 255]);
+        }
+    }
+    let mut drawn = 0usize;
+    for building in buildings {
+        let centroid = Vec2::from_array(building.centroid);
+        if centroid.distance_squared(center) > (MAP_RADIUS_WORLD + 80.0).powi(2) {
+            continue;
+        }
+        if building.perimeter.len() < 3 {
+            continue;
+        }
+        let head = journal
+            .map(|journal| journal.0.head_for(building.id))
+            .unwrap_or(0.0);
+        let color = if head <= 0.0 {
+            [255, 255, 255, 230]
+        } else if head < 5.0 {
+            [255, 214, 92, 235]
+        } else if head < 10.0 {
+            [255, 142, 58, 240]
+        } else {
+            [235, 58, 58, 245]
+        };
+        let polygon = building
+            .perimeter
+            .iter()
+            .map(|point| world_to_map_r(Vec2::from_array(*point), center, MAP_RADIUS_WORLD))
+            .collect::<Vec<_>>();
+        fill_polygon(data, &polygon, color);
+        drawn += 1;
+    }
+    let elapsed = started.elapsed().as_secs_f32() * 1000.0;
+    if elapsed > 1.0 {
+        info!("MINIMAP seattle: {drawn} buildings in {elapsed:.2} ms");
+    }
+}
+
 fn update_minimap_map(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
@@ -1045,6 +1095,8 @@ fn update_minimap_map(
     images: Option<Res<MinimapImages>>,
     zoom: Option<Res<MapZoom>>,
     hierarchy: Option<Res<HierarchyMap>>,
+    seattle: Option<Res<SeattleFootprints>>,
+    journal: Option<Res<DamageJournal>>,
     mut assets: ResMut<Assets<Image>>,
     mut last: Local<Option<(Vec2, f32, u64, u64, u8, bool)>>,
 ) {
@@ -1093,7 +1145,13 @@ fn update_minimap_map(
             zoom.as_ref().map(|z| z.0).unwrap_or(0)
         );
     }
-    let nearest_name = if stream_enabled()
+    let nearest_name = if s3_enabled()
+        && let Some(seattle) = seattle.as_ref()
+    {
+        let local_center = Vec2::new(center.x - STREAM_WORLD_OFFSET, center.y);
+        render_seattle_layer(data, local_center, &seattle.buildings, journal.as_deref());
+        None
+    } else if stream_enabled()
         && let Some(hierarchy) = hierarchy.as_ref()
     {
         let local_center = Vec2::new(center.x - crate::citypack::STREAM_WORLD_OFFSET, center.y);

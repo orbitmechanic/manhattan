@@ -425,6 +425,7 @@ fn main() {
     .insert_resource(FrameCounter::default())
     .init_resource::<manhattan_viewer::pilot::PilotDamageState>()
     .init_resource::<manhattan_viewer::geology::S3DamageState>()
+    .init_resource::<manhattan_viewer::geology::SeattleFootprints>()
     .insert_resource(selftest)
     .insert_resource(Environment::default())
     .insert_resource(weather)

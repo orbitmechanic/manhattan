@@ -126,6 +126,18 @@ pub fn s2_enabled() -> bool {
     std::env::var_os("SEATTLE_S2").is_some()
 }
 
+#[derive(Clone)]
+pub struct SeattleFootprint {
+    pub id: u32,
+    pub centroid: [f32; 2],
+    pub perimeter: Vec<[f32; 2]>,
+}
+
+#[derive(Resource, Default)]
+pub struct SeattleFootprints {
+    pub buildings: Vec<SeattleFootprint>,
+}
+
 #[derive(Resource)]
 pub struct Geology {
     pub dem: Dem,
@@ -1258,6 +1270,27 @@ fn s3_damage(world: &mut World) {
                     .resource_mut::<Geology>()
                     .targets
                     .push((id, origin, height));
+                let state = world.resource::<Geology>();
+                let mut footprint = None;
+                for index in state.pack.neighborhoods() {
+                    let Ok(chunk) = state.pack.read_chunk(index) else {
+                        continue;
+                    };
+                    if let Some(building) = chunk.buildings.iter().find(|b| b.id == id) {
+                        footprint = Some(SeattleFootprint {
+                            id,
+                            centroid: building.centroid,
+                            perimeter: building.perimeter.clone(),
+                        });
+                        break;
+                    }
+                }
+                if let Some(footprint) = footprint {
+                    world
+                        .resource_mut::<SeattleFootprints>()
+                        .buildings
+                        .push(footprint);
+                }
             }
         }
         return;
@@ -1574,7 +1607,7 @@ fn s3_list_targets(world: &mut World) {
     std::process::exit(0);
 }
 
-fn s3_enabled() -> bool {
+pub fn s3_enabled() -> bool {
     std::env::var_os("SEATTLE_S3").is_some()
 }
 
@@ -1773,6 +1806,23 @@ fn s3_buildings(world: &mut World) {
                     Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET,
                     spec_height,
                 ));
+            }
+        }
+        {
+            let mut footprints = world.resource_mut::<SeattleFootprints>();
+            for building in &chunk.buildings {
+                if footprints
+                    .buildings
+                    .iter()
+                    .any(|entry| entry.id == building.id)
+                {
+                    continue;
+                }
+                footprints.buildings.push(SeattleFootprint {
+                    id: building.id,
+                    centroid: building.centroid,
+                    perimeter: building.perimeter.clone(),
+                });
             }
         }
         let count = entities.len();
