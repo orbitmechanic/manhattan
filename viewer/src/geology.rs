@@ -740,6 +740,7 @@ fn geology_stream(
     mut motion: Option<ResMut<crate::motion::MotionState>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut ticks: Local<u32>,
+    trees: Option<Res<crate::trees::Trees>>,
 ) {
     if let Some(motion) = motion.as_mut() {
         motion.velocity = Vec3::ZERO;
@@ -920,7 +921,7 @@ fn geology_stream(
     }
     if let Ok(mut text) = text.single_mut() {
         text.0 = format!(
-            "S2 terrain {} (+{}/-{})  roads {} (+{}/-{})  buildings {}  evals {}/{}/{}\n30 m streamed / 60 m regional / skirts / boot {:.0} ms / tile {:.1} ms road {:.1} ms",
+            "S2 terrain {} (+{}/-{})  roads {} (+{}/-{})  buildings {}  trees {} / {} groups  evals {}/{}/{}\n30 m streamed / 60 m regional / skirts / boot {:.0} ms / tile {:.1} ms road {:.1} ms",
             state.terrain.len(),
             loads,
             unloads,
@@ -928,6 +929,8 @@ fn geology_stream(
             road_loads,
             state.road_unloads,
             state.loaded_buildings,
+            trees.as_ref().map(|trees| trees.active).unwrap_or(0),
+            trees.as_ref().map(|trees| trees.draw_groups).unwrap_or(0),
             evaluations.counties,
             evaluations.cities,
             evaluations.neighborhoods,
@@ -1280,6 +1283,7 @@ fn s2_capture(
         || std::env::var_os("S2_ORBIT").is_some()
         || std::env::var_os("S2_HOVER").is_some()
         || std::env::var_os("S3_DAMAGE").is_some()
+        || std::env::var_os("TREES_CAPTURE").is_some()
     {
         return;
     }

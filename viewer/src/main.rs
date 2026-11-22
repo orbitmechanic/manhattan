@@ -241,6 +241,16 @@ fn parse_args() -> Args {
                     std::env::set_var("PILOT_CLEAN", "1");
                 }
             }
+            "--seattle-trees" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("TREES_CAPTURE", "1");
+                }
+            }
             "--seattle-s3" => {
                 args.pilot = true;
                 unsafe {
@@ -418,6 +428,7 @@ fn main() {
     .add_plugins(manhattan_viewer::citypack::CityPackPlugin)
     .add_plugins(manhattan_viewer::horizon::HorizonPlugin)
     .add_plugins(manhattan_viewer::geology::GeologyPlugin)
+    .add_plugins(manhattan_viewer::trees::TreesPlugin)
     .add_plugins(CityAudioPlugin)
     .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
     .insert_resource(clock)

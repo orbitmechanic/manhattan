@@ -27,5 +27,6 @@ pub mod stationing;
 pub mod storefront;
 pub mod street_furniture;
 pub mod traffic;
+pub mod trees;
 pub mod ui;
 pub mod weather;
