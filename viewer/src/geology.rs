@@ -1210,13 +1210,28 @@ fn s3_damage(world: &mut World) {
     }
     let elapsed = world.resource::<Time>().elapsed_secs();
     let targets = world.resource::<Geology>().targets.clone();
-    if elapsed >= 5.0 && targets.len() < 3 {
-        let y = world.resource::<Geology>().dem.height(0.0, 0.0) + 30.0;
+    let target_limit = if std::env::var_os("S3_NODE").is_some() {
+        1
+    } else {
+        3
+    };
+    if elapsed >= 5.0 && targets.len() < target_limit {
+        let center = std::env::var("S3_CENTER")
+            .ok()
+            .and_then(|raw| {
+                let mut parts = raw.split(',');
+                Some((
+                    parts.next()?.trim().parse::<f32>().ok()?,
+                    parts.next()?.trim().parse::<f32>().ok()?,
+                ))
+            })
+            .unwrap_or((0.0, 0.0));
+        let y = world.resource::<Geology>().dem.height(center.0, center.1) + 30.0;
         if let Ok(mut camera) = world
             .query_filtered::<&mut Transform, With<FlyCamera>>()
             .single_mut(world)
         {
-            camera.translation = Vec3::new(STREAM_WORLD_OFFSET, y, 0.0);
+            camera.translation = Vec3::new(STREAM_WORLD_OFFSET + center.0, y, center.1);
             camera.rotation = Quat::from_euler(EulerRot::YXZ, 0.0, -0.25, 0.0);
         }
         return;
@@ -1235,7 +1250,11 @@ fn s3_damage(world: &mut World) {
                 .0
                 .head_for(targets[0].0);
             info!("S3 DAMAGE journal after admission: {journal:.2}");
-            let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/s3_damage_tower.png");
+            let name =
+                std::env::var("S3_CAPTURE").unwrap_or_else(|_| "s3_damage_tower.png".to_string());
+            let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("captures")
+                .join(name);
             world
                 .spawn(Screenshot::primary_window())
                 .observe(save_to_disk(path));
@@ -1262,12 +1281,30 @@ fn s3_damage(world: &mut World) {
         done.since = since;
     }
     let target = targets[0];
+    if let Some(record) = world
+        .resource::<destructibles_bevy::building::Buildings>()
+        .get(target.0)
+    {
+        let target_root = record.entity;
+        let others = world
+            .resource::<Geology>()
+            .building_chunks
+            .values()
+            .flat_map(|entities| entities.iter().copied())
+            .filter(|entity| *entity != target_root)
+            .collect::<Vec<_>>();
+        for entity in others {
+            if let Ok(mut entity) = world.get_entity_mut(entity) {
+                entity.insert(Visibility::Hidden);
+            }
+        }
+    }
     if let Ok(mut camera) = world
         .query_filtered::<&mut Transform, With<FlyCamera>>()
         .single_mut(world)
     {
-        camera.translation = target.1 + Vec3::new(0.0, 18.0, 45.0);
-        let look = target.1 + Vec3::Y * 10.0;
+        camera.translation = target.1 + Vec3::new(0.0, 22.0, 48.0);
+        let look = target.1 + Vec3::Y * 12.0;
         let d = (look - camera.translation).normalize_or_zero();
         camera.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
     }
@@ -1460,6 +1497,11 @@ fn s3_buildings(world: &mut World) {
             .remove(&index);
     }
     for index in wanted {
+        let (target_name, target_mean) = {
+            let state = world.resource::<Geology>();
+            let node = &state.pack.nodes[index];
+            (node.name.clone(), node.mean_height_m)
+        };
         let (chunk, specs, origin_h) = {
             let state = world.resource::<Geology>();
             let Some(node) = state.pack.nodes.get(index) else {
@@ -1503,7 +1545,19 @@ fn s3_buildings(world: &mut World) {
                 BuildingDetail::Shell,
             );
             entities.push(entity);
-            if world.resource::<Geology>().targets.len() < 3 {
+            let filter = std::env::var("S3_NODE").ok();
+            let min_height = std::env::var("S3_MIN_HEIGHT")
+                .ok()
+                .and_then(|value| value.parse::<f32>().ok())
+                .unwrap_or(0.0);
+            let matches_node = filter
+                .as_ref()
+                .is_none_or(|needle| target_name.contains(needle));
+            let spec_height = target_mean;
+            if matches_node
+                && spec_height >= min_height
+                && world.resource::<Geology>().targets.len() < 3
+            {
                 world
                     .resource_mut::<Geology>()
                     .targets
