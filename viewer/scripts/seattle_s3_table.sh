@@ -29,7 +29,9 @@ run() {
 # Virtual time clamps at 250 ms per frame, so a heavy tree needs minutes of
 # wall clock for the gauntlet to finish its 18.5 virtual seconds.
 run poses timeout 600 "$BIN" --seattle-s3
-run gauntlet timeout 900 env SEATTLE_S3=1 "$BIN" --seattle-s2-gauntlet
+if [[ "${SKIP_GAUNTLET:-0}" != "1" ]]; then
+    run gauntlet timeout 900 env SEATTLE_S3=1 "$BIN" --seattle-s2-gauntlet
+fi
 run orbit timeout 600 env SEATTLE_S3=1 "$BIN" --seattle-s2-orbit
 run hover timeout 600 env SEATTLE_S3=1 "$BIN" --seattle-s2-hover
 

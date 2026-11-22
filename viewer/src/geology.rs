@@ -37,6 +37,10 @@ const ROAD_UNLOAD_M: f32 = 3800.0;
 const TILE_LOADS_PER_FRAME: usize = 2;
 const ROAD_LOADS_PER_FRAME: usize = 1;
 const LOAD_BUDGET_MS: f32 = 6.0;
+/// Lever (a): full shells cover the near field; everything else is a proxy box.
+const S3_SHELL_NEAR_M: f32 = 160.0;
+const S3_SHELL_FLOOR: usize = 6;
+const S3_SHELL_CAP: usize = 24;
 const FAR_STEP: i32 = 2;
 
 #[derive(Deserialize)]
@@ -148,8 +152,11 @@ pub struct Geology {
     style: StylePack,
     pub building_chunks: HashMap<usize, Vec<Entity>>,
     pub box_material: Handle<StandardMaterial>,
+    pub box_mesh: Handle<Mesh>,
     pub targets: Vec<(u32, Vec3, f32)>,
     pub loaded_buildings: usize,
+    start_instant: std::time::Instant,
+    first_chunk_reported: bool,
     pub terrain_material: Handle<StandardMaterial>,
     pub water_material: Handle<StandardMaterial>,
     pub road_material: Handle<StandardMaterial>,
@@ -264,6 +271,7 @@ fn setup_geology(
         cull_mode: None,
         ..default()
     });
+    let box_mesh = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
     let road_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.17, 0.17, 0.18),
         perceptual_roughness: 0.9,
@@ -317,8 +325,11 @@ fn setup_geology(
         style,
         building_chunks: HashMap::new(),
         box_material,
+        box_mesh,
         targets: Vec::new(),
         loaded_buildings: 0,
+        start_instant: started,
+        first_chunk_reported: false,
         terrain_material,
         water_material,
         road_material,
@@ -980,6 +991,23 @@ fn pose(geology: &Geology, index: usize) -> Pose {
     }
 }
 
+fn underfoot_loaded(state: &Geology, center: [f32; 2]) -> bool {
+    let tile_size = TILE_CELLS as f32 * state.dem.spacing;
+    let tx = ((center[0] - state.dem.origin[0]) / tile_size).floor() as i32;
+    let tz = ((center[1] - state.dem.origin[1]) / tile_size).floor() as i32;
+    state.terrain.contains_key(&(tx, tz))
+}
+
+fn nearest_chunk_loaded(state: &Geology, center: [f32; 2]) -> bool {
+    // The nearest *data-bearing* neighborhood may be skipped by read_chunk
+    // errors, so assert coverage: some loaded chunk centre lies within the
+    // building load radius of the camera.
+    state.building_chunks.keys().any(|index| {
+        let node = &state.pack.nodes[*index];
+        (node.center[0] - center[0]).hypot(node.center[1] - center[1]) <= 650.0
+    })
+}
+
 #[allow(clippy::too_many_arguments)]
 fn gauntlet_flight(
     mut commands: Commands,
@@ -1026,6 +1054,18 @@ fn gauntlet_flight(
     // 2.9 s mark; capture once per regime at the first frame past 2.6 s.
     if local_time >= 2.6 && !captured[regime] {
         captured[regime] = true;
+        assert!(
+            underfoot_loaded(state, [base.x, base.z]),
+            "gauntlet {} m/s: unloaded terrain underfoot at ({:.0}, {:.0})",
+            speeds[regime],
+            base.x,
+            base.z
+        );
+        assert!(
+            nearest_chunk_loaded(state, [base.x, base.z]),
+            "gauntlet {} m/s: no streamed building chunk underfoot",
+            speeds[regime]
+        );
         let name = format!("gauntlet_{}ms.png", speeds[regime] as u32);
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("captures")
@@ -2025,12 +2065,15 @@ fn s3_buildings(world: &mut World) {
             .filter(|index| !state.building_chunks.contains_key(index))
             .take(1)
             .collect::<Vec<_>>();
+        // Load and unload must use the same metric: a sprawling neighbourhood
+        // can have its AABB inside the load radius while its centre sits past
+        // the unload radius, which made every frame respawn it.
         let unload = state
             .building_chunks
             .iter()
             .filter(|(index, _)| {
                 let node = &state.pack.nodes[**index];
-                (node.center[0] - center[0]).hypot(node.center[1] - center[1]) > 950.0
+                crate::citypack::aabb_distance2(&node.bounds, center) > 950.0 * 950.0
             })
             .map(|(index, entities)| (*index, entities.clone()))
             .collect();
@@ -2071,10 +2114,21 @@ fn s3_buildings(world: &mut World) {
                             let spec = building_spec(&state.style, node, building, city)?;
                             let y =
                                 state.dem.height(building.centroid[0], building.centroid[1]) + 0.03;
+                            let mut min = [f32::MAX; 2];
+                            let mut max = [f32::MIN; 2];
+                            for point in &building.perimeter {
+                                min[0] = min[0].min(point[0]);
+                                min[1] = min[1].min(point[1]);
+                                max[0] = max[0].max(point[0]);
+                                max[1] = max[1].max(point[1]);
+                            }
                             Some((
                                 building.id,
                                 spec,
                                 [building.centroid[0], y, building.centroid[1]],
+                                building.height_m,
+                                (max[0] - min[0]).max(2.0),
+                                (max[1] - min[1]).max(2.0),
                             ))
                         })
                         .collect::<Vec<_>>();
@@ -2084,34 +2138,82 @@ fn s3_buildings(world: &mut World) {
             }
         };
         let _ = chunk;
-        let mut entities = Vec::new();
-        for (id, spec, origin) in specs {
-            let entity = spawn_building_world_lod(
-                world,
-                id,
-                spec,
-                Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET,
-                BuildingDetail::Shell,
-            );
-            entities.push(entity);
-            let filter = std::env::var("S3_NODE").ok();
-            let min_height = std::env::var("S3_MIN_HEIGHT")
-                .ok()
-                .and_then(|value| value.parse::<f32>().ok())
-                .unwrap_or(0.0);
-            let matches_node = filter
-                .as_ref()
-                .is_none_or(|needle| target_name.contains(needle));
-            let spec_height = target_mean;
-            if matches_node
-                && spec_height >= min_height
-                && world.resource::<Geology>().targets.len() < 3
-            {
-                world.resource_mut::<Geology>().targets.push((
+        let spawn_started = std::time::Instant::now();
+        let spec_count = specs.len();
+        let mut order = (0..specs.len()).collect::<Vec<_>>();
+        order.sort_by(|left, right| {
+            let a = specs[*left].2;
+            let b = specs[*right].2;
+            let da = (a[0] - center[0]).hypot(a[2] - center[1]);
+            let db = (b[0] - center[0]).hypot(b[2] - center[1]);
+            da.total_cmp(&db)
+        });
+        let near = order
+            .iter()
+            .take_while(|&&index| {
+                let origin = specs[index].2;
+                (origin[0] - center[0]).hypot(origin[2] - center[1]) <= S3_SHELL_NEAR_M
+            })
+            .count();
+        let shell_count = near.clamp(S3_SHELL_FLOOR, S3_SHELL_CAP).min(specs.len());
+        let shell_set = order[..shell_count].iter().copied().collect::<HashSet<_>>();
+        let mut entities = Vec::with_capacity(specs.len());
+        let mut shells = 0usize;
+        let mut proxies = 0usize;
+        for (index, (id, spec, origin, height, width, depth)) in specs.into_iter().enumerate() {
+            if shell_set.contains(&index) {
+                let entity = spawn_building_world_lod(
+                    world,
                     id,
+                    spec,
                     Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET,
-                    spec_height,
-                ));
+                    BuildingDetail::Shell,
+                );
+                entities.push(entity);
+                shells += 1;
+                let filter = std::env::var("S3_NODE").ok();
+                let min_height = std::env::var("S3_MIN_HEIGHT")
+                    .ok()
+                    .and_then(|value| value.parse::<f32>().ok())
+                    .unwrap_or(0.0);
+                let matches_node = filter
+                    .as_ref()
+                    .is_none_or(|needle| target_name.contains(needle));
+                let spec_height = target_mean;
+                if matches_node
+                    && spec_height >= min_height
+                    && world.resource::<Geology>().targets.len() < 3
+                {
+                    world.resource_mut::<Geology>().targets.push((
+                        id,
+                        Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET,
+                        spec_height,
+                    ));
+                }
+            } else {
+                let (mesh, material) = {
+                    let state = world.resource::<Geology>();
+                    (state.box_mesh.clone(), state.box_material.clone())
+                };
+                let entity = world
+                    .spawn((
+                        Mesh3d(mesh),
+                        MeshMaterial3d(material),
+                        Transform::from_translation(
+                            Vec3::from_array(origin)
+                                + Vec3::X * STREAM_WORLD_OFFSET
+                                + Vec3::Y * height * 0.5,
+                        )
+                        .with_scale(Vec3::new(
+                            width,
+                            height.max(2.0),
+                            depth,
+                        )),
+                        Name::new(format!("S3 proxy b{id}")),
+                    ))
+                    .id();
+                entities.push(entity);
+                proxies += 1;
             }
         }
         {
@@ -2140,6 +2242,28 @@ fn s3_buildings(world: &mut World) {
             chunk_structures, 0,
             "Shell Doctrine violation: graphs after a streamed chunk"
         );
+        let spawn_ms = spawn_started.elapsed().as_secs_f32() * 1000.0;
+        assert_eq!(
+            entities.len(),
+            spec_count,
+            "proxy hole: {} entities for {spec_count} records in {target_name}",
+            entities.len()
+        );
+        info!(
+            "S3 chunk {target_name}: {count} entities -> {shells} shells, {proxies} proxies in {spawn_ms:.1} ms"
+        );
+        if !world.resource::<Geology>().first_chunk_reported {
+            let boot_to_first = world
+                .resource::<Geology>()
+                .start_instant
+                .elapsed()
+                .as_secs_f32()
+                * 1000.0;
+            info!(
+                "S3 BOOT: first streamed chunk in {boot_to_first:.0} ms ({shells} shells, {proxies} proxies)"
+            );
+            world.resource_mut::<Geology>().first_chunk_reported = true;
+        }
         let mut state = world.resource_mut::<Geology>();
         state.building_chunks.insert(index, entities);
         state.loaded_buildings += count;
