@@ -83,7 +83,7 @@ impl Plugin for GeologyPlugin {
                 )
                     .chain(),
             )
-            .add_systems(Update, (s3_buildings, s3_damage))
+            .add_systems(Update, (s3_buildings, s3_damage, s3_list_targets))
             .add_systems(PostUpdate, hide_precip);
     }
 }
@@ -1365,6 +1365,65 @@ fn s3_damage(world: &mut World) {
 pub struct S3DamageState {
     stage: u8,
     since: f32,
+}
+
+fn family_name(family: MaterialFamily) -> &'static str {
+    match family {
+        MaterialFamily::SteelFrame => "steel_frame",
+        MaterialFamily::MasonryStone => "masonry_stone",
+        MaterialFamily::Timber => "timber",
+        _ => "mixed",
+    }
+}
+
+fn s3_list_targets(world: &mut World) {
+    if std::env::var_os("S3_LIST_TARGETS").is_none() || !s3_enabled() {
+        return;
+    }
+    static DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    if DONE.swap(true, std::sync::atomic::Ordering::SeqCst) {
+        return;
+    }
+    info!("S3 TARGET DUMP key=style-pack rule match on city+partition name -> MaterialFamily");
+    let state = world.resource::<Geology>();
+    let mut counts = std::collections::HashMap::<String, usize>::new();
+    for node in state.pack.nodes.iter().filter(|node| node.level == 2) {
+        let Some(index) = state
+            .pack
+            .nodes
+            .iter()
+            .position(|candidate| std::ptr::eq(candidate, node))
+        else {
+            continue;
+        };
+        if counts.len() >= 4 && counts.values().all(|count| *count >= 5) {
+            break;
+        }
+        let Ok(chunk) = state.pack.read_chunk(index) else {
+            continue;
+        };
+        let city = state
+            .pack
+            .nodes
+            .get(node.parent as usize)
+            .map(|node| node.name.as_str())
+            .unwrap_or("Seattle");
+        for building in &chunk.buildings {
+            let Some(spec) = building_spec(&state.style, node, building, city) else {
+                continue;
+            };
+            let family = family_name(spec.family).to_string();
+            let count = counts.entry(family.clone()).or_insert(0);
+            if *count < 5 {
+                info!(
+                    "S3 TARGET family={} id={} height={:.1} partition={}",
+                    family, building.id, building.height_m, node.name
+                );
+                *count += 1;
+            }
+        }
+    }
+    std::process::exit(0);
 }
 
 fn s3_enabled() -> bool {
