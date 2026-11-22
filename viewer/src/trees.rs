@@ -653,7 +653,7 @@ const TREE_POSES: [TreePose; 8] = [
         z: -1500.0,
         eye: 90.0,
         look: [4000.0, 45.0, 8000.0],
-        minute: 5.0 * 60.0 + 40.0,
+        minute: 6.0 * 60.0 + 45.0,
     },
     TreePose {
         name: "trees_dusk_skyline.png",
@@ -661,7 +661,7 @@ const TREE_POSES: [TreePose; 8] = [
         z: -1500.0,
         eye: 90.0,
         look: [4000.0, 45.0, 8000.0],
-        minute: 20.0 * 60.0 + 30.0,
+        minute: 17.0 * 60.0 + 30.0,
     },
 ];
 
@@ -681,8 +681,17 @@ fn tree_capture(world: &mut World) {
         return;
     }
     if index >= TREE_POSES.len() {
-        world.resource_mut::<TreeCaptureState>().done = true;
-        world.write_message(AppExit::Success);
+        // Give the last screenshot time to reach disk before exiting.
+        if !entered {
+            let mut state = world.resource_mut::<TreeCaptureState>();
+            state.entered = true;
+            state.since = elapsed;
+            return;
+        }
+        if elapsed - since > 1.5 {
+            world.resource_mut::<TreeCaptureState>().done = true;
+            world.write_message(AppExit::Success);
+        }
         return;
     }
     let pose = &TREE_POSES[index];
