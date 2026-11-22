@@ -1085,6 +1085,7 @@ fn render_seattle_layer(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn update_minimap_map(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,

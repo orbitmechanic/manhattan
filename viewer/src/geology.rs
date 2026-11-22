@@ -1350,26 +1350,13 @@ fn s3_damage(world: &mut World) {
     if stage == 2 {
         if std::env::var_os("S3_RESTORE").is_some() && since > 0.0 {
             let id = targets[0].0;
-            let pristine = world
-                .resource::<destructibles_bevy::streaming::PristineChecksums>()
-                .0
-                .get(&id)
-                .copied()
-                .unwrap_or(0);
-            let pristine = world
-                .resource::<destructibles_bevy::streaming::PristineChecksums>()
-                .0
-                .get(&id)
-                .copied()
-                .unwrap_or(0);
             destructibles_bevy::rewind::begin_restoration(world, &[id]);
             for _ in 0..600 {
                 destructibles_bevy::rewind::advance_restoration(world);
                 if world
                     .resource::<destructibles_bevy::damage::DamageJournal>()
                     .0
-                    .len()
-                    == 0
+                    .is_empty()
                 {
                     break;
                 }
@@ -1378,6 +1365,12 @@ fn s3_damage(world: &mut World) {
                 .resource::<destructibles_bevy::damage::DamageJournal>()
                 .0
                 .len();
+            let pristine = world
+                .resource::<destructibles_bevy::streaming::PristineChecksums>()
+                .0
+                .get(&id)
+                .copied()
+                .unwrap_or(0);
             let pre_reset = destructibles_bevy::rewind::building_checksum(world, id);
             let checksum_pre = pre_reset == pristine;
             destructibles_bevy::streaming::force_pristine_reset(world, id);
