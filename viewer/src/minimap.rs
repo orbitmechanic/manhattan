@@ -1216,6 +1216,7 @@ fn update_location_text(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn update_minimap_map(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
