@@ -1141,6 +1141,72 @@ fn set_live_detail(world: &mut World, id: usize, level: DetailTier) {
     }
 }
 
+/// Seattle arsenal: ray against the CityPack shells in the destructibles
+/// registry, JIT tier-up, impacts and journal. This is the --seattle weapon.
+fn seattle_fire(world: &mut World, origin: Vec3, forward: Vec3, preset: DamagePreset) {
+    let keys = world.resource::<ButtonInput<KeyCode>>().clone();
+    let mouse = world.resource::<ButtonInput<MouseButton>>().clone();
+    if !(keys.just_pressed(KeyCode::KeyG)
+        || keys.just_pressed(KeyCode::KeyX)
+        || mouse.just_pressed(MouseButton::Left))
+    {
+        return;
+    }
+    let mut best: Option<(f32, u32, Vec3)> = None;
+    {
+        let registry = world.resource::<destructibles_bevy::building::Buildings>();
+        for id in registry.ids() {
+            let Some(record) = registry.get(id) else {
+                continue;
+            };
+            let base = record.origin;
+            let mut min = Vec3::splat(f32::INFINITY);
+            let mut max = Vec3::splat(f32::NEG_INFINITY);
+            for point in &record.layout.footprint {
+                let p = Vec3::new(base.x + point[0], base.y, base.z + point[1]);
+                min = min.min(p);
+                max = max.max(p);
+            }
+            max.y = base.y + record.layout.height;
+            if let Some(t) = ray_aabb(origin, forward, min, max)
+                && best.is_none_or(|(best_t, _, _)| t < best_t)
+            {
+                best = Some((t, id, origin + forward * t));
+            }
+        }
+    }
+    let Some((_t, id, point)) = best else {
+        info!("FIRE seattle: ray MISS");
+        world.resource_mut::<FireBadges>().misses += 1;
+        return;
+    };
+    fire_seattle_at(world, id, preset, point, forward);
+}
+
+pub(crate) fn fire_seattle_at(
+    world: &mut World,
+    id: u32,
+    preset: DamagePreset,
+    point: Vec3,
+    forward: Vec3,
+) {
+    destructibles_bevy::building::begin_detail_upgrade(
+        world,
+        id,
+        destructibles_bevy::building::DetailTier::Structural,
+    );
+    for _ in 0..80 {
+        let level = destructibles_bevy::building::advance_detail(world, id, 50.0);
+        if level >= destructibles_bevy::building::DetailTier::Structural {
+            break;
+        }
+    }
+    apply_preset(world, id, preset, point, forward);
+    let head = world.resource::<DamageJournal>().0.head_for(id);
+    info!("FIRE seattle: b{id} preset {preset:?} journal {head:.2}");
+    world.resource_mut::<FireBadges>().line = format!("RAY → HIT=b{id} → JOURNAL={head:.2}");
+}
+
 fn apply_preset(
     world: &mut World,
     building: u32,
@@ -1275,6 +1341,10 @@ fn damage_input(world: &mut World) {
     let origin = camera.translation;
     let origin_of_ray = origin;
     let forward = camera.forward().as_vec3();
+    if crate::geology::s3_enabled() {
+        seattle_fire(world, origin, forward, preset);
+        return;
+    }
     let mut best: Option<(f32, usize, Vec3)> = None;
     {
         let neighborhood = world.resource::<Neighborhood>();

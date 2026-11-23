@@ -90,7 +90,8 @@ pub struct GeologyPlugin;
 
 impl Plugin for GeologyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_geology)
+        app.init_resource::<FireProbe>()
+            .add_systems(Startup, setup_geology)
             .add_systems(
                 Update,
                 (
@@ -110,10 +111,37 @@ impl Plugin for GeologyPlugin {
                     s3_list_targets,
                     district_capture,
                     seattle_boot_camera,
+                    seattle_fire_probe,
                 ),
             )
-            .add_systems(PostUpdate, hide_precip);
+            .add_systems(PostUpdate, (clamp_camera, hide_precip));
     }
+}
+
+/// Ground floor law: the camera may not sink below DEM + 0.5 m on land; over
+/// water it may dive (the reviewer permitted it formally).
+pub fn clamp_camera_floor(ground: f32, wet: bool, y: f32) -> f32 {
+    if wet { y } else { y.max(ground + 0.5) }
+}
+
+fn clamp_camera(state: Option<Res<Geology>>, mut camera: Query<&mut Transform, With<FlyCamera>>) {
+    let Some(state) = state else {
+        return;
+    };
+    let Ok(mut transform) = camera.single_mut() else {
+        return;
+    };
+    let x = transform.translation.x - STREAM_WORLD_OFFSET;
+    let z = transform.translation.z;
+    let col = ((x - state.dem.origin[0]) / state.dem.spacing).round() as isize;
+    let row = ((z - state.dem.origin[1]) / state.dem.spacing).round() as isize;
+    let wet = row >= 0
+        && col >= 0
+        && (row as usize) < state.dem.rows
+        && (col as usize) < state.dem.cols
+        && state.mask[row as usize * state.dem.cols + col as usize] != 0;
+    let ground = state.dem.height(x, z);
+    transform.translation.y = clamp_camera_floor(ground, wet, transform.translation.y);
 }
 
 fn hide_precip(
@@ -2170,6 +2198,136 @@ fn district_capture(world: &mut World) {
     state.entered = false;
 }
 
+#[derive(Resource, Default)]
+struct FireProbe {
+    stage: u8,
+    since: f32,
+    target: u32,
+}
+
+/// Verification harness for the Seattle weapon: aim at a real CityPack record,
+/// fire the same shared path the G key uses, log the journal and capture the
+/// wound. Gated by SEATTLE_FIRE_TEST (id via SEATTLE_FIRE_AT).
+fn seattle_fire_probe(world: &mut World) {
+    if std::env::var_os("SEATTLE_FIRE_TEST").is_none() || !s2_enabled() {
+        return;
+    }
+    unsafe {
+        std::env::set_var("PILOT_CLEAN", "1");
+    }
+    let elapsed = world.resource::<Time>().elapsed_secs();
+    let (mut stage, mut since) = {
+        let state = world.resource::<FireProbe>();
+        (state.stage, state.since)
+    };
+    let target_id = std::env::var("SEATTLE_FIRE_AT")
+        .ok()
+        .and_then(|value| value.trim().parse::<u32>().ok())
+        .unwrap_or(187064);
+    match stage {
+        0 => {
+            if elapsed < 6.0 {
+                return;
+            }
+            let mut chosen = world
+                .resource::<destructibles_bevy::building::Buildings>()
+                .get(target_id)
+                .map(|record| (record.origin, record.layout.height, target_id));
+            if chosen.is_none() {
+                let camera = world
+                    .query_filtered::<&Transform, With<FlyCamera>>()
+                    .single(world)
+                    .map(|transform| transform.translation)
+                    .unwrap_or(Vec3::ZERO);
+                let registry = world.resource::<destructibles_bevy::building::Buildings>();
+                chosen = registry
+                    .ids()
+                    .filter(|id| *id < crate::landmarks::LANDMARK_ID_BASE)
+                    .filter_map(|id| registry.get(id))
+                    .map(|record| {
+                        (
+                            record.origin,
+                            record.layout.height,
+                            record.id,
+                            record.origin.distance_squared(camera),
+                        )
+                    })
+                    .min_by(|a, b| a.3.total_cmp(&b.3))
+                    .map(|(origin, height, id, _)| (origin, height, id));
+            }
+            let Some((origin, height, chosen_id)) = chosen else {
+                return;
+            };
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            let _ = staged;
+            let eye = origin + Vec3::new(40.0, height * 0.55 + 6.0, 28.0);
+            let look = origin + Vec3::Y * (height * 0.45);
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "seattle_fire_probe",
+                eye,
+                look,
+                "gun_probe",
+            );
+            world.resource_mut::<FireProbe>().target = chosen_id;
+            stage = 1;
+            since = elapsed;
+        }
+        1 => {
+            if elapsed - since < 1.5 {
+                return;
+            }
+            let chosen_id = world.resource::<FireProbe>().target;
+            let Some((origin, height)) = world
+                .resource::<destructibles_bevy::building::Buildings>()
+                .get(chosen_id)
+                .map(|record| (record.origin, record.layout.height))
+            else {
+                return;
+            };
+            let point = origin + Vec3::Y * (height * 0.45);
+            let forward = Vec3::new(-0.8, -0.1, -0.55).normalize_or_zero();
+            crate::neighborhood::fire_seattle_at(
+                world,
+                chosen_id,
+                crate::neighborhood::DamagePreset::Bullet,
+                point,
+                forward,
+            );
+            stage = 2;
+            since = elapsed;
+        }
+        2 => {
+            if elapsed - since < 1.5 {
+                return;
+            }
+            let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/seattle_gun_wound.png");
+            world
+                .spawn(Screenshot::primary_window())
+                .observe(save_to_disk(path));
+            let chosen_id = world.resource::<FireProbe>().target;
+            let head = world
+                .resource::<destructibles_bevy::damage::DamageJournal>()
+                .0
+                .head_for(chosen_id);
+            info!("SEATTLE GUN PROBE: b{chosen_id} journal {head:.2} (capture)");
+            stage = 3;
+            since = elapsed;
+        }
+        _ => {
+            if elapsed - since > 1.0 {
+                world.write_message(AppExit::Success);
+            }
+        }
+    }
+    {
+        let mut state = world.resource_mut::<FireProbe>();
+        state.stage = stage;
+        state.since = since;
+    }
+}
+
 /// Milestone S4: `--seattle` boot profile. Places the free-fly camera at the
 /// Westlake/Pike Pine seam at street level looking downhill toward the market
 /// and the Sound, with daytime clear defaults. One-shot; input owns the camera
@@ -2739,22 +2897,9 @@ fn s3_buildings(world: &mut World) {
         state.loaded_buildings += count;
         let _ = origin_h;
     }
-    let structures = world
-        .resource::<destructibles_bevy::structure::Structures>()
-        .iter()
-        .filter(|(id, _)| **id < crate::landmarks::LANDMARK_ID_BASE)
-        .count();
-    if structures != 0 {
-        let ids = world
-            .resource::<destructibles_bevy::structure::Structures>()
-            .iter()
-            .map(|(id, _)| *id)
-            .filter(|id| *id < crate::landmarks::LANDMARK_ID_BASE)
-            .take(8)
-            .collect::<Vec<_>>();
-        error!("Shell Doctrine violation: {structures} graphs, ids {ids:?}");
-        std::process::exit(1);
-    }
+    // The doctrine's load-time invariant is asserted per streamed chunk above.
+    // A player weapon (or a smoke/gate) may legitimately tier a shell up later;
+    // that is the intended damage path, not a violation.
     let mut state = world.resource_mut::<Geology>();
     state.loaded_buildings = state.building_chunks.values().map(Vec::len).sum();
 }
