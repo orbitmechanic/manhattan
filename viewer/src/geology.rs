@@ -1316,6 +1316,7 @@ fn s2_capture(
         || std::env::var_os("TREES_CAPTURE").is_some()
         || std::env::var_os("LANDMARK_GATE").is_some()
         || std::env::var_os("DISTRICT_CAPTURE").is_some()
+        || std::env::var_os("STOREFRONT_CAPTURE").is_some()
     {
         return;
     }

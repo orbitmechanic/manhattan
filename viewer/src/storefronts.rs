@@ -209,6 +209,23 @@ impl StorefrontAssets {
     }
 }
 
+/// Every placement that has been generated, by prop kind, for derived cameras.
+#[derive(Resource, Default)]
+pub struct PlacementIndex {
+    pub by_kind: HashMap<u8, Vec<Placement>>,
+}
+
+impl PlacementIndex {
+    pub fn remember(&mut self, placements: &[Placement]) {
+        for placement in placements {
+            let list = self.by_kind.entry(placement.kind).or_default();
+            if list.len() < 400 {
+                list.push(*placement);
+            }
+        }
+    }
+}
+
 #[derive(Resource, Default)]
 pub struct Storefronts {
     pub loaded: HashMap<usize, Vec<Entity>>,
@@ -221,8 +238,10 @@ pub struct StorefrontsPlugin;
 
 impl Plugin for StorefrontsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_storefronts)
-            .add_systems(Update, storefront_stream);
+        app.init_resource::<PlacementIndex>()
+            .init_resource::<StorefrontCaptureState>()
+            .add_systems(Startup, setup_storefronts)
+            .add_systems(Update, (storefront_stream, storefront_capture));
     }
 }
 
@@ -492,6 +511,7 @@ fn storefront_stream(world: &mut World) {
                 .insert(index, Vec::new());
             continue;
         }
+        world.resource_mut::<PlacementIndex>().remember(&placements);
         world
             .resource_mut::<Storefronts>()
             .pending
@@ -505,6 +525,151 @@ fn storefront_stream(world: &mut World) {
             world.resource::<Geology>().pack.nodes[index].name
         );
     }
+}
+
+#[derive(Resource, Default)]
+struct StorefrontCaptureState {
+    index: usize,
+    entered: bool,
+    since: f32,
+    done: bool,
+    chosen: Vec<Placement>,
+}
+
+const CAPTURE_KINDS: [(u8, &str); 4] = [
+    (KIND_AWNING, "storefronts_pike_place"),
+    (KIND_COLONNADE, "storefronts_pioneer_square"),
+    (KIND_WAREHOUSE, "storefronts_sodo"),
+    (KIND_PLACARD, "storefronts_residential"),
+];
+
+/// Derived camera: pick a real placed prop, stand 18 m along its outward face
+/// normal at pedestrian eye height, aim at its mid-height with a little street.
+fn storefront_capture(world: &mut World) {
+    if std::env::var_os("STOREFRONT_CAPTURE").is_none() || !crate::geology::s2_enabled() {
+        return;
+    }
+    let elapsed = world.resource::<Time>().elapsed_secs();
+    if elapsed < 5.0 {
+        return;
+    }
+    let (index, entered, since, done) = {
+        let state = world.resource::<StorefrontCaptureState>();
+        (state.index, state.entered, state.since, state.done)
+    };
+    if done {
+        return;
+    }
+    if index >= CAPTURE_KINDS.len() {
+        world.resource_mut::<StorefrontCaptureState>().done = true;
+        world.write_message(AppExit::Success);
+        return;
+    }
+    {
+        let mut clock = world.resource_mut::<crate::clock::SimClock>();
+        clock.minute_of_day = 12.0 * 60.0;
+        clock.playing = false;
+        let mut weather = world.resource_mut::<crate::weather::Weather>();
+        weather.auto = false;
+        weather.target = crate::weather::WeatherKind::Clear;
+        weather.cloud_cover = 0.18;
+        weather.precipitation = 0.0;
+        weather.storm = 0.0;
+        weather.snow = 0.0;
+    }
+    let (kind, name) = CAPTURE_KINDS[index];
+    if !entered {
+        let chosen = world
+            .resource::<PlacementIndex>()
+            .by_kind
+            .get(&kind)
+            .and_then(|list| list.first().copied());
+        let Some(placement) = chosen else {
+            // Nothing streamed yet: park the camera at the market so the
+            // streamer has something to load, then wait.
+            let ground = world
+                .resource::<crate::geology::Geology>()
+                .dem
+                .height(-440.0, -400.0);
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "storefront_capture",
+                Vec3::new(
+                    crate::citypack::STREAM_WORLD_OFFSET - 440.0,
+                    ground + 6.0,
+                    -400.0,
+                ),
+                Vec3::new(
+                    crate::citypack::STREAM_WORLD_OFFSET - 525.0,
+                    ground + 8.0,
+                    -400.0,
+                ),
+                "warming",
+            );
+            return;
+        };
+        let ground = world
+            .resource::<crate::geology::Geology>()
+            .dem
+            .height(placement.x, placement.z);
+        let nx = placement.yaw.sin();
+        let nz = placement.yaw.cos();
+        let eye = Vec3::new(
+            crate::citypack::STREAM_WORLD_OFFSET + placement.x + nx * 8.0,
+            ground + 2.6,
+            placement.z + nz * 8.0,
+        );
+        let look = Vec3::new(
+            crate::citypack::STREAM_WORLD_OFFSET + placement.x + nx * 2.0,
+            ground + 3.2,
+            placement.z + nz * 2.0,
+        );
+        {
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "storefront_capture",
+                eye,
+                look,
+                name,
+            );
+        }
+        {
+            let mut clock = world.resource_mut::<crate::clock::SimClock>();
+            clock.minute_of_day = 12.0 * 60.0;
+            let mut weather = world.resource_mut::<crate::weather::Weather>();
+            weather.auto = false;
+            weather.target = crate::weather::WeatherKind::Clear;
+            weather.cloud_cover = 0.18;
+            weather.precipitation = 0.0;
+            weather.storm = 0.0;
+            weather.snow = 0.0;
+        }
+        let mut state = world.resource_mut::<StorefrontCaptureState>();
+        state.chosen = vec![placement];
+        state.entered = true;
+        state.since = elapsed;
+        return;
+    }
+    if elapsed - since < 1.4 {
+        return;
+    }
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("captures")
+        .join(format!("{name}.png"));
+    world
+        .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
+        .observe(bevy::render::view::screenshot::save_to_disk(path));
+    info!(
+        "STOREFRONT capture {name} from kind {} at ({:.0},{:.0})",
+        kind,
+        world.resource::<StorefrontCaptureState>().chosen[0].x,
+        world.resource::<StorefrontCaptureState>().chosen[0].z
+    );
+    let mut state = world.resource_mut::<StorefrontCaptureState>();
+    state.index += 1;
+    state.entered = false;
 }
 
 fn spawn_placements(world: &mut World, node: usize, placements: &[Placement]) {

@@ -248,7 +248,7 @@ fn parse_args() -> Args {
                     std::env::set_var("SEATTLE_S3", "1");
                     std::env::set_var("PILOT_HORIZON", "1");
                     std::env::set_var("PILOT_CLEAN", "1");
-                    std::env::set_var("DISTRICT_CAPTURE", "1");
+                    std::env::set_var("STOREFRONT_CAPTURE", "1");
                     std::env::set_var("TREES_OFF", "1");
                 }
             }
