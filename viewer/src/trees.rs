@@ -697,22 +697,18 @@ fn tree_capture(world: &mut World) {
     let pose = &TREE_POSES[index];
     // Drive the camera every frame: the pilot controller also writes it.
     let ground = world.resource::<Geology>().dem.height(pose.x, pose.z);
-    if let Ok(mut camera) = world
-        .query_filtered::<&mut Transform, With<FlyCamera>>()
-        .single_mut(world)
     {
-        camera.translation = Vec3::new(STREAM_WORLD_OFFSET + pose.x, ground + pose.eye, pose.z);
-        let look = Vec3::new(
-            STREAM_WORLD_OFFSET + pose.look[0],
-            ground + pose.look[1],
-            pose.look[2],
-        );
-        let direction = (look - camera.translation).normalize_or_zero();
-        camera.rotation = Quat::from_euler(
-            EulerRot::YXZ,
-            (-direction.x).atan2(-direction.z),
-            direction.y.asin(),
-            0.0,
+        let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+        crate::camera_authority::stage_look_at(
+            &mut staged,
+            "tree_capture",
+            Vec3::new(STREAM_WORLD_OFFSET + pose.x, ground + pose.eye, pose.z),
+            Vec3::new(
+                STREAM_WORLD_OFFSET + pose.look[0],
+                ground + pose.look[1],
+                pose.look[2],
+            ),
+            pose.name,
         );
     }
     {

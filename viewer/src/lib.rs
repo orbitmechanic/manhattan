@@ -3,6 +3,7 @@ pub mod astro;
 pub mod audio;
 pub mod blocks;
 pub mod camera;
+pub mod camera_authority;
 pub mod city_material;
 pub mod city_rhythm;
 pub mod city_tuning;

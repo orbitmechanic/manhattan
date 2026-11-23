@@ -450,6 +450,7 @@ fn main() {
     .add_plugins(manhattan_viewer::citypack::CityPackPlugin)
     .add_plugins(manhattan_viewer::horizon::HorizonPlugin)
     .add_plugins(manhattan_viewer::geology::GeologyPlugin)
+    .add_plugins(manhattan_viewer::camera_authority::CameraAuthorityPlugin)
     .add_plugins(manhattan_viewer::trees::TreesPlugin)
     .add_plugins(manhattan_viewer::storefronts::StorefrontsPlugin)
     .add_plugins(manhattan_viewer::landmarks::LandmarksPlugin)

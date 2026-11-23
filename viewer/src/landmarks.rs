@@ -1686,18 +1686,14 @@ pub fn ground_at(world: &World, x: f32, z: f32) -> f32 {
 
 pub fn set_camera(world: &mut World, eye: [f32; 3], look: [f32; 3]) {
     let ground = ground_at(world, eye[0], eye[2]);
-    if let Ok(mut camera) = world
-        .query_filtered::<&mut Transform, With<FlyCamera>>()
-        .single_mut(world)
     {
-        camera.translation = Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + eye[1], eye[2]);
-        let look = Vec3::new(STREAM_WORLD_OFFSET + look[0], look[1], look[2]);
-        let direction = (look - camera.translation).normalize_or_zero();
-        camera.rotation = Quat::from_euler(
-            EulerRot::YXZ,
-            (-direction.x).atan2(-direction.z),
-            direction.y.asin(),
-            0.0,
+        let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+        crate::camera_authority::stage_look_at(
+            &mut staged,
+            "landmark_gate",
+            Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + eye[1], eye[2]),
+            Vec3::new(STREAM_WORLD_OFFSET + look[0], look[1], look[2]),
+            "landmark",
         );
     }
 }

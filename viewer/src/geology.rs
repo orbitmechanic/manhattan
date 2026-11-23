@@ -760,6 +760,7 @@ fn geology_stream(
     mut meshes: ResMut<Assets<Mesh>>,
     mut ticks: Local<u32>,
     trees: Option<Res<crate::trees::Trees>>,
+    staged: Option<Res<crate::camera_authority::StagedPose>>,
 ) {
     if let Some(motion) = motion.as_mut() {
         motion.velocity = Vec3::ZERO;
@@ -940,7 +941,7 @@ fn geology_stream(
     }
     if let Ok(mut text) = text.single_mut() {
         text.0 = format!(
-            "S2 terrain {} (+{}/-{})  roads {} (+{}/-{})  buildings {}  trees {} / {} groups  evals {}/{}/{}\n30 m streamed / 60 m regional / skirts / boot {:.0} ms / tile {:.1} ms road {:.1} ms",
+            "S2 terrain {} (+{}/-{})  roads {} (+{}/-{})  buildings {}  trees {} / {} groups  evals {}/{}/{}  {}\n30 m streamed / 60 m regional / skirts / boot {:.0} ms / tile {:.1} ms road {:.1} ms",
             state.terrain.len(),
             loads,
             unloads,
@@ -953,6 +954,16 @@ fn geology_stream(
             evaluations.counties,
             evaluations.cities,
             evaluations.neighborhoods,
+            staged
+                .as_ref()
+                .filter(|pose| pose.active)
+                .map(|pose| format!(
+                    "POSE {} {:.0},{:.0}",
+                    pose.stamp,
+                    pose.translation.x - STREAM_WORLD_OFFSET,
+                    pose.translation.z
+                ))
+                .unwrap_or_default(),
             state.boot_ms,
             tile_ms,
             road_ms
@@ -2080,13 +2091,13 @@ fn district_capture(world: &mut World) {
     const POSES: [(&str, [f32; 2], [f32; 2]); 5] = [
         (
             "storefronts_pike_place.png",
-            [-470.0, -330.0],
-            [-520.0, -400.0],
+            [-440.0, -400.0],
+            [-525.0, -400.0],
         ),
         (
             "storefronts_pioneer_square.png",
-            [250.0, 560.0],
-            [250.0, 470.0],
+            [250.0, 650.0],
+            [250.0, 500.0],
         ),
         ("storefronts_sodo.png", [420.0, 3620.0], [340.0, 3300.0]),
         (
@@ -2120,14 +2131,15 @@ fn district_capture(world: &mut World) {
             geology.dem.height(look[0], look[1]),
         )
     };
-    if let Ok(mut camera) = world
-        .query_filtered::<&mut Transform, With<FlyCamera>>()
-        .single_mut(world)
     {
-        camera.translation = Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + 6.0, eye[1]);
-        let target = Vec3::new(STREAM_WORLD_OFFSET + look[0], look_ground + 9.0, look[1]);
-        let d = (target - camera.translation).normalize_or_zero();
-        camera.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+        let mut pose = world.resource_mut::<crate::camera_authority::StagedPose>();
+        crate::camera_authority::stage_look_at(
+            &mut pose,
+            "district_capture",
+            Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + 6.0, eye[1]),
+            Vec3::new(STREAM_WORLD_OFFSET + look[0], look_ground + 9.0, look[1]),
+            name,
+        );
     }
     if !entered {
         let mut state = world.resource_mut::<DistrictCaptureState>();
