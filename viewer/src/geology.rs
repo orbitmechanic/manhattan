@@ -104,7 +104,13 @@ impl Plugin for GeologyPlugin {
             )
             .add_systems(
                 Update,
-                (s3_buildings, s3_damage, s3_list_targets, district_capture),
+                (
+                    s3_buildings,
+                    s3_damage,
+                    s3_list_targets,
+                    district_capture,
+                    seattle_boot_camera,
+                ),
             )
             .add_systems(PostUpdate, hide_precip);
     }
@@ -1317,6 +1323,7 @@ fn s2_capture(
         || std::env::var_os("LANDMARK_GATE").is_some()
         || std::env::var_os("DISTRICT_CAPTURE").is_some()
         || std::env::var_os("STOREFRONT_CAPTURE").is_some()
+        || std::env::var_os("SEATTLE_BOOT").is_some()
     {
         return;
     }
@@ -2161,6 +2168,52 @@ fn district_capture(world: &mut World) {
     let mut state = world.resource_mut::<DistrictCaptureState>();
     state.index += 1;
     state.entered = false;
+}
+
+/// Milestone S4: `--seattle` boot profile. Places the free-fly camera at the
+/// Westlake/Pike Pine seam at street level looking downhill toward the market
+/// and the Sound, with daytime clear defaults. One-shot; input owns the camera
+/// afterwards.
+fn seattle_boot_camera(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut done: Local<u8>,
+    mut camera: Query<&mut Transform, With<FlyCamera>>,
+    mut clock: ResMut<SimClock>,
+    mut weather: ResMut<Weather>,
+) {
+    if std::env::var_os("SEATTLE_BOOT").is_none() {
+        return;
+    }
+    let capture = std::env::var_os("SEATTLE_BOOT_CAPTURE").is_some();
+    if *done == 0 {
+        clock.minute_of_day = 12.0 * 60.0;
+        weather.auto = false;
+        weather.target = WeatherKind::Clear;
+        weather.cloud_cover = 0.18;
+        weather.precipitation = 0.0;
+        weather.storm = 0.0;
+        weather.snow = 0.0;
+        if let Ok(mut transform) = camera.single_mut() {
+            let eye = Vec3::new(STREAM_WORLD_OFFSET - 138.4, 60.0, -614.3);
+            let look = Vec3::new(STREAM_WORLD_OFFSET - 518.6, 20.0, -399.4);
+            transform.translation = eye;
+            let d = (look - eye).normalize_or_zero();
+            transform.rotation =
+                Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+        }
+        info!("SEATTLE BOOT: camera at Westlake seam, daytime clear");
+        *done = 1;
+        return;
+    }
+    if capture && *done == 1 && time.elapsed_secs() > 7.0 {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/seattle_boot.png");
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(path));
+        info!("SEATTLE BOOT: spawn capture");
+        *done = 2;
+    }
 }
 
 fn s3_list_targets(world: &mut World) {

@@ -1,98 +1,98 @@
 [
   {
-    "avg_ms": 63.810001373291016,
-    "p99_ms": 70.66000366210938,
+    "avg_ms": 46.9900016784668,
+    "p99_ms": 346.6099853515625,
+    "pose": "gauntlet_15ms",
+    "samples": 182
+  },
+  {
+    "avg_ms": 51.02000045776367,
+    "p99_ms": 65.08000183105469,
+    "pose": "gauntlet_30ms",
+    "samples": 59
+  },
+  {
+    "avg_ms": 51.93000030517578,
+    "p99_ms": 63.33000183105469,
+    "pose": "gauntlet_100ms",
+    "samples": 58
+  },
+  {
+    "avg_ms": 56.20000076293945,
+    "p99_ms": 96.23999786376952,
+    "pose": "gauntlet_650ms",
+    "samples": 53
+  },
+  {
+    "avg_ms": 48.380001068115234,
+    "p99_ms": 258.75,
+    "pose": "low_orbit",
+    "samples": 307
+  },
+  {
+    "avg_ms": 38.70000076293945,
+    "p99_ms": 48.16999816894531,
+    "pose": "chunk_hover",
+    "samples": 50
+  },
+  {
+    "avg_ms": 66.33000183105469,
+    "p99_ms": 80.08999633789062,
     "pose": "s2_capitol_climb.png",
-    "samples": 16
+    "samples": 15
   },
   {
-    "avg_ms": 39.869998931884766,
-    "p99_ms": 43.52000045776367,
+    "avg_ms": 35.470001220703125,
+    "p99_ms": 44.560001373291016,
     "pose": "s2_elliott_rainier.png",
-    "samples": 25
+    "samples": 28
   },
   {
-    "avg_ms": 70.27999877929688,
-    "p99_ms": 76.44999694824219,
+    "avg_ms": 74.52999877929688,
+    "p99_ms": 80.88999938964844,
     "pose": "s2_queen_anne.png",
-    "samples": 14
+    "samples": 13
   },
   {
-    "avg_ms": 39.41999816894531,
-    "p99_ms": 43.83000183105469,
+    "avg_ms": 36.279998779296875,
+    "p99_ms": 40.08000183105469,
     "pose": "s2_lake_bellevue.png",
-    "samples": 25
+    "samples": 28
   },
   {
-    "avg_ms": 64.51000213623047,
-    "p99_ms": 77.08000183105469,
+    "avg_ms": 47.599998474121094,
+    "p99_ms": 58.7599983215332,
     "pose": "s2_sodo_flats.png",
-    "samples": 16
-  },
-  {
-    "avg_ms": 60.91999816894531,
-    "p99_ms": 66.7699966430664,
-    "pose": "s2_steep_overcast.png",
-    "samples": 17
-  },
-  {
-    "avg_ms": 47.41999816894531,
-    "p99_ms": 52.380001068115234,
-    "pose": "s2_montlake_cut.png",
     "samples": 21
   },
   {
-    "avg_ms": 44.630001068115234,
-    "p99_ms": 51.720001220703125,
-    "pose": "s2_waterfront_duwamish.png",
-    "samples": 23
+    "avg_ms": 54.220001220703125,
+    "p99_ms": 62.72999954223633,
+    "pose": "s2_steep_overcast.png",
+    "samples": 18
   },
   {
-    "avg_ms": 39.27000045776367,
-    "p99_ms": 45.08000183105469,
-    "pose": "s2_elliott_dawn.png",
-    "samples": 26
-  },
-  {
-    "avg_ms": 39.25,
-    "p99_ms": 43.93000030517578,
-    "pose": "s2_elliott_dusk.png",
+    "avg_ms": 40.630001068115234,
+    "p99_ms": 49.16999816894531,
+    "pose": "s2_montlake_cut.png",
     "samples": 25
   },
   {
-    "avg_ms": 40.41999816894531,
-    "p99_ms": 250.0,
-    "pose": "gauntlet_15ms",
-    "samples": 189
+    "avg_ms": 47.2400016784668,
+    "p99_ms": 56.2400016784668,
+    "pose": "s2_waterfront_duwamish.png",
+    "samples": 21
   },
   {
-    "avg_ms": 49.77000045776367,
-    "p99_ms": 59.08000183105469,
-    "pose": "gauntlet_30ms",
-    "samples": 60
+    "avg_ms": 35.709999084472656,
+    "p99_ms": 39.27000045776367,
+    "pose": "s2_elliott_dawn.png",
+    "samples": 28
   },
   {
-    "avg_ms": 49.90999984741211,
-    "p99_ms": 60.040000915527344,
-    "pose": "gauntlet_100ms",
-    "samples": 60
-  },
-  {
-    "avg_ms": 58.720001220703125,
-    "p99_ms": 100.94000244140624,
-    "pose": "gauntlet_650ms",
-    "samples": 51
-  },
-  {
-    "avg_ms": 33.52000045776367,
-    "p99_ms": 92.97000122070312,
-    "pose": "low_orbit",
-    "samples": 360
-  },
-  {
-    "avg_ms": 53.290000915527344,
-    "p99_ms": 67.5199966430664,
-    "pose": "chunk_hover",
-    "samples": 37
+    "avg_ms": 35.25,
+    "p99_ms": 38.369998931884766,
+    "pose": "s2_elliott_dusk.png",
+    "samples": 28
   }
 ]

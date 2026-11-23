@@ -757,7 +757,7 @@ struct TreeCaptureState {
 fn tree_lod_update(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
-    assets: Res<TreeAssets>,
+    assets: Option<Res<TreeAssets>>,
     mut trees: ResMut<Trees>,
     mut query: Query<(&Transform, &mut Mesh3d, &mut TreeVisual)>,
 ) {
@@ -769,6 +769,9 @@ fn tree_lod_update(
         return;
     }
     trees.last_lod = now;
+    let Some(assets) = assets else {
+        return;
+    };
     let camera = camera.translation;
     let mut groups: HashSet<(u8, u8, u8)> = HashSet::new();
     let mut active = 0usize;

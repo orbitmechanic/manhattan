@@ -111,6 +111,13 @@ pub fn place_chunk(
             continue;
         }
         let (cx, cz) = (building.centroid[0], building.centroid[1]);
+        if district == "Pike Place" {
+            let dx = cx - MARKET[0];
+            let dz = cz - MARKET[1];
+            if dx * dx + dz * dz > 200.0 * 200.0 {
+                continue;
+            }
+        }
         let Some((road_distance, sx, sz)) = nearest_street(chunk, cx, cz) else {
             continue;
         };
@@ -581,12 +588,19 @@ fn storefront_capture(world: &mut World) {
     // Lighting override (documented workaround: capture-mode sun path renders
     // night; the storefront gate is the subject, the sun path is queued).
     {
+        // Aim the fill along the current view so the faces the camera sees are
+        // lit; the capture-mode sun path remains a filed debt.
+        let view = world.resource::<crate::camera_authority::StagedPose>();
+        let direction = if view.active {
+            (view.rotation * Vec3::NEG_Z).normalize_or_zero()
+        } else {
+            Vec3::new(-0.45, -0.75, -0.35).normalize()
+        };
+        let rotation = Quat::from_rotation_arc(Vec3::NEG_Z, direction);
         let mut lights = world.query::<(&mut DirectionalLight, &mut Transform)>();
-        let rotation =
-            Quat::from_rotation_arc(Vec3::NEG_Z, Vec3::new(-0.45, -0.75, -0.35).normalize());
         for (mut light, mut transform) in lights.iter_mut(world) {
-            light.illuminance = 22_000.0;
-            light.color = Color::srgb(1.0, 0.96, 0.9);
+            light.illuminance = 26_000.0;
+            light.color = Color::srgb(1.0, 0.97, 0.92);
             transform.rotation = rotation;
         }
     }

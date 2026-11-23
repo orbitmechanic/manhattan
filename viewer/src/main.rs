@@ -241,6 +241,12 @@ fn parse_args() -> Args {
                     std::env::set_var("PILOT_CLEAN", "1");
                 }
             }
+            "--seattle" => unsafe {
+                std::env::set_var("SEATTLE_S2", "1");
+                std::env::set_var("SEATTLE_S3", "1");
+                std::env::set_var("SEATTLE_BOOT", "1");
+                std::env::set_var("LANDMARKS_ALWAYS", "1");
+            },
             "--districts" => {
                 args.pilot = true;
                 unsafe {
