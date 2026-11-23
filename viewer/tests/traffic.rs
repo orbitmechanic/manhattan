@@ -58,10 +58,10 @@ fn steep_street() -> (Dem, VehicleState) {
                 }
                 let dy = dem.height(pair[1][0], pair[1][1]) - dem.height(pair[0][0], pair[0][1]);
                 let grade = (dy / len).abs();
-                if grade > best.as_ref().map(|(g, _)| *g).unwrap_or(0.04) {
-                    if let Some(state) = vehicle_on_street(street, 11, 1.0, 9.0, SPECIES_SEDAN) {
-                        best = Some((grade, state));
-                    }
+                if grade > best.as_ref().map(|(g, _)| *g).unwrap_or(0.04)
+                    && let Some(state) = vehicle_on_street(street, 11, 1.0, 9.0, SPECIES_SEDAN)
+                {
+                    best = Some((grade, state));
                 }
             }
         }
