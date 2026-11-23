@@ -1,0 +1,36 @@
+{
+  "changed_buildings": 33657,
+  "districts": {
+    "Ballard": 71,
+    "Bellevue CBD": 49,
+    "Capitol Hill": 47,
+    "Downtown": 4,
+    "Eastside": 132,
+    "First Hill": 4,
+    "Fremont": 30,
+    "Georgetown": 6,
+    "Pike Place": 1,
+    "Pioneer Square": 1,
+    "Queen Anne": 28,
+    "SODO": 10,
+    "Seattle general": 354,
+    "Tacoma": 289,
+    "Wallingford": 5,
+    "West Seattle": 65
+  },
+  "families_after_buildings": {
+    "masonry_stone": 187864,
+    "mixed": 84846,
+    "steel_frame": 19365,
+    "timber": 38255
+  },
+  "families_before_buildings": {
+    "masonry_stone": 164941,
+    "mixed": 111948,
+    "steel_frame": 17348,
+    "timber": 36093
+  },
+  "mapping_sha256": "8ab97e1fb7f456a409cb757eb0e9b3fce83cfe8a4b5dc25df0be6c0db3bd26e5",
+  "partitions": 1096,
+  "schema": "seattle-district-report/1"
+}

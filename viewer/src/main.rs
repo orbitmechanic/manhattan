@@ -241,6 +241,17 @@ fn parse_args() -> Args {
                     std::env::set_var("PILOT_CLEAN", "1");
                 }
             }
+            "--districts" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("DISTRICT_CAPTURE", "1");
+                    std::env::set_var("TREES_OFF", "1");
+                }
+            }
             "--landmarks" => {
                 args.pilot = true;
                 unsafe {

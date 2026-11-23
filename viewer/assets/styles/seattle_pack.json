@@ -118,6 +118,62 @@
       "glass_probability": 0.15,
       "height_bias": "mid",
       "roof_recipe": "tan_parapet_equipment"
+    },
+    {
+      "id": "pike-place",
+      "cities": [
+        "Seattle"
+      ],
+      "neighborhood_any": [
+        "Pike Place"
+      ],
+      "family": "masonry_stone",
+      "facade_style": "brick_brownstone",
+      "glass_probability": 0.05,
+      "height_bias": "low",
+      "roof_recipe": "tan_parapet_curb"
+    },
+    {
+      "id": "first-hill",
+      "cities": [
+        "Seattle"
+      ],
+      "neighborhood_any": [
+        "First Hill"
+      ],
+      "family": "masonry_stone",
+      "facade_style": "brick_midrise",
+      "glass_probability": 0.12,
+      "height_bias": "mid",
+      "roof_recipe": "tan_parapet_equipment"
+    },
+    {
+      "id": "wallingford",
+      "cities": [
+        "Seattle"
+      ],
+      "neighborhood_any": [
+        "Wallingford"
+      ],
+      "family": "timber",
+      "facade_style": "brick_midrise",
+      "glass_probability": 0.1,
+      "height_bias": "low",
+      "roof_recipe": "tan_parapet_equipment"
+    },
+    {
+      "id": "tacoma-default",
+      "cities": [
+        "Tacoma"
+      ],
+      "neighborhood_any": [
+        "Tacoma"
+      ],
+      "family": "masonry_stone",
+      "facade_style": "concrete_grid",
+      "glass_probability": 0.2,
+      "height_bias": "mid",
+      "roof_recipe": "tan_parapet_curb"
     }
   ],
   "default": {

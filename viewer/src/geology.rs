@@ -74,6 +74,8 @@ struct StyleRule {
     family: String,
     facade_style: String,
     glass_probability: f32,
+    #[serde(default)]
+    height_bias: String,
 }
 
 #[derive(Deserialize)]
@@ -100,7 +102,10 @@ impl Plugin for GeologyPlugin {
                 )
                     .chain(),
             )
-            .add_systems(Update, (s3_buildings, s3_damage, s3_list_targets))
+            .add_systems(
+                Update,
+                (s3_buildings, s3_damage, s3_list_targets, district_capture),
+            )
             .add_systems(PostUpdate, hide_precip);
     }
 }
@@ -170,6 +175,7 @@ pub struct Geology {
     pub mask: Vec<u8>,
     pub pack: CityPack,
     style: StylePack,
+    districts: HashMap<String, String>,
     pub building_chunks: HashMap<usize, Vec<Entity>>,
     pending_shells: std::collections::VecDeque<PendingShell>,
     pub box_material: Handle<StandardMaterial>,
@@ -268,6 +274,16 @@ fn setup_geology(
         &std::fs::read_to_string(asset("assets/styles/seattle_pack.json")).expect("style pack"),
     )
     .expect("style pack json");
+    #[derive(Deserialize)]
+    struct DistrictFile {
+        assignments: HashMap<String, String>,
+    }
+    let districts: HashMap<String, String> =
+        std::fs::read_to_string(asset("assets/styles/seattle_districts.json"))
+            .ok()
+            .and_then(|text| serde_json::from_str::<DistrictFile>(&text).ok())
+            .map(|file| file.assignments)
+            .unwrap_or_default();
     let pack =
         CityPack::open(Path::new(env!("CARGO_MANIFEST_DIR")).join(crate::citypack::PACK_PATH))
             .expect("citypack for streets");
@@ -339,11 +355,13 @@ fn setup_geology(
         "S2: DEM {}x{} at {} m, water and far terrain in {:.1} ms",
         dem.rows, dem.cols, dem.spacing, boot_ms
     );
+    commands.insert_resource(DistrictCaptureState::default());
     commands.insert_resource(Geology {
         dem,
         mask,
         pack,
         style,
+        districts,
         building_chunks: HashMap::new(),
         pending_shells: std::collections::VecDeque::new(),
         box_material,
@@ -733,7 +751,8 @@ fn add_ribbon(
 fn geology_stream(
     mut commands: Commands,
     mut state: Option<ResMut<Geology>>,
-    time: Res<Time>,
+    _time: Res<Time>,
+    real_time: Res<Time<bevy::time::Real>>,
     camera: Query<&Transform, With<FlyCamera>>,
     mut text: Query<&mut Text, With<S2Text>>,
     mut precip: Query<&mut Visibility, With<crate::weather::PrecipVolume>>,
@@ -762,7 +781,7 @@ fn geology_stream(
         transform.translation.x - STREAM_WORLD_OFFSET,
         transform.translation.z,
     ];
-    state.samples.push(time.delta_secs() * 1000.0);
+    state.samples.push(real_time.delta_secs() * 1000.0);
     if state.samples.len() > 360 {
         state.samples.remove(0);
     }
@@ -1285,6 +1304,7 @@ fn s2_capture(
         || std::env::var_os("S3_DAMAGE").is_some()
         || std::env::var_os("TREES_CAPTURE").is_some()
         || std::env::var_os("LANDMARK_GATE").is_some()
+        || std::env::var_os("DISTRICT_CAPTURE").is_some()
     {
         return;
     }
@@ -1395,7 +1415,29 @@ fn s3_damage(world: &mut World) {
             let mut found = None;
             {
                 let state = world.resource::<Geology>();
-                for index in state.pack.neighborhoods() {
+                let district_priority = |name: &str| -> u8 {
+                    let district = state.districts.get(name).map(String::as_str).unwrap_or("");
+                    match district {
+                        "Pioneer Square" => 0,
+                        "Pike Place" => 1,
+                        "Downtown" => 2,
+                        "First Hill" => 3,
+                        "Capitol Hill" => 4,
+                        "Ballard" => 5,
+                        "Fremont" => 6,
+                        "Wallingford" => 7,
+                        "Georgetown" => 8,
+                        "SODO" => 9,
+                        "West Seattle" => 10,
+                        "Bellevue CBD" => 11,
+                        "Eastside" => 12,
+                        "Tacoma" => 13,
+                        _ => 14,
+                    }
+                };
+                let mut ordered = state.pack.neighborhoods();
+                ordered.sort_by_key(|index| district_priority(&state.pack.nodes[*index].name));
+                for index in ordered {
                     let Ok(chunk) = state.pack.read_chunk(index) else {
                         continue;
                     };
@@ -1407,7 +1449,14 @@ fn s3_damage(world: &mut World) {
                             .get(node.parent as usize)
                             .map(|node| node.name.as_str())
                             .unwrap_or("Seattle");
-                        if let Some(spec) = building_spec(&state.style, node, building, city) {
+                        let district = state
+                            .districts
+                            .get(&node.name)
+                            .map(String::as_str)
+                            .unwrap_or(&node.name);
+                        if let Some(spec) =
+                            building_spec(&state.style, node, building, city, district)
+                        {
                             let y =
                                 state.dem.height(building.centroid[0], building.centroid[1]) + 0.03;
                             found = Some((
@@ -2005,6 +2054,85 @@ fn family_name(family: MaterialFamily) -> &'static str {
     }
 }
 
+#[derive(Resource, Default)]
+struct DistrictCaptureState {
+    index: usize,
+    entered: bool,
+    since: f32,
+    done: bool,
+}
+
+fn district_capture(world: &mut World) {
+    if std::env::var_os("DISTRICT_CAPTURE").is_none() || !s2_enabled() {
+        return;
+    }
+    let elapsed = world.resource::<Time>().elapsed_secs();
+    if elapsed < 5.0 {
+        return;
+    }
+    let (index, entered, since, done) = {
+        let state = world.resource::<DistrictCaptureState>();
+        (state.index, state.entered, state.since, state.done)
+    };
+    if done {
+        return;
+    }
+    const POSES: [(&str, [f32; 2], [f32; 2]); 3] = [
+        (
+            "districts_pioneer_square.png",
+            [250.0, 560.0],
+            [250.0, 470.0],
+        ),
+        (
+            "districts_fremont_timber.png",
+            [-1040.0, -4880.0],
+            [-960.0, -4960.0],
+        ),
+        ("districts_downtown_glass.png", [0.0, 120.0], [0.0, -60.0]),
+    ];
+    if index >= POSES.len() {
+        world.resource_mut::<DistrictCaptureState>().done = true;
+        world.write_message(AppExit::Success);
+        return;
+    }
+    let (name, eye, look) = POSES[index];
+    let (ground, look_ground) = {
+        let geology = world.resource::<Geology>();
+        (
+            geology.dem.height(eye[0], eye[1]),
+            geology.dem.height(look[0], look[1]),
+        )
+    };
+    if let Ok(mut camera) = world
+        .query_filtered::<&mut Transform, With<FlyCamera>>()
+        .single_mut(world)
+    {
+        camera.translation = Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + 6.0, eye[1]);
+        let target = Vec3::new(STREAM_WORLD_OFFSET + look[0], look_ground + 9.0, look[1]);
+        let d = (target - camera.translation).normalize_or_zero();
+        camera.rotation = Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+    }
+    if !entered {
+        let mut state = world.resource_mut::<DistrictCaptureState>();
+        state.entered = true;
+        state.since = elapsed;
+        return;
+    }
+    if elapsed - since < 1.5 {
+        return;
+    }
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("captures")
+        .join(name);
+    world
+        .spawn(Screenshot::primary_window())
+        .observe(save_to_disk(path));
+    info!("DISTRICT capture {name}");
+    let mut state = world.resource_mut::<DistrictCaptureState>();
+    state.index += 1;
+    state.entered = false;
+}
+
 fn s3_list_targets(world: &mut World) {
     if std::env::var_os("S3_LIST_TARGETS").is_none() || !s3_enabled() {
         return;
@@ -2013,21 +2141,35 @@ fn s3_list_targets(world: &mut World) {
     if DONE.swap(true, std::sync::atomic::Ordering::SeqCst) {
         return;
     }
-    info!("S3 TARGET DUMP key=style-pack rule match on city+partition name -> MaterialFamily");
+    info!("S3 TARGET DUMP key=style-pack rule match on city+district (mapped) -> MaterialFamily");
     let state = world.resource::<Geology>();
     let mut counts = std::collections::HashMap::<String, usize>::new();
-    for node in state.pack.nodes.iter().filter(|node| node.level == 2) {
-        let Some(index) = state
-            .pack
-            .nodes
-            .iter()
-            .position(|candidate| std::ptr::eq(candidate, node))
-        else {
-            continue;
-        };
+    let priority = |name: &str| -> u8 {
+        match state.districts.get(name).map(String::as_str).unwrap_or("") {
+            "Pioneer Square" => 0,
+            "Pike Place" => 1,
+            "Downtown" => 2,
+            "First Hill" => 3,
+            "Capitol Hill" => 4,
+            "Ballard" => 5,
+            "Fremont" => 6,
+            "Wallingford" => 7,
+            "Georgetown" => 8,
+            "SODO" => 9,
+            "West Seattle" => 10,
+            "Bellevue CBD" => 11,
+            "Eastside" => 12,
+            "Tacoma" => 13,
+            _ => 14,
+        }
+    };
+    let mut ordered = state.pack.neighborhoods();
+    ordered.sort_by_key(|index| priority(&state.pack.nodes[*index].name));
+    for index in ordered {
         if counts.len() >= 4 && counts.values().all(|count| *count >= 5) {
             break;
         }
+        let node = &state.pack.nodes[index];
         let Ok(chunk) = state.pack.read_chunk(index) else {
             continue;
         };
@@ -2037,16 +2179,21 @@ fn s3_list_targets(world: &mut World) {
             .get(node.parent as usize)
             .map(|node| node.name.as_str())
             .unwrap_or("Seattle");
+        let district = state
+            .districts
+            .get(&node.name)
+            .map(String::as_str)
+            .unwrap_or(&node.name);
         for building in &chunk.buildings {
-            let Some(spec) = building_spec(&state.style, node, building, city) else {
+            let Some(spec) = building_spec(&state.style, node, building, city, district) else {
                 continue;
             };
             let family = family_name(spec.family).to_string();
             let count = counts.entry(family.clone()).or_insert(0);
             if *count < 5 {
                 info!(
-                    "S3 TARGET family={} id={} height={:.1} partition={}",
-                    family, building.id, building.height_m, node.name
+                    "S3 TARGET family={} id={} height={:.1} partition={} district={}",
+                    family, building.id, building.height_m, node.name, district
                 );
                 *count += 1;
             }
@@ -2059,7 +2206,12 @@ pub fn s3_enabled() -> bool {
     std::env::var_os("SEATTLE_S3").is_some()
 }
 
-fn rule_for<'a>(pack: &'a StylePack, city: &str, neighborhood: &str) -> &'a StyleRule {
+fn rule_for<'a>(
+    pack: &'a StylePack,
+    city: &str,
+    district: &str,
+    _neighborhood: &str,
+) -> &'a StyleRule {
     for rule in &pack.rules {
         if !rule.cities.is_empty() && !rule.cities.iter().any(|value| value == city) {
             continue;
@@ -2067,7 +2219,7 @@ fn rule_for<'a>(pack: &'a StylePack, city: &str, neighborhood: &str) -> &'a Styl
         if rule
             .neighborhood_any
             .iter()
-            .any(|value| neighborhood.contains(value))
+            .any(|value| district == value || district.contains(value))
         {
             return rule;
         }
@@ -2097,11 +2249,12 @@ fn building_spec(
     node: &crate::citypack::PackNode,
     building: &crate::citypack::PackBuilding,
     city: &str,
+    district: &str,
 ) -> Option<BuildingSpec> {
     if building.perimeter.len() < 3 || building.perimeter.len() > 64 {
         return None;
     }
-    let rule = rule_for(pack, city, &node.name);
+    let rule = rule_for(pack, city, district, &node.name);
     let mut style = facade_for(&rule.facade_style);
     let roll = (building.id.wrapping_mul(2654435761) % 1000) as f32 / 1000.0;
     if roll < rule.glass_probability && building.height_m >= 25.0 {
@@ -2119,7 +2272,10 @@ fn building_spec(
         })
         .collect::<Vec<_>>();
     let floor_height = building.floor_height_m.clamp(2.4, 6.0);
-    let floor_count = (building.height_m / floor_height).round().max(1.0) as u32;
+    let mut floor_count = (building.height_m / floor_height).round().max(1.0) as u32;
+    if rule.height_bias == "low" {
+        floor_count = floor_count.min(6);
+    }
     let mut windows = style.windows();
     windows.height = (floor_height - 0.1).clamp(1.1, 3.0);
     windows.sill_height = 0.0;
@@ -2286,7 +2442,12 @@ fn s3_buildings(world: &mut World) {
                                 .get(node.parent as usize)
                                 .map(|node| node.name.as_str())
                                 .unwrap_or("Seattle");
-                            let spec = building_spec(&state.style, node, building, city)?;
+                            let district = state
+                                .districts
+                                .get(&node.name)
+                                .map(String::as_str)
+                                .unwrap_or(&node.name);
+                            let spec = building_spec(&state.style, node, building, city, district)?;
                             let y =
                                 state.dem.height(building.centroid[0], building.centroid[1]) + 0.03;
                             let mut min = [f32::MAX; 2];
