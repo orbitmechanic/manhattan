@@ -2182,10 +2182,20 @@ fn seattle_boot_camera(
     mut clock: ResMut<SimClock>,
     mut weather: ResMut<Weather>,
 ) {
-    if std::env::var_os("SEATTLE_BOOT").is_none() {
+    let boot = std::env::var_os("SEATTLE_BOOT").is_some();
+    let traffic_hour = std::env::var("TRAFFIC_HOUR")
+        .ok()
+        .and_then(|value| value.parse::<f64>().ok());
+    if !boot && traffic_hour.is_none() {
         return;
     }
     let capture = std::env::var_os("SEATTLE_BOOT_CAPTURE").is_some();
+    if let Some(hour) = traffic_hour {
+        clock.minute_of_day = hour * 60.0;
+    }
+    if !boot {
+        return;
+    }
     if *done == 0 {
         clock.minute_of_day = 12.0 * 60.0;
         weather.auto = false;

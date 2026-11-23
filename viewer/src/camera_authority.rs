@@ -70,6 +70,26 @@ fn apply_staged_pose(pose: Res<StagedPose>, mut camera: Query<&mut Transform, Wi
     transform.rotation = pose.rotation;
 }
 
+/// Curb-side template for moving or populated subjects: stand 27 m behind the
+/// subject's lane and 4.6 m to the sidewalk side at 2.8 m, aim 22 m down the
+/// lane. Used by traffic captures; pedestrians inherit it.
+pub fn curb_side_eye(subject: Vec3, lane: Vec3) -> (Vec3, Vec3) {
+    let flat = Vec3::new(lane.x, 0.0, lane.z).normalize_or_zero();
+    let side = Vec3::new(-flat.z, 0.0, flat.x);
+    let eye = subject - flat * 27.0 + side * 4.6 + Vec3::Y * 2.8;
+    let look = subject + flat * 22.0 + Vec3::Y * 1.4;
+    (eye, look)
+}
+
+/// The framing law as code: a capture eye must stay clear of every active
+/// subject, or the frame is rejected (the point-blank bus failure becomes a
+/// test failure).
+pub fn clear_of_subjects(eye: Vec3, subjects: impl Iterator<Item = Vec3>, clearance: f32) -> bool {
+    subjects
+        .into_iter()
+        .all(|subject| eye.distance(subject) > clearance)
+}
+
 /// Helper for gate/capture systems: stage a look-at pose and never touch the
 /// camera directly.
 pub fn stage_look_at(

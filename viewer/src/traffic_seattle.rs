@@ -482,6 +482,49 @@ fn drive_traffic(
     }
 }
 
+fn state_has_am(world: &World) -> bool {
+    world.resource::<TrafficCaptureState>().has_am
+}
+
+fn state_am(world: &World) -> (Vec3, Vec3) {
+    let state = world.resource::<TrafficCaptureState>();
+    (state.am_eye, state.am_look)
+}
+
+/// Curb-side template: pick a vehicle whose eye is clear of the whole fleet
+/// (>= 5 m) and stage the curb-side frame, or return false if none.
+fn curb_pose(world: &mut World, label: &str) -> bool {
+    let fleet = {
+        let traffic = world.resource::<Traffic>();
+        traffic
+            .states
+            .keys()
+            .filter_map(|entity| world.get::<Transform>(*entity))
+            .map(|transform| (transform.translation, transform.rotation))
+            .collect::<Vec<_>>()
+    };
+    for (position, rotation) in &fleet {
+        let lane = *rotation * Vec3::NEG_Z;
+        let (eye, look) = crate::camera_authority::curb_side_eye(*position, lane);
+        if crate::camera_authority::clear_of_subjects(
+            eye,
+            fleet.iter().map(|(fleet_position, _)| *fleet_position),
+            5.0,
+        ) {
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "traffic_capture",
+                eye,
+                look,
+                label,
+            );
+            return true;
+        }
+    }
+    false
+}
+
 fn traffic_capture(world: &mut World) {
     if std::env::var_os("TRAFFIC_CAPTURE").is_none() || !crate::geology::s2_enabled() {
         return;
@@ -596,38 +639,24 @@ fn traffic_capture(world: &mut World) {
             weather.storm = 0.0;
             weather.snow = 0.0;
         }
-        // Derive the camera from a real vehicle when one is loaded: 14 m behind
-        // it along its heading, 2.5 m up, looking down the lane.
-        let focus = world
-            .resource::<Traffic>()
-            .states
-            .keys()
-            .next()
-            .and_then(|entity| {
-                world
-                    .get::<Transform>(*entity)
-                    .map(|transform| (transform.translation, transform.rotation))
-            });
-        let (eye_v, look_v) = if let Some((position, rotation)) = focus {
-            let forward = rotation * Vec3::NEG_Z;
-            let flat = Vec3::new(forward.x, 0.0, forward.z).normalize_or_zero();
-            (
-                position - flat * 14.0 + Vec3::Y * 2.6,
-                position + flat * 20.0 + Vec3::Y * 1.5,
-            )
-        } else {
-            (
-                Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + 6.0, eye[1]),
-                Vec3::new(STREAM_WORLD_OFFSET + look[0], look_ground + 4.0, look[1]),
-            )
-        };
-        {
+        if index == 3 && state_has_am(world) {
+            // Graveyard reuses the AM eye exactly: same street, vacant.
+            let (am_eye, am_look) = state_am(world);
             let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
             crate::camera_authority::stage_look_at(
                 &mut staged,
                 "traffic_capture",
-                eye_v,
-                look_v,
+                am_eye,
+                am_look,
+                name,
+            );
+        } else if !curb_pose(world, name) {
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "traffic_capture",
+                Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + 6.0, eye[1]),
+                Vec3::new(STREAM_WORLD_OFFSET + look[0], look_ground + 4.0, look[1]),
                 name,
             );
         }
@@ -638,28 +667,16 @@ fn traffic_capture(world: &mut World) {
         return;
     }
     if elapsed - since < 4.0 {
-        // Keep the camera on a real vehicle as the fleet streams in.
-        let focus = world
-            .resource::<Traffic>()
-            .states
-            .keys()
-            .next()
-            .and_then(|entity| {
-                world
-                    .get::<Transform>(*entity)
-                    .map(|transform| (transform.translation, transform.rotation))
-            });
-        if let Some((position, rotation)) = focus {
-            let forward = rotation * Vec3::NEG_Z;
-            let flat = Vec3::new(forward.x, 0.0, forward.z).normalize_or_zero();
-            let eye_v = position - flat * 14.0 + Vec3::Y * 2.6;
-            let look_v = position + flat * 20.0 + Vec3::Y * 1.5;
+        if index != 3 || !state_has_am(world) {
+            curb_pose(world, name);
+        } else {
+            let (am_eye, am_look) = state_am(world);
             let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
             crate::camera_authority::stage_look_at(
                 &mut staged,
                 "traffic_capture",
-                eye_v,
-                look_v,
+                am_eye,
+                am_look,
                 name,
             );
         }
@@ -675,7 +692,21 @@ fn traffic_capture(world: &mut World) {
         "TRAFFIC capture {name} hour {hour} vehicles {}",
         world.resource::<Traffic>().active
     );
+    let am = if index == 0 {
+        let pose = world.resource::<crate::camera_authority::StagedPose>();
+        Some((
+            pose.translation,
+            pose.translation + (pose.rotation * Vec3::NEG_Z) * 20.0,
+        ))
+    } else {
+        None
+    };
     let mut state = world.resource_mut::<TrafficCaptureState>();
+    if let Some((eye, look)) = am {
+        state.am_eye = eye;
+        state.am_look = look;
+        state.has_am = true;
+    }
     state.index += 1;
     state.entered = false;
 }
@@ -687,4 +718,7 @@ struct TrafficCaptureState {
     since: f32,
     hour: f32,
     done: bool,
+    am_eye: Vec3,
+    am_look: Vec3,
+    has_am: bool,
 }
