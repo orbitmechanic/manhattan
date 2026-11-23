@@ -1,0 +1,98 @@
+[
+  {
+    "avg_ms": 53.529998779296875,
+    "p99_ms": 78.0,
+    "pose": "s2_capitol_climb.png",
+    "samples": 16
+  },
+  {
+    "avg_ms": 29.520000457763672,
+    "p99_ms": 36.279998779296875,
+    "pose": "s2_elliott_rainier.png",
+    "samples": 35
+  },
+  {
+    "avg_ms": 70.72000122070312,
+    "p99_ms": 81.91999816894531,
+    "pose": "s2_queen_anne.png",
+    "samples": 14
+  },
+  {
+    "avg_ms": 29.489999771118164,
+    "p99_ms": 40.560001373291016,
+    "pose": "s2_lake_bellevue.png",
+    "samples": 34
+  },
+  {
+    "avg_ms": 34.880001068115234,
+    "p99_ms": 41.209999084472656,
+    "pose": "s2_sodo_flats.png",
+    "samples": 29
+  },
+  {
+    "avg_ms": 47.279998779296875,
+    "p99_ms": 59.9900016784668,
+    "pose": "s2_steep_overcast.png",
+    "samples": 22
+  },
+  {
+    "avg_ms": 45.4900016784668,
+    "p99_ms": 69.4800033569336,
+    "pose": "s2_montlake_cut.png",
+    "samples": 23
+  },
+  {
+    "avg_ms": 77.05999755859375,
+    "p99_ms": 78.52999877929688,
+    "pose": "s2_waterfront_duwamish.png",
+    "samples": 13
+  },
+  {
+    "avg_ms": 28.38999938964844,
+    "p99_ms": 37.119998931884766,
+    "pose": "s2_elliott_dawn.png",
+    "samples": 35
+  },
+  {
+    "avg_ms": 28.5,
+    "p99_ms": 37.22999954223633,
+    "pose": "s2_elliott_dusk.png",
+    "samples": 35
+  },
+  {
+    "avg_ms": 48.369998931884766,
+    "p99_ms": 594.8200073242188,
+    "pose": "gauntlet_15ms",
+    "samples": 193
+  },
+  {
+    "avg_ms": 68.63999938964844,
+    "p99_ms": 165.5399932861328,
+    "pose": "gauntlet_30ms",
+    "samples": 43
+  },
+  {
+    "avg_ms": 37.2400016784668,
+    "p99_ms": 56.029998779296875,
+    "pose": "gauntlet_100ms",
+    "samples": 81
+  },
+  {
+    "avg_ms": 50.33000183105469,
+    "p99_ms": 108.6500015258789,
+    "pose": "gauntlet_650ms",
+    "samples": 60
+  },
+  {
+    "avg_ms": 49.869998931884766,
+    "p99_ms": 261.4599914550781,
+    "pose": "low_orbit",
+    "samples": 307
+  },
+  {
+    "avg_ms": 32.119998931884766,
+    "p99_ms": 43.720001220703125,
+    "pose": "chunk_hover",
+    "samples": 60
+  }
+]

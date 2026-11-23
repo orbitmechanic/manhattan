@@ -38,9 +38,9 @@ const TILE_LOADS_PER_FRAME: usize = 2;
 const ROAD_LOADS_PER_FRAME: usize = 1;
 const LOAD_BUDGET_MS: f32 = 6.0;
 /// Lever (a): full shells cover the near field; everything else is a proxy box.
-const S3_SHELL_NEAR_M: f32 = 120.0;
+const S3_SHELL_NEAR_M: f32 = 220.0;
 const S3_SHELL_FLOOR: usize = 6;
-const S3_SHELL_CAP: usize = 24;
+const S3_SHELL_CAP: usize = 64;
 /// Proxies beyond this distance merge into one mesh per chunk; closer ones
 /// stay individual so the near field keeps per-building silhouettes.
 const S3_PROXY_MERGE_M: f32 = 250.0;
@@ -1501,8 +1501,9 @@ fn s3_damage(world: &mut World) {
                             .get(&node.name)
                             .map(String::as_str)
                             .unwrap_or(&node.name);
+                        let category = chunk.string(building.category_idx as u16).to_string();
                         if let Some(spec) =
-                            building_spec(&state.style, node, building, city, district)
+                            building_spec(&state.style, node, building, city, district, &category)
                         {
                             let y =
                                 state.dem.height(building.centroid[0], building.centroid[1]) + 0.03;
@@ -2435,7 +2436,9 @@ fn s3_list_targets(world: &mut World) {
             .map(String::as_str)
             .unwrap_or(&node.name);
         for building in &chunk.buildings {
-            let Some(spec) = building_spec(&state.style, node, building, city, district) else {
+            let category = chunk.string(building.category_idx as u16).to_string();
+            let Some(spec) = building_spec(&state.style, node, building, city, district, &category)
+            else {
                 continue;
             };
             let family = family_name(spec.family).to_string();
@@ -2500,6 +2503,7 @@ fn building_spec(
     building: &crate::citypack::PackBuilding,
     city: &str,
     district: &str,
+    category: &str,
 ) -> Option<BuildingSpec> {
     if building.perimeter.len() < 3 || building.perimeter.len() > 64 {
         return None;
@@ -2521,8 +2525,16 @@ fn building_spec(
             ]
         })
         .collect::<Vec<_>>();
-    let floor_height = building.floor_height_m.clamp(2.4, 6.0);
+    // Human-scale governor: the packaged heights are inflated in residential
+    // districts (Wallingford p90 39 m, max 94 m for SFR blocks). Residential
+    // floors are 3.0 m and capped at three storeys until the enrichment layer
+    // is re-emitted; commercial keeps 4.0 m.
+    let residential = category.eq_ignore_ascii_case("residential");
+    let floor_height = if residential { 3.0 } else { 4.0 };
     let mut floor_count = (building.height_m / floor_height).round().max(1.0) as u32;
+    if residential {
+        floor_count = floor_count.min(3);
+    }
     if rule.height_bias == "low" {
         floor_count = floor_count.min(6);
     }
@@ -2697,7 +2709,15 @@ fn s3_buildings(world: &mut World) {
                                 .get(&node.name)
                                 .map(String::as_str)
                                 .unwrap_or(&node.name);
-                            let spec = building_spec(&state.style, node, building, city, district)?;
+                            let category = chunk.string(building.category_idx as u16).to_string();
+                            let spec = building_spec(
+                                &state.style,
+                                node,
+                                building,
+                                city,
+                                district,
+                                &category,
+                            )?;
                             let y =
                                 state.dem.height(building.centroid[0], building.centroid[1]) + 0.03;
                             let mut min = [f32::MAX; 2];
