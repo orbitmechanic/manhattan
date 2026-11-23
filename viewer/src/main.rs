@@ -451,6 +451,7 @@ fn main() {
     .add_plugins(manhattan_viewer::horizon::HorizonPlugin)
     .add_plugins(manhattan_viewer::geology::GeologyPlugin)
     .add_plugins(manhattan_viewer::trees::TreesPlugin)
+    .add_plugins(manhattan_viewer::storefronts::StorefrontsPlugin)
     .add_plugins(manhattan_viewer::landmarks::LandmarksPlugin)
     .add_plugins(CityAudioPlugin)
     .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))

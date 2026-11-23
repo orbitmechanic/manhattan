@@ -26,6 +26,7 @@ pub mod pilot;
 pub mod restoration;
 pub mod stationing;
 pub mod storefront;
+pub mod storefronts;
 pub mod street_furniture;
 pub mod traffic;
 pub mod trees;

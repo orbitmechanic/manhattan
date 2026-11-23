@@ -175,7 +175,7 @@ pub struct Geology {
     pub mask: Vec<u8>,
     pub pack: CityPack,
     style: StylePack,
-    districts: HashMap<String, String>,
+    pub districts: HashMap<String, String>,
     pub building_chunks: HashMap<usize, Vec<Entity>>,
     pending_shells: std::collections::VecDeque<PendingShell>,
     pub box_material: Handle<StandardMaterial>,
@@ -2077,16 +2077,22 @@ fn district_capture(world: &mut World) {
     if done {
         return;
     }
-    const POSES: [(&str, [f32; 2], [f32; 2]); 3] = [
+    const POSES: [(&str, [f32; 2], [f32; 2]); 5] = [
         (
-            "districts_pioneer_square.png",
+            "storefronts_pike_place.png",
+            [-470.0, -330.0],
+            [-520.0, -400.0],
+        ),
+        (
+            "storefronts_pioneer_square.png",
             [250.0, 560.0],
             [250.0, 470.0],
         ),
+        ("storefronts_sodo.png", [420.0, 3620.0], [340.0, 3300.0]),
         (
-            "districts_fremont_timber.png",
-            [-1040.0, -4880.0],
-            [-960.0, -4960.0],
+            "storefronts_residential.png",
+            [-3060.0, -6060.0],
+            [-2980.0, -6140.0],
         ),
         ("districts_downtown_glass.png", [0.0, 120.0], [0.0, -60.0]),
     ];
@@ -2094,6 +2100,17 @@ fn district_capture(world: &mut World) {
         world.resource_mut::<DistrictCaptureState>().done = true;
         world.write_message(AppExit::Success);
         return;
+    }
+    {
+        let mut clock = world.resource_mut::<SimClock>();
+        clock.minute_of_day = 12.0 * 60.0;
+        let mut weather = world.resource_mut::<Weather>();
+        weather.auto = false;
+        weather.target = WeatherKind::Clear;
+        weather.cloud_cover = 0.18;
+        weather.precipitation = 0.0;
+        weather.storm = 0.0;
+        weather.snow = 0.0;
     }
     let (name, eye, look) = POSES[index];
     let (ground, look_ground) = {
