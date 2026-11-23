@@ -536,11 +536,11 @@ struct StorefrontCaptureState {
     chosen: Vec<Placement>,
 }
 
-const CAPTURE_KINDS: [(u8, &str); 4] = [
-    (KIND_AWNING, "storefronts_pike_place"),
-    (KIND_COLONNADE, "storefronts_pioneer_square"),
-    (KIND_WAREHOUSE, "storefronts_sodo"),
-    (KIND_PLACARD, "storefronts_residential"),
+const CAPTURE_KINDS: [(u8, usize, &str); 4] = [
+    (KIND_AWNING, 1, "storefronts_pike_place"),
+    (KIND_COLONNADE, 1, "storefronts_pioneer_square"),
+    (KIND_WAREHOUSE, 0, "storefronts_sodo"),
+    (KIND_PLACARD, 1, "storefronts_residential"),
 ];
 
 /// Derived camera: pick a real placed prop, stand 18 m along its outward face
@@ -577,33 +577,50 @@ fn storefront_capture(world: &mut World) {
         weather.storm = 0.0;
         weather.snow = 0.0;
     }
-    let (kind, name) = CAPTURE_KINDS[index];
+    let (kind, instance, name) = CAPTURE_KINDS[index];
+    // Lighting override (documented workaround: capture-mode sun path renders
+    // night; the storefront gate is the subject, the sun path is queued).
+    {
+        let mut lights = world.query::<(&mut DirectionalLight, &mut Transform)>();
+        let rotation =
+            Quat::from_rotation_arc(Vec3::NEG_Z, Vec3::new(-0.45, -0.75, -0.35).normalize());
+        for (mut light, mut transform) in lights.iter_mut(world) {
+            light.illuminance = 22_000.0;
+            light.color = Color::srgb(1.0, 0.96, 0.9);
+            transform.rotation = rotation;
+        }
+    }
     if !entered {
         let chosen = world
             .resource::<PlacementIndex>()
             .by_kind
             .get(&kind)
-            .and_then(|list| list.first().copied());
+            .and_then(|list| {
+                list.get(instance.min(list.len().saturating_sub(1)))
+                    .copied()
+            });
         let Some(placement) = chosen else {
-            // Nothing streamed yet: park the camera at the market so the
-            // streamer has something to load, then wait.
+            // Nothing streamed for this kind yet: park the camera in that
+            // district so its chunks stream, then wait.
+            let (wx, wz) = match kind {
+                KIND_AWNING => (-440.0, -400.0),
+                KIND_COLONNADE => (250.0, 650.0),
+                KIND_WAREHOUSE => (400.0, 3600.0),
+                _ => (-3060.0, -6060.0),
+            };
             let ground = world
                 .resource::<crate::geology::Geology>()
                 .dem
-                .height(-440.0, -400.0);
+                .height(wx, wz);
             let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
             crate::camera_authority::stage_look_at(
                 &mut staged,
                 "storefront_capture",
+                Vec3::new(crate::citypack::STREAM_WORLD_OFFSET + wx, ground + 6.0, wz),
                 Vec3::new(
-                    crate::citypack::STREAM_WORLD_OFFSET - 440.0,
-                    ground + 6.0,
-                    -400.0,
-                ),
-                Vec3::new(
-                    crate::citypack::STREAM_WORLD_OFFSET - 525.0,
+                    crate::citypack::STREAM_WORLD_OFFSET + wx + 80.0,
                     ground + 8.0,
-                    -400.0,
+                    wz - 60.0,
                 ),
                 "warming",
             );
@@ -615,15 +632,23 @@ fn storefront_capture(world: &mut World) {
             .height(placement.x, placement.z);
         let nx = placement.yaw.sin();
         let nz = placement.yaw.cos();
+        // 45 degrees along the facade: prop in the near third, host facade
+        // and district context behind it.
+        let (s45, c45) = (
+            std::f32::consts::FRAC_1_SQRT_2,
+            std::f32::consts::FRAC_1_SQRT_2,
+        );
+        let ex = nx * c45 - nz * s45;
+        let ez = nx * s45 + nz * c45;
         let eye = Vec3::new(
-            crate::citypack::STREAM_WORLD_OFFSET + placement.x + nx * 8.0,
+            crate::citypack::STREAM_WORLD_OFFSET + placement.x + ex * 9.0,
             ground + 2.6,
-            placement.z + nz * 8.0,
+            placement.z + ez * 9.0,
         );
         let look = Vec3::new(
-            crate::citypack::STREAM_WORLD_OFFSET + placement.x + nx * 2.0,
-            ground + 3.2,
-            placement.z + nz * 2.0,
+            crate::citypack::STREAM_WORLD_OFFSET + placement.x - nx * 2.0,
+            ground + 4.2,
+            placement.z - nz * 2.0,
         );
         {
             let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
