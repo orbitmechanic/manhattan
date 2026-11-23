@@ -485,6 +485,7 @@ fn main() {
     .add_plugins(manhattan_viewer::camera_authority::CameraAuthorityPlugin)
     .add_plugins(manhattan_viewer::trees::TreesPlugin)
     .add_plugins(manhattan_viewer::traffic_seattle::TrafficPlugin)
+    .add_plugins(manhattan_viewer::facade::FacadePlugin)
     .add_plugins(manhattan_viewer::pedestrians::PedestriansPlugin)
     .add_plugins(manhattan_viewer::storefronts::StorefrontsPlugin)
     .add_plugins(manhattan_viewer::landmarks::LandmarksPlugin)
@@ -745,18 +746,33 @@ fn spawn_camera(mut commands: Commands, args: Res<Args>) {
         .id();
 
     // The web build omits the DOF pass: it is a full-screen post-process and
-    // the browser is the most fill-rate-sensitive target.
+    // the browser is the most fill-rate-sensitive target. Capture modes omit it
+    // too: a 180 m focal distance blurs every reviewer frame taken at street
+    // range, which made the storefront/scale evidence unreadable.
+    let capture_mode = [
+        "SEATTLE_BOOT_CAPTURE",
+        "SCALE_ORACLE",
+        "EVIDENCE_CAPTURE",
+        "MINIMAP_CAPTURE",
+        "STOREFRONT_CAPTURE",
+        "MURK_CAPTURE",
+        "GHOST_AERIAL",
+    ]
+    .iter()
+    .any(|name| std::env::var_os(name).is_some());
     #[cfg(not(target_arch = "wasm32"))]
-    commands
-        .entity(camera)
-        .insert(bevy::post_process::dof::DepthOfField {
-            mode: bevy::post_process::dof::DepthOfFieldMode::Gaussian,
-            focal_distance: 180.0,
-            sensor_height: 2.5,
-            aperture_f_stops: 1.0,
-            max_circle_of_confusion_diameter: 18.0,
-            max_depth: 7_000.0,
-        });
+    if !capture_mode {
+        commands
+            .entity(camera)
+            .insert(bevy::post_process::dof::DepthOfField {
+                mode: bevy::post_process::dof::DepthOfFieldMode::Gaussian,
+                focal_distance: 180.0,
+                sensor_height: 2.5,
+                aperture_f_stops: 1.0,
+                max_circle_of_confusion_diameter: 18.0,
+                max_depth: 7_000.0,
+            });
+    }
 }
 
 #[derive(serde::Deserialize)]

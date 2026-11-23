@@ -20,7 +20,7 @@ use crate::clock::SimClock;
 use crate::weather::{Weather, WeatherKind};
 use destructibles_bevy::building::{BuildingDetail, spawn_building_world_lod};
 use destructibles_core::family::MaterialFamily;
-use destructibles_core::{BuildingSpec, FacadeStyle, core_for_style};
+use destructibles_core::{BuildingSpec, FacadeStyle, WindowSpec, core_for_style};
 
 pub const DEM_PATH: &str = "assets/terrain/seattle_dem_30m.bin";
 pub const MASK_PATH: &str = "assets/terrain/seattle_water_mask.bin";
@@ -722,6 +722,7 @@ fn mesh(
 fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3)]) -> Mesh {
     let mut positions = Vec::new();
     let mut normals = Vec::new();
+    let mut uvs = Vec::new();
     let mut indices = Vec::new();
     for (center, size) in boxes {
         let h = *size * 0.5;
@@ -779,6 +780,9 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3)]) -> Mesh {
                 positions.push((c + corner).to_array());
                 normals.push(normal.to_array());
             }
+            // One full tile per face: the night atlas paints a window dot grid
+            // on every proxy, so the far city is navigable by its own light.
+            uvs.extend([[0.0, 1.0], [0.0, 0.0], [1.0, 0.0], [1.0, 1.0]]);
             indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
         }
     }
@@ -788,6 +792,7 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3)]) -> Mesh {
     );
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
     mesh.insert_indices(bevy::render::mesh::Indices::U32(indices));
     mesh
 }
@@ -2754,7 +2759,11 @@ fn seattle_boot_camera(
         return;
     }
     if *done == 0 {
-        clock.minute_of_day = 12.0 * 60.0;
+        clock.minute_of_day = std::env::var("SEATTLE_HOUR")
+            .ok()
+            .and_then(|value| value.parse::<f64>().ok())
+            .map(|hour| hour * 60.0)
+            .unwrap_or(12.0 * 60.0);
         weather.auto = false;
         weather.target = WeatherKind::Clear;
         weather.cloud_cover = 0.18;
@@ -3010,9 +3019,32 @@ fn building_spec(
     if rule.height_bias == "low" {
         floor_count = floor_count.min(6);
     }
-    let mut windows = style.windows();
-    windows.height = (floor_height - 0.1).clamp(1.1, 3.0);
-    windows.sill_height = 0.0;
+    // House windows on houses: a residential parcel gets a sash window with a
+    // sill and a 3.1 m column pitch regardless of the district's commercial
+    // grammar. Commercial floors keep their grammar's fenestration, but the
+    // window never runs floor-to-floor (that is how a brownstone turned into
+    // an office curtain wall).
+    let mut windows = if residential {
+        WindowSpec {
+            width: 1.10,
+            height: 1.45,
+            sill_height: 0.95,
+            column_spacing: 3.10,
+            edge_margin: 1.30,
+            recess: 0.17,
+        }
+    } else {
+        let mut spec = style.windows();
+        spec.height = spec
+            .height
+            .min(floor_height - spec.sill_height - 0.35)
+            .max(1.0);
+        spec
+    };
+    windows.height = windows
+        .height
+        .min(floor_height - windows.sill_height - 0.20)
+        .max(1.0);
     let spec = BuildingSpec {
         family,
         footprint,
@@ -3061,6 +3093,7 @@ fn s3_buildings(world: &mut World) {
             {
                 continue;
             }
+            let family = job.spec.family;
             let entity = spawn_building_world_lod(
                 world,
                 job.id,
@@ -3068,6 +3101,7 @@ fn s3_buildings(world: &mut World) {
                 job.origin,
                 BuildingDetail::Shell,
             );
+            crate::facade::apply_family_skin(world, job.id, family);
             if let Some(entities) = world
                 .resource_mut::<Geology>()
                 .building_chunks
@@ -3269,6 +3303,7 @@ fn s3_buildings(world: &mut World) {
                         });
                     continue;
                 }
+                let family = spec.family;
                 let entity = spawn_building_world_lod(
                     world,
                     id,
@@ -3276,6 +3311,7 @@ fn s3_buildings(world: &mut World) {
                     Vec3::from_array(origin) + Vec3::X * STREAM_WORLD_OFFSET,
                     BuildingDetail::Shell,
                 );
+                crate::facade::apply_family_skin(world, id, family);
                 entities.push(entity);
                 let filter = std::env::var("S3_NODE").ok();
                 let min_height = std::env::var("S3_MIN_HEIGHT")

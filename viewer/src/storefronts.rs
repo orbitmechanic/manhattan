@@ -585,25 +585,6 @@ fn storefront_capture(world: &mut World) {
         weather.snow = 0.0;
     }
     let (kind, instance, name) = CAPTURE_KINDS[index];
-    // Lighting override (documented workaround: capture-mode sun path renders
-    // night; the storefront gate is the subject, the sun path is queued).
-    {
-        // Aim the fill along the current view so the faces the camera sees are
-        // lit; the capture-mode sun path remains a filed debt.
-        let view = world.resource::<crate::camera_authority::StagedPose>();
-        let direction = if view.active {
-            (view.rotation * Vec3::NEG_Z).normalize_or_zero()
-        } else {
-            Vec3::new(-0.45, -0.75, -0.35).normalize()
-        };
-        let rotation = Quat::from_rotation_arc(Vec3::NEG_Z, direction);
-        let mut lights = world.query::<(&mut DirectionalLight, &mut Transform)>();
-        for (mut light, mut transform) in lights.iter_mut(world) {
-            light.illuminance = 26_000.0;
-            light.color = Color::srgb(1.0, 0.97, 0.92);
-            transform.rotation = rotation;
-        }
-    }
     if !entered {
         let chosen = world
             .resource::<PlacementIndex>()

@@ -1510,3 +1510,75 @@ including `tests/geo.rs` (far-east 18 km round trip, stream-offset equivalence, 
 failing at playtest 69 for a different reason — it sampled points up to 1.4 m outside footprints and
 compared them to a strict point-in-polygon brute force, while `resolve_point` intentionally snaps within
 1 m of an edge. That test now samples strictly interior points (centroid, vertex mean, skip if neither).
+
+## Iteration 70 — per-family shell facades, night light, chimney census (seattle-facades1)
+
+**Textures belong to the shell.** `src/facade.rs` generates four family atlases at startup: steel frame
+(panel joints + rivets), timber (lap siding), masonry/stone (running-bond brick) and earth/adobe (plaster).
+Each family owns five shared materials — cladding, window sash, lit window, shop sash, shop lit — and every
+streamed building points at its family's handles. Nothing is cloned per building: **20 shared
+`StandardMaterial`s for the whole city**, **2.0 MB** of CPU texture data (4 × 256² wall + 4 × 4 × 128² sash,
+mips extra ≈ 2.7 MB). `FACADE_DEBUG=1` replaces the cladding with a magenta checker for the sampling check
+that proved the swap reaches the wall child.
+
+The window grid is the layout's own pane geometry, not a painted illusion: each pane quad maps 0..1 onto the
+family sash atlas, so a window carries its frame and mullions at any distance, and the lit quad reuses the
+same mask (glass bright, frame black). The human-scale fix lives in `building_spec`: a **residential** parcel
+gets a 1.10 × 1.45 m sash window with a 0.95 m sill and a 3.10 m column pitch at 3.0 m floors, capped at
+three storeys, *regardless of the district's commercial grammar*. The old override forced every window to
+`floor_height − 0.1` at zero sill, which is precisely how a brownstone became an office curtain wall. A
+`SkinGuard` re-applies the family skin after a detail tier-up rebuilds a building's children.
+
+**Night.** `seattle_night_density` runs after the stock window system and lights floor-coherent rows rather
+than a dot scatter: ≤3 floors **42 %** of floors, taller buildings **62 %**, curtain wall **72 %**, with 88 %
+of panes inside a lit floor and 90 % of ground-floor shop windows. The live atlas carries **6 × 8 cells,
+55 % lit** per proxy face, so the merged far-city boxes are a light field rather than black cut-outs — the
+reason an aerial at 190 m could not see the city before. Measured frames: `night_downtown.png`,
+`night_residential.png`, `night_storefronts.png` (shop band brightest, apartment rows behind).
+
+**Storefront glow.** Commercial ground-floor panes use the shop sash (wider, brighter, 11.0 emissive), the
+district props (awnings, placards) share one material whose emissive follows the scene clock. Both filed
+storefront debts close here: the capture-mode sun override in `storefront_capture` was **deleted** and the
+Pike Place frame renders correctly from the host sun path alone, and the props sit on the same lighting path
+as the host facade. Capture modes (`SEATTLE_BOOT_CAPTURE`, `SCALE_ORACLE`, `EVIDENCE_CAPTURE`,
+`MINIMAP_CAPTURE`, `STOREFRONT_CAPTURE`, `MURK_CAPTURE`, `GHOST_AERIAL`) also **omit the depth-of-field
+pass**: its 180 m focal distance blurred every street-range reviewer frame.
+
+**Capture gates.** Day storefront row: `captures/storefronts_pike_place.png` (brick window grid, awning,
+crate, curb template). Residential skin: `captures/facade_house_day.png` (lap siding + punched sash windows
+on a three-storey house). Night: two aerials above plus `night_storefronts.png`. Scale oracle:
+`captures/scale_oracle.png`, a sedan at ~20 m beside a three-storey house on a residential street, pose
+derived from the nearest vehicle (`SCALE_ORACLE=1`, logs walker/vehicle distances). The **walker half of the
+oracle is a named debt**: `ad_density` falls to zero beyond 2.5 km from Westlake, so residential districts
+spawn no walkers at all (`walkers=0` at Wallingford *and* at First Hill; the same field makes the
+`--pedestrians` plaza capture assert 0/15). Pedestrian-field round owns it.
+
+**Chimney census** (`scripts/seattle_height_census.py`, full rows in `datasets/seattle/chimney_census.json`).
+Replays the same rule order and governor as `building_spec`. Totals: **330,330 records, 318,703 residential,
+225,080 residential records above the 9 m cap (70.6 %)**. Sources: audited 313,571 (`real_surveyed`
+161,882, `lidar_overture` 151,623, `osm_levels_derived` 66), enriched 16,759 (`area_heuristic` 13,912,
+`msml_estimate` 2,847).
+
+| district | residential over cap | max recorded | max governor-applied | family key |
+|---|---:|---:|---:|---|
+| Ballard | 16,575 | 144.4 m | 24.0 m | timber |
+| West Seattle | 12,417 | 150.2 m | 128.0 m | mixed |
+| Capitol Hill | 8,724 | 137.2 m | 128.0 m | mixed |
+| Fremont | 6,572 | 145.5 m | 24.0 m | timber |
+| Queen Anne | 5,904 | 138.5 m | 128.0 m | mixed |
+| Wallingford | 1,287 | 93.8 m | 24.0 m | timber |
+| Tacoma | 81,288 | 134.3 m | 9.0 m | masonry_stone |
+
+Worst single records are `real_surveyed` heights of **141.9 m** on 10 × 16 m "residential" footprints
+(Fremont 30, id 443; Ballard 36, id 33427 at 142.9 m). The governor is applied (those render at 9 m), so the
+chimneys the player saw are **commercial records in residential districts**, which the governor does not
+touch: `mixed`/`mid` districts leave commercial uncapped (max applied 128 m), and `low` districts allow 24 m.
+Recommended fix path, not this round: (1) re-enrichment must derive height from floors × category floor
+height or footprint area — a 160 m² house cannot be 141.9 m; (2) the interim runtime should cap commercial
+by the same `height_bias` (low 6 floors, mid 8) and by footprint area; (3) key family from the record's own
+material where present instead of inheriting the partition's single family.
+
+**Named debts.** `pedestrian-residential-field` (above). `proxy-night-uniformity`: far proxies share one
+6 × 8 atlas, so a residential block glows like a tower block; per-family proxy UV banks are the next step.
+`steel-day-skin`: the steel cladding is proven at night and from the air but no satisfactory sunlit street
+frame was captured this round (the tower test shots were backlit silhouettes).

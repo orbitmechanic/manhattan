@@ -1438,10 +1438,15 @@ fn update_minimap_text(
     let mph = speed * 2.236_936;
     let kph = speed * 3.6;
     let mach = speed / MACH_1_MPS;
-    let (lon, lat) = world_to_lon_lat(
+    // Before a Seattle boot stage places the camera (or if the player flies
+    // out of the fitted region) there is no valid readout. The readout is the
+    // one place that asserts inside the fit; the gate here keeps an unplaced
+    // camera from crashing a capture run.
+    let local = (
         position.x - crate::citypack::STREAM_WORLD_OFFSET,
         position.z,
     );
+    let lon_lat = world_to_lon_lat_checked(local.0, local.1);
     for (kind, mut text) in &mut texts {
         text.0 = match kind {
             MinimapText::Telemetry => format!(
@@ -1450,7 +1455,10 @@ fn update_minimap_text(
                  A {:.2} G",
                 position.x, position.y, position.z, mph, kph, mach, motion.accel_g,
             ),
-            MinimapText::LatLon => format!("LAT {:.5} N\nLON {:.5} W", lat.abs(), lon.abs()),
+            MinimapText::LatLon => match lon_lat {
+                Some((lon, lat)) => format!("LAT {:.5} N\nLON {:.5} W", lat.abs(), lon.abs()),
+                None => format!("OFF MAP\nX {:.0} Z {:.0}", local.0, local.1),
+            },
             MinimapText::Street => {
                 if nearest.0.is_empty() {
                     "ST  —".to_string()
