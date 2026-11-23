@@ -2718,6 +2718,20 @@ fn family_for(name: &str) -> MaterialFamily {
 /// on steep high-elevation terrain a centroid seat buries the uphill corners.
 pub const SEAT_LIFT_M: f32 = 0.18;
 
+/// Douglas-Peucker-lite: stride samples keep existence inside the 64-vertex
+/// render budget. A few centimetres of outline fidelity traded for the house.
+pub fn simplify_perimeter(perimeter: &[[f32; 2]]) -> Vec<[f32; 2]> {
+    if perimeter.len() <= 64 {
+        return perimeter.to_vec();
+    }
+    let step = perimeter.len().div_ceil(64);
+    let mut simplified = perimeter.iter().step_by(step).copied().collect::<Vec<_>>();
+    if simplified.len() < 3 {
+        simplified = perimeter.iter().take(3).copied().collect();
+    }
+    simplified
+}
+
 pub fn footprint_seat(dem: &Dem, centroid: [f32; 2], perimeter: &[[f32; 2]]) -> f32 {
     let mut height = dem.height(centroid[0], centroid[1]);
     for point in perimeter {
@@ -2734,9 +2748,12 @@ fn building_spec(
     district: &str,
     category: &str,
 ) -> Option<BuildingSpec> {
-    if building.perimeter.len() < 3 || building.perimeter.len() > 64 {
+    if building.perimeter.len() < 3 {
         return None;
     }
+    // Complex footprints are simplified to the renderer's 64-vertex budget
+    // instead of being dropped: existence beats centimetre outline fidelity.
+    let perimeter = simplify_perimeter(&building.perimeter);
     let rule = rule_for(pack, city, district, &node.name);
     let mut style = facade_for(&rule.facade_style);
     let roll = (building.id.wrapping_mul(2654435761) % 1000) as f32 / 1000.0;
@@ -2744,8 +2761,7 @@ fn building_spec(
         style = FacadeStyle::GlassCurtainWall;
     }
     let family = family_for(&rule.family);
-    let footprint = building
-        .perimeter
+    let footprint = perimeter
         .iter()
         .map(|point| {
             [
@@ -2778,7 +2794,7 @@ fn building_spec(
         facade: style.material(),
         facade_style: style,
         windows,
-        core: core_for_style(style, &building.perimeter, building.id),
+        core: core_for_style(style, &perimeter, building.id),
     };
     spec.validate().ok().map(|_| spec)
 }

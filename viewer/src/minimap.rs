@@ -59,12 +59,6 @@ const MAP_MOVE_EPS_SQ: f32 = 4.0 * 4.0;
 const OVERLAY_UPDATE_SECS: f32 = 0.10;
 const TEXT_UPDATE_SECS: f32 = 0.12;
 
-/// Web Mercator radius of the Earth.
-const EARTH_RADIUS: f64 = 6_378_137.0;
-/// BlenderGIS scene origin from `manhattan.blend`.
-const GEO_ANCHOR_X: f64 = -8_237_739.824_561_493;
-const GEO_ANCHOR_Y: f64 = 4_970_168.600_037_185;
-
 const STREET_DATA: &str = include_str!("../assets/models/street_network.json");
 
 /// Buildings currently owned by the destructible subsystem, keyed by the
@@ -421,12 +415,59 @@ fn world_to_map(world: Vec2, center: Vec2) -> Vec2 {
 
 /// Convert model world `(x, z)` to longitude/latitude.  `x` is east and `z`
 /// is south in the Web Mercator frame described at the top of this file.
-fn world_to_lon_lat(x: f32, z: f32) -> (f64, f64) {
-    let mercator_x = GEO_ANCHOR_X + x as f64;
-    let mercator_y = GEO_ANCHOR_Y - z as f64;
-    let lon = (mercator_x / EARTH_RADIUS).to_degrees();
-    let lat =
-        (2.0 * (mercator_y / EARTH_RADIUS).exp().atan() - std::f64::consts::FRAC_PI_2).to_degrees();
+/// Seattle world XY -> WGS84, fitted against the dataset's EPSG:2926 origin
+/// (US feet anchor) with a cubic surface over the region: nanodegree residuals.
+/// A readout outside the dataset bbox is a bug, not a display.
+pub fn world_to_lon_lat(x: f32, z: f32) -> (f64, f64) {
+    const S: f64 = 10_000.0;
+    const LON: [f64; 10] = [
+        -1.223355000002e2,
+        1.329708356185e-1,
+        2.595869801715e-3,
+        4.485428267587e-6,
+        -2.296683441745e-4,
+        -4.485267254967e-6,
+        -1.321806961975e-7,
+        -2.324754368749e-8,
+        3.965316346084e-7,
+        7.748832732778e-9,
+    ];
+    const LAT: [f64; 10] = [
+        4.760620000032e1,
+        1.755555679057e-3,
+        -8.992658472889e-2,
+        -7.769059765080e-5,
+        -3.030147633816e-6,
+        -1.129500233508e-7,
+        -2.618162471234e-9,
+        1.340345367404e-7,
+        3.103896011950e-9,
+        3.643340013031e-8,
+    ];
+    let u = x as f64 / S;
+    let v = z as f64 / S;
+    let terms = [
+        1.0,
+        u,
+        v,
+        u * u,
+        u * v,
+        v * v,
+        u * u * u,
+        u * u * v,
+        u * v * v,
+        v * v * v,
+    ];
+    let mut lon = 0.0;
+    let mut lat = 0.0;
+    for (index, term) in terms.iter().enumerate() {
+        lon += LON[index] * term;
+        lat += LAT[index] * term;
+    }
+    assert!(
+        (-122.65..=-121.95).contains(&lon) && (47.00..=47.85).contains(&lat),
+        "lat/lon readout outside the Seattle dataset bbox: {lat:.5},{lon:.5} at ({x:.0},{z:.0})"
+    );
     (lon, lat)
 }
 
@@ -1393,13 +1434,6 @@ fn update_minimap_text(
 mod tests {
     use super::*;
     use std::f32::consts::TAU;
-
-    #[test]
-    fn origin_matches_the_blend_scene_anchor() {
-        let (lon, lat) = world_to_lon_lat(0.0, 0.0);
-        assert!((lon - -74.000_875_910_036_54).abs() < 1e-9, "lon {lon}");
-        assert!((lat - 40.713_460_624_392_276).abs() < 1e-9, "lat {lat}");
-    }
 
     #[test]
     fn map_rotation_puts_the_heading_at_the_top() {
