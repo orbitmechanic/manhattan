@@ -262,6 +262,12 @@ fn parse_args() -> Args {
                 std::env::set_var("LANDMARKS_ALWAYS", "1");
                 std::env::set_var("TRAFFIC_CAPTURE", "1");
             },
+            "--evidence" => unsafe {
+                std::env::set_var("SEATTLE_S2", "1");
+                std::env::set_var("SEATTLE_S3", "1");
+                std::env::set_var("PILOT_CLEAN", "1");
+                std::env::set_var("EVIDENCE_CAPTURE", "1");
+            },
             "--districts" => {
                 args.pilot = true;
                 unsafe {

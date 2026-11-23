@@ -91,6 +91,7 @@ pub struct GeologyPlugin;
 impl Plugin for GeologyPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<FireProbe>()
+            .init_resource::<EvidenceState>()
             .add_systems(Startup, setup_geology)
             .add_systems(
                 Update,
@@ -112,6 +113,7 @@ impl Plugin for GeologyPlugin {
                     district_capture,
                     seattle_boot_camera,
                     seattle_fire_probe,
+                    evidence_capture,
                 ),
             )
             .add_systems(PostUpdate, (clamp_camera, murk_update, hide_precip));
@@ -2390,6 +2392,157 @@ fn seattle_fire_probe(world: &mut World) {
         state.stage = stage;
         state.since = since;
     }
+}
+
+#[derive(Resource, Default)]
+struct EvidenceState {
+    index: usize,
+    entered: bool,
+    since: f32,
+    done: bool,
+}
+
+/// Playtest evidence frames: Tacoma/West Seattle agree-pass, Wallingford
+/// houses, the clamped ground slab and the underwater murk.
+fn evidence_capture(world: &mut World) {
+    if std::env::var_os("EVIDENCE_CAPTURE").is_none() || !s2_enabled() {
+        return;
+    }
+    let elapsed = world.resource::<Time>().elapsed_secs();
+    if elapsed < 5.0 {
+        return;
+    }
+    let (index, entered, since, done) = {
+        let state = world.resource::<EvidenceState>();
+        (state.index, state.entered, state.since, state.done)
+    };
+    if done {
+        return;
+    }
+    if index >= 5 {
+        if since == 0.0 {
+            world.resource_mut::<EvidenceState>().since = elapsed;
+            return;
+        }
+        if elapsed - since > 1.5 {
+            world.resource_mut::<EvidenceState>().done = true;
+            world.write_message(AppExit::Success);
+        }
+        return;
+    }
+    if !entered {
+        let (center, district) = {
+            let geology = world.resource::<Geology>();
+            let wanted = ["Tacoma", "West Seattle", "Wallingford", "Capitol Hill"][index.min(3)];
+            let mut found = None;
+            for id in geology.pack.neighborhoods() {
+                let node = &geology.pack.nodes[id];
+                if geology.districts.get(&node.name).map(String::as_str) == Some(wanted) {
+                    found = Some((node.center, wanted));
+                    break;
+                }
+            }
+            found.unwrap_or(([0.0, 0.0], "Seattle general"))
+        };
+        let _ = district;
+        let (ground, wet) = {
+            let geology = world.resource::<Geology>();
+            let ground = geology.dem.height(center[0], center[1]);
+            let col = ((center[0] - geology.dem.origin[0]) / geology.dem.spacing).round() as isize;
+            let row = ((center[1] - geology.dem.origin[1]) / geology.dem.spacing).round() as isize;
+            let wet = row >= 0
+                && col >= 0
+                && (row as usize) < geology.dem.rows
+                && (col as usize) < geology.dem.cols
+                && geology.mask[row as usize * geology.dem.cols + col as usize] != 0;
+            (ground, wet)
+        };
+        let (eye, look) = match index {
+            0 => (
+                Vec3::new(
+                    STREAM_WORLD_OFFSET + center[0],
+                    ground + 140.0,
+                    center[1] + 160.0,
+                ),
+                Vec3::new(STREAM_WORLD_OFFSET + center[0], ground + 10.0, center[1]),
+            ),
+            1 => (
+                Vec3::new(
+                    STREAM_WORLD_OFFSET + center[0] + 120.0,
+                    ground + 120.0,
+                    center[1] + 140.0,
+                ),
+                Vec3::new(STREAM_WORLD_OFFSET + center[0], ground + 8.0, center[1]),
+            ),
+            2 => (
+                Vec3::new(
+                    STREAM_WORLD_OFFSET + center[0] + 70.0,
+                    ground + 90.0,
+                    center[1] + 90.0,
+                ),
+                Vec3::new(STREAM_WORLD_OFFSET + center[0], ground + 6.0, center[1]),
+            ),
+            3 => (
+                Vec3::new(
+                    STREAM_WORLD_OFFSET + center[0],
+                    ground - 40.0,
+                    center[1] + 40.0,
+                ),
+                Vec3::new(
+                    STREAM_WORLD_OFFSET + center[0] + 80.0,
+                    ground + 4.0,
+                    center[1] - 40.0,
+                ),
+            ),
+            _ => {
+                let (wx, wz) = (-4200.0_f32, 0.0_f32);
+                let _ = wet;
+                (
+                    Vec3::new(STREAM_WORLD_OFFSET + wx, -6.0, wz),
+                    Vec3::new(STREAM_WORLD_OFFSET + wx + 60.0, -8.0, wz - 40.0),
+                )
+            }
+        };
+        let labels = [
+            "evidence_tacoma",
+            "evidence_west_seattle",
+            "evidence_wallingford",
+            "evidence_ground_slab",
+            "evidence_murk",
+        ];
+        let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+        crate::camera_authority::stage_look_at(
+            &mut staged,
+            "evidence_capture",
+            eye,
+            look,
+            labels[index],
+        );
+        let mut state = world.resource_mut::<EvidenceState>();
+        state.entered = true;
+        state.since = elapsed;
+        return;
+    }
+    if elapsed - since < 2.0 {
+        return;
+    }
+    let labels = [
+        "evidence_tacoma",
+        "evidence_west_seattle",
+        "evidence_wallingford",
+        "evidence_ground_slab",
+        "evidence_murk",
+    ];
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("captures")
+        .join(format!("{}.png", labels[index]));
+    world
+        .spawn(Screenshot::primary_window())
+        .observe(save_to_disk(path));
+    info!("EVIDENCE capture {}", labels[index]);
+    let mut state = world.resource_mut::<EvidenceState>();
+    state.index += 1;
+    state.entered = false;
 }
 
 /// Milestone S4: `--seattle` boot profile. Places the free-fly camera at the

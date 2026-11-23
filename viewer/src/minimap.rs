@@ -100,6 +100,9 @@ struct MinimapImages {
 pub struct MinimapRoot;
 
 #[derive(Component)]
+pub struct LocationText;
+
+#[derive(Component)]
 struct MinimapMapImage;
 
 /// 0 = neighborhood (650 m), 1 = city, 2 = county.
@@ -192,7 +195,11 @@ impl Plugin for MinimapPlugin {
             .init_resource::<NearestStreet>()
             .init_resource::<LiveFootprints>()
             .init_resource::<MapZoom>()
-            .add_systems(PostStartup, (setup_minimap, mark_minimap_tree).chain())
+            .add_systems(
+                PostStartup,
+                (setup_minimap, mark_minimap_tree, spawn_location_text).chain(),
+            )
+            .add_systems(Update, update_location_text)
             .add_systems(Update, cycle_minimap_zoom)
             .add_systems(
                 Update,
@@ -307,7 +314,7 @@ fn draw_compass(data: &mut [u8], yaw: f32) {
             data,
             nx.round() as i32 + dx,
             ny.round() as i32 + dy,
-            [235, 248, 255, 250],
+            [255, 105, 180, 255],
         );
     }
 }
@@ -1145,6 +1152,70 @@ fn render_seattle_layer(
 }
 
 #[allow(clippy::too_many_arguments)]
+fn spawn_location_text(mut commands: Commands) {
+    commands.spawn((
+        LocationText,
+        MinimapRoot,
+        Text::new("…"),
+        TextFont {
+            font_size: FontSize::Px(14.0),
+            ..default()
+        },
+        TextColor(Color::srgb(0.85, 0.92, 1.0)),
+        Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(18.0),
+            bottom: Val::Px(18.0),
+            ..default()
+        },
+        ZIndex(20),
+    ));
+}
+
+fn update_location_text(
+    time: Res<Time>,
+    camera: Single<&Transform, With<FlyCamera>>,
+    geology: Option<Res<crate::geology::Geology>>,
+    mut last: Local<f32>,
+    mut texts: Query<&mut Text, With<LocationText>>,
+) {
+    let now = time.elapsed_secs();
+    if now - *last < 0.25 {
+        return;
+    }
+    *last = now;
+    let Some(geology) = geology else {
+        return;
+    };
+    let x = camera.translation.x - crate::citypack::STREAM_WORLD_OFFSET;
+    let z = camera.translation.z;
+    let mut label = "—".to_string();
+    for index in geology.pack.neighborhoods() {
+        let node = &geology.pack.nodes[index];
+        let b = node.bounds;
+        if x >= b[0] && x <= b[2] && z >= b[1] && z <= b[3] {
+            let city = geology
+                .pack
+                .nodes
+                .get(node.parent as usize)
+                .map(|parent| parent.name.clone())
+                .unwrap_or_default();
+            let county = geology
+                .pack
+                .nodes
+                .get(node.parent as usize)
+                .and_then(|parent| geology.pack.nodes.get(parent.parent as usize))
+                .map(|county| county.name.clone())
+                .unwrap_or_default();
+            label = format!("{county}  >  {city}  >  {}", node.name);
+            break;
+        }
+    }
+    for mut text in &mut texts {
+        text.0 = label.clone();
+    }
+}
+
 fn update_minimap_map(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
