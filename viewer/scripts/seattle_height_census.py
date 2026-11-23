@@ -123,14 +123,38 @@ def match_rule(style: dict, city: str, district: str) -> dict:
     return style["default"]
 
 
+LEGACY = "--legacy" in sys.argv
+
+RESIDENTIAL_DISTRICTS = {
+    "Ballard",
+    "Fremont",
+    "Wallingford",
+    "Georgetown",
+    "Capitol Hill",
+    "Queen Anne",
+    "West Seattle",
+    "First Hill",
+    "Pioneer Square",
+    "Pike Place",
+}
+
+
 def governor(record: dict, rule: dict) -> dict:
     residential = record["category"].lower() == CATEGORY_RESIDENTIAL
     floor_height = 3.0 if residential else 4.0
     floor_count = max(1, round(record["height"] / floor_height))
     if residential:
         floor_count = min(floor_count, 3)
-    if rule.get("height_bias") == "low":
-        floor_count = min(floor_count, 6)
+    if LEGACY:
+        if rule.get("height_bias") == "low":
+            floor_count = min(floor_count, 6)
+    elif rule.get("_district") in RESIDENTIAL_DISTRICTS:
+        # Iteration 71 interim caps from this census: low 6 / mid 8 floors in
+        # residential districts; the catch-all and the cores stay uncapped.
+        if rule.get("height_bias") == "low":
+            floor_count = min(floor_count, 6)
+        elif rule.get("height_bias") == "mid":
+            floor_count = min(floor_count, 8)
     return {
         "residential": residential,
         "floor_height": floor_height,
@@ -153,7 +177,8 @@ def main() -> None:
         district = districts.get(node["name"], "Seattle")
         parent = nodes[node["parent"]] if 0 <= node["parent"] < len(nodes) else None
         city_name = parent["name"] if parent and parent["level"] == 1 else "Seattle"
-        rule = match_rule(style, city_name, district)
+        rule = dict(match_rule(style, city_name, district))
+        rule["_district"] = district
         buildings = parse_buildings(data, node)
         counts = Counter()
         sources = Counter()

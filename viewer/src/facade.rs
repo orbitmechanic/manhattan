@@ -640,6 +640,7 @@ fn proxy_windows_texture() -> Image {
     let mut data = vec![0u8; size * size * 4];
     let columns = 6usize;
     let rows = 8usize;
+    let roof_strip = (size as f32 * 0.89) as usize;
     for row in 0..rows {
         for column in 0..columns {
             let on = hash01(
@@ -656,7 +657,7 @@ fn proxy_windows_texture() -> Image {
             let y1 = y0 + cell_h / 2;
             let warm = 0.65 + 0.35 * hash01(row as u32 * 31 + column as u32);
             for y in y0..y1 {
-                for x in x0..x1 {
+                for x in x0..x1.min(roof_strip) {
                     let index = (y * size + x) * 4;
                     data[index] = to_byte(warm);
                     data[index + 1] = to_byte(warm * 0.78);
@@ -664,6 +665,68 @@ fn proxy_windows_texture() -> Image {
                     data[index + 3] = 255;
                 }
             }
+        }
+    }
+    let mut image = Image::new(
+        Extent3d {
+            width: SASH_TEX,
+            height: SASH_TEX,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        data,
+        TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD,
+    );
+    image.sampler = ImageSampler::linear();
+    image
+}
+
+/// Daylight atlas for the merged proxy boxes: the far city is mostly these,
+/// and a flat tan box is what "tan blocks" meant in the playtest. One shared
+/// facade atlas (panels + punched windows) so distance reads as buildings.
+fn proxy_day_texture() -> Image {
+    let size = SASH_TEX as usize;
+    let mut data = vec![0u8; size * size * 4];
+    let columns = 6usize;
+    let rows = 8usize;
+    let roof_strip = (size as f32 * 0.89) as usize;
+    for y in 0..size {
+        for x in 0..size {
+            let index = (y * size + x) * 4;
+            if x >= roof_strip {
+                // Plain roof strip: no window cells.
+                let grain = hash01((x as u32).wrapping_mul(97) ^ y as u32) * 0.05;
+                data[index] = to_byte(0.40 + grain);
+                data[index + 1] = to_byte(0.38 + grain);
+                data[index + 2] = to_byte(0.34 + grain);
+                data[index + 3] = 255;
+                continue;
+            }
+            // Cladding: light warm concrete with a little grain.
+            let grain = hash01((x as u32).wrapping_mul(131) ^ y as u32) * 0.08;
+            let mut color = [0.62 + grain, 0.57 + grain, 0.50 + grain];
+            let cell_w = size / columns;
+            let cell_h = size / rows;
+            let cx = x % cell_w;
+            let cy = y % cell_h;
+            let window =
+                cx > cell_w / 4 && cx < cell_w * 3 / 4 && cy > cell_h / 4 && cy < cell_h * 3 / 4;
+            if window {
+                let lit = hash01(
+                    ((x / cell_w) as u32).wrapping_mul(0x9E37_79B9)
+                        ^ ((y / cell_h) as u32).wrapping_mul(0x85EB_CA6B),
+                ) < 0.18;
+                color = if lit {
+                    [0.72, 0.58, 0.38]
+                } else {
+                    [0.10, 0.12, 0.14]
+                };
+            }
+            data[index] = to_byte(color[0]);
+            data[index + 1] = to_byte(color[1]);
+            data[index + 2] = to_byte(color[2]);
+            data[index + 3] = 255;
         }
     }
     let mut image = Image::new(
@@ -691,10 +754,15 @@ fn install_proxy_windows(
     let Some(geology) = geology else {
         return;
     };
-    let texture = images.add(proxy_windows_texture());
+    let night_texture = images.add(proxy_windows_texture());
+    let day_texture = images.add(proxy_day_texture());
     if let Some(mut material) = materials.get_mut(&geology.box_material) {
-        material.emissive_texture = Some(texture);
+        material.emissive_texture = Some(night_texture);
         material.emissive = LinearRgba::BLACK;
+        // The shell skin audit: proxies now carry a daylight facade atlas
+        // instead of the flat tan box colour.
+        material.base_color = Color::WHITE;
+        material.base_color_texture = Some(day_texture);
     }
 }
 
@@ -838,6 +906,87 @@ fn scale_oracle(world: &mut World) {
     }
 }
 
+/// SKIN_AUDIT: per-frame skinning histogram, printed every two seconds. The
+/// player's ">90 % tan blocks" report needs numbers, not impressions: this
+/// separates skinned shells, bare shells and proxy-only entities.
+#[derive(Resource, Default)]
+pub struct SkinAudit {
+    next_at: f32,
+}
+
+fn skin_audit(world: &mut World) {
+    let now = world.resource::<Time>().elapsed_secs();
+    if now < world.resource::<SkinAudit>().next_at {
+        return;
+    }
+    world.resource_mut::<SkinAudit>().next_at = now + 2.0;
+    let Some(skins) = world.get_resource::<FacadeSkins>().cloned() else {
+        return;
+    };
+    let Some(geology) = world.get_resource::<crate::geology::Geology>() else {
+        return;
+    };
+    let mut skinned = 0usize;
+    let mut bare = 0usize;
+    let mut proxies = 0usize;
+    let mut shell_buildings = 0usize;
+    let mut proxy_buildings = 0usize;
+    for (index, entities) in &geology.building_chunks {
+        let records = geology.pack.nodes[*index].buildings as usize;
+        let mut shells = 0usize;
+        for entity in entities {
+            if world
+                .get::<destructibles_bevy::building::Building>(*entity)
+                .is_some()
+            {
+                shells += 1;
+            }
+        }
+        shell_buildings += shells;
+        proxy_buildings += records.saturating_sub(shells);
+    }
+    for entities in geology.building_chunks.values() {
+        for entity in entities {
+            let Some(building) = world.get::<destructibles_bevy::building::Building>(*entity)
+            else {
+                proxies += 1;
+                continue;
+            };
+            let family = world
+                .resource::<Buildings>()
+                .get(building.id)
+                .map(|record| record.family);
+            let expected =
+                family.and_then(|family| skins.skin(family).map(|skin| skin.wall.clone()));
+            let Some(record) = world.resource::<Buildings>().get(building.id) else {
+                proxies += 1;
+                continue;
+            };
+            let current = world
+                .get::<MeshMaterial3d<StandardMaterial>>(record.wall_mesh)
+                .map(|material| material.0.clone());
+            match (expected, current) {
+                (Some(expected), Some(current)) if expected == current => skinned += 1,
+                _ => bare += 1,
+            }
+        }
+    }
+    if skinned + bare + proxies > 0 {
+        let total = (skinned + bare + proxies) as f32;
+        let represented = (shell_buildings + proxy_buildings) as f32;
+        info!(
+            "SKIN AUDIT t={now:.0} skinned={skinned} bare={bare} proxy_entities={proxies} \
+             shell_share={:.1}% shell_buildings={shell_buildings} proxy_buildings={proxy_buildings} proxy_building_share={:.1}%",
+            100.0 * skinned as f32 / total,
+            if represented > 0.0 {
+                100.0 * proxy_buildings as f32 / represented
+            } else {
+                0.0
+            }
+        );
+    }
+}
+
 pub struct FacadePlugin;
 
 impl Plugin for FacadePlugin {
@@ -845,6 +994,7 @@ impl Plugin for FacadePlugin {
         app.init_resource::<SkinGuard>()
             .init_resource::<ScaleOracleState>()
             .init_resource::<NightProfile>()
+            .init_resource::<SkinAudit>()
             .add_systems(Startup, setup_facades)
             .add_systems(PostStartup, install_proxy_windows)
             .add_systems(
@@ -854,6 +1004,7 @@ impl Plugin for FacadePlugin {
                     storefront_night_glow,
                     proxy_night_windows,
                     scale_oracle,
+                    skin_audit,
                     skin_guard,
                 ),
             );

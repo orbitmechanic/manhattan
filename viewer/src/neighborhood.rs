@@ -405,6 +405,8 @@ impl Plugin for NeighborhoodPlugin {
             .init_resource::<LiveFootprints>()
             .init_resource::<DamageAim>()
             .init_resource::<FireBadges>()
+            .init_resource::<AutoFire>()
+            .init_resource::<JournalDump>()
             .init_resource::<StreetParity>()
             .insert_resource(NeighborhoodDemo::from_env())
             .add_systems(Startup, (setup_neighborhood, setup_neighborhood_hud))
@@ -431,7 +433,8 @@ impl Plugin for NeighborhoodPlugin {
                     run_neighborhood_demo,
                 )
                     .chain(),
-            );
+            )
+            .add_systems(Update, (auto_fire, journal_dump, teleport_after_damage));
     }
 }
 
@@ -1152,6 +1155,26 @@ fn seattle_fire(world: &mut World, origin: Vec3, forward: Vec3, preset: DamagePr
     {
         return;
     }
+    // Camera Ownership Law, extended: a staged camera is an observer. The
+    // capture harness clicks/keys can never write a DamageCmd.
+    if world
+        .resource::<crate::camera_authority::StagedPose>()
+        .active
+    {
+        return;
+    }
+    seattle_fire_at(world, origin, forward, preset, "player");
+}
+
+/// The one damage emitter for the Seattle weapon. `author` is recorded with
+/// the journal entry (player|autofire|...) so a mysterious chip self-attributes.
+fn seattle_fire_at(
+    world: &mut World,
+    origin: Vec3,
+    forward: Vec3,
+    preset: DamagePreset,
+    author: &str,
+) {
     let mut best: Option<(f32, u32, Vec3)> = None;
     {
         let registry = world.resource::<destructibles_bevy::building::Buildings>();
@@ -1176,11 +1199,11 @@ fn seattle_fire(world: &mut World, origin: Vec3, forward: Vec3, preset: DamagePr
         }
     }
     let Some((_t, id, point)) = best else {
-        info!("FIRE seattle: ray MISS");
+        info!("FIRE seattle: ray MISS author={author}");
         world.resource_mut::<FireBadges>().misses += 1;
         return;
     };
-    fire_seattle_at(world, id, preset, point, forward);
+    fire_seattle_at(world, id, preset, point, forward, author);
 }
 
 pub(crate) fn fire_seattle_at(
@@ -1189,6 +1212,7 @@ pub(crate) fn fire_seattle_at(
     preset: DamagePreset,
     point: Vec3,
     forward: Vec3,
+    author: &str,
 ) {
     destructibles_bevy::building::begin_detail_upgrade(
         world,
@@ -1201,9 +1225,33 @@ pub(crate) fn fire_seattle_at(
             break;
         }
     }
+    let attribution = if author == "player" || author == "autofire" {
+        destructibles_core::Author::Player
+    } else {
+        destructibles_core::Author::System
+    };
+    {
+        let mut current = world.resource_mut::<destructibles_bevy::damage::DamageAuthor>();
+        current.0 = attribution;
+    }
     apply_preset(world, id, preset, point, forward);
+    world
+        .resource_mut::<destructibles_bevy::damage::DamageAuthor>()
+        .0 = destructibles_core::Author::System;
+    if let Some(record) = world
+        .resource::<destructibles_bevy::building::Buildings>()
+        .get(id)
+    {
+        let remaining = world.resource::<DamageJournal>().0.remaining_volume(id);
+        info!(
+            "FIRE seattle: b{id} total_volume={:.4} removed={:.4} lost={:.4} author={author}",
+            record.total_volume,
+            remaining,
+            remaining / record.total_volume.max(1.0e-3)
+        );
+    }
     let head = world.resource::<DamageJournal>().0.head_for(id);
-    debug!("FIRE seattle: b{id} preset {preset:?} journal {head:.2}");
+    debug!("FIRE seattle: b{id} preset {preset:?} author={author} journal {head:.2}");
     world.resource_mut::<FireBadges>().line = format!("RAY → HIT=b{id} → JOURNAL={head:.2}");
 }
 
@@ -1312,6 +1360,161 @@ fn mask_covers_building(world: &World, id: usize) -> bool {
         }
         neighborhood.mask_pixels[py as usize * MASK_RES + px as usize] > 0
     })
+}
+
+#[derive(Resource, Default)]
+pub struct AutoFire {
+    fired: bool,
+}
+
+/// Deterministic regression harness for the playtest-71 crash: fire the
+/// crosshair preset once at a fixed time, no input devices involved.
+fn auto_fire(world: &mut World) {
+    let Some(at) = std::env::var("SEATTLE_AUTOFIRE_AT")
+        .ok()
+        .and_then(|value| value.parse::<f32>().ok())
+    else {
+        return;
+    };
+    if world.resource::<AutoFire>().fired
+        || world.resource::<Time>().elapsed_secs() < at
+        || !crate::geology::s3_enabled()
+    {
+        return;
+    }
+    world.resource_mut::<AutoFire>().fired = true;
+    let Some(camera) = world
+        .query_filtered::<&Transform, With<FlyCamera>>()
+        .single(world)
+        .ok()
+        .copied()
+    else {
+        return;
+    };
+    let preset = world.resource::<DamageAim>().preset;
+    info!("AUTOFIRE at {at}s preset {preset:?}");
+    if let Some(id) = std::env::var("SEATTLE_AUTOFIRE_ID")
+        .ok()
+        .and_then(|value| value.parse::<u32>().ok())
+    {
+        let Some((origin, height)) = world
+            .resource::<destructibles_bevy::building::Buildings>()
+            .get(id)
+            .map(|record| (record.origin, record.layout.height))
+        else {
+            info!("AUTOFIRE: b{id} not resident yet");
+            return;
+        };
+        let point = origin + Vec3::Y * (height * 0.45);
+        fire_seattle_at(
+            world,
+            id,
+            preset,
+            point,
+            Vec3::new(-0.8, -0.1, -0.55).normalize_or_zero(),
+            "autofire",
+        );
+        return;
+    }
+    seattle_fire_at(
+        world,
+        camera.translation,
+        camera.forward().as_vec3(),
+        preset,
+        "autofire",
+    );
+}
+
+/// Forces a chunk stream after a damage event, reproducing the playtest-71
+/// race on fast machines where every boot chunk is resident before the shot.
+fn teleport_after_damage(world: &mut World) {
+    let Some(at) = std::env::var("SEATTLE_TELEPORT_AT")
+        .ok()
+        .and_then(|value| value.parse::<f32>().ok())
+    else {
+        return;
+    };
+    if world.resource::<Time>().elapsed_secs() < at {
+        return;
+    }
+    let Some(target) = std::env::var("SEATTLE_TELEPORT_TO").ok() else {
+        return;
+    };
+    let parts = target
+        .split(',')
+        .filter_map(|part| part.trim().parse::<f32>().ok())
+        .collect::<Vec<_>>();
+    if parts.len() != 3 {
+        return;
+    }
+    let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+    if staged.stamp == "teleport_after_damage" {
+        return;
+    }
+    crate::camera_authority::stage_look_at(
+        &mut staged,
+        "teleport_after_damage",
+        Vec3::new(
+            crate::citypack::STREAM_WORLD_OFFSET + parts[0],
+            parts[1],
+            parts[2],
+        ),
+        Vec3::new(
+            crate::citypack::STREAM_WORLD_OFFSET + parts[0] + 60.0,
+            parts[1] - 4.0,
+            parts[2] - 60.0,
+        ),
+        "teleport_after_damage",
+    );
+}
+
+#[derive(Resource, Default)]
+pub struct JournalDump {
+    done: bool,
+}
+
+/// JOURNAL_DUMP_AT=<secs>: one-shot, checksummed journal dump for the soak
+/// gate. Prints the author on every entry (journal entries self-attribute).
+fn journal_dump(world: &mut World) {
+    let Some(at) = std::env::var("JOURNAL_DUMP_AT")
+        .ok()
+        .and_then(|value| value.parse::<f32>().ok())
+    else {
+        return;
+    };
+    if world.resource::<JournalDump>().done || world.resource::<Time>().elapsed_secs() < at {
+        return;
+    }
+    world.resource_mut::<JournalDump>().done = true;
+    let journal = &world
+        .resource::<destructibles_bevy::damage::DamageJournal>()
+        .0;
+    let mut checksum: u64 = 0xcbf2_9ce4_8422_2325;
+    for entry in journal.entries() {
+        for byte in entry.seq.to_le_bytes() {
+            checksum = (checksum ^ byte as u64).wrapping_mul(0x0000_0100_0000_01b3);
+        }
+        for byte in entry.at.to_bits().to_le_bytes() {
+            checksum = (checksum ^ byte as u64).wrapping_mul(0x0000_0100_0000_01b3);
+        }
+        for byte in entry.volume.to_bits().to_le_bytes() {
+            checksum = (checksum ^ byte as u64).wrapping_mul(0x0000_0100_0000_01b3);
+        }
+        checksum = (checksum ^ entry.author as u64).wrapping_mul(0x0000_0100_0000_01b3);
+        checksum = (checksum ^ entry.cmd.building() as u64).wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    let structures = world
+        .resource::<destructibles_bevy::structure::Structures>()
+        .iter()
+        .count();
+    let buildings = world
+        .resource::<destructibles_bevy::building::Buildings>()
+        .len();
+    warn!(
+        "JOURNAL STATE entries={} structures={structures} buildings={buildings} checksum={checksum:016x}\n{}",
+        journal.len(),
+        journal.dump()
+    );
 }
 
 fn damage_input(world: &mut World) {

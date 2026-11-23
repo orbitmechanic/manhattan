@@ -3,7 +3,7 @@
     "neighborhoods": 1096,
     "records": 330330,
     "residential": 318703,
-    "over_cap": 231114,
+    "over_cap": 231276,
     "over_cap_residential": 225080
   },
   "rows": [
@@ -1311,10 +1311,10 @@
       "district": "West Seattle",
       "records": 692,
       "residential": 655,
-      "over_cap": 531,
+      "over_cap": 536,
       "over_cap_residential": 516,
       "max_recorded": 141.15,
-      "max_applied": 128.0,
+      "max_applied": 32.0,
       "max_residential_excess": 132.15,
       "families": {
         "mixed": 692
@@ -1642,6 +1642,55 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 42",
+      "district": "West Seattle",
+      "records": 629,
+      "residential": 601,
+      "over_cap": 486,
+      "over_cap_residential": 467,
+      "max_recorded": 131.16,
+      "max_applied": 32.0,
+      "max_residential_excess": 122.16,
+      "families": {
+        "mixed": 629
+      },
+      "sources": {
+        "real_surveyed": 353,
+        "lidar_overture": 268,
+        "msml_estimate": 4,
+        "area_heuristic": 4
+      },
+      "worst": [
+        {
+          "id": 177042,
+          "height": 131.16,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 148122,
+          "height": 127.76,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 141192,
+          "height": 120.55,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma South 90",
       "district": "Tacoma",
       "records": 506,
@@ -1684,55 +1733,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 42",
-      "district": "West Seattle",
-      "records": 629,
-      "residential": 601,
-      "over_cap": 484,
-      "over_cap_residential": 467,
-      "max_recorded": 131.16,
-      "max_applied": 80.0,
-      "max_residential_excess": 122.16,
-      "families": {
-        "mixed": 629
-      },
-      "sources": {
-        "real_surveyed": 353,
-        "lidar_overture": 268,
-        "msml_estimate": 4,
-        "area_heuristic": 4
-      },
-      "worst": [
-        {
-          "id": 177042,
-          "height": 131.16,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 148122,
-          "height": 127.76,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 141192,
-          "height": 120.55,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -1829,6 +1829,55 @@
       ]
     },
     {
+      "neighborhood": "Seattle South 128",
+      "district": "West Seattle",
+      "records": 701,
+      "residential": 654,
+      "over_cap": 460,
+      "over_cap_residential": 434,
+      "max_recorded": 87.52,
+      "max_applied": 32.0,
+      "max_residential_excess": 78.52,
+      "families": {
+        "mixed": 701
+      },
+      "sources": {
+        "area_heuristic": 40,
+        "real_surveyed": 224,
+        "lidar_overture": 434,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 155814,
+          "height": 87.52,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 185817,
+          "height": 85.48,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 152419,
+          "height": 82.93,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma South 10",
       "district": "Tacoma",
       "records": 491,
@@ -1871,55 +1920,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Seattle South 128",
-      "district": "West Seattle",
-      "records": 701,
-      "residential": 654,
-      "over_cap": 458,
-      "over_cap_residential": 434,
-      "max_recorded": 87.52,
-      "max_applied": 72.0,
-      "max_residential_excess": 78.52,
-      "families": {
-        "mixed": 701
-      },
-      "sources": {
-        "area_heuristic": 40,
-        "real_surveyed": 224,
-        "lidar_overture": 434,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 155814,
-          "height": 87.52,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 185817,
-          "height": 85.48,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 152419,
-          "height": 82.93,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -2213,10 +2213,10 @@
       "district": "West Seattle",
       "records": 703,
       "residential": 667,
-      "over_cap": 430,
+      "over_cap": 431,
       "over_cap_residential": 410,
       "max_recorded": 74.56,
-      "max_applied": 64.0,
+      "max_applied": 32.0,
       "max_residential_excess": 65.56,
       "families": {
         "mixed": 703
@@ -2304,6 +2304,55 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 03",
+      "district": "West Seattle",
+      "records": 519,
+      "residential": 481,
+      "over_cap": 427,
+      "over_cap_residential": 398,
+      "max_recorded": 147.69,
+      "max_applied": 32.0,
+      "max_residential_excess": 138.69,
+      "families": {
+        "mixed": 519
+      },
+      "sources": {
+        "real_surveyed": 369,
+        "lidar_overture": 144,
+        "area_heuristic": 3,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 141879,
+          "height": 147.69,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 133895,
+          "height": 146.0,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 163683,
+          "height": 143.91,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma South 40",
       "district": "Tacoma",
       "records": 437,
@@ -2346,55 +2395,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 03",
-      "district": "West Seattle",
-      "records": 519,
-      "residential": 481,
-      "over_cap": 420,
-      "over_cap_residential": 398,
-      "max_recorded": 147.69,
-      "max_applied": 112.0,
-      "max_residential_excess": 138.69,
-      "families": {
-        "mixed": 519
-      },
-      "sources": {
-        "real_surveyed": 369,
-        "lidar_overture": 144,
-        "area_heuristic": 3,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 141879,
-          "height": 147.69,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 133895,
-          "height": 146.0,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 163683,
-          "height": 143.91,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -2445,6 +2445,56 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 04",
+      "district": "Capitol Hill",
+      "records": 549,
+      "residential": 504,
+      "over_cap": 416,
+      "over_cap_residential": 394,
+      "max_recorded": 134.92,
+      "max_applied": 32.0,
+      "max_residential_excess": 125.92,
+      "families": {
+        "mixed": 549
+      },
+      "sources": {
+        "real_surveyed": 259,
+        "lidar_overture": 269,
+        "msml_estimate": 7,
+        "osm_levels_derived": 3,
+        "area_heuristic": 11
+      },
+      "worst": [
+        {
+          "id": 114802,
+          "height": 134.92,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 99477,
+          "height": 125.39,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 76197,
+          "height": 120.9,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma North 09",
       "district": "Tacoma",
       "records": 433,
@@ -2487,56 +2537,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 04",
-      "district": "Capitol Hill",
-      "records": 549,
-      "residential": 504,
-      "over_cap": 412,
-      "over_cap_residential": 394,
-      "max_recorded": 134.92,
-      "max_applied": 120.0,
-      "max_residential_excess": 125.92,
-      "families": {
-        "mixed": 549
-      },
-      "sources": {
-        "real_surveyed": 259,
-        "lidar_overture": 269,
-        "msml_estimate": 7,
-        "osm_levels_derived": 3,
-        "area_heuristic": 11
-      },
-      "worst": [
-        {
-          "id": 114802,
-          "height": 134.92,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 99477,
-          "height": 125.39,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 76197,
-          "height": 120.9,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -2636,6 +2636,55 @@
       ]
     },
     {
+      "neighborhood": "Queen Anne 03",
+      "district": "Queen Anne",
+      "records": 500,
+      "residential": 458,
+      "over_cap": 408,
+      "over_cap_residential": 386,
+      "max_recorded": 138.49,
+      "max_applied": 32.0,
+      "max_residential_excess": 129.49,
+      "families": {
+        "mixed": 500
+      },
+      "sources": {
+        "real_surveyed": 319,
+        "lidar_overture": 169,
+        "area_heuristic": 11,
+        "msml_estimate": 1
+      },
+      "worst": [
+        {
+          "id": 110708,
+          "height": 138.49,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 88871,
+          "height": 131.54,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 99953,
+          "height": 124.36,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma South 116",
       "district": "Tacoma",
       "records": 434,
@@ -2678,55 +2727,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 03",
-      "district": "Queen Anne",
-      "records": 500,
-      "residential": 458,
-      "over_cap": 403,
-      "over_cap_residential": 386,
-      "max_recorded": 138.49,
-      "max_applied": 96.0,
-      "max_residential_excess": 129.49,
-      "families": {
-        "mixed": 500
-      },
-      "sources": {
-        "real_surveyed": 319,
-        "lidar_overture": 169,
-        "area_heuristic": 11,
-        "msml_estimate": 1
-      },
-      "worst": [
-        {
-          "id": 110708,
-          "height": 138.49,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 88871,
-          "height": 131.54,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 99953,
-          "height": 124.36,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -3160,6 +3160,55 @@
       ]
     },
     {
+      "neighborhood": "Queen Anne 26",
+      "district": "Queen Anne",
+      "records": 461,
+      "residential": 431,
+      "over_cap": 386,
+      "over_cap_residential": 366,
+      "max_recorded": 111.71,
+      "max_applied": 32.0,
+      "max_residential_excess": 102.71,
+      "families": {
+        "mixed": 461
+      },
+      "sources": {
+        "real_surveyed": 277,
+        "lidar_overture": 165,
+        "area_heuristic": 16,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 81559,
+          "height": 111.71,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 113651,
+          "height": 106.73,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 115155,
+          "height": 103.11,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma Core 57",
       "district": "Tacoma",
       "records": 419,
@@ -3349,55 +3398,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 26",
-      "district": "Queen Anne",
-      "records": 461,
-      "residential": 431,
-      "over_cap": 379,
-      "over_cap_residential": 366,
-      "max_recorded": 111.71,
-      "max_applied": 104.0,
-      "max_residential_excess": 102.71,
-      "families": {
-        "mixed": 461
-      },
-      "sources": {
-        "real_surveyed": 277,
-        "lidar_overture": 165,
-        "area_heuristic": 16,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 81559,
-          "height": 111.71,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 113651,
-          "height": 106.73,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 115155,
-          "height": 103.11,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -4256,6 +4256,55 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 43",
+      "district": "West Seattle",
+      "records": 479,
+      "residential": 441,
+      "over_cap": 352,
+      "over_cap_residential": 328,
+      "max_recorded": 103.74,
+      "max_applied": 32.0,
+      "max_residential_excess": 94.74,
+      "families": {
+        "mixed": 479
+      },
+      "sources": {
+        "real_surveyed": 235,
+        "lidar_overture": 238,
+        "area_heuristic": 1,
+        "msml_estimate": 5
+      },
+      "worst": [
+        {
+          "id": 171160,
+          "height": 103.74,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 166886,
+          "height": 97.73,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 164222,
+          "height": 96.58,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma South 47",
       "district": "Tacoma",
       "records": 373,
@@ -4298,55 +4347,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 43",
-      "district": "West Seattle",
-      "records": 479,
-      "residential": 441,
-      "over_cap": 350,
-      "over_cap_residential": 328,
-      "max_recorded": 103.74,
-      "max_applied": 80.0,
-      "max_residential_excess": 94.74,
-      "families": {
-        "mixed": 479
-      },
-      "sources": {
-        "real_surveyed": 235,
-        "lidar_overture": 238,
-        "area_heuristic": 1,
-        "msml_estimate": 5
-      },
-      "worst": [
-        {
-          "id": 171160,
-          "height": 103.74,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 166886,
-          "height": 97.73,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 164222,
-          "height": 96.58,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -4820,6 +4820,55 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 38",
+      "district": "West Seattle",
+      "records": 500,
+      "residential": 475,
+      "over_cap": 342,
+      "over_cap_residential": 330,
+      "max_recorded": 137.03,
+      "max_applied": 32.0,
+      "max_residential_excess": 128.03,
+      "families": {
+        "mixed": 500
+      },
+      "sources": {
+        "real_surveyed": 220,
+        "lidar_overture": 276,
+        "msml_estimate": 3,
+        "area_heuristic": 1
+      },
+      "worst": [
+        {
+          "id": 139807,
+          "height": 137.03,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 178634,
+          "height": 133.51,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 163538,
+          "height": 132.09,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Ballard 22",
       "district": "Ballard",
       "records": 471,
@@ -4964,55 +5013,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 38",
-      "district": "West Seattle",
-      "records": 500,
-      "residential": 475,
-      "over_cap": 341,
-      "over_cap_residential": 330,
-      "max_recorded": 137.03,
-      "max_applied": 92.0,
-      "max_residential_excess": 128.03,
-      "families": {
-        "mixed": 500
-      },
-      "sources": {
-        "real_surveyed": 220,
-        "lidar_overture": 276,
-        "msml_estimate": 3,
-        "area_heuristic": 1
-      },
-      "worst": [
-        {
-          "id": 139807,
-          "height": 137.03,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 178634,
-          "height": 133.51,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 163538,
-          "height": 132.09,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -5200,6 +5200,56 @@
           "source": "real_surveyed",
           "family": "timber",
           "district": "Ballard"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 01",
+      "district": "Capitol Hill",
+      "records": 377,
+      "residential": 350,
+      "over_cap": 338,
+      "over_cap_residential": 321,
+      "max_recorded": 137.21,
+      "max_applied": 32.0,
+      "max_residential_excess": 128.21,
+      "families": {
+        "mixed": 377
+      },
+      "sources": {
+        "real_surveyed": 289,
+        "lidar_overture": 84,
+        "msml_estimate": 2,
+        "osm_levels_derived": 1,
+        "area_heuristic": 1
+      },
+      "worst": [
+        {
+          "id": 95041,
+          "height": 137.21,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 88796,
+          "height": 135.53,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 100317,
+          "height": 128.95,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
         }
       ]
     },
@@ -5577,52 +5627,51 @@
       ]
     },
     {
-      "neighborhood": "Capitol Hill 01",
-      "district": "Capitol Hill",
-      "records": 377,
-      "residential": 350,
-      "over_cap": 332,
-      "over_cap_residential": 321,
-      "max_recorded": 137.21,
-      "max_applied": 128.0,
-      "max_residential_excess": 128.21,
+      "neighborhood": "Queen Anne 14",
+      "district": "Queen Anne",
+      "records": 459,
+      "residential": 425,
+      "over_cap": 333,
+      "over_cap_residential": 312,
+      "max_recorded": 122.13,
+      "max_applied": 32.0,
+      "max_residential_excess": 113.13,
       "families": {
-        "mixed": 377
+        "mixed": 459
       },
       "sources": {
-        "real_surveyed": 289,
-        "lidar_overture": 84,
-        "msml_estimate": 2,
-        "osm_levels_derived": 1,
-        "area_heuristic": 1
+        "real_surveyed": 237,
+        "lidar_overture": 212,
+        "msml_estimate": 4,
+        "area_heuristic": 6
       },
       "worst": [
         {
-          "id": 95041,
-          "height": 137.21,
+          "id": 107360,
+          "height": 122.13,
           "applied": 9.0,
           "category": "residential",
-          "source": "real_surveyed",
+          "source": "area_heuristic",
           "family": "mixed",
-          "district": "Capitol Hill"
+          "district": "Queen Anne"
         },
         {
-          "id": 88796,
-          "height": 135.53,
+          "id": 107933,
+          "height": 100.18,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
           "family": "mixed",
-          "district": "Capitol Hill"
+          "district": "Queen Anne"
         },
         {
-          "id": 100317,
-          "height": 128.95,
+          "id": 94661,
+          "height": 98.54,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
           "family": "mixed",
-          "district": "Capitol Hill"
+          "district": "Queen Anne"
         }
       ]
     },
@@ -5770,55 +5819,6 @@
           "source": "real_surveyed",
           "family": "timber",
           "district": "Ballard"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 14",
-      "district": "Queen Anne",
-      "records": 459,
-      "residential": 425,
-      "over_cap": 330,
-      "over_cap_residential": 312,
-      "max_recorded": 122.13,
-      "max_applied": 80.0,
-      "max_residential_excess": 113.13,
-      "families": {
-        "mixed": 459
-      },
-      "sources": {
-        "real_surveyed": 237,
-        "lidar_overture": 212,
-        "msml_estimate": 4,
-        "area_heuristic": 6
-      },
-      "worst": [
-        {
-          "id": 107360,
-          "height": 122.13,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "area_heuristic",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 107933,
-          "height": 100.18,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 94661,
-          "height": 98.54,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -6153,6 +6153,56 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 53",
+      "district": "West Seattle",
+      "records": 495,
+      "residential": 461,
+      "over_cap": 325,
+      "over_cap_residential": 311,
+      "max_recorded": 63.92,
+      "max_applied": 32.0,
+      "max_residential_excess": 54.92,
+      "families": {
+        "mixed": 495
+      },
+      "sources": {
+        "lidar_overture": 305,
+        "real_surveyed": 171,
+        "area_heuristic": 9,
+        "msml_estimate": 9,
+        "osm_levels_derived": 1
+      },
+      "worst": [
+        {
+          "id": 159917,
+          "height": 63.92,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 165612,
+          "height": 62.66,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 153945,
+          "height": 61.57,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma South 95",
       "district": "Tacoma",
       "records": 345,
@@ -6206,7 +6256,7 @@
       "over_cap": 323,
       "over_cap_residential": 302,
       "max_recorded": 76.59,
-      "max_applied": 56.0,
+      "max_applied": 32.0,
       "max_residential_excess": 67.59,
       "families": {
         "mixed": 486
@@ -6388,56 +6438,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 53",
-      "district": "West Seattle",
-      "records": 495,
-      "residential": 461,
-      "over_cap": 323,
-      "over_cap_residential": 311,
-      "max_recorded": 63.92,
-      "max_applied": 40.0,
-      "max_residential_excess": 54.92,
-      "families": {
-        "mixed": 495
-      },
-      "sources": {
-        "lidar_overture": 305,
-        "real_surveyed": 171,
-        "area_heuristic": 9,
-        "msml_estimate": 9,
-        "osm_levels_derived": 1
-      },
-      "worst": [
-        {
-          "id": 159917,
-          "height": 63.92,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 165612,
-          "height": 62.66,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 153945,
-          "height": 61.57,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -6768,6 +6768,55 @@
           "source": "real_surveyed",
           "family": "timber",
           "district": "Fremont"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 36",
+      "district": "Capitol Hill",
+      "records": 425,
+      "residential": 386,
+      "over_cap": 318,
+      "over_cap_residential": 292,
+      "max_recorded": 110.89,
+      "max_applied": 32.0,
+      "max_residential_excess": 101.89,
+      "families": {
+        "mixed": 425
+      },
+      "sources": {
+        "real_surveyed": 255,
+        "lidar_overture": 159,
+        "msml_estimate": 6,
+        "area_heuristic": 5
+      },
+      "worst": [
+        {
+          "id": 110804,
+          "height": 110.89,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 108989,
+          "height": 107.42,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 97350,
+          "height": 104.87,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
         }
       ]
     },
@@ -7384,55 +7433,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 36",
-      "district": "Capitol Hill",
-      "records": 425,
-      "residential": 386,
-      "over_cap": 311,
-      "over_cap_residential": 292,
-      "max_recorded": 110.89,
-      "max_applied": 88.0,
-      "max_residential_excess": 101.89,
-      "families": {
-        "mixed": 425
-      },
-      "sources": {
-        "real_surveyed": 255,
-        "lidar_overture": 159,
-        "msml_estimate": 6,
-        "area_heuristic": 5
-      },
-      "worst": [
-        {
-          "id": 110804,
-          "height": 110.89,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 108989,
-          "height": 107.42,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 97350,
-          "height": 104.87,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -8108,7 +8108,7 @@
       "over_cap": 305,
       "over_cap_residential": 291,
       "max_recorded": 45.17,
-      "max_applied": 44.0,
+      "max_applied": 32.0,
       "max_residential_excess": 33.63,
       "families": {
         "mixed": 538
@@ -8123,7 +8123,7 @@
         {
           "id": 77138,
           "height": 45.17,
-          "applied": 44.0,
+          "applied": 32.0,
           "category": "commercial",
           "source": "real_surveyed",
           "family": "mixed",
@@ -8192,6 +8192,55 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
+        }
+      ]
+    },
+    {
+      "neighborhood": "West Seattle 52",
+      "district": "West Seattle",
+      "records": 438,
+      "residential": 408,
+      "over_cap": 305,
+      "over_cap_residential": 289,
+      "max_recorded": 94.58,
+      "max_applied": 32.0,
+      "max_residential_excess": 85.58,
+      "families": {
+        "mixed": 438
+      },
+      "sources": {
+        "lidar_overture": 217,
+        "msml_estimate": 3,
+        "real_surveyed": 212,
+        "area_heuristic": 6
+      },
+      "worst": [
+        {
+          "id": 126252,
+          "height": 94.58,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 166143,
+          "height": 93.86,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 155768,
+          "height": 91.11,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
         }
       ]
     },
@@ -8388,6 +8437,56 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 32",
+      "district": "First Hill",
+      "records": 358,
+      "residential": 333,
+      "over_cap": 302,
+      "over_cap_residential": 289,
+      "max_recorded": 105.6,
+      "max_applied": 32.0,
+      "max_residential_excess": 96.6,
+      "families": {
+        "masonry_stone": 358
+      },
+      "sources": {
+        "lidar_overture": 190,
+        "msml_estimate": 26,
+        "osm_levels_derived": 10,
+        "real_surveyed": 127,
+        "area_heuristic": 5
+      },
+      "worst": [
+        {
+          "id": 95995,
+          "height": 105.6,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "osm_levels_derived",
+          "family": "masonry_stone",
+          "district": "First Hill"
+        },
+        {
+          "id": 107386,
+          "height": 94.62,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "masonry_stone",
+          "district": "First Hill"
+        },
+        {
+          "id": 89270,
+          "height": 85.57,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "masonry_stone",
+          "district": "First Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma Core 43",
       "district": "Tacoma",
       "records": 326,
@@ -8571,105 +8670,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 52",
-      "district": "West Seattle",
-      "records": 438,
-      "residential": 408,
-      "over_cap": 301,
-      "over_cap_residential": 289,
-      "max_recorded": 94.58,
-      "max_applied": 72.0,
-      "max_residential_excess": 85.58,
-      "families": {
-        "mixed": 438
-      },
-      "sources": {
-        "lidar_overture": 217,
-        "msml_estimate": 3,
-        "real_surveyed": 212,
-        "area_heuristic": 6
-      },
-      "worst": [
-        {
-          "id": 126252,
-          "height": 94.58,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 166143,
-          "height": 93.86,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 155768,
-          "height": 91.11,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 32",
-      "district": "First Hill",
-      "records": 358,
-      "residential": 333,
-      "over_cap": 300,
-      "over_cap_residential": 289,
-      "max_recorded": 105.6,
-      "max_applied": 36.0,
-      "max_residential_excess": 96.6,
-      "families": {
-        "masonry_stone": 358
-      },
-      "sources": {
-        "lidar_overture": 190,
-        "msml_estimate": 26,
-        "osm_levels_derived": 10,
-        "real_surveyed": 127,
-        "area_heuristic": 5
-      },
-      "worst": [
-        {
-          "id": 95995,
-          "height": 105.6,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "osm_levels_derived",
-          "family": "masonry_stone",
-          "district": "First Hill"
-        },
-        {
-          "id": 107386,
-          "height": 94.62,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "masonry_stone",
-          "district": "First Hill"
-        },
-        {
-          "id": 89270,
-          "height": 85.57,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "masonry_stone",
-          "district": "First Hill"
         }
       ]
     },
@@ -8958,6 +8958,55 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 29",
+      "district": "Capitol Hill",
+      "records": 392,
+      "residential": 360,
+      "over_cap": 297,
+      "over_cap_residential": 283,
+      "max_recorded": 110.54,
+      "max_applied": 32.0,
+      "max_residential_excess": 101.54,
+      "families": {
+        "mixed": 392
+      },
+      "sources": {
+        "real_surveyed": 223,
+        "lidar_overture": 161,
+        "msml_estimate": 5,
+        "area_heuristic": 3
+      },
+      "worst": [
+        {
+          "id": 108335,
+          "height": 110.54,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 99443,
+          "height": 109.42,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 98425,
+          "height": 109.32,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Seattle South 86",
       "district": "Seattle general",
       "records": 424,
@@ -9103,55 +9152,6 @@
       ]
     },
     {
-      "neighborhood": "Capitol Hill 29",
-      "district": "Capitol Hill",
-      "records": 392,
-      "residential": 360,
-      "over_cap": 295,
-      "over_cap_residential": 283,
-      "max_recorded": 110.54,
-      "max_applied": 80.0,
-      "max_residential_excess": 101.54,
-      "families": {
-        "mixed": 392
-      },
-      "sources": {
-        "real_surveyed": 223,
-        "lidar_overture": 161,
-        "msml_estimate": 5,
-        "area_heuristic": 3
-      },
-      "worst": [
-        {
-          "id": 108335,
-          "height": 110.54,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 99443,
-          "height": 109.42,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 98425,
-          "height": 109.32,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        }
-      ]
-    },
-    {
       "neighborhood": "Tacoma South 03",
       "district": "Tacoma",
       "records": 322,
@@ -9254,7 +9254,7 @@
       "over_cap": 294,
       "over_cap_residential": 279,
       "max_recorded": 101.03,
-      "max_applied": 100.0,
+      "max_applied": 32.0,
       "max_residential_excess": 59.02,
       "families": {
         "mixed": 488
@@ -9269,7 +9269,7 @@
         {
           "id": 111285,
           "height": 101.03,
-          "applied": 100.0,
+          "applied": 32.0,
           "category": "commercial",
           "source": "real_surveyed",
           "family": "mixed",
@@ -10522,7 +10522,7 @@
       "over_cap": 285,
       "over_cap_residential": 264,
       "max_recorded": 75.91,
-      "max_applied": 48.0,
+      "max_applied": 32.0,
       "max_residential_excess": 66.91,
       "families": {
         "mixed": 445
@@ -10701,6 +10701,54 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
+        }
+      ]
+    },
+    {
+      "neighborhood": "West Seattle 18",
+      "district": "West Seattle",
+      "records": 334,
+      "residential": 313,
+      "over_cap": 282,
+      "over_cap_residential": 266,
+      "max_recorded": 132.3,
+      "max_applied": 32.0,
+      "max_residential_excess": 123.3,
+      "families": {
+        "mixed": 334
+      },
+      "sources": {
+        "real_surveyed": 231,
+        "lidar_overture": 101,
+        "msml_estimate": 2
+      },
+      "worst": [
+        {
+          "id": 135450,
+          "height": 132.3,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 121595,
+          "height": 129.29,
+          "applied": 32.0,
+          "category": "commercial",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 144269,
+          "height": 125.87,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
         }
       ]
     },
@@ -11081,27 +11129,28 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 18",
+      "neighborhood": "West Seattle 39",
       "district": "West Seattle",
-      "records": 334,
-      "residential": 313,
+      "records": 427,
+      "residential": 403,
       "over_cap": 280,
-      "over_cap_residential": 266,
-      "max_recorded": 132.3,
-      "max_applied": 128.0,
-      "max_residential_excess": 123.3,
+      "over_cap_residential": 264,
+      "max_recorded": 104.98,
+      "max_applied": 32.0,
+      "max_residential_excess": 95.98,
       "families": {
-        "mixed": 334
+        "mixed": 427
       },
       "sources": {
-        "real_surveyed": 231,
-        "lidar_overture": 101,
-        "msml_estimate": 2
+        "real_surveyed": 166,
+        "lidar_overture": 256,
+        "msml_estimate": 4,
+        "area_heuristic": 1
       },
       "worst": [
         {
-          "id": 135450,
-          "height": 132.3,
+          "id": 155204,
+          "height": 104.98,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -11109,17 +11158,17 @@
           "district": "West Seattle"
         },
         {
-          "id": 121595,
-          "height": 129.29,
-          "applied": 128.0,
-          "category": "commercial",
+          "id": 181926,
+          "height": 102.99,
+          "applied": 9.0,
+          "category": "residential",
           "source": "real_surveyed",
           "family": "mixed",
           "district": "West Seattle"
         },
         {
-          "id": 144269,
-          "height": 125.87,
+          "id": 130407,
+          "height": 99.58,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -11367,63 +11416,14 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 39",
-      "district": "West Seattle",
-      "records": 427,
-      "residential": 403,
-      "over_cap": 279,
-      "over_cap_residential": 264,
-      "max_recorded": 104.98,
-      "max_applied": 40.0,
-      "max_residential_excess": 95.98,
-      "families": {
-        "mixed": 427
-      },
-      "sources": {
-        "real_surveyed": 166,
-        "lidar_overture": 256,
-        "msml_estimate": 4,
-        "area_heuristic": 1
-      },
-      "worst": [
-        {
-          "id": 155204,
-          "height": 104.98,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 181926,
-          "height": 102.99,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 130407,
-          "height": 99.58,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        }
-      ]
-    },
-    {
       "neighborhood": "Capitol Hill 35",
       "district": "Capitol Hill",
       "records": 414,
       "residential": 370,
-      "over_cap": 277,
+      "over_cap": 278,
       "over_cap_residential": 258,
       "max_recorded": 69.84,
-      "max_applied": 60.0,
+      "max_applied": 32.0,
       "max_residential_excess": 60.84,
       "families": {
         "mixed": 414
@@ -12462,6 +12462,55 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 07",
+      "district": "Capitol Hill",
+      "records": 346,
+      "residential": 309,
+      "over_cap": 269,
+      "over_cap_residential": 248,
+      "max_recorded": 125.24,
+      "max_applied": 32.0,
+      "max_residential_excess": 109.22,
+      "families": {
+        "mixed": 346
+      },
+      "sources": {
+        "real_surveyed": 222,
+        "lidar_overture": 118,
+        "area_heuristic": 3,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 92567,
+          "height": 125.24,
+          "applied": 32.0,
+          "category": "commercial",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 111058,
+          "height": 118.22,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 85564,
+          "height": 117.46,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma South 111",
       "district": "Tacoma",
       "records": 280,
@@ -12504,55 +12553,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 07",
-      "district": "Capitol Hill",
-      "records": 346,
-      "residential": 309,
-      "over_cap": 268,
-      "over_cap_residential": 248,
-      "max_recorded": 125.24,
-      "max_applied": 124.0,
-      "max_residential_excess": 109.22,
-      "families": {
-        "mixed": 346
-      },
-      "sources": {
-        "real_surveyed": 222,
-        "lidar_overture": 118,
-        "area_heuristic": 3,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 92567,
-          "height": 125.24,
-          "applied": 124.0,
-          "category": "commercial",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 111058,
-          "height": 118.22,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 85564,
-          "height": 117.46,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -12743,6 +12743,55 @@
           "source": "real_surveyed",
           "family": "timber",
           "district": "Ballard"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 11",
+      "district": "Capitol Hill",
+      "records": 375,
+      "residential": 345,
+      "over_cap": 266,
+      "over_cap_residential": 250,
+      "max_recorded": 89.23,
+      "max_applied": 32.0,
+      "max_residential_excess": 76.42,
+      "families": {
+        "mixed": 375
+      },
+      "sources": {
+        "real_surveyed": 143,
+        "lidar_overture": 218,
+        "area_heuristic": 5,
+        "msml_estimate": 9
+      },
+      "worst": [
+        {
+          "id": 107348,
+          "height": 89.23,
+          "applied": 32.0,
+          "category": "commercial",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 89156,
+          "height": 85.42,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 92815,
+          "height": 80.64,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
         }
       ]
     },
@@ -13033,55 +13082,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 11",
-      "district": "Capitol Hill",
-      "records": 375,
-      "residential": 345,
-      "over_cap": 264,
-      "over_cap_residential": 250,
-      "max_recorded": 89.23,
-      "max_applied": 88.0,
-      "max_residential_excess": 76.42,
-      "families": {
-        "mixed": 375
-      },
-      "sources": {
-        "real_surveyed": 143,
-        "lidar_overture": 218,
-        "area_heuristic": 5,
-        "msml_estimate": 9
-      },
-      "worst": [
-        {
-          "id": 107348,
-          "height": 89.23,
-          "applied": 88.0,
-          "category": "commercial",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 89156,
-          "height": 85.42,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 92815,
-          "height": 80.64,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -14049,7 +14049,7 @@
       "over_cap": 260,
       "over_cap_residential": 233,
       "max_recorded": 73.14,
-      "max_applied": 36.0,
+      "max_applied": 32.0,
       "max_residential_excess": 64.14,
       "families": {
         "mixed": 423
@@ -14625,7 +14625,7 @@
       "over_cap": 258,
       "over_cap_residential": 244,
       "max_recorded": 64.79,
-      "max_applied": 52.0,
+      "max_applied": 32.0,
       "max_residential_excess": 55.79,
       "families": {
         "mixed": 419
@@ -15910,6 +15910,55 @@
       ]
     },
     {
+      "neighborhood": "Queen Anne 25",
+      "district": "Queen Anne",
+      "records": 297,
+      "residential": 277,
+      "over_cap": 251,
+      "over_cap_residential": 236,
+      "max_recorded": 127.49,
+      "max_applied": 32.0,
+      "max_residential_excess": 118.49,
+      "families": {
+        "mixed": 297
+      },
+      "sources": {
+        "lidar_overture": 114,
+        "real_surveyed": 178,
+        "msml_estimate": 4,
+        "area_heuristic": 1
+      },
+      "worst": [
+        {
+          "id": 96080,
+          "height": 127.49,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 91904,
+          "height": 124.39,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 94873,
+          "height": 114.68,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "Rainier Valley 49",
       "district": "Seattle general",
       "records": 319,
@@ -16109,7 +16158,7 @@
       "over_cap": 251,
       "over_cap_residential": 230,
       "max_recorded": 64.33,
-      "max_applied": 44.0,
+      "max_applied": 32.0,
       "max_residential_excess": 55.33,
       "families": {
         "mixed": 423
@@ -16242,6 +16291,55 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
+        }
+      ]
+    },
+    {
+      "neighborhood": "West Seattle 37",
+      "district": "West Seattle",
+      "records": 381,
+      "residential": 356,
+      "over_cap": 250,
+      "over_cap_residential": 239,
+      "max_recorded": 97.83,
+      "max_applied": 32.0,
+      "max_residential_excess": 88.83,
+      "families": {
+        "mixed": 381
+      },
+      "sources": {
+        "lidar_overture": 227,
+        "real_surveyed": 144,
+        "msml_estimate": 5,
+        "area_heuristic": 5
+      },
+      "worst": [
+        {
+          "id": 174829,
+          "height": 97.83,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 130318,
+          "height": 89.08,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 182960,
+          "height": 83.41,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
         }
       ]
     },
@@ -16437,55 +16535,6 @@
       ]
     },
     {
-      "neighborhood": "Queen Anne 25",
-      "district": "Queen Anne",
-      "records": 297,
-      "residential": 277,
-      "over_cap": 248,
-      "over_cap_residential": 236,
-      "max_recorded": 127.49,
-      "max_applied": 92.0,
-      "max_residential_excess": 118.49,
-      "families": {
-        "mixed": 297
-      },
-      "sources": {
-        "lidar_overture": 114,
-        "real_surveyed": 178,
-        "msml_estimate": 4,
-        "area_heuristic": 1
-      },
-      "worst": [
-        {
-          "id": 96080,
-          "height": 127.49,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 91904,
-          "height": 124.39,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 94873,
-          "height": 114.68,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        }
-      ]
-    },
-    {
       "neighborhood": "South King 09",
       "district": "Tacoma",
       "records": 256,
@@ -16577,55 +16626,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 37",
-      "district": "West Seattle",
-      "records": 381,
-      "residential": 356,
-      "over_cap": 248,
-      "over_cap_residential": 239,
-      "max_recorded": 97.83,
-      "max_applied": 44.0,
-      "max_residential_excess": 88.83,
-      "families": {
-        "mixed": 381
-      },
-      "sources": {
-        "lidar_overture": 227,
-        "real_surveyed": 144,
-        "msml_estimate": 5,
-        "area_heuristic": 5
-      },
-      "worst": [
-        {
-          "id": 174829,
-          "height": 97.83,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 130318,
-          "height": 89.08,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 182960,
-          "height": 83.41,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -17205,6 +17205,55 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 20",
+      "district": "West Seattle",
+      "records": 398,
+      "residential": 367,
+      "over_cap": 245,
+      "over_cap_residential": 230,
+      "max_recorded": 72.26,
+      "max_applied": 32.0,
+      "max_residential_excess": 63.26,
+      "families": {
+        "mixed": 398
+      },
+      "sources": {
+        "lidar_overture": 272,
+        "real_surveyed": 114,
+        "msml_estimate": 3,
+        "area_heuristic": 9
+      },
+      "worst": [
+        {
+          "id": 149651,
+          "height": 72.26,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 182197,
+          "height": 59.73,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 153825,
+          "height": 58.0,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "West Seattle 46",
       "district": "West Seattle",
       "records": 354,
@@ -17583,55 +17632,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 20",
-      "district": "West Seattle",
-      "records": 398,
-      "residential": 367,
-      "over_cap": 244,
-      "over_cap_residential": 230,
-      "max_recorded": 72.26,
-      "max_applied": 36.0,
-      "max_residential_excess": 63.26,
-      "families": {
-        "mixed": 398
-      },
-      "sources": {
-        "lidar_overture": 272,
-        "real_surveyed": 114,
-        "msml_estimate": 3,
-        "area_heuristic": 9
-      },
-      "worst": [
-        {
-          "id": 149651,
-          "height": 72.26,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 182197,
-          "height": 59.73,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 153825,
-          "height": 58.0,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -18213,6 +18213,104 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 50",
+      "district": "Capitol Hill",
+      "records": 379,
+      "residential": 343,
+      "over_cap": 238,
+      "over_cap_residential": 220,
+      "max_recorded": 62.38,
+      "max_applied": 32.0,
+      "max_residential_excess": 53.38,
+      "families": {
+        "mixed": 379
+      },
+      "sources": {
+        "real_surveyed": 114,
+        "lidar_overture": 240,
+        "area_heuristic": 9,
+        "msml_estimate": 16
+      },
+      "worst": [
+        {
+          "id": 111457,
+          "height": 62.38,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 85220,
+          "height": 59.15,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 84669,
+          "height": 58.79,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Queen Anne 06",
+      "district": "Queen Anne",
+      "records": 382,
+      "residential": 356,
+      "over_cap": 238,
+      "over_cap_residential": 225,
+      "max_recorded": 89.46,
+      "max_applied": 32.0,
+      "max_residential_excess": 80.46,
+      "families": {
+        "mixed": 382
+      },
+      "sources": {
+        "real_surveyed": 172,
+        "lidar_overture": 207,
+        "area_heuristic": 2,
+        "msml_estimate": 1
+      },
+      "worst": [
+        {
+          "id": 104802,
+          "height": 89.46,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 99370,
+          "height": 88.84,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 110490,
+          "height": 85.82,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "Rainier Valley 03",
       "district": "Seattle general",
       "records": 311,
@@ -18400,51 +18498,51 @@
       ]
     },
     {
-      "neighborhood": "Capitol Hill 50",
-      "district": "Capitol Hill",
-      "records": 379,
-      "residential": 343,
-      "over_cap": 237,
-      "over_cap_residential": 220,
-      "max_recorded": 62.38,
-      "max_applied": 36.0,
-      "max_residential_excess": 53.38,
+      "neighborhood": "West Seattle 58",
+      "district": "West Seattle",
+      "records": 353,
+      "residential": 334,
+      "over_cap": 238,
+      "over_cap_residential": 229,
+      "max_recorded": 81.28,
+      "max_applied": 32.0,
+      "max_residential_excess": 72.28,
       "families": {
-        "mixed": 379
+        "mixed": 353
       },
       "sources": {
-        "real_surveyed": 114,
-        "lidar_overture": 240,
-        "area_heuristic": 9,
-        "msml_estimate": 16
+        "lidar_overture": 199,
+        "real_surveyed": 135,
+        "area_heuristic": 11,
+        "msml_estimate": 8
       },
       "worst": [
         {
-          "id": 111457,
-          "height": 62.38,
+          "id": 135984,
+          "height": 81.28,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
           "family": "mixed",
-          "district": "Capitol Hill"
+          "district": "West Seattle"
         },
         {
-          "id": 85220,
-          "height": 59.15,
+          "id": 132315,
+          "height": 76.62,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
           "family": "mixed",
-          "district": "Capitol Hill"
+          "district": "West Seattle"
         },
         {
-          "id": 84669,
-          "height": 58.79,
+          "id": 122112,
+          "height": 75.92,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
           "family": "mixed",
-          "district": "Capitol Hill"
+          "district": "West Seattle"
         }
       ]
     },
@@ -18493,104 +18591,6 @@
           "source": "lidar_overture",
           "family": "mixed",
           "district": "Eastside"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 06",
-      "district": "Queen Anne",
-      "records": 382,
-      "residential": 356,
-      "over_cap": 237,
-      "over_cap_residential": 225,
-      "max_recorded": 89.46,
-      "max_applied": 84.0,
-      "max_residential_excess": 80.46,
-      "families": {
-        "mixed": 382
-      },
-      "sources": {
-        "real_surveyed": 172,
-        "lidar_overture": 207,
-        "area_heuristic": 2,
-        "msml_estimate": 1
-      },
-      "worst": [
-        {
-          "id": 104802,
-          "height": 89.46,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 99370,
-          "height": 88.84,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 110490,
-          "height": 85.82,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 58",
-      "district": "West Seattle",
-      "records": 353,
-      "residential": 334,
-      "over_cap": 237,
-      "over_cap_residential": 229,
-      "max_recorded": 81.28,
-      "max_applied": 48.0,
-      "max_residential_excess": 72.28,
-      "families": {
-        "mixed": 353
-      },
-      "sources": {
-        "lidar_overture": 199,
-        "real_surveyed": 135,
-        "area_heuristic": 11,
-        "msml_estimate": 8
-      },
-      "worst": [
-        {
-          "id": 135984,
-          "height": 81.28,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 132315,
-          "height": 76.62,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 122112,
-          "height": 75.92,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -19020,6 +19020,55 @@
           "source": "real_surveyed",
           "family": "timber",
           "district": "Ballard"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 02",
+      "district": "Capitol Hill",
+      "records": 297,
+      "residential": 277,
+      "over_cap": 232,
+      "over_cap_residential": 221,
+      "max_recorded": 104.52,
+      "max_applied": 32.0,
+      "max_residential_excess": 95.52,
+      "families": {
+        "mixed": 297
+      },
+      "sources": {
+        "real_surveyed": 149,
+        "lidar_overture": 139,
+        "area_heuristic": 4,
+        "msml_estimate": 5
+      },
+      "worst": [
+        {
+          "id": 75828,
+          "height": 104.52,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 94646,
+          "height": 94.25,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 91044,
+          "height": 92.99,
+          "applied": 32.0,
+          "category": "commercial",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
         }
       ]
     },
@@ -19460,55 +19509,6 @@
       ]
     },
     {
-      "neighborhood": "Capitol Hill 02",
-      "district": "Capitol Hill",
-      "records": 297,
-      "residential": 277,
-      "over_cap": 230,
-      "over_cap_residential": 221,
-      "max_recorded": 104.52,
-      "max_applied": 92.0,
-      "max_residential_excess": 95.52,
-      "families": {
-        "mixed": 297
-      },
-      "sources": {
-        "real_surveyed": 149,
-        "lidar_overture": 139,
-        "area_heuristic": 4,
-        "msml_estimate": 5
-      },
-      "worst": [
-        {
-          "id": 75828,
-          "height": 104.52,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 94646,
-          "height": 94.25,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 91044,
-          "height": 92.99,
-          "applied": 92.0,
-          "category": "commercial",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        }
-      ]
-    },
-    {
       "neighborhood": "Tacoma Core 13",
       "district": "Tacoma",
       "records": 241,
@@ -19842,6 +19842,55 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 28",
+      "district": "Capitol Hill",
+      "records": 387,
+      "residential": 365,
+      "over_cap": 229,
+      "over_cap_residential": 220,
+      "max_recorded": 70.26,
+      "max_applied": 32.0,
+      "max_residential_excess": 61.26,
+      "families": {
+        "mixed": 387
+      },
+      "sources": {
+        "lidar_overture": 271,
+        "real_surveyed": 110,
+        "msml_estimate": 4,
+        "area_heuristic": 2
+      },
+      "worst": [
+        {
+          "id": 112136,
+          "height": 70.26,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 80269,
+          "height": 69.88,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 78516,
+          "height": 68.35,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Seattle South 132",
       "district": "Seattle general",
       "records": 295,
@@ -19987,28 +20036,28 @@
       ]
     },
     {
-      "neighborhood": "Capitol Hill 28",
+      "neighborhood": "Capitol Hill 37",
       "district": "Capitol Hill",
-      "records": 387,
-      "residential": 365,
+      "records": 346,
+      "residential": 314,
       "over_cap": 228,
-      "over_cap_residential": 220,
-      "max_recorded": 70.26,
-      "max_applied": 36.0,
-      "max_residential_excess": 61.26,
+      "over_cap_residential": 212,
+      "max_recorded": 86.15,
+      "max_applied": 32.0,
+      "max_residential_excess": 77.15,
       "families": {
-        "mixed": 387
+        "mixed": 346
       },
       "sources": {
-        "lidar_overture": 271,
-        "real_surveyed": 110,
-        "msml_estimate": 4,
+        "real_surveyed": 142,
+        "lidar_overture": 200,
+        "msml_estimate": 2,
         "area_heuristic": 2
       },
       "worst": [
         {
-          "id": 112136,
-          "height": 70.26,
+          "id": 110623,
+          "height": 86.15,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -20016,8 +20065,8 @@
           "district": "Capitol Hill"
         },
         {
-          "id": 80269,
-          "height": 69.88,
+          "id": 91602,
+          "height": 82.28,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -20025,8 +20074,8 @@
           "district": "Capitol Hill"
         },
         {
-          "id": 78516,
-          "height": 68.35,
+          "id": 89875,
+          "height": 77.77,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -20222,6 +20271,104 @@
           "source": "real_surveyed",
           "family": "mixed",
           "district": "West Seattle"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 14",
+      "district": "Capitol Hill",
+      "records": 288,
+      "residential": 264,
+      "over_cap": 227,
+      "over_cap_residential": 212,
+      "max_recorded": 120.22,
+      "max_applied": 32.0,
+      "max_residential_excess": 111.22,
+      "families": {
+        "mixed": 288
+      },
+      "sources": {
+        "real_surveyed": 209,
+        "lidar_overture": 72,
+        "area_heuristic": 5,
+        "msml_estimate": 2
+      },
+      "worst": [
+        {
+          "id": 108397,
+          "height": 120.22,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 88141,
+          "height": 115.03,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 99170,
+          "height": 114.26,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Queen Anne 07",
+      "district": "Queen Anne",
+      "records": 274,
+      "residential": 246,
+      "over_cap": 227,
+      "over_cap_residential": 212,
+      "max_recorded": 135.53,
+      "max_applied": 32.0,
+      "max_residential_excess": 126.53,
+      "families": {
+        "mixed": 274
+      },
+      "sources": {
+        "msml_estimate": 2,
+        "area_heuristic": 10,
+        "lidar_overture": 92,
+        "real_surveyed": 170
+      },
+      "worst": [
+        {
+          "id": 101876,
+          "height": 135.53,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 83510,
+          "height": 133.4,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 79599,
+          "height": 132.18,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
         }
       ]
     },
@@ -20605,55 +20752,6 @@
       ]
     },
     {
-      "neighborhood": "Capitol Hill 14",
-      "district": "Capitol Hill",
-      "records": 288,
-      "residential": 264,
-      "over_cap": 225,
-      "over_cap_residential": 212,
-      "max_recorded": 120.22,
-      "max_applied": 100.0,
-      "max_residential_excess": 111.22,
-      "families": {
-        "mixed": 288
-      },
-      "sources": {
-        "real_surveyed": 209,
-        "lidar_overture": 72,
-        "area_heuristic": 5,
-        "msml_estimate": 2
-      },
-      "worst": [
-        {
-          "id": 108397,
-          "height": 120.22,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 88141,
-          "height": 115.03,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 99170,
-          "height": 114.26,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        }
-      ]
-    },
-    {
       "neighborhood": "Rainier Valley 50",
       "district": "Seattle general",
       "records": 301,
@@ -20699,55 +20797,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 37",
-      "district": "Capitol Hill",
-      "records": 346,
-      "residential": 314,
-      "over_cap": 224,
-      "over_cap_residential": 212,
-      "max_recorded": 86.15,
-      "max_applied": 52.0,
-      "max_residential_excess": 77.15,
-      "families": {
-        "mixed": 346
-      },
-      "sources": {
-        "real_surveyed": 142,
-        "lidar_overture": 200,
-        "msml_estimate": 2,
-        "area_heuristic": 2
-      },
-      "worst": [
-        {
-          "id": 110623,
-          "height": 86.15,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 91602,
-          "height": 82.28,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 89875,
-          "height": 77.77,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -21133,55 +21182,6 @@
       ]
     },
     {
-      "neighborhood": "Queen Anne 07",
-      "district": "Queen Anne",
-      "records": 274,
-      "residential": 246,
-      "over_cap": 222,
-      "over_cap_residential": 212,
-      "max_recorded": 135.53,
-      "max_applied": 128.0,
-      "max_residential_excess": 126.53,
-      "families": {
-        "mixed": 274
-      },
-      "sources": {
-        "msml_estimate": 2,
-        "area_heuristic": 10,
-        "lidar_overture": 92,
-        "real_surveyed": 170
-      },
-      "worst": [
-        {
-          "id": 101876,
-          "height": 135.53,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 83510,
-          "height": 133.4,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 79599,
-          "height": 132.18,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        }
-      ]
-    },
-    {
       "neighborhood": "Eastside 90",
       "district": "Eastside",
       "records": 541,
@@ -21225,6 +21225,55 @@
           "source": "lidar_overture",
           "family": "mixed",
           "district": "Eastside"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Queen Anne 09",
+      "district": "Queen Anne",
+      "records": 298,
+      "residential": 276,
+      "over_cap": 221,
+      "over_cap_residential": 206,
+      "max_recorded": 100.83,
+      "max_applied": 32.0,
+      "max_residential_excess": 91.83,
+      "families": {
+        "mixed": 298
+      },
+      "sources": {
+        "real_surveyed": 156,
+        "lidar_overture": 133,
+        "msml_estimate": 5,
+        "area_heuristic": 4
+      },
+      "worst": [
+        {
+          "id": 88191,
+          "height": 100.83,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 107811,
+          "height": 96.83,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 108778,
+          "height": 94.11,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
         }
       ]
     },
@@ -21274,6 +21323,104 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
+        }
+      ]
+    },
+    {
+      "neighborhood": "West Seattle 57",
+      "district": "West Seattle",
+      "records": 295,
+      "residential": 278,
+      "over_cap": 221,
+      "over_cap_residential": 210,
+      "max_recorded": 119.64,
+      "max_applied": 32.0,
+      "max_residential_excess": 110.64,
+      "families": {
+        "mixed": 295
+      },
+      "sources": {
+        "real_surveyed": 166,
+        "lidar_overture": 121,
+        "area_heuristic": 5,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 124633,
+          "height": 119.64,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 134040,
+          "height": 114.9,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 152003,
+          "height": 108.11,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 17",
+      "district": "Capitol Hill",
+      "records": 336,
+      "residential": 305,
+      "over_cap": 220,
+      "over_cap_residential": 205,
+      "max_recorded": 58.62,
+      "max_applied": 32.0,
+      "max_residential_excess": 49.62,
+      "families": {
+        "mixed": 336
+      },
+      "sources": {
+        "lidar_overture": 253,
+        "area_heuristic": 11,
+        "real_surveyed": 61,
+        "msml_estimate": 11
+      },
+      "worst": [
+        {
+          "id": 86531,
+          "height": 58.62,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 106715,
+          "height": 55.82,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 102707,
+          "height": 42.58,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
         }
       ]
     },
@@ -21471,104 +21618,6 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 57",
-      "district": "West Seattle",
-      "records": 295,
-      "residential": 278,
-      "over_cap": 220,
-      "over_cap_residential": 210,
-      "max_recorded": 119.64,
-      "max_applied": 44.0,
-      "max_residential_excess": 110.64,
-      "families": {
-        "mixed": 295
-      },
-      "sources": {
-        "real_surveyed": 166,
-        "lidar_overture": 121,
-        "area_heuristic": 5,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 124633,
-          "height": 119.64,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 134040,
-          "height": 114.9,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 152003,
-          "height": 108.11,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 17",
-      "district": "Capitol Hill",
-      "records": 336,
-      "residential": 305,
-      "over_cap": 219,
-      "over_cap_residential": 205,
-      "max_recorded": 58.62,
-      "max_applied": 36.0,
-      "max_residential_excess": 49.62,
-      "families": {
-        "mixed": 336
-      },
-      "sources": {
-        "lidar_overture": 253,
-        "area_heuristic": 11,
-        "real_surveyed": 61,
-        "msml_estimate": 11
-      },
-      "worst": [
-        {
-          "id": 86531,
-          "height": 58.62,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 106715,
-          "height": 55.82,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 102707,
-          "height": 42.58,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        }
-      ]
-    },
-    {
       "neighborhood": "Seattle South 103",
       "district": "Seattle general",
       "records": 272,
@@ -21718,7 +21767,7 @@
       "over_cap": 219,
       "over_cap_residential": 201,
       "max_recorded": 85.71,
-      "max_applied": 84.0,
+      "max_applied": 32.0,
       "max_residential_excess": 60.32,
       "families": {
         "mixed": 353
@@ -21733,7 +21782,7 @@
         {
           "id": 119263,
           "height": 85.71,
-          "applied": 84.0,
+          "applied": 32.0,
           "category": "commercial",
           "source": "real_surveyed",
           "family": "mixed",
@@ -21857,28 +21906,77 @@
       ]
     },
     {
-      "neighborhood": "Queen Anne 09",
-      "district": "Queen Anne",
-      "records": 298,
-      "residential": 276,
+      "neighborhood": "Capitol Hill 51",
+      "district": "Capitol Hill",
+      "records": 380,
+      "residential": 350,
       "over_cap": 218,
-      "over_cap_residential": 206,
-      "max_recorded": 100.83,
-      "max_applied": 52.0,
-      "max_residential_excess": 91.83,
+      "over_cap_residential": 200,
+      "max_recorded": 60.39,
+      "max_applied": 32.0,
+      "max_residential_excess": 51.39,
       "families": {
-        "mixed": 298
+        "mixed": 380
       },
       "sources": {
-        "real_surveyed": 156,
-        "lidar_overture": 133,
-        "msml_estimate": 5,
-        "area_heuristic": 4
+        "real_surveyed": 112,
+        "lidar_overture": 261,
+        "area_heuristic": 5,
+        "msml_estimate": 2
       },
       "worst": [
         {
-          "id": 88191,
-          "height": 100.83,
+          "id": 101369,
+          "height": 60.39,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 101785,
+          "height": 53.51,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 111978,
+          "height": 52.91,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Queen Anne 20",
+      "district": "Queen Anne",
+      "records": 264,
+      "residential": 238,
+      "over_cap": 218,
+      "over_cap_residential": 201,
+      "max_recorded": 130.65,
+      "max_applied": 32.0,
+      "max_residential_excess": 121.65,
+      "families": {
+        "mixed": 264
+      },
+      "sources": {
+        "msml_estimate": 3,
+        "real_surveyed": 160,
+        "lidar_overture": 98,
+        "area_heuristic": 3
+      },
+      "worst": [
+        {
+          "id": 92256,
+          "height": 130.65,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -21886,8 +21984,8 @@
           "district": "Queen Anne"
         },
         {
-          "id": 107811,
-          "height": 96.83,
+          "id": 89487,
+          "height": 120.35,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -21895,8 +21993,8 @@
           "district": "Queen Anne"
         },
         {
-          "id": 108778,
-          "height": 94.11,
+          "id": 93180,
+          "height": 112.21,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -21951,6 +22049,55 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Seattle South 133",
+      "district": "West Seattle",
+      "records": 314,
+      "residential": 292,
+      "over_cap": 218,
+      "over_cap_residential": 206,
+      "max_recorded": 85.76,
+      "max_applied": 32.0,
+      "max_residential_excess": 76.76,
+      "families": {
+        "mixed": 314
+      },
+      "sources": {
+        "lidar_overture": 190,
+        "real_surveyed": 110,
+        "msml_estimate": 9,
+        "area_heuristic": 5
+      },
+      "worst": [
+        {
+          "id": 182929,
+          "height": 85.76,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 150054,
+          "height": 85.56,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 123122,
+          "height": 85.26,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
         }
       ]
     },
@@ -22011,7 +22158,7 @@
       "over_cap": 217,
       "over_cap_residential": 205,
       "max_recorded": 98.86,
-      "max_applied": 76.0,
+      "max_applied": 32.0,
       "max_residential_excess": 89.86,
       "families": {
         "mixed": 307
@@ -22049,104 +22196,6 @@
           "source": "real_surveyed",
           "family": "mixed",
           "district": "Capitol Hill"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 51",
-      "district": "Capitol Hill",
-      "records": 380,
-      "residential": 350,
-      "over_cap": 217,
-      "over_cap_residential": 200,
-      "max_recorded": 60.39,
-      "max_applied": 40.0,
-      "max_residential_excess": 51.39,
-      "families": {
-        "mixed": 380
-      },
-      "sources": {
-        "real_surveyed": 112,
-        "lidar_overture": 261,
-        "area_heuristic": 5,
-        "msml_estimate": 2
-      },
-      "worst": [
-        {
-          "id": 101369,
-          "height": 60.39,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 101785,
-          "height": 53.51,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 111978,
-          "height": 52.91,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Seattle South 133",
-      "district": "West Seattle",
-      "records": 314,
-      "residential": 292,
-      "over_cap": 217,
-      "over_cap_residential": 206,
-      "max_recorded": 85.76,
-      "max_applied": 44.0,
-      "max_residential_excess": 76.76,
-      "families": {
-        "mixed": 314
-      },
-      "sources": {
-        "lidar_overture": 190,
-        "real_surveyed": 110,
-        "msml_estimate": 9,
-        "area_heuristic": 5
-      },
-      "worst": [
-        {
-          "id": 182929,
-          "height": 85.76,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 150054,
-          "height": 85.56,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 123122,
-          "height": 85.26,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -22342,6 +22391,55 @@
       ]
     },
     {
+      "neighborhood": "Queen Anne 24",
+      "district": "Queen Anne",
+      "records": 327,
+      "residential": 310,
+      "over_cap": 216,
+      "over_cap_residential": 208,
+      "max_recorded": 100.04,
+      "max_applied": 32.0,
+      "max_residential_excess": 91.04,
+      "families": {
+        "mixed": 327
+      },
+      "sources": {
+        "lidar_overture": 233,
+        "real_surveyed": 79,
+        "msml_estimate": 9,
+        "area_heuristic": 6
+      },
+      "worst": [
+        {
+          "id": 105714,
+          "height": 100.04,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 91805,
+          "height": 63.44,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 111655,
+          "height": 61.68,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "Tacoma South 61",
       "district": "Tacoma",
       "records": 243,
@@ -22395,7 +22493,7 @@
       "over_cap": 216,
       "over_cap_residential": 207,
       "max_recorded": 150.15,
-      "max_applied": 36.0,
+      "max_applied": 32.0,
       "max_residential_excess": 141.15,
       "families": {
         "mixed": 283
@@ -22482,55 +22580,6 @@
           "source": "real_surveyed",
           "family": "timber",
           "district": "Ballard"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 24",
-      "district": "Queen Anne",
-      "records": 327,
-      "residential": 310,
-      "over_cap": 215,
-      "over_cap_residential": 208,
-      "max_recorded": 100.04,
-      "max_applied": 48.0,
-      "max_residential_excess": 91.04,
-      "families": {
-        "mixed": 327
-      },
-      "sources": {
-        "lidar_overture": 233,
-        "real_surveyed": 79,
-        "msml_estimate": 9,
-        "area_heuristic": 6
-      },
-      "worst": [
-        {
-          "id": 105714,
-          "height": 100.04,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 91805,
-          "height": 63.44,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 111655,
-          "height": 61.68,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -22675,55 +22724,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 20",
-      "district": "Queen Anne",
-      "records": 264,
-      "residential": 238,
-      "over_cap": 214,
-      "over_cap_residential": 201,
-      "max_recorded": 130.65,
-      "max_applied": 80.0,
-      "max_residential_excess": 121.65,
-      "families": {
-        "mixed": 264
-      },
-      "sources": {
-        "msml_estimate": 3,
-        "real_surveyed": 160,
-        "lidar_overture": 98,
-        "area_heuristic": 3
-      },
-      "worst": [
-        {
-          "id": 92256,
-          "height": 130.65,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 89487,
-          "height": 120.35,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 93180,
-          "height": 112.21,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -22879,7 +22879,7 @@
       "over_cap": 214,
       "over_cap_residential": 203,
       "max_recorded": 64.39,
-      "max_applied": 64.0,
+      "max_applied": 32.0,
       "max_residential_excess": 52.71,
       "families": {
         "mixed": 381
@@ -22894,7 +22894,7 @@
         {
           "id": 156231,
           "height": 64.39,
-          "applied": 64.0,
+          "applied": 32.0,
           "category": "commercial",
           "source": "real_surveyed",
           "family": "mixed",
@@ -23593,6 +23593,55 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 03",
+      "district": "Capitol Hill",
+      "records": 295,
+      "residential": 263,
+      "over_cap": 209,
+      "over_cap_residential": 195,
+      "max_recorded": 128.5,
+      "max_applied": 32.0,
+      "max_residential_excess": 119.5,
+      "families": {
+        "mixed": 295
+      },
+      "sources": {
+        "real_surveyed": 132,
+        "lidar_overture": 155,
+        "area_heuristic": 6,
+        "msml_estimate": 2
+      },
+      "worst": [
+        {
+          "id": 99088,
+          "height": 128.5,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 108333,
+          "height": 117.65,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 109581,
+          "height": 117.24,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Rainier Valley 59",
       "district": "Seattle general",
       "records": 275,
@@ -23746,7 +23795,7 @@
       "over_cap": 209,
       "over_cap_residential": 191,
       "max_recorded": 46.17,
-      "max_applied": 44.0,
+      "max_applied": 32.0,
       "max_residential_excess": 37.17,
       "families": {
         "mixed": 448
@@ -23770,7 +23819,7 @@
         {
           "id": 180897,
           "height": 45.26,
-          "applied": 44.0,
+          "applied": 32.0,
           "category": "commercial",
           "source": "real_surveyed",
           "family": "mixed",
@@ -23983,55 +24032,6 @@
       ]
     },
     {
-      "neighborhood": "Capitol Hill 03",
-      "district": "Capitol Hill",
-      "records": 295,
-      "residential": 263,
-      "over_cap": 207,
-      "over_cap_residential": 195,
-      "max_recorded": 128.5,
-      "max_applied": 92.0,
-      "max_residential_excess": 119.5,
-      "families": {
-        "mixed": 295
-      },
-      "sources": {
-        "real_surveyed": 132,
-        "lidar_overture": 155,
-        "area_heuristic": 6,
-        "msml_estimate": 2
-      },
-      "worst": [
-        {
-          "id": 99088,
-          "height": 128.5,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 108333,
-          "height": 117.65,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 109581,
-          "height": 117.24,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        }
-      ]
-    },
-    {
       "neighborhood": "Capitol Hill 49",
       "district": "Capitol Hill",
       "records": 375,
@@ -24077,6 +24077,55 @@
           "source": "real_surveyed",
           "family": "mixed",
           "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Queen Anne 02",
+      "district": "Queen Anne",
+      "records": 309,
+      "residential": 281,
+      "over_cap": 207,
+      "over_cap_residential": 187,
+      "max_recorded": 86.73,
+      "max_applied": 32.0,
+      "max_residential_excess": 77.73,
+      "families": {
+        "mixed": 309
+      },
+      "sources": {
+        "real_surveyed": 130,
+        "lidar_overture": 171,
+        "area_heuristic": 3,
+        "msml_estimate": 5
+      },
+      "worst": [
+        {
+          "id": 101016,
+          "height": 86.73,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 76533,
+          "height": 86.56,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 106836,
+          "height": 84.26,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
         }
       ]
     },
@@ -24563,6 +24612,55 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 07",
+      "district": "West Seattle",
+      "records": 295,
+      "residential": 272,
+      "over_cap": 205,
+      "over_cap_residential": 187,
+      "max_recorded": 126.28,
+      "max_applied": 32.0,
+      "max_residential_excess": 117.28,
+      "families": {
+        "mixed": 295
+      },
+      "sources": {
+        "lidar_overture": 145,
+        "real_surveyed": 143,
+        "msml_estimate": 4,
+        "area_heuristic": 3
+      },
+      "worst": [
+        {
+          "id": 155345,
+          "height": 126.28,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 185265,
+          "height": 117.53,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 158287,
+          "height": 116.32,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "West Seattle 35",
       "district": "West Seattle",
       "records": 398,
@@ -24953,55 +25051,6 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 07",
-      "district": "West Seattle",
-      "records": 295,
-      "residential": 272,
-      "over_cap": 204,
-      "over_cap_residential": 187,
-      "max_recorded": 126.28,
-      "max_applied": 44.0,
-      "max_residential_excess": 117.28,
-      "families": {
-        "mixed": 295
-      },
-      "sources": {
-        "lidar_overture": 145,
-        "real_surveyed": 143,
-        "msml_estimate": 4,
-        "area_heuristic": 3
-      },
-      "worst": [
-        {
-          "id": 155345,
-          "height": 126.28,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 185265,
-          "height": 117.53,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 158287,
-          "height": 116.32,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        }
-      ]
-    },
-    {
       "neighborhood": "Beacon Hill 31",
       "district": "Seattle general",
       "records": 342,
@@ -25095,55 +25144,6 @@
           "source": "lidar_overture",
           "family": "mixed",
           "district": "Eastside"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 02",
-      "district": "Queen Anne",
-      "records": 309,
-      "residential": 281,
-      "over_cap": 203,
-      "over_cap_residential": 187,
-      "max_recorded": 86.73,
-      "max_applied": 64.0,
-      "max_residential_excess": 77.73,
-      "families": {
-        "mixed": 309
-      },
-      "sources": {
-        "real_surveyed": 130,
-        "lidar_overture": 171,
-        "area_heuristic": 3,
-        "msml_estimate": 5
-      },
-      "worst": [
-        {
-          "id": 101016,
-          "height": 86.73,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 76533,
-          "height": 86.56,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 106836,
-          "height": 84.26,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -25632,6 +25632,54 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 30",
+      "district": "West Seattle",
+      "records": 293,
+      "residential": 278,
+      "over_cap": 201,
+      "over_cap_residential": 195,
+      "max_recorded": 113.4,
+      "max_applied": 32.0,
+      "max_residential_excess": 104.4,
+      "families": {
+        "mixed": 293
+      },
+      "sources": {
+        "lidar_overture": 166,
+        "real_surveyed": 125,
+        "msml_estimate": 2
+      },
+      "worst": [
+        {
+          "id": 144463,
+          "height": 113.4,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 131331,
+          "height": 109.22,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 157580,
+          "height": 109.12,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "West Seattle 33",
       "district": "West Seattle",
       "records": 395,
@@ -26067,54 +26115,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 30",
-      "district": "West Seattle",
-      "records": 293,
-      "residential": 278,
-      "over_cap": 199,
-      "over_cap_residential": 195,
-      "max_recorded": 113.4,
-      "max_applied": 76.0,
-      "max_residential_excess": 104.4,
-      "families": {
-        "mixed": 293
-      },
-      "sources": {
-        "lidar_overture": 166,
-        "real_surveyed": 125,
-        "msml_estimate": 2
-      },
-      "worst": [
-        {
-          "id": 144463,
-          "height": 113.4,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 131331,
-          "height": 109.22,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 157580,
-          "height": 109.12,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -27950,6 +27950,103 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 51",
+      "district": "West Seattle",
+      "records": 265,
+      "residential": 248,
+      "over_cap": 192,
+      "over_cap_residential": 181,
+      "max_recorded": 115.16,
+      "max_applied": 32.0,
+      "max_residential_excess": 106.16,
+      "families": {
+        "mixed": 265
+      },
+      "sources": {
+        "real_surveyed": 137,
+        "lidar_overture": 123,
+        "area_heuristic": 5
+      },
+      "worst": [
+        {
+          "id": 186489,
+          "height": 115.16,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 178039,
+          "height": 102.72,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 131782,
+          "height": 100.37,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 30",
+      "district": "Capitol Hill",
+      "records": 252,
+      "residential": 228,
+      "over_cap": 191,
+      "over_cap_residential": 178,
+      "max_recorded": 114.28,
+      "max_applied": 32.0,
+      "max_residential_excess": 105.28,
+      "families": {
+        "mixed": 252
+      },
+      "sources": {
+        "real_surveyed": 145,
+        "lidar_overture": 100,
+        "area_heuristic": 6,
+        "msml_estimate": 1
+      },
+      "worst": [
+        {
+          "id": 75529,
+          "height": 114.28,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 114930,
+          "height": 102.3,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 87321,
+          "height": 99.49,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Eastside 92",
       "district": "Eastside",
       "records": 351,
@@ -28723,27 +28820,27 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 51",
+      "neighborhood": "West Seattle 25",
       "district": "West Seattle",
-      "records": 265,
-      "residential": 248,
+      "records": 268,
+      "residential": 253,
       "over_cap": 189,
       "over_cap_residential": 181,
-      "max_recorded": 115.16,
-      "max_applied": 72.0,
-      "max_residential_excess": 106.16,
+      "max_recorded": 141.73,
+      "max_applied": 32.0,
+      "max_residential_excess": 132.73,
       "families": {
-        "mixed": 265
+        "mixed": 268
       },
       "sources": {
-        "real_surveyed": 137,
-        "lidar_overture": 123,
-        "area_heuristic": 5
+        "lidar_overture": 129,
+        "real_surveyed": 136,
+        "area_heuristic": 3
       },
       "worst": [
         {
-          "id": 186489,
-          "height": 115.16,
+          "id": 152346,
+          "height": 141.73,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -28751,8 +28848,8 @@
           "district": "West Seattle"
         },
         {
-          "id": 178039,
-          "height": 102.72,
+          "id": 154315,
+          "height": 141.7,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
@@ -28760,62 +28857,13 @@
           "district": "West Seattle"
         },
         {
-          "id": 131782,
-          "height": 100.37,
+          "id": 133995,
+          "height": 138.22,
           "applied": 9.0,
           "category": "residential",
           "source": "real_surveyed",
           "family": "mixed",
           "district": "West Seattle"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 30",
-      "district": "Capitol Hill",
-      "records": 252,
-      "residential": 228,
-      "over_cap": 188,
-      "over_cap_residential": 178,
-      "max_recorded": 114.28,
-      "max_applied": 80.0,
-      "max_residential_excess": 105.28,
-      "families": {
-        "mixed": 252
-      },
-      "sources": {
-        "real_surveyed": 145,
-        "lidar_overture": 100,
-        "area_heuristic": 6,
-        "msml_estimate": 1
-      },
-      "worst": [
-        {
-          "id": 75529,
-          "height": 114.28,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 114930,
-          "height": 102.3,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 87321,
-          "height": 99.49,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -29105,54 +29153,6 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 25",
-      "district": "West Seattle",
-      "records": 268,
-      "residential": 253,
-      "over_cap": 188,
-      "over_cap_residential": 181,
-      "max_recorded": 141.73,
-      "max_applied": 64.0,
-      "max_residential_excess": 132.73,
-      "families": {
-        "mixed": 268
-      },
-      "sources": {
-        "lidar_overture": 129,
-        "real_surveyed": 136,
-        "area_heuristic": 3
-      },
-      "worst": [
-        {
-          "id": 152346,
-          "height": 141.73,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 154315,
-          "height": 141.7,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 133995,
-          "height": 138.22,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        }
-      ]
-    },
-    {
       "neighborhood": "Ballard 06",
       "district": "Ballard",
       "records": 325,
@@ -29307,7 +29307,7 @@
       "over_cap": 186,
       "over_cap_residential": 176,
       "max_recorded": 167.2,
-      "max_applied": 76.0,
+      "max_applied": 32.0,
       "max_residential_excess": 158.2,
       "families": {
         "masonry_stone": 218
@@ -30800,6 +30800,54 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 55",
+      "district": "West Seattle",
+      "records": 346,
+      "residential": 325,
+      "over_cap": 183,
+      "over_cap_residential": 175,
+      "max_recorded": 64.78,
+      "max_applied": 32.0,
+      "max_residential_excess": 55.78,
+      "families": {
+        "mixed": 346
+      },
+      "sources": {
+        "lidar_overture": 282,
+        "real_surveyed": 59,
+        "area_heuristic": 5
+      },
+      "worst": [
+        {
+          "id": 139249,
+          "height": 64.78,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 116150,
+          "height": 52.57,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 149704,
+          "height": 40.52,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Bellevue CBD 41",
       "district": "Bellevue CBD",
       "records": 359,
@@ -31043,54 +31091,6 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 55",
-      "district": "West Seattle",
-      "records": 346,
-      "residential": 325,
-      "over_cap": 182,
-      "over_cap_residential": 175,
-      "max_recorded": 64.78,
-      "max_applied": 36.0,
-      "max_residential_excess": 55.78,
-      "families": {
-        "mixed": 346
-      },
-      "sources": {
-        "lidar_overture": 282,
-        "real_surveyed": 59,
-        "area_heuristic": 5
-      },
-      "worst": [
-        {
-          "id": 139249,
-          "height": 64.78,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 116150,
-          "height": 52.57,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 149704,
-          "height": 40.52,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        }
-      ]
-    },
-    {
       "neighborhood": "Ballard 02",
       "district": "Ballard",
       "records": 298,
@@ -31189,6 +31189,55 @@
       ]
     },
     {
+      "neighborhood": "Queen Anne 22",
+      "district": "Queen Anne",
+      "records": 292,
+      "residential": 267,
+      "over_cap": 181,
+      "over_cap_residential": 170,
+      "max_recorded": 55.9,
+      "max_applied": 32.0,
+      "max_residential_excess": 37.98,
+      "families": {
+        "mixed": 292
+      },
+      "sources": {
+        "lidar_overture": 250,
+        "real_surveyed": 29,
+        "area_heuristic": 10,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 96701,
+          "height": 55.9,
+          "applied": 32.0,
+          "category": "commercial",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 106602,
+          "height": 46.98,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 92418,
+          "height": 40.57,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "University District 47",
       "district": "Seattle general",
       "records": 233,
@@ -31282,55 +31331,6 @@
           "source": "real_surveyed",
           "family": "timber",
           "district": "Georgetown"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 22",
-      "district": "Queen Anne",
-      "records": 292,
-      "residential": 267,
-      "over_cap": 180,
-      "over_cap_residential": 170,
-      "max_recorded": 55.9,
-      "max_applied": 56.0,
-      "max_residential_excess": 37.98,
-      "families": {
-        "mixed": 292
-      },
-      "sources": {
-        "lidar_overture": 250,
-        "real_surveyed": 29,
-        "area_heuristic": 10,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 106602,
-          "height": 46.98,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 92418,
-          "height": 40.57,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 100722,
-          "height": 37.73,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -31819,6 +31819,55 @@
       ]
     },
     {
+      "neighborhood": "Queen Anne 08",
+      "district": "Queen Anne",
+      "records": 277,
+      "residential": 261,
+      "over_cap": 178,
+      "over_cap_residential": 168,
+      "max_recorded": 91.37,
+      "max_applied": 32.0,
+      "max_residential_excess": 82.37,
+      "families": {
+        "mixed": 277
+      },
+      "sources": {
+        "lidar_overture": 143,
+        "real_surveyed": 127,
+        "msml_estimate": 4,
+        "area_heuristic": 3
+      },
+      "worst": [
+        {
+          "id": 110649,
+          "height": 91.37,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 97480,
+          "height": 88.47,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 91595,
+          "height": 88.35,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "Queen Anne 18",
       "district": "Queen Anne",
       "records": 358,
@@ -31963,6 +32012,55 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 15",
+      "district": "Queen Anne",
+      "records": 196,
+      "residential": 180,
+      "over_cap": 177,
+      "over_cap_residential": 170,
+      "max_recorded": 130.97,
+      "max_applied": 32.0,
+      "max_residential_excess": 121.97,
+      "families": {
+        "mixed": 196
+      },
+      "sources": {
+        "lidar_overture": 46,
+        "real_surveyed": 144,
+        "msml_estimate": 2,
+        "area_heuristic": 4
+      },
+      "worst": [
+        {
+          "id": 84415,
+          "height": 130.97,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 85054,
+          "height": 122.41,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 115089,
+          "height": 121.73,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "Eastside 05",
       "district": "Eastside",
       "records": 439,
@@ -32055,55 +32153,6 @@
           "source": "lidar_overture",
           "family": "mixed",
           "district": "Eastside"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 08",
-      "district": "Queen Anne",
-      "records": 277,
-      "residential": 261,
-      "over_cap": 177,
-      "over_cap_residential": 168,
-      "max_recorded": 91.37,
-      "max_applied": 88.0,
-      "max_residential_excess": 82.37,
-      "families": {
-        "mixed": 277
-      },
-      "sources": {
-        "lidar_overture": 143,
-        "real_surveyed": 127,
-        "msml_estimate": 4,
-        "area_heuristic": 3
-      },
-      "worst": [
-        {
-          "id": 110649,
-          "height": 91.37,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 97480,
-          "height": 88.47,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 91595,
-          "height": 88.35,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -32351,55 +32400,6 @@
       ]
     },
     {
-      "neighborhood": "Capitol Hill 15",
-      "district": "Queen Anne",
-      "records": 196,
-      "residential": 180,
-      "over_cap": 175,
-      "over_cap_residential": 170,
-      "max_recorded": 130.97,
-      "max_applied": 100.0,
-      "max_residential_excess": 121.97,
-      "families": {
-        "mixed": 196
-      },
-      "sources": {
-        "lidar_overture": 46,
-        "real_surveyed": 144,
-        "msml_estimate": 2,
-        "area_heuristic": 4
-      },
-      "worst": [
-        {
-          "id": 84415,
-          "height": 130.97,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 85054,
-          "height": 122.41,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 115089,
-          "height": 121.73,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        }
-      ]
-    },
-    {
       "neighborhood": "Capitol Hill 33",
       "district": "Capitol Hill",
       "records": 260,
@@ -32445,6 +32445,55 @@
           "source": "real_surveyed",
           "family": "mixed",
           "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Fremont 37",
+      "district": "Queen Anne",
+      "records": 246,
+      "residential": 218,
+      "over_cap": 175,
+      "over_cap_residential": 158,
+      "max_recorded": 134.01,
+      "max_applied": 32.0,
+      "max_residential_excess": 125.01,
+      "families": {
+        "mixed": 246
+      },
+      "sources": {
+        "real_surveyed": 137,
+        "lidar_overture": 103,
+        "area_heuristic": 5,
+        "msml_estimate": 1
+      },
+      "worst": [
+        {
+          "id": 93181,
+          "height": 134.01,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 114344,
+          "height": 114.92,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 111568,
+          "height": 108.4,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
         }
       ]
     },
@@ -32881,55 +32930,6 @@
           "source": "osm_levels_derived",
           "family": "steel_frame",
           "district": "Bellevue CBD"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Fremont 37",
-      "district": "Queen Anne",
-      "records": 246,
-      "residential": 218,
-      "over_cap": 173,
-      "over_cap_residential": 158,
-      "max_recorded": 134.01,
-      "max_applied": 68.0,
-      "max_residential_excess": 125.01,
-      "families": {
-        "mixed": 246
-      },
-      "sources": {
-        "real_surveyed": 137,
-        "lidar_overture": 103,
-        "area_heuristic": 5,
-        "msml_estimate": 1
-      },
-      "worst": [
-        {
-          "id": 93181,
-          "height": 134.01,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 114344,
-          "height": 114.92,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 111568,
-          "height": 108.4,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -33557,6 +33557,55 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 32",
+      "district": "West Seattle",
+      "records": 227,
+      "residential": 208,
+      "over_cap": 171,
+      "over_cap_residential": 160,
+      "max_recorded": 133.42,
+      "max_applied": 32.0,
+      "max_residential_excess": 124.42,
+      "families": {
+        "mixed": 227
+      },
+      "sources": {
+        "real_surveyed": 133,
+        "lidar_overture": 91,
+        "msml_estimate": 1,
+        "area_heuristic": 2
+      },
+      "worst": [
+        {
+          "id": 176206,
+          "height": 133.42,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 146480,
+          "height": 131.6,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 178834,
+          "height": 129.8,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Ballard 03",
       "district": "Ballard",
       "records": 290,
@@ -33844,55 +33893,6 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 32",
-      "district": "West Seattle",
-      "records": 227,
-      "residential": 208,
-      "over_cap": 169,
-      "over_cap_residential": 160,
-      "max_recorded": 133.42,
-      "max_applied": 92.0,
-      "max_residential_excess": 124.42,
-      "families": {
-        "mixed": 227
-      },
-      "sources": {
-        "real_surveyed": 133,
-        "lidar_overture": 91,
-        "msml_estimate": 1,
-        "area_heuristic": 2
-      },
-      "worst": [
-        {
-          "id": 176206,
-          "height": 133.42,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 146480,
-          "height": 131.6,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 178834,
-          "height": 129.8,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        }
-      ]
-    },
-    {
       "neighborhood": "Seattle South 07",
       "district": "Seattle general",
       "records": 269,
@@ -34036,6 +34036,54 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
+        }
+      ]
+    },
+    {
+      "neighborhood": "West Seattle 11",
+      "district": "West Seattle",
+      "records": 200,
+      "residential": 185,
+      "over_cap": 168,
+      "over_cap_residential": 158,
+      "max_recorded": 149.54,
+      "max_applied": 32.0,
+      "max_residential_excess": 140.54,
+      "families": {
+        "mixed": 200
+      },
+      "sources": {
+        "real_surveyed": 152,
+        "lidar_overture": 46,
+        "msml_estimate": 2
+      },
+      "worst": [
+        {
+          "id": 156540,
+          "height": 149.54,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 134061,
+          "height": 148.14,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 136040,
+          "height": 138.57,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
         }
       ]
     },
@@ -34422,54 +34470,6 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 11",
-      "district": "West Seattle",
-      "records": 200,
-      "residential": 185,
-      "over_cap": 165,
-      "over_cap_residential": 158,
-      "max_recorded": 149.54,
-      "max_applied": 96.0,
-      "max_residential_excess": 140.54,
-      "families": {
-        "mixed": 200
-      },
-      "sources": {
-        "real_surveyed": 152,
-        "lidar_overture": 46,
-        "msml_estimate": 2
-      },
-      "worst": [
-        {
-          "id": 156540,
-          "height": 149.54,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 134061,
-          "height": 148.14,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 136040,
-          "height": 138.57,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        }
-      ]
-    },
-    {
       "neighborhood": "Rainier Valley 13",
       "district": "Seattle general",
       "records": 282,
@@ -34771,7 +34771,7 @@
       "over_cap": 163,
       "over_cap_residential": 155,
       "max_recorded": 128.81,
-      "max_applied": 64.0,
+      "max_applied": 32.0,
       "max_residential_excess": 119.81,
       "families": {
         "mixed": 229
@@ -36889,6 +36889,104 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 21",
+      "district": "Capitol Hill",
+      "records": 205,
+      "residential": 189,
+      "over_cap": 154,
+      "over_cap_residential": 144,
+      "max_recorded": 101.01,
+      "max_applied": 32.0,
+      "max_residential_excess": 92.01,
+      "families": {
+        "mixed": 205
+      },
+      "sources": {
+        "real_surveyed": 114,
+        "lidar_overture": 87,
+        "area_heuristic": 4
+      },
+      "worst": [
+        {
+          "id": 77353,
+          "height": 101.01,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 112803,
+          "height": 95.03,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 106937,
+          "height": 94.58,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 39",
+      "district": "First Hill",
+      "records": 199,
+      "residential": 185,
+      "over_cap": 154,
+      "over_cap_residential": 146,
+      "max_recorded": 57.97,
+      "max_applied": 32.0,
+      "max_residential_excess": 48.97,
+      "families": {
+        "masonry_stone": 199
+      },
+      "sources": {
+        "area_heuristic": 2,
+        "real_surveyed": 40,
+        "lidar_overture": 146,
+        "msml_estimate": 10,
+        "osm_levels_derived": 1
+      },
+      "worst": [
+        {
+          "id": 93560,
+          "height": 57.97,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "masonry_stone",
+          "district": "First Hill"
+        },
+        {
+          "id": 111016,
+          "height": 54.64,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "masonry_stone",
+          "district": "First Hill"
+        },
+        {
+          "id": 85561,
+          "height": 50.78,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "masonry_stone",
+          "district": "First Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Eastside 106",
       "district": "Eastside",
       "records": 251,
@@ -37122,104 +37220,6 @@
           "source": "lidar_overture",
           "family": "steel_frame",
           "district": "Bellevue CBD"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 21",
-      "district": "Capitol Hill",
-      "records": 205,
-      "residential": 189,
-      "over_cap": 153,
-      "over_cap_residential": 144,
-      "max_recorded": 101.01,
-      "max_applied": 76.0,
-      "max_residential_excess": 92.01,
-      "families": {
-        "mixed": 205
-      },
-      "sources": {
-        "real_surveyed": 114,
-        "lidar_overture": 87,
-        "area_heuristic": 4
-      },
-      "worst": [
-        {
-          "id": 77353,
-          "height": 101.01,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 112803,
-          "height": 95.03,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 106937,
-          "height": 94.58,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 39",
-      "district": "First Hill",
-      "records": 199,
-      "residential": 185,
-      "over_cap": 153,
-      "over_cap_residential": 146,
-      "max_recorded": 57.97,
-      "max_applied": 36.0,
-      "max_residential_excess": 48.97,
-      "families": {
-        "masonry_stone": 199
-      },
-      "sources": {
-        "area_heuristic": 2,
-        "real_surveyed": 40,
-        "lidar_overture": 146,
-        "msml_estimate": 10,
-        "osm_levels_derived": 1
-      },
-      "worst": [
-        {
-          "id": 93560,
-          "height": 57.97,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "masonry_stone",
-          "district": "First Hill"
-        },
-        {
-          "id": 111016,
-          "height": 54.64,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "masonry_stone",
-          "district": "First Hill"
-        },
-        {
-          "id": 85561,
-          "height": 50.78,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "masonry_stone",
-          "district": "First Hill"
         }
       ]
     },
@@ -37462,6 +37462,55 @@
           "source": "lidar_overture",
           "family": "steel_frame",
           "district": "Bellevue CBD"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Queen Anne 23",
+      "district": "Queen Anne",
+      "records": 240,
+      "residential": 221,
+      "over_cap": 151,
+      "over_cap_residential": 143,
+      "max_recorded": 54.16,
+      "max_applied": 32.0,
+      "max_residential_excess": 35.26,
+      "families": {
+        "mixed": 240
+      },
+      "sources": {
+        "real_surveyed": 26,
+        "lidar_overture": 209,
+        "msml_estimate": 2,
+        "area_heuristic": 3
+      },
+      "worst": [
+        {
+          "id": 93384,
+          "height": 54.16,
+          "applied": 32.0,
+          "category": "commercial",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 100495,
+          "height": 44.26,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 86760,
+          "height": 38.44,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
         }
       ]
     },
@@ -37753,55 +37802,6 @@
       ]
     },
     {
-      "neighborhood": "Queen Anne 23",
-      "district": "Queen Anne",
-      "records": 240,
-      "residential": 221,
-      "over_cap": 150,
-      "over_cap_residential": 143,
-      "max_recorded": 54.16,
-      "max_applied": 56.0,
-      "max_residential_excess": 35.26,
-      "families": {
-        "mixed": 240
-      },
-      "sources": {
-        "real_surveyed": 26,
-        "lidar_overture": 209,
-        "msml_estimate": 2,
-        "area_heuristic": 3
-      },
-      "worst": [
-        {
-          "id": 100495,
-          "height": 44.26,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 86760,
-          "height": 38.44,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 114342,
-          "height": 36.46,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        }
-      ]
-    },
-    {
       "neighborhood": "Ballard 01",
       "district": "Ballard",
       "records": 238,
@@ -37943,6 +37943,55 @@
           "source": "lidar_overture",
           "family": "mixed",
           "district": "Eastside"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 44",
+      "district": "Capitol Hill",
+      "records": 189,
+      "residential": 169,
+      "over_cap": 148,
+      "over_cap_residential": 136,
+      "max_recorded": 116.93,
+      "max_applied": 32.0,
+      "max_residential_excess": 107.93,
+      "families": {
+        "mixed": 189
+      },
+      "sources": {
+        "real_surveyed": 115,
+        "lidar_overture": 69,
+        "msml_estimate": 3,
+        "area_heuristic": 2
+      },
+      "worst": [
+        {
+          "id": 97523,
+          "height": 116.93,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 115588,
+          "height": 114.34,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 112463,
+          "height": 108.51,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
         }
       ]
     },
@@ -38279,6 +38328,55 @@
       ]
     },
     {
+      "neighborhood": "Queen Anne 01",
+      "district": "Queen Anne",
+      "records": 188,
+      "residential": 175,
+      "over_cap": 146,
+      "over_cap_residential": 140,
+      "max_recorded": 119.38,
+      "max_applied": 32.0,
+      "max_residential_excess": 110.38,
+      "families": {
+        "mixed": 188
+      },
+      "sources": {
+        "area_heuristic": 2,
+        "lidar_overture": 60,
+        "real_surveyed": 123,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 106824,
+          "height": 119.38,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 112531,
+          "height": 117.42,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 110166,
+          "height": 112.46,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "Rainier Valley 14",
       "district": "Seattle general",
       "records": 205,
@@ -38373,6 +38471,55 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
+        }
+      ]
+    },
+    {
+      "neighborhood": "West Seattle 09",
+      "district": "West Seattle",
+      "records": 243,
+      "residential": 229,
+      "over_cap": 146,
+      "over_cap_residential": 139,
+      "max_recorded": 115.45,
+      "max_applied": 32.0,
+      "max_residential_excess": 106.45,
+      "families": {
+        "mixed": 243
+      },
+      "sources": {
+        "real_surveyed": 84,
+        "lidar_overture": 154,
+        "area_heuristic": 2,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 125962,
+          "height": 115.45,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 119181,
+          "height": 113.79,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 117568,
+          "height": 113.71,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
         }
       ]
     },
@@ -38715,55 +38862,6 @@
       ]
     },
     {
-      "neighborhood": "Queen Anne 01",
-      "district": "Queen Anne",
-      "records": 188,
-      "residential": 175,
-      "over_cap": 144,
-      "over_cap_residential": 140,
-      "max_recorded": 119.38,
-      "max_applied": 64.0,
-      "max_residential_excess": 110.38,
-      "families": {
-        "mixed": 188
-      },
-      "sources": {
-        "area_heuristic": 2,
-        "lidar_overture": 60,
-        "real_surveyed": 123,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 106824,
-          "height": 119.38,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 112531,
-          "height": 117.42,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 110166,
-          "height": 112.46,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        }
-      ]
-    },
-    {
       "neighborhood": "Rainier Valley 33",
       "district": "Seattle general",
       "records": 218,
@@ -38861,55 +38959,6 @@
       ]
     },
     {
-      "neighborhood": "West Seattle 09",
-      "district": "West Seattle",
-      "records": 243,
-      "residential": 229,
-      "over_cap": 144,
-      "over_cap_residential": 139,
-      "max_recorded": 115.45,
-      "max_applied": 84.0,
-      "max_residential_excess": 106.45,
-      "families": {
-        "mixed": 243
-      },
-      "sources": {
-        "real_surveyed": 84,
-        "lidar_overture": 154,
-        "area_heuristic": 2,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 125962,
-          "height": 115.45,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 119181,
-          "height": 113.79,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 117568,
-          "height": 113.71,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        }
-      ]
-    },
-    {
       "neighborhood": "Beacon Hill 26",
       "district": "Seattle general",
       "records": 192,
@@ -39003,55 +39052,6 @@
           "source": "lidar_overture",
           "family": "mixed",
           "district": "Eastside"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 44",
-      "district": "Capitol Hill",
-      "records": 189,
-      "residential": 169,
-      "over_cap": 142,
-      "over_cap_residential": 136,
-      "max_recorded": 116.93,
-      "max_applied": 108.0,
-      "max_residential_excess": 107.93,
-      "families": {
-        "mixed": 189
-      },
-      "sources": {
-        "real_surveyed": 115,
-        "lidar_overture": 69,
-        "msml_estimate": 3,
-        "area_heuristic": 2
-      },
-      "worst": [
-        {
-          "id": 97523,
-          "height": 116.93,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 115588,
-          "height": 114.34,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 112463,
-          "height": 108.51,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -39345,6 +39345,54 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 45",
+      "district": "West Seattle",
+      "records": 171,
+      "residential": 158,
+      "over_cap": 140,
+      "over_cap_residential": 132,
+      "max_recorded": 129.65,
+      "max_applied": 32.0,
+      "max_residential_excess": 120.65,
+      "families": {
+        "mixed": 171
+      },
+      "sources": {
+        "real_surveyed": 119,
+        "lidar_overture": 50,
+        "area_heuristic": 2
+      },
+      "worst": [
+        {
+          "id": 131852,
+          "height": 129.65,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 176233,
+          "height": 129.59,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 147809,
+          "height": 126.11,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Fremont 38",
       "district": "Fremont",
       "records": 160,
@@ -39633,54 +39681,6 @@
           "source": "real_surveyed",
           "family": "timber",
           "district": "Georgetown"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 45",
-      "district": "West Seattle",
-      "records": 171,
-      "residential": 158,
-      "over_cap": 138,
-      "over_cap_residential": 132,
-      "max_recorded": 129.65,
-      "max_applied": 104.0,
-      "max_residential_excess": 120.65,
-      "families": {
-        "mixed": 171
-      },
-      "sources": {
-        "real_surveyed": 119,
-        "lidar_overture": 50,
-        "area_heuristic": 2
-      },
-      "worst": [
-        {
-          "id": 131852,
-          "height": 129.65,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 176233,
-          "height": 129.59,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 147809,
-          "height": 126.11,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -40503,7 +40503,7 @@
       "over_cap": 131,
       "over_cap_residential": 124,
       "max_recorded": 61.27,
-      "max_applied": 36.0,
+      "max_applied": 32.0,
       "max_residential_excess": 52.27,
       "families": {
         "masonry_stone": 189
@@ -41224,6 +41224,103 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 13",
+      "district": "Capitol Hill",
+      "records": 173,
+      "residential": 162,
+      "over_cap": 125,
+      "over_cap_residential": 118,
+      "max_recorded": 99.3,
+      "max_applied": 32.0,
+      "max_residential_excess": 90.3,
+      "families": {
+        "mixed": 173
+      },
+      "sources": {
+        "lidar_overture": 67,
+        "real_surveyed": 101,
+        "area_heuristic": 5
+      },
+      "worst": [
+        {
+          "id": 89453,
+          "height": 99.3,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 96622,
+          "height": 96.72,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 89747,
+          "height": 91.6,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
+      "neighborhood": "Capitol Hill 38",
+      "district": "Capitol Hill",
+      "records": 179,
+      "residential": 164,
+      "over_cap": 125,
+      "over_cap_residential": 120,
+      "max_recorded": 121.19,
+      "max_applied": 32.0,
+      "max_residential_excess": 112.19,
+      "families": {
+        "mixed": 179
+      },
+      "sources": {
+        "lidar_overture": 78,
+        "real_surveyed": 92,
+        "msml_estimate": 1,
+        "area_heuristic": 8
+      },
+      "worst": [
+        {
+          "id": 107078,
+          "height": 121.19,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 89052,
+          "height": 100.32,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 76205,
+          "height": 96.69,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Eastside 56",
       "district": "Eastside",
       "records": 286,
@@ -41521,7 +41618,7 @@
       "over_cap": 125,
       "over_cap_residential": 119,
       "max_recorded": 100.1,
-      "max_applied": 40.0,
+      "max_applied": 32.0,
       "max_residential_excess": 91.1,
       "families": {
         "mixed": 163
@@ -41654,55 +41751,6 @@
           "source": "lidar_overture",
           "family": "steel_frame",
           "district": "Bellevue CBD"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 38",
-      "district": "Capitol Hill",
-      "records": 179,
-      "residential": 164,
-      "over_cap": 124,
-      "over_cap_residential": 120,
-      "max_recorded": 121.19,
-      "max_applied": 56.0,
-      "max_residential_excess": 112.19,
-      "families": {
-        "mixed": 179
-      },
-      "sources": {
-        "lidar_overture": 78,
-        "real_surveyed": 92,
-        "msml_estimate": 1,
-        "area_heuristic": 8
-      },
-      "worst": [
-        {
-          "id": 107078,
-          "height": 121.19,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 89052,
-          "height": 100.32,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 76205,
-          "height": 96.69,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -41849,54 +41897,6 @@
           "source": "lidar_overture",
           "family": "steel_frame",
           "district": "Bellevue CBD"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 13",
-      "district": "Capitol Hill",
-      "records": 173,
-      "residential": 162,
-      "over_cap": 123,
-      "over_cap_residential": 118,
-      "max_recorded": 99.3,
-      "max_applied": 60.0,
-      "max_residential_excess": 90.3,
-      "families": {
-        "mixed": 173
-      },
-      "sources": {
-        "lidar_overture": 67,
-        "real_surveyed": 101,
-        "area_heuristic": 5
-      },
-      "worst": [
-        {
-          "id": 89453,
-          "height": 99.3,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 96622,
-          "height": 96.72,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 89747,
-          "height": 91.6,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -43009,7 +43009,7 @@
       "over_cap": 113,
       "over_cap_residential": 103,
       "max_recorded": 138.71,
-      "max_applied": 108.0,
+      "max_applied": 32.0,
       "max_residential_excess": 129.71,
       "families": {
         "mixed": 135
@@ -43196,6 +43196,54 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 23",
+      "district": "Capitol Hill",
+      "records": 135,
+      "residential": 130,
+      "over_cap": 109,
+      "over_cap_residential": 106,
+      "max_recorded": 128.17,
+      "max_applied": 32.0,
+      "max_residential_excess": 119.17,
+      "families": {
+        "mixed": 135
+      },
+      "sources": {
+        "lidar_overture": 48,
+        "real_surveyed": 82,
+        "area_heuristic": 5
+      },
+      "worst": [
+        {
+          "id": 101989,
+          "height": 128.17,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 103120,
+          "height": 122.18,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 102976,
+          "height": 116.8,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Seattle South 125",
       "district": "Seattle general",
       "records": 165,
@@ -43289,54 +43337,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Seattle general"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 23",
-      "district": "Capitol Hill",
-      "records": 135,
-      "residential": 130,
-      "over_cap": 108,
-      "over_cap_residential": 106,
-      "max_recorded": 128.17,
-      "max_applied": 88.0,
-      "max_residential_excess": 119.17,
-      "families": {
-        "mixed": 135
-      },
-      "sources": {
-        "lidar_overture": 48,
-        "real_surveyed": 82,
-        "area_heuristic": 5
-      },
-      "worst": [
-        {
-          "id": 101989,
-          "height": 128.17,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 103120,
-          "height": 122.18,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 102976,
-          "height": 116.8,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -44153,6 +44153,54 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 24",
+      "district": "Capitol Hill",
+      "records": 113,
+      "residential": 103,
+      "over_cap": 98,
+      "over_cap_residential": 89,
+      "max_recorded": 93.83,
+      "max_applied": 32.0,
+      "max_residential_excess": 84.83,
+      "families": {
+        "mixed": 113
+      },
+      "sources": {
+        "real_surveyed": 56,
+        "lidar_overture": 54,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 100015,
+          "height": 93.83,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 81383,
+          "height": 81.86,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 91433,
+          "height": 77.63,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Eastside 117",
       "district": "Eastside",
       "records": 221,
@@ -44435,54 +44483,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 24",
-      "district": "Capitol Hill",
-      "records": 113,
-      "residential": 103,
-      "over_cap": 96,
-      "over_cap_residential": 89,
-      "max_recorded": 93.83,
-      "max_applied": 56.0,
-      "max_residential_excess": 84.83,
-      "families": {
-        "mixed": 113
-      },
-      "sources": {
-        "real_surveyed": 56,
-        "lidar_overture": 54,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 100015,
-          "height": 93.83,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 81383,
-          "height": 81.86,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 91433,
-          "height": 77.63,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -44825,7 +44825,7 @@
       "over_cap": 94,
       "over_cap_residential": 88,
       "max_recorded": 136.24,
-      "max_applied": 112.0,
+      "max_applied": 32.0,
       "max_residential_excess": 127.24,
       "families": {
         "mixed": 121
@@ -45154,6 +45154,54 @@
       ]
     },
     {
+      "neighborhood": "Queen Anne 15",
+      "district": "Queen Anne",
+      "records": 109,
+      "residential": 102,
+      "over_cap": 91,
+      "over_cap_residential": 85,
+      "max_recorded": 137.97,
+      "max_applied": 32.0,
+      "max_residential_excess": 128.97,
+      "families": {
+        "mixed": 109
+      },
+      "sources": {
+        "real_surveyed": 73,
+        "lidar_overture": 30,
+        "area_heuristic": 6
+      },
+      "worst": [
+        {
+          "id": 110251,
+          "height": 137.97,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 81574,
+          "height": 136.4,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        },
+        {
+          "id": 114832,
+          "height": 129.88,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Queen Anne"
+        }
+      ]
+    },
+    {
       "neighborhood": "South King 38",
       "district": "Tacoma",
       "records": 95,
@@ -45389,54 +45437,6 @@
           "source": "real_surveyed",
           "family": "timber",
           "district": "Fremont"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Queen Anne 15",
-      "district": "Queen Anne",
-      "records": 109,
-      "residential": 102,
-      "over_cap": 88,
-      "over_cap_residential": 85,
-      "max_recorded": 137.97,
-      "max_applied": 120.0,
-      "max_residential_excess": 128.97,
-      "families": {
-        "mixed": 109
-      },
-      "sources": {
-        "real_surveyed": 73,
-        "lidar_overture": 30,
-        "area_heuristic": 6
-      },
-      "worst": [
-        {
-          "id": 110251,
-          "height": 137.97,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 81574,
-          "height": 136.4,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
-        },
-        {
-          "id": 114832,
-          "height": 129.88,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Queen Anne"
         }
       ]
     },
@@ -45729,6 +45729,55 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 06",
+      "district": "Capitol Hill",
+      "records": 123,
+      "residential": 116,
+      "over_cap": 86,
+      "over_cap_residential": 82,
+      "max_recorded": 111.18,
+      "max_applied": 32.0,
+      "max_residential_excess": 102.18,
+      "families": {
+        "mixed": 123
+      },
+      "sources": {
+        "lidar_overture": 70,
+        "real_surveyed": 48,
+        "area_heuristic": 2,
+        "msml_estimate": 3
+      },
+      "worst": [
+        {
+          "id": 84478,
+          "height": 111.18,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 101255,
+          "height": 99.63,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 114589,
+          "height": 90.42,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Bellevue CBD 13",
       "district": "Bellevue CBD",
       "records": 195,
@@ -45773,55 +45822,6 @@
           "source": "lidar_overture",
           "family": "steel_frame",
           "district": "Bellevue CBD"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 06",
-      "district": "Capitol Hill",
-      "records": 123,
-      "residential": 116,
-      "over_cap": 85,
-      "over_cap_residential": 82,
-      "max_recorded": 111.18,
-      "max_applied": 64.0,
-      "max_residential_excess": 102.18,
-      "families": {
-        "mixed": 123
-      },
-      "sources": {
-        "lidar_overture": 70,
-        "real_surveyed": 48,
-        "area_heuristic": 2,
-        "msml_estimate": 3
-      },
-      "worst": [
-        {
-          "id": 84478,
-          "height": 111.18,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 101255,
-          "height": 99.63,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 114589,
-          "height": 90.42,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -46920,6 +46920,54 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 19",
+      "district": "West Seattle",
+      "records": 118,
+      "residential": 99,
+      "over_cap": 77,
+      "over_cap_residential": 68,
+      "max_recorded": 106.01,
+      "max_applied": 32.0,
+      "max_residential_excess": 97.01,
+      "families": {
+        "mixed": 118
+      },
+      "sources": {
+        "real_surveyed": 52,
+        "lidar_overture": 65,
+        "msml_estimate": 1
+      },
+      "worst": [
+        {
+          "id": 146184,
+          "height": 106.01,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 179579,
+          "height": 84.87,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 118117,
+          "height": 83.27,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Ballard 46",
       "district": "Ballard",
       "records": 78,
@@ -47060,54 +47108,6 @@
           "source": "lidar_overture",
           "family": "mixed",
           "district": "Eastside"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 19",
-      "district": "West Seattle",
-      "records": 118,
-      "residential": 99,
-      "over_cap": 76,
-      "over_cap_residential": 68,
-      "max_recorded": 106.01,
-      "max_applied": 52.0,
-      "max_residential_excess": 97.01,
-      "families": {
-        "mixed": 118
-      },
-      "sources": {
-        "real_surveyed": 52,
-        "lidar_overture": 65,
-        "msml_estimate": 1
-      },
-      "worst": [
-        {
-          "id": 146184,
-          "height": 106.01,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 179579,
-          "height": 84.87,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
-        },
-        {
-          "id": 118117,
-          "height": 83.27,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },
@@ -47592,10 +47592,10 @@
       "district": "West Seattle",
       "records": 80,
       "residential": 74,
-      "over_cap": 69,
+      "over_cap": 70,
       "over_cap_residential": 65,
       "max_recorded": 114.73,
-      "max_applied": 76.0,
+      "max_applied": 32.0,
       "max_residential_excess": 105.73,
       "families": {
         "mixed": 80
@@ -47641,10 +47641,10 @@
       "district": "West Seattle",
       "records": 88,
       "residential": 82,
-      "over_cap": 69,
+      "over_cap": 70,
       "over_cap_residential": 67,
       "max_recorded": 138.44,
-      "max_applied": 40.0,
+      "max_applied": 32.0,
       "max_residential_excess": 129.44,
       "families": {
         "mixed": 88
@@ -47834,7 +47834,7 @@
       "over_cap": 67,
       "over_cap_residential": 61,
       "max_recorded": 128.18,
-      "max_applied": 60.0,
+      "max_applied": 32.0,
       "max_residential_excess": 119.18,
       "families": {
         "mixed": 102
@@ -50073,7 +50073,7 @@
       "over_cap": 37,
       "over_cap_residential": 35,
       "max_recorded": 125.2,
-      "max_applied": 112.0,
+      "max_applied": 32.0,
       "max_residential_excess": 116.2,
       "families": {
         "mixed": 42
@@ -50504,7 +50504,7 @@
       "over_cap": 25,
       "over_cap_residential": 22,
       "max_recorded": 100.83,
-      "max_applied": 64.0,
+      "max_applied": 32.0,
       "max_residential_excess": 91.83,
       "families": {
         "mixed": 29
@@ -50686,6 +50686,55 @@
       ]
     },
     {
+      "neighborhood": "Capitol Hill 09",
+      "district": "Capitol Hill",
+      "records": 41,
+      "residential": 35,
+      "over_cap": 23,
+      "over_cap_residential": 18,
+      "max_recorded": 43.52,
+      "max_applied": 32.0,
+      "max_residential_excess": 19.57,
+      "families": {
+        "mixed": 41
+      },
+      "sources": {
+        "lidar_overture": 33,
+        "area_heuristic": 2,
+        "msml_estimate": 1,
+        "real_surveyed": 5
+      },
+      "worst": [
+        {
+          "id": 114532,
+          "height": 43.52,
+          "applied": 32.0,
+          "category": "commercial",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 88486,
+          "height": 28.57,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        },
+        {
+          "id": 98879,
+          "height": 24.11,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "Capitol Hill"
+        }
+      ]
+    },
+    {
       "neighborhood": "Eastside 130",
       "district": "Eastside",
       "records": 50,
@@ -50778,55 +50827,6 @@
           "source": "lidar_overture",
           "family": "mixed",
           "district": "Eastside"
-        }
-      ]
-    },
-    {
-      "neighborhood": "Capitol Hill 09",
-      "district": "Capitol Hill",
-      "records": 41,
-      "residential": 35,
-      "over_cap": 22,
-      "over_cap_residential": 18,
-      "max_recorded": 43.52,
-      "max_applied": 44.0,
-      "max_residential_excess": 19.57,
-      "families": {
-        "mixed": 41
-      },
-      "sources": {
-        "lidar_overture": 33,
-        "area_heuristic": 2,
-        "msml_estimate": 1,
-        "real_surveyed": 5
-      },
-      "worst": [
-        {
-          "id": 88486,
-          "height": 28.57,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 98879,
-          "height": 24.11,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "Capitol Hill"
-        },
-        {
-          "id": 98575,
-          "height": 23.0,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "lidar_overture",
-          "family": "mixed",
-          "district": "Capitol Hill"
         }
       ]
     },
@@ -51502,7 +51502,7 @@
       "over_cap": 11,
       "over_cap_residential": 10,
       "max_recorded": 135.14,
-      "max_applied": 44.0,
+      "max_applied": 32.0,
       "max_residential_excess": 126.14,
       "families": {
         "mixed": 12
@@ -52225,6 +52225,43 @@
       ]
     },
     {
+      "neighborhood": "West Seattle 08",
+      "district": "West Seattle",
+      "records": 2,
+      "residential": 1,
+      "over_cap": 2,
+      "over_cap_residential": 1,
+      "max_recorded": 107.13,
+      "max_applied": 32.0,
+      "max_residential_excess": 0.77,
+      "families": {
+        "mixed": 2
+      },
+      "sources": {
+        "real_surveyed": 2
+      },
+      "worst": [
+        {
+          "id": 181565,
+          "height": 107.13,
+          "applied": 32.0,
+          "category": "commercial",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        },
+        {
+          "id": 173270,
+          "height": 9.77,
+          "applied": 9.0,
+          "category": "residential",
+          "source": "real_surveyed",
+          "family": "mixed",
+          "district": "West Seattle"
+        }
+      ]
+    },
+    {
       "neighborhood": "Seattle South 119",
       "district": "Seattle general",
       "records": 2,
@@ -52278,34 +52315,6 @@
           "source": "real_surveyed",
           "family": "masonry_stone",
           "district": "Tacoma"
-        }
-      ]
-    },
-    {
-      "neighborhood": "West Seattle 08",
-      "district": "West Seattle",
-      "records": 2,
-      "residential": 1,
-      "over_cap": 1,
-      "over_cap_residential": 1,
-      "max_recorded": 107.13,
-      "max_applied": 108.0,
-      "max_residential_excess": 0.77,
-      "families": {
-        "mixed": 2
-      },
-      "sources": {
-        "real_surveyed": 2
-      },
-      "worst": [
-        {
-          "id": 173270,
-          "height": 9.77,
-          "applied": 9.0,
-          "category": "residential",
-          "source": "real_surveyed",
-          "family": "mixed",
-          "district": "West Seattle"
         }
       ]
     },

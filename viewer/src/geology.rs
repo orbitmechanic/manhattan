@@ -255,6 +255,8 @@ pub struct Geology {
     style: StylePack,
     pub districts: HashMap<String, String>,
     pub building_chunks: HashMap<usize, Vec<Entity>>,
+    /// Chunks pinned because they hold a damaged building; logged once.
+    pub pinned_chunks: std::collections::HashSet<usize>,
     pending_shells: std::collections::VecDeque<PendingShell>,
     pub box_material: Handle<StandardMaterial>,
     pub box_mesh: Handle<Mesh>,
@@ -468,6 +470,7 @@ fn setup_geology(
         style,
         districts,
         building_chunks: HashMap::new(),
+        pinned_chunks: std::collections::HashSet::new(),
         pending_shells: std::collections::VecDeque::new(),
         box_material,
         box_mesh,
@@ -780,9 +783,14 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3)]) -> Mesh {
                 positions.push((c + corner).to_array());
                 normals.push(normal.to_array());
             }
-            // One full tile per face: the night atlas paints a window dot grid
-            // on every proxy, so the far city is navigable by its own light.
-            uvs.extend([[0.0, 1.0], [0.0, 0.0], [1.0, 0.0], [1.0, 1.0]]);
+            // Side faces use the full facade tile; the roof face samples the
+            // plain strip at the right edge of the atlas, so a flying player
+            // does not see windows painted on roofs.
+            if normal == Vec3::Y {
+                uvs.extend([[0.89, 1.0], [0.89, 0.0], [1.0, 0.0], [1.0, 1.0]]);
+            } else {
+                uvs.extend([[0.0, 1.0], [0.0, 0.0], [1.0, 0.0], [1.0, 1.0]]);
+            }
             indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
         }
     }
@@ -2371,6 +2379,7 @@ fn seattle_fire_probe(world: &mut World) {
                 crate::neighborhood::DamagePreset::Bullet,
                 point,
                 forward,
+                "seattle_fire_test",
             );
             stage = 2;
             since = elapsed;
@@ -3016,8 +3025,32 @@ fn building_spec(
     if residential {
         floor_count = floor_count.min(3);
     }
-    if rule.height_bias == "low" {
-        floor_count = floor_count.min(6);
+    // Interim caps from the playtest-70 census: low districts 6 floors, mid
+    // districts 8; towers (Downtown/Bellevue core) stay uncapped. The census
+    // showed commercial records inheriting 128 m in mixed residential
+    // districts — the chimneys the player flew into.
+    // The cap is for residential *districts*, not the catch-all "Seattle
+    // general", whose mid-bias covers downtown-adjacent blocks that are
+    // legitimately tall.
+    let residential_district = matches!(
+        district,
+        "Ballard"
+            | "Fremont"
+            | "Wallingford"
+            | "Georgetown"
+            | "Capitol Hill"
+            | "Queen Anne"
+            | "West Seattle"
+            | "First Hill"
+            | "Pioneer Square"
+            | "Pike Place"
+    );
+    if !residential && residential_district {
+        match rule.height_bias.as_str() {
+            "low" => floor_count = floor_count.min(6),
+            "mid" => floor_count = floor_count.min(8),
+            _ => {}
+        }
     }
     // House windows on houses: a residential parcel gets a sash window with a
     // sill and a 3.1 m column pitch regardless of the district's commercial
@@ -3186,6 +3219,30 @@ fn s3_buildings(world: &mut World) {
         (wanted, unload)
     };
     for (index, entities) in unload {
+        // A damaged building's support graph is journal-derived state, not
+        // chunk state. Despawning the chunk under it would orphan the graph
+        // and let a re-stream spawn a pristine shell over a damaged record.
+        // Pin the chunk instead; the destructibles streaming controller owns
+        // the damaged building from there (freeze -> dormant -> reconstruct).
+        let damaged = entities.iter().any(|entity| {
+            world
+                .get::<destructibles_bevy::building::Building>(*entity)
+                .map(|building| {
+                    world
+                        .resource::<destructibles_bevy::damage::DamageJournal>()
+                        .0
+                        .head_for(building.id)
+                        > 0.0
+                })
+                .unwrap_or(false)
+        });
+        if damaged {
+            let name = world.resource::<Geology>().pack.nodes[index].name.clone();
+            if world.resource_mut::<Geology>().pinned_chunks.insert(index) {
+                info!("S3 unload: pinned {name} (damaged building in chunk)");
+            }
+            continue;
+        }
         for entity in entities {
             let _ = world.despawn(entity);
         }
@@ -3200,6 +3257,11 @@ fn s3_buildings(world: &mut World) {
     }
     for index in wanted {
         let index_chunk = index;
+        let structures_before = world
+            .resource::<destructibles_bevy::structure::Structures>()
+            .iter()
+            .filter(|(id, _)| **id < crate::landmarks::LANDMARK_ID_BASE)
+            .count();
         let (target_name, target_mean) = {
             let state = world.resource::<Geology>();
             let node = &state.pack.nodes[index];
@@ -3389,9 +3451,13 @@ fn s3_buildings(world: &mut World) {
             .iter()
             .filter(|(id, _)| **id < crate::landmarks::LANDMARK_ID_BASE)
             .count();
-        assert_eq!(
-            chunk_structures, 0,
-            "Shell Doctrine violation: graphs after a streamed chunk"
+        // Shell Doctrine: *streaming* must not build a support graph. A graph
+        // that already existed belongs to a damaged, journal-owned building
+        // and is legitimate; only growth across the spawn is a violation.
+        assert!(
+            chunk_structures <= structures_before,
+            "Shell Doctrine violation: streaming {target_name} created {} support graph(s)",
+            chunk_structures - structures_before
         );
         let merged = far_boxes.len();
         if !far_boxes.is_empty() {

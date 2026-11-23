@@ -1582,3 +1582,57 @@ material where present instead of inheriting the partition's single family.
 6 × 8 atlas, so a residential block glows like a tower block; per-family proxy UV banks are the next step.
 `steel-day-skin`: the steel cladding is proven at night and from the air but no satisfactory sunlit street
 frame was captured this round (the tower test shots were backlit silhouettes).
+
+## Iteration 71 — the orphan graph: streaming lifecycle, journal authors, proxy skin (seattle-journal1)
+
+**Crash, reproduced exactly.** `SEATTLE_AUTOFIRE_AT=1.5 ./manhattan-viewer --seattle` fires the crosshair ray
+from the boot camera and lands on **b110094 at (59689.9, 54.0, −587.4)** — the same building and decimetre
+as the player's journal. The emitter is the **player weapon path**, not a camera system: a startup focus
+click (`mouse.just_pressed(Left)`) walked `damage_input → seattle_fire → fire_seattle_at`, tiering the shell
+up and applying a `Bullet` impact.
+
+**The assert was overreach, with a latent leak behind it.** World (b): the support graph was created by a
+live tier-up 1.5 s *before* the chunk stream that tripped the assert; streaming itself created nothing.
+Evidence: the delta assert (`structures_before` vs after) passes on the identical repro, and the journal
+timestamp precedes the stream. The latent leak is real, though: the viewer's chunk unload despawned
+entities without telling the destructibles streaming controller, orphaning any graph on a damaged building.
+Fix: a chunk that contains a journaled building is now **pinned on unload** (logged once), so journal-derived
+state can never be despawned by chunk churn; the controller freezes/evicts it on its own schedule. The
+Shell Doctrine now reads *streaming must not create a support graph* (delta), not *no graph may exist*.
+
+**One chip forced a blackout — upstream sign error.** `power::damage_check` read the journal's
+*removed* volume (misnamed `remaining_volume`) and computed `lost = 1 − removed/total`, so a 0.0004 m³ chip
+on an 1803.7 m³ tower scored lost = 1.0 and forced `PowerLoss` in the same tick. Fixed in destructibles
+`manhattan-journal1` (`lost_fraction = removed/total`, regression test), and the journal accessor is now
+`removed_volume()` with the old name as an alias.
+
+**Journal attribution.** `JournalEntry.author` (`system|player|vehicle|walker|camera`) with
+`record_with_volume_author`; the `DamageAuthor` resource lets a host tag a call. The player's chip now dumps
+as `surface | player | b110094 | ChipFacade` and the bogus PowerLoss is gone. Camera Ownership Law is
+extended in code: a staged camera (`StagedPose.active`) can never fire the weapon.
+
+**The hang.** Not reproducible in the fixed build. A deliberate panic at the same point (after all boot
+chunks, 195 buildings, 1.5 M tris) exits in **6 s with and without `RUST_BACKTRACE=1`**. The player's ~20 s
+is consistent with symbolization of the 273 MB binary plus winit/pipewire teardown after an unwind (their
+console shows the calloop source-removal warning), not a deadlock. No watchdog was added: an abort-on-panic
+watchdog would hide the next lifecycle defect, and the panic is gone.
+
+**Facade streaming hole — root cause found and fixed.** `SKIN AUDIT` (printed every 2 s): **skinned=47,
+bare=0**, proxy entities 9 — but **proxy_buildings=1151 of 1198 represented buildings (96.1 %)**. The stream
+spawn path skins every shell; what the player saw as ">90 % tan blocks" was the merged proxy boxes, which
+were flat tan. The proxy material now carries a generated daylight facade atlas (6 × 8 punched windows,
+cladding grain) with a plain roof strip sampled by the roof face, so flight-level distance reads as window
+grids instead of sand. Evidence: `captures/facade_proxy_day.png`.
+
+**Interim height caps from the census.** Commercial floors are capped in residential districts only
+(low bias 6 floors, mid bias 8); the catch-all "Seattle general" and the cores stay uncapped. Census delta
+(max governor-applied height, before → after): Capitol Hill **128 → 32 m**, West Seattle **128 → 32**,
+Queen Anne **128 → 32**, First Hill **76 → 32**; Ballard/Fremont/Wallingford/Georgetown/Pioneer/Pike
+unchanged at 24 m; Seattle general 248 and Downtown 136 unchanged. Family from the record's own material is
+not possible yet — the pack carries no per-record material, only the partition rule — filed with the
+re-enrichment debt.
+
+**Verification.** fmt; clippy `-D warnings`; 160 tests green; **two 30 s hands-off `--seattle` soaks** with
+no panic and no hang; `JOURNAL STATE entries=0 structures=0 checksum=cbf29ce484222325` (empty FNV offset)
+on both; the damage soak leaves `entries=1, structures=1, checksum=2de187e59a00030b` with the chip attributed
+to `player` and no PowerLoss.
