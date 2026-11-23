@@ -151,7 +151,8 @@ pub struct TrafficPlugin;
 
 impl Plugin for TrafficPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_traffic)
+        app.init_resource::<TrafficCaptureState>()
+            .add_systems(Startup, setup_traffic)
             .add_systems(Update, (traffic_stream, drive_traffic, traffic_capture));
     }
 }
@@ -489,6 +490,16 @@ fn traffic_capture(world: &mut World) {
     if elapsed < 5.0 {
         return;
     }
+    {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static FIRST: AtomicBool = AtomicBool::new(false);
+        if !FIRST.swap(true, Ordering::Relaxed) {
+            info!(
+                "TRAFFIC capture: first frame, vehicles {}",
+                world.resource::<Traffic>().active
+            );
+        }
+    }
     let (index, entered, since, hour_state, done) = {
         let state = world.resource::<TrafficCaptureState>();
         (
@@ -528,6 +539,21 @@ fn traffic_capture(world: &mut World) {
         world.resource_mut::<TrafficCaptureState>().done = true;
         world.write_message(AppExit::Success);
         return;
+    }
+    {
+        let view = world.resource::<crate::camera_authority::StagedPose>();
+        let direction = if view.active {
+            (view.rotation * Vec3::NEG_Z).normalize_or_zero()
+        } else {
+            Vec3::new(-0.45, -0.75, -0.35).normalize()
+        };
+        let rotation = Quat::from_rotation_arc(Vec3::NEG_Z, direction);
+        let mut lights = world.query::<(&mut DirectionalLight, &mut Transform)>();
+        for (mut light, mut transform) in lights.iter_mut(world) {
+            light.illuminance = 26_000.0;
+            light.color = Color::srgb(1.0, 0.97, 0.92);
+            transform.rotation = rotation;
+        }
     }
     let (name, hour, eye, look) = POSES[index];
     if !entered || hour_state != hour {
@@ -570,13 +596,38 @@ fn traffic_capture(world: &mut World) {
             weather.storm = 0.0;
             weather.snow = 0.0;
         }
+        // Derive the camera from a real vehicle when one is loaded: 14 m behind
+        // it along its heading, 2.5 m up, looking down the lane.
+        let focus = world
+            .resource::<Traffic>()
+            .states
+            .keys()
+            .next()
+            .and_then(|entity| {
+                world
+                    .get::<Transform>(*entity)
+                    .map(|transform| (transform.translation, transform.rotation))
+            });
+        let (eye_v, look_v) = if let Some((position, rotation)) = focus {
+            let forward = rotation * Vec3::NEG_Z;
+            let flat = Vec3::new(forward.x, 0.0, forward.z).normalize_or_zero();
+            (
+                position - flat * 14.0 + Vec3::Y * 2.6,
+                position + flat * 20.0 + Vec3::Y * 1.5,
+            )
+        } else {
+            (
+                Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + 6.0, eye[1]),
+                Vec3::new(STREAM_WORLD_OFFSET + look[0], look_ground + 4.0, look[1]),
+            )
+        };
         {
             let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
             crate::camera_authority::stage_look_at(
                 &mut staged,
                 "traffic_capture",
-                Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + 6.0, eye[1]),
-                Vec3::new(STREAM_WORLD_OFFSET + look[0], look_ground + 4.0, look[1]),
+                eye_v,
+                look_v,
                 name,
             );
         }
@@ -587,6 +638,31 @@ fn traffic_capture(world: &mut World) {
         return;
     }
     if elapsed - since < 4.0 {
+        // Keep the camera on a real vehicle as the fleet streams in.
+        let focus = world
+            .resource::<Traffic>()
+            .states
+            .keys()
+            .next()
+            .and_then(|entity| {
+                world
+                    .get::<Transform>(*entity)
+                    .map(|transform| (transform.translation, transform.rotation))
+            });
+        if let Some((position, rotation)) = focus {
+            let forward = rotation * Vec3::NEG_Z;
+            let flat = Vec3::new(forward.x, 0.0, forward.z).normalize_or_zero();
+            let eye_v = position - flat * 14.0 + Vec3::Y * 2.6;
+            let look_v = position + flat * 20.0 + Vec3::Y * 1.5;
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "traffic_capture",
+                eye_v,
+                look_v,
+                name,
+            );
+        }
         return;
     }
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
