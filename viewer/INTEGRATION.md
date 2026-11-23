@@ -1465,3 +1465,48 @@ The style pack keys families by district vocabulary, but CityPack partitions car
 ## Seattle field epicentre (amenities round, iteration 59)
 
 Seattle's radial/daily fields are anchored at the **Westlake / Pike Pine seam**, world `(-138.4, -614.3)`, not at Columbia Center: ad density, the pedestrian field and commute-direction logic all key on where downtown life concentrates, and the transit/retail seam is where that lands. Pike Place stays the symbolic heart (the point is ~440 m from it). The choice is committed in `datasets/seattle/seattle_fields.json` with its rationale, peaks (08:30 / 17:00, graveyard 5%), the 90/40 commute split, the halved traffic scale and the 500-pedestrian cap. `city_rhythm::CityFields` now carries the epicentre and parameters; Manhattan keeps its Times Square instance (`CityFields::manhattan()`) and Seattle uses `CityFields::seattle()` / `from_json`, so no Manhattan constant is silently reused. Tests pin the four canonical moments, the AM/PM flip, the radial falloff and the metadata agreement.
+
+## Iteration 69b — readout unit boundary, painter guard, ghost funnel (playtest 4)
+
+**The readout panic was the stream offset, not a 3.28× feet factor.** `--seattle` panicked with
+`lat/lon readout outside the Seattle dataset bbox: 47.61945,-121.53946 at (59862,-614)`. The camera's
+world X carries `STREAM_WORLD_OFFSET = 60000`; the fix in playtest 69 re-fit against metres but the
+readout still passed world X into the fit. Evaluating the committed cubic at raw `x = 59861.6, z = -614.3`
+reproduces `-121.53945789, 47.61944951` to the fifth decimal — the crash string exactly. The same fit at
+`x = 18264` (the coordinate a 3.28084 feet-as-metres error would need) gives `-122.0928`, so the earlier
+3.28×/feet hypothesis is **refuted by arithmetic**; the bug was a missing conversion at one boundary, not a
+wrong conversion factor. `minimap::world_to_lon_lat` now documents pack-local metres as its input space, the
+location readout subtracts `STREAM_WORLD_OFFSET` once, and the fit is one private `fit_lon_lat` with two
+public wrappers: the player readout asserts (a wrong boundary must be loud), and
+`world_to_lon_lat_checked` returns `Option` for batch painters.
+
+**Painter guard.** `render_seattle_layer` validates each visible footprint through the checked wrapper,
+skips out-of-bbox records, and warns with the running count at paint completion. No pack records currently
+fall outside the fit domain, so the path is defensive; a boot at pack-local `(18000, 240, -800)` (HUD
+`LAT 47.61630 N / LON 122.09631 W`, no panic) exercises the far-east readout end to end.
+
+**Ghost funnel, per stage (GHOST_FUNNEL=1, boot camera):** the camera's Westlake point lies inside three
+overlapping partition AABBs. Downtown 01 (the first bbox hit) reports `records=153 specs=152 entities=7
+pending=0 mesh=1 nearest=599 m`; the buildings the camera actually stands among are in **Downtown 02**:
+`records=171 specs=152 entities=21 mesh=4 nearest=36 m`. Resident chunks all had entities, and a
+GHOST_AERIAL frame from 320 m shows the merged proxy meshes and shells painted across the basin — so the
+pipeline loses no stage (records → specs → shells/proxies → meshes). The "empty block" impression was the
+**boot pose being discarded**: `seattle_boot_camera` wrote `Transform` once, but `fly_camera_system`
+re-applies its own `FlyCamera.yaw/pitch` every Update, so the commanded look-at was replaced by yaw 0 on the
+next frame. The boot now hands ownership to input at the commanded pose by writing the `FlyCamera`
+component as well (Camera Ownership Law: one writer, and the hand-off is explicit). The authored eye/look
+pair also had a real error: at the seam the DEM is **37.9 m** and the Market corner **19.4 m**, so the old
+`eye y=60 / look y=20` aimed **10 m into the hillside** (screenshots showed a dark bank filling the lower
+half). Both endpoints are now seated on the DEM — eye 22 m above grade, target Market roof height — so the
+opening frame looks downhill along Pike and keeps the Sound on the horizon.
+
+**Murk frame.** Captured with `MURK_CAPTURE=1` (two frames, no queue): `captures/evidence_murk.png` — camera
+staged underwater in Elliott Bay at pack-local `(-4200, -6, 0)` with the HUD reading `MODE MURK`. This
+clears the frame owed since playtest 67; no fourth attempt was needed.
+
+**Suite.** `cargo fmt`, `cargo clippy --all-targets -- -D warnings`, and the full test suite are green,
+including `tests/geo.rs` (far-east 18 km round trip, stream-offset equivalence, painter skip, and a
+`#[should_panic]` gate for the player readout). `citypack::tests::top_down_lookup_equals_bruteforce` was
+failing at playtest 69 for a different reason — it sampled points up to 1.4 m outside footprints and
+compared them to a strict point-in-polygon brute force, while `resolve_point` intentionally snaps within
+1 m of an edge. That test now samples strictly interior points (centroid, vertex mean, skip if neither).

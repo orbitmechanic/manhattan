@@ -92,6 +92,9 @@ impl Plugin for GeologyPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<FireProbe>()
             .init_resource::<EvidenceState>()
+            .init_resource::<GhostFunnelState>()
+            .init_resource::<GhostAerialState>()
+            .init_resource::<MurkState>()
             .add_systems(Startup, setup_geology)
             .add_systems(
                 Update,
@@ -114,6 +117,9 @@ impl Plugin for GeologyPlugin {
                     seattle_boot_camera,
                     seattle_fire_probe,
                     evidence_capture,
+                    ghost_funnel,
+                    ghost_aerial,
+                    murk_capture,
                 ),
             )
             .add_systems(PostUpdate, (clamp_camera, murk_update, hide_precip));
@@ -2545,6 +2551,181 @@ fn evidence_capture(world: &mut World) {
     state.entered = false;
 }
 
+#[derive(Resource)]
+struct GhostFunnelState {
+    next_at: f32,
+}
+
+impl Default for GhostFunnelState {
+    fn default() -> Self {
+        Self { next_at: 4.0 }
+    }
+}
+
+/// GHOST_FUNNEL=1: per-stage counts for the partition under the camera every
+/// two seconds. Records -> specs -> spawned entities -> shells/proxies -> mesh
+/// entities close enough to be visible.
+fn ghost_funnel(world: &mut World) {
+    if std::env::var_os("GHOST_FUNNEL").is_none() || !s2_enabled() {
+        return;
+    }
+    let elapsed = world.resource::<Time>().elapsed_secs();
+    if elapsed < world.resource::<GhostFunnelState>().next_at {
+        return;
+    }
+    world.resource_mut::<GhostFunnelState>().next_at = elapsed + 2.0;
+    let Some(camera) = world
+        .query_filtered::<&Transform, With<FlyCamera>>()
+        .single(world)
+        .ok()
+        .copied()
+    else {
+        return;
+    };
+    let (x, z) = (
+        camera.translation.x - STREAM_WORLD_OFFSET,
+        camera.translation.z,
+    );
+    let dem_y = world.resource::<Geology>().dem.height(x, z);
+    let state = world.resource::<Geology>();
+    let resident = {
+        let mut rows = state
+            .building_chunks
+            .iter()
+            .map(|(index, entities)| {
+                let node = &state.pack.nodes[*index];
+                let mut nearest = f32::MAX;
+                let mut nearest_y = 0.0;
+                let mut meshes = 0;
+                for entity in entities {
+                    if world.get::<Mesh3d>(*entity).is_some() {
+                        meshes += 1;
+                    }
+                    if let Some(transform) = world.get::<Transform>(*entity) {
+                        let distance = transform.translation.distance(camera.translation);
+                        if distance < nearest {
+                            nearest = distance;
+                            nearest_y = transform.translation.y;
+                        }
+                    }
+                }
+                let records = state.pack.nodes[*index].buildings;
+                let pending = state
+                    .pending_shells
+                    .iter()
+                    .filter(|job| job.chunk == *index)
+                    .count();
+                format!(
+                    "{}: rec={records} ent={} pend={pending} mesh={meshes} near={nearest:.0}m y={nearest_y:.1}",
+                    node.name,
+                    entities.len()
+                )
+            })
+            .collect::<Vec<_>>();
+        rows.sort();
+        rows
+    };
+    info!(
+        "GHOST FUNNEL t={elapsed:.1} cam=({x:.0},{z:.0},y={:.1}) dem={dem_y:.1} resident={} | {}",
+        camera.translation.y,
+        resident.len(),
+        resident.join(" | ")
+    );
+}
+
+#[derive(Resource, Default)]
+struct GhostAerialState {
+    stage: u8,
+    since: f32,
+}
+
+/// GHOST_AERIAL=1: a wide frame over the boot camera's block, so proxies and
+/// shells can be judged together without touching the player's view.
+fn ghost_aerial(world: &mut World) {
+    if std::env::var_os("GHOST_AERIAL").is_none() || !s2_enabled() {
+        return;
+    }
+    let elapsed = world.resource::<Time>().elapsed_secs();
+    let (stage, since) = {
+        let state = world.resource::<GhostAerialState>();
+        (state.stage, state.since)
+    };
+    match stage {
+        0 if elapsed >= 9.0 => {
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "ghost_aerial",
+                Vec3::new(STREAM_WORLD_OFFSET - 138.0, 320.0, -614.0),
+                Vec3::new(STREAM_WORLD_OFFSET - 1500.0, 0.0, 600.0),
+                "ghost_aerial",
+            );
+            let mut state = world.resource_mut::<GhostAerialState>();
+            state.stage = 1;
+            state.since = elapsed;
+        }
+        1 if elapsed - since > 1.5 => {
+            let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/ghost_aerial.png");
+            world
+                .spawn(Screenshot::primary_window())
+                .observe(save_to_disk(path));
+            let mut state = world.resource_mut::<GhostAerialState>();
+            state.stage = 2;
+            state.since = elapsed;
+        }
+        2 if elapsed - since > 2.5 => {
+            world.write_message(AppExit::Success);
+        }
+        _ => {}
+    }
+}
+
+#[derive(Resource, Default)]
+struct MurkState {
+    stage: u8,
+    since: f32,
+}
+
+/// MURK_CAPTURE=1: a still-start underwater capture (two frames, no queue).
+fn murk_capture(world: &mut World) {
+    if std::env::var_os("MURK_CAPTURE").is_none() || !s2_enabled() {
+        return;
+    }
+    let elapsed = world.resource::<Time>().elapsed_secs();
+    let (stage, since) = {
+        let state = world.resource::<MurkState>();
+        (state.stage, state.since)
+    };
+    match stage {
+        0 if elapsed >= 5.0 => {
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "murk_capture",
+                Vec3::new(STREAM_WORLD_OFFSET - 4200.0, -6.0, 0.0),
+                Vec3::new(STREAM_WORLD_OFFSET - 4140.0, -8.0, -40.0),
+                "murk",
+            );
+            let mut state = world.resource_mut::<MurkState>();
+            state.stage = 1;
+            state.since = elapsed;
+        }
+        1 if elapsed - since > 1.0 => {
+            let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/evidence_murk.png");
+            world
+                .spawn(Screenshot::primary_window())
+                .observe(save_to_disk(path));
+            let mut state = world.resource_mut::<MurkState>();
+            state.stage = 2;
+            state.since = elapsed;
+        }
+        2 if elapsed - since > 2.0 => {
+            world.write_message(AppExit::Success);
+        }
+        _ => {}
+    }
+}
+
 /// Milestone S4: `--seattle` boot profile. Places the free-fly camera at the
 /// Westlake/Pike Pine seam at street level looking downhill toward the market
 /// and the Sound, with daytime clear defaults. One-shot; input owns the camera
@@ -2553,7 +2734,8 @@ fn seattle_boot_camera(
     mut commands: Commands,
     time: Res<Time>,
     mut done: Local<u8>,
-    mut camera: Query<&mut Transform, With<FlyCamera>>,
+    mut camera: Query<(&mut Transform, &mut FlyCamera)>,
+    geology: Option<Res<Geology>>,
     mut clock: ResMut<SimClock>,
     mut weather: ResMut<Weather>,
 ) {
@@ -2579,19 +2761,64 @@ fn seattle_boot_camera(
         weather.precipitation = 0.0;
         weather.storm = 0.0;
         weather.snow = 0.0;
-        if let Ok(mut transform) = camera.single_mut() {
-            let eye = Vec3::new(STREAM_WORLD_OFFSET - 138.4, 60.0, -614.3);
-            let look = Vec3::new(STREAM_WORLD_OFFSET - 518.6, 20.0, -399.4);
+        if let Ok((mut transform, mut fly)) = camera.single_mut() {
+            // Audit override: SEATTLE_BOOT_AT / SEATTLE_BOOT_LOOK take
+            // pack-local x,y,z so a far partition can be booted without a
+            // flight. Defaults are the Westlake/Pike Place seam.
+            let parse = |name: &str| {
+                std::env::var(name).ok().and_then(|value| {
+                    let parts = value
+                        .split(',')
+                        .map(|part| part.trim().parse::<f32>().ok())
+                        .collect::<Option<Vec<_>>>()?;
+                    (parts.len() == 3)
+                        .then(|| Vec3::new(STREAM_WORLD_OFFSET + parts[0], parts[1], parts[2]))
+                })
+            };
+            // Seat the establishing view on the DEM, not on a hard-coded
+            // elevation: the seam is at 37.9 m and the Market corner at
+            // ~19 m, so the old eye/look pair (60 / 20) aimed 10 m into the
+            // hillside. Keep the authored 22 m rooftop eye, aim at Market
+            // roof height so the Sound stays on the horizon.
+            let seat = |x: f32, z: f32, above: f32| {
+                geology
+                    .as_ref()
+                    .map(|state| state.dem.height(x, z).max(0.0) + above)
+                    .unwrap_or(above)
+            };
+            let eye = parse("SEATTLE_BOOT_AT").unwrap_or(Vec3::new(
+                STREAM_WORLD_OFFSET - 138.4,
+                seat(-138.4, -614.3, 22.0),
+                -614.3,
+            ));
+            let look = parse("SEATTLE_BOOT_LOOK").unwrap_or(Vec3::new(
+                STREAM_WORLD_OFFSET - 740.0,
+                seat(-740.0, -520.0, 20.0),
+                -520.0,
+            ));
             transform.translation = eye;
             let d = (look - eye).normalize_or_zero();
-            transform.rotation =
-                Quat::from_euler(EulerRot::YXZ, (-d.x).atan2(-d.z), d.y.asin(), 0.0);
+            let extra = std::env::var("SEATTLE_YAW")
+                .ok()
+                .and_then(|value| value.parse::<f32>().ok())
+                .unwrap_or(0.0);
+            // Hand ownership to input at the commanded pose: the free-fly
+            // controller re-applies its own yaw/pitch every Update, so a
+            // transform-only boot pose is silently discarded on the next
+            // frame and the establishing view never happens.
+            fly.yaw = (-d.x).atan2(-d.z) + extra.to_radians();
+            fly.pitch = d.y.asin();
+            transform.rotation = Quat::from_rotation_y(fly.yaw) * Quat::from_rotation_x(fly.pitch);
         }
         info!("SEATTLE BOOT: camera at Westlake seam, daytime clear");
         *done = 1;
         return;
     }
-    if capture && *done == 1 && time.elapsed_secs() > 7.0 {
+    let capture_at = std::env::var("SEATTLE_CAPTURE_AT")
+        .ok()
+        .and_then(|value| value.parse::<f32>().ok())
+        .unwrap_or(7.0);
+    if capture && *done == 1 && time.elapsed_secs() > capture_at {
         let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("captures/seattle_boot.png");
         commands
             .spawn(Screenshot::primary_window())
@@ -2796,6 +3023,18 @@ fn building_spec(
         windows,
         core: core_for_style(style, &perimeter, building.id),
     };
+    let mut spec = spec;
+    if spec.validate().is_err() {
+        // Small residential parcels cannot host the default core (>=50% of the
+        // footprint). Shrink it, then drop it, rather than lose the building.
+        if let Some(core) = spec.core.as_mut() {
+            core.half_x *= 0.5;
+            core.half_z *= 0.5;
+        }
+        if spec.validate().is_err() {
+            spec.core = None;
+        }
+    }
     spec.validate().ok().map(|_| spec)
 }
 

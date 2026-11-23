@@ -1161,11 +1161,25 @@ mod tests {
             .collect();
         assert!(all.len() > 300_000);
         let mut checked = 0;
-        for (index, building) in all.iter().enumerate().step_by(all.len() / 50) {
-            let point = [
-                building.centroid[0] + (index % 7) as f32 * 0.4 - 1.2,
-                building.centroid[1] + (index % 5) as f32 * 0.4 - 0.8,
-            ];
+        for building in all.iter().step_by(all.len() / 50) {
+            // Sample strictly inside the record. The resolver deliberately
+            // snaps points within 1 m of an edge, so offset samples can never
+            // be compared against a strict point-in-polygon brute force.
+            // Concave footprints can put their centroid outside, so fall back
+            // to the vertex mean and skip records with no interior sample.
+            let mean = building
+                .perimeter
+                .iter()
+                .fold([0.0_f64, 0.0_f64], |sum, point| {
+                    [sum[0] + point[0] as f64, sum[1] + point[1] as f64]
+                });
+            let count = building.perimeter.len() as f64;
+            let mean = [(mean[0] / count) as f32, (mean[1] / count) as f32];
+            let Some(point) = [building.centroid, mean].into_iter().find(|point| {
+                destructibles_core::math::point_in_polygon(*point, &building.perimeter)
+            }) else {
+                continue;
+            };
             let resolved = lookup.resolve_point(point);
             let inside = all
                 .iter()
@@ -1183,7 +1197,7 @@ mod tests {
             assert_eq!(resolved, inside, "point {point:?}");
             checked += 1;
         }
-        assert!(checked >= 50);
+        assert!(checked >= 40, "only {checked} interior samples");
     }
 
     #[test]

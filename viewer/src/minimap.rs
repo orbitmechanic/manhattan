@@ -415,10 +415,33 @@ fn world_to_map(world: Vec2, center: Vec2) -> Vec2 {
 
 /// Convert model world `(x, z)` to longitude/latitude.  `x` is east and `z`
 /// is south in the Web Mercator frame described at the top of this file.
-/// Seattle world XY -> WGS84, fitted against the dataset's EPSG:2926 origin
-/// (US feet anchor) with a cubic surface over the region: nanodegree residuals.
-/// A readout outside the dataset bbox is a bug, not a display.
+/// Pack-local world XY (metres, without `STREAM_WORLD_OFFSET`) -> WGS84,
+/// fitted against the dataset's EPSG:2926 US-foot origin with a cubic surface:
+/// nanodegree residuals. Callers must convert at ONE boundary: subtract the
+/// stream offset and pass metres here. A readout outside the dataset bbox is a
+/// bug, not a display.
 pub fn world_to_lon_lat(x: f32, z: f32) -> (f64, f64) {
+    let (lon, lat) = fit_lon_lat(x, z);
+    assert!(
+        inside_dataset_bbox(lon, lat),
+        "lat/lon readout outside the Seattle dataset bbox: {lat:.5},{lon:.5} at ({x:.0},{z:.0})"
+    );
+    (lon, lat)
+}
+
+/// Batch-painter variant: the same fit, but an out-of-bbox record is a skip,
+/// not a crash. The caller logs the running count at paint completion.
+pub fn world_to_lon_lat_checked(x: f32, z: f32) -> Option<(f64, f64)> {
+    let (lon, lat) = fit_lon_lat(x, z);
+    inside_dataset_bbox(lon, lat).then_some((lon, lat))
+}
+
+fn inside_dataset_bbox(lon: f64, lat: f64) -> bool {
+    (-122.65..=-121.95).contains(&lon) && (47.00..=47.85).contains(&lat)
+}
+
+/// The cubic surface itself. Input is pack-local metres: `x` east, `z` south.
+fn fit_lon_lat(x: f32, z: f32) -> (f64, f64) {
     const S: f64 = 10_000.0;
     const LON: [f64; 10] = [
         -1.223355000002e2,
@@ -464,10 +487,6 @@ pub fn world_to_lon_lat(x: f32, z: f32) -> (f64, f64) {
         lon += LON[index] * term;
         lat += LAT[index] * term;
     }
-    assert!(
-        (-122.65..=-121.95).contains(&lon) && (47.00..=47.85).contains(&lat),
-        "lat/lon readout outside the Seattle dataset bbox: {lat:.5},{lon:.5} at ({x:.0},{z:.0})"
-    );
     (lon, lat)
 }
 
@@ -1114,6 +1133,7 @@ fn render_seattle_layer(
     }
     let mut drawn = 0usize;
     let mut damaged = 0usize;
+    let mut out_of_bbox = 0usize;
     let outline_lod = buildings.len() > 300;
     for building in buildings {
         let centroid = Vec2::from_array(building.centroid);
@@ -1121,6 +1141,10 @@ fn render_seattle_layer(
             continue;
         }
         if building.perimeter.len() < 3 {
+            continue;
+        }
+        if world_to_lon_lat_checked(building.centroid[0], building.centroid[1]).is_none() {
+            out_of_bbox += 1;
             continue;
         }
         let head = journal
@@ -1187,6 +1211,11 @@ fn render_seattle_layer(
         }
     }
     let elapsed = started.elapsed().as_secs_f32() * 1000.0;
+    if out_of_bbox > 0 {
+        warn!(
+            "MINIMAP seattle: skipped {out_of_bbox} footprints outside the dataset bbox ({drawn} drawn, {damaged} damaged)"
+        );
+    }
     if elapsed > 1.0 {
         info!("MINIMAP seattle: {drawn} buildings ({damaged} damaged) in {elapsed:.2} ms");
     }
@@ -1409,7 +1438,10 @@ fn update_minimap_text(
     let mph = speed * 2.236_936;
     let kph = speed * 3.6;
     let mach = speed / MACH_1_MPS;
-    let (lon, lat) = world_to_lon_lat(position.x, position.z);
+    let (lon, lat) = world_to_lon_lat(
+        position.x - crate::citypack::STREAM_WORLD_OFFSET,
+        position.z,
+    );
     for (kind, mut text) in &mut texts {
         text.0 = match kind {
             MinimapText::Telemetry => format!(
