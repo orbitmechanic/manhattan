@@ -247,6 +247,13 @@ fn parse_args() -> Args {
                 std::env::set_var("SEATTLE_BOOT", "1");
                 std::env::set_var("LANDMARKS_ALWAYS", "1");
             },
+            "--pedestrians" => unsafe {
+                std::env::set_var("SEATTLE_S2", "1");
+                std::env::set_var("SEATTLE_S3", "1");
+                std::env::set_var("SEATTLE_BOOT", "1");
+                std::env::set_var("LANDMARKS_ALWAYS", "1");
+                std::env::set_var("PEDESTRIAN_CAPTURE", "1");
+            },
             "--traffic" => unsafe {
                 std::env::set_var("SEATTLE_S2", "1");
                 std::env::set_var("SEATTLE_S3", "1");
@@ -466,6 +473,7 @@ fn main() {
     .add_plugins(manhattan_viewer::camera_authority::CameraAuthorityPlugin)
     .add_plugins(manhattan_viewer::trees::TreesPlugin)
     .add_plugins(manhattan_viewer::traffic_seattle::TrafficPlugin)
+    .add_plugins(manhattan_viewer::pedestrians::PedestriansPlugin)
     .add_plugins(manhattan_viewer::storefronts::StorefrontsPlugin)
     .add_plugins(manhattan_viewer::landmarks::LandmarksPlugin)
     .add_plugins(CityAudioPlugin)
