@@ -549,6 +549,44 @@ fn ped_capture(world: &mut World) {
         }
         return;
     }
+    if POSES[index].2 == "plaza" {
+        // Minimum-crowd law: the plaza frame must show a crowd.
+        let pose = world.resource::<crate::camera_authority::StagedPose>();
+        let eye = pose.translation;
+        let forward = pose.rotation * Vec3::NEG_Z;
+        let anchor = Vec3::new(STREAM_WORLD_OFFSET - 518.6, eye.y - 1.6, -399.4);
+        let crowd = {
+            let peds = world.resource::<Pedestrians>();
+            peds.states
+                .keys()
+                .filter_map(|entity| world.get::<Transform>(*entity))
+                .filter(|transform| {
+                    let to = transform.translation - eye;
+                    to.length() < 60.0 && to.normalize_or_zero().dot(forward) > 0.25
+                })
+                .count()
+        };
+        let nearest = {
+            let peds = world.resource::<Pedestrians>();
+            peds.states
+                .keys()
+                .filter_map(|entity| world.get::<Transform>(*entity))
+                .map(|transform| transform.translation.distance(eye))
+                .fold(f32::MAX, f32::min)
+        };
+        if elapsed - since < 9.0 && (crowd < 15 || nearest < 4.0) {
+            return;
+        }
+        info!(
+            "PEDESTRIANS plaza crowd: {crowd} in view, nearest {nearest:.1} m from anchor {:?}",
+            anchor
+        );
+        assert!(crowd >= 15, "plaza frame has only {crowd} walkers in view");
+        assert!(
+            nearest >= 4.0,
+            "plaza eye stands inside the crowd ({nearest} m)"
+        );
+    }
     let peds = world.resource::<Pedestrians>();
     let expected = peds.expected;
     let actual = peds.active;

@@ -81,6 +81,17 @@ pub fn curb_side_eye(subject: Vec3, lane: Vec3) -> (Vec3, Vec3) {
     (eye, look)
 }
 
+/// Crowd-subject variant of the curb law: when the subject is a gathering,
+/// proximity is the point. Stand 24 m off the hotspot at 2.8 m and aim at the
+/// crowd mass. Callers assert the minimum-crowd count and that the eye is
+/// outside the walking band.
+pub fn plaza_eye(anchor: Vec3, offset: Vec3) -> (Vec3, Vec3) {
+    let flat = Vec3::new(offset.x, 0.0, offset.z).normalize_or_zero();
+    let eye = anchor + flat * 24.0 + Vec3::Y * 2.8;
+    let look = anchor + Vec3::Y * 1.4;
+    (eye, look)
+}
+
 /// The framing law as code: a capture eye must stay clear of every active
 /// subject, or the frame is rejected (the point-blank bus failure becomes a
 /// test failure).
