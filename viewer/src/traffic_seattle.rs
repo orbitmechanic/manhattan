@@ -15,7 +15,7 @@ use bevy::render::mesh::{Indices, Mesh, PrimitiveTopology};
 use bevy::time::Real;
 
 use crate::camera::FlyCamera;
-use crate::city_rhythm::{CityFields, SEATTLE_EPICENTER};
+use crate::city_rhythm::CityFields;
 use crate::citypack::{STREAM_WORLD_OFFSET, wanted_neighborhoods};
 use crate::clock::SimClock;
 use crate::geology::Geology;
@@ -145,7 +145,6 @@ pub struct Traffic {
     pending: Vec<(usize, Vec<VehicleState>)>,
     pub active: usize,
     pub enabled: bool,
-    last_hour: f32,
 }
 
 pub struct TrafficPlugin;
