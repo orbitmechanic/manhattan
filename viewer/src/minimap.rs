@@ -1267,22 +1267,35 @@ fn update_minimap_overlay(
 }
 
 fn update_minimap_text(
-    time: Res<Time>,
+    time: Res<Time<bevy::time::Real>>,
     camera: Single<&Transform, With<FlyCamera>>,
     motion: Res<MotionState>,
     nearest: Res<NearestStreet>,
     mut last: Local<f32>,
+    mut prev: Local<Option<(Vec3, f32)>>,
     mut texts: Query<(&MinimapText, &mut Text)>,
 ) {
     let now = time.elapsed_secs();
+    let position = camera.translation;
+    let (speed, dt) = match *prev {
+        Some((last_position, last_time)) if now > last_time => (
+            last_position.distance(position) / (now - last_time),
+            now - last_time,
+        ),
+        _ => (0.0, 0.0),
+    };
+    *prev = Some((position, now));
+    let _ = dt;
     if now - *last < TEXT_UPDATE_SECS {
         return;
     }
     *last = now;
-    let position = camera.translation;
-    let mph = motion.speed * 2.236_936;
-    let kph = motion.speed * 3.6;
-    let mach = motion.speed / MACH_1_MPS;
+    // Seattle boot zeroes MotionState.speed, so read speed from the camera's
+    // own motion; Manhattan in-flight values still flow through as a floor.
+    let speed = speed.max(motion.speed);
+    let mph = speed * 2.236_936;
+    let kph = speed * 3.6;
+    let mach = speed / MACH_1_MPS;
     let (lon, lat) = world_to_lon_lat(position.x, position.z);
     for (kind, mut text) in &mut texts {
         text.0 = match kind {

@@ -427,8 +427,13 @@ fn main() {
     let asset_path = "assets".to_string();
 
     let mut app = App::new();
+    let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "warn".to_string());
     app.add_plugins(
         DefaultPlugins
+            .set(bevy::log::LogPlugin {
+                filter: log_filter,
+                ..default()
+            })
             .set(AssetPlugin {
                 file_path: asset_path,
                 meta_check: AssetMetaCheck::Never,

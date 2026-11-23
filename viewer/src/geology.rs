@@ -114,7 +114,7 @@ impl Plugin for GeologyPlugin {
                     seattle_fire_probe,
                 ),
             )
-            .add_systems(PostUpdate, (clamp_camera, hide_precip));
+            .add_systems(PostUpdate, (clamp_camera, murk_update, hide_precip));
     }
 }
 
@@ -142,6 +142,42 @@ fn clamp_camera(state: Option<Res<Geology>>, mut camera: Query<&mut Transform, W
         && state.mask[row as usize * state.dem.cols + col as usize] != 0;
     let ground = state.dem.height(x, z);
     transform.translation.y = clamp_camera_floor(ground, wet, transform.translation.y);
+}
+
+#[derive(Component)]
+pub struct MurkOverlay;
+
+fn murk_update(
+    state: Option<Res<Geology>>,
+    camera: Query<&Transform, With<FlyCamera>>,
+    mut overlay: Query<&mut BackgroundColor, With<MurkOverlay>>,
+) {
+    let Some(state) = state else {
+        return;
+    };
+    let Ok(transform) = camera.single() else {
+        return;
+    };
+    let y = transform.translation.y;
+    let wet = {
+        let x = transform.translation.x - STREAM_WORLD_OFFSET;
+        let z = transform.translation.z;
+        let col = ((x - state.dem.origin[0]) / state.dem.spacing).round() as isize;
+        let row = ((z - state.dem.origin[1]) / state.dem.spacing).round() as isize;
+        row >= 0
+            && col >= 0
+            && (row as usize) < state.dem.rows
+            && (col as usize) < state.dem.cols
+            && state.mask[row as usize * state.dem.cols + col as usize] != 0
+    };
+    let underwater = wet && y < 1.0;
+    for mut color in &mut overlay {
+        color.0 = if underwater {
+            Color::srgba(0.04, 0.09, 0.07, 0.96)
+        } else {
+            Color::NONE
+        };
+    }
 }
 
 fn hide_precip(
@@ -349,6 +385,20 @@ fn setup_geology(
         cull_mode: None,
         ..default()
     });
+    // Ground underside: a deep dirt slab under the streamed terrain so a
+    // camera clamped at grade never sees under-map void.
+    let dirt = materials.add(StandardMaterial {
+        base_color: Color::srgb(0.20, 0.16, 0.11),
+        perceptual_roughness: 1.0,
+        cull_mode: None,
+        ..default()
+    });
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(70_000.0, 320.0, 70_000.0))),
+        MeshMaterial3d(dirt),
+        Transform::from_xyz(STREAM_WORLD_OFFSET + 3000.0, -160.5, 1000.0),
+        Name::new("ground underside"),
+    ));
     let far = build_far_mesh(&dem, &mask);
     commands.spawn((
         Mesh3d(meshes.add(far)),
@@ -389,6 +439,19 @@ fn setup_geology(
         "S2: DEM {}x{} at {} m, water and far terrain in {:.1} ms",
         dem.rows, dem.cols, dem.spacing, boot_ms
     );
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(0.0),
+            top: Val::Px(0.0),
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..default()
+        },
+        BackgroundColor(Color::NONE),
+        MurkOverlay,
+        Name::new("underwater murk"),
+    ));
     commands.insert_resource(DistrictCaptureState::default());
     commands.insert_resource(Geology {
         dem,

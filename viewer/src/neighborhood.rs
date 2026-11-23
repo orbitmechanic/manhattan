@@ -1203,7 +1203,7 @@ pub(crate) fn fire_seattle_at(
     }
     apply_preset(world, id, preset, point, forward);
     let head = world.resource::<DamageJournal>().0.head_for(id);
-    info!("FIRE seattle: b{id} preset {preset:?} journal {head:.2}");
+    debug!("FIRE seattle: b{id} preset {preset:?} journal {head:.2}");
     world.resource_mut::<FireBadges>().line = format!("RAY → HIT=b{id} → JOURNAL={head:.2}");
 }
 
