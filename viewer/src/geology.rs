@@ -1569,7 +1569,8 @@ fn s3_damage(world: &mut World) {
                             building_spec(&state.style, node, building, city, district, &category)
                         {
                             let y =
-                                state.dem.height(building.centroid[0], building.centroid[1]) + 0.03;
+                                footprint_seat(&state.dem, building.centroid, &building.perimeter)
+                                    + 0.03;
                             found = Some((
                                 building.id,
                                 spec,
@@ -1715,7 +1716,7 @@ fn s3_damage(world: &mut World) {
                     .resource::<Geology>()
                     .dem
                     .height(targets[0].1.x - STREAM_WORLD_OFFSET, targets[0].1.z);
-                let seat = Vec3::new(targets[0].1.x, record + 0.03, targets[0].1.z);
+                let seat = Vec3::new(targets[0].1.x, record + SEAT_LIFT_M, targets[0].1.z);
                 spawn_building_world_lod(world, id, spec, seat, BuildingDetail::Shell);
                 seat_ok = true;
                 checksum_ok = checksum_pre;
@@ -1970,7 +1971,7 @@ fn s3_damage(world: &mut World) {
                     world,
                     id,
                     spec,
-                    Vec3::new(origin.x, ground + 0.03, origin.z),
+                    Vec3::new(origin.x, ground + SEAT_LIFT_M, origin.z),
                     BuildingDetail::Shell,
                 );
                 seat = true;
@@ -2560,6 +2561,18 @@ fn family_for(name: &str) -> MaterialFamily {
     }
 }
 
+/// Seat a footprint on the highest DEM sample under it, not just its centroid:
+/// on steep high-elevation terrain a centroid seat buries the uphill corners.
+pub const SEAT_LIFT_M: f32 = 0.18;
+
+pub fn footprint_seat(dem: &Dem, centroid: [f32; 2], perimeter: &[[f32; 2]]) -> f32 {
+    let mut height = dem.height(centroid[0], centroid[1]);
+    for point in perimeter {
+        height = height.max(dem.height(point[0], point[1]));
+    }
+    height
+}
+
 fn building_spec(
     pack: &StylePack,
     node: &crate::citypack::PackNode,
@@ -2782,7 +2795,8 @@ fn s3_buildings(world: &mut World) {
                                 &category,
                             )?;
                             let y =
-                                state.dem.height(building.centroid[0], building.centroid[1]) + 0.03;
+                                footprint_seat(&state.dem, building.centroid, &building.perimeter)
+                                    + 0.03;
                             let mut min = [f32::MAX; 2];
                             let mut max = [f32::MIN; 2];
                             for point in &building.perimeter {
