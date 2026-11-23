@@ -1,0 +1,13 @@
+{
+  "schema": "seattle-fields/1",
+  "epicenter": {
+    "name": "Westlake / Pike Pine",
+    "wgs84": [-122.3375, 47.6117],
+    "world": [-138.4, -614.3],
+    "why": "Downtown life concentrates at the Westlake transit/pike-pine retail seam, not at Columbia Center; ad density, pedestrian field and commute direction key on this point. Pike Place is the symbolic heart; Westlake is where the transit pulse actually lands."
+  },
+  "peaks": { "am": 8.5, "pm": 17.0, "width_am": 1.25, "width_pm": 1.45, "midday": 13.0, "midday_width": 3.0 },
+  "occupancy": { "toward_peak": 0.90, "away_peak": 0.40, "base": 0.05 },
+  "densities": { "traffic_scale": 0.5, "pedestrian_cap": 500, "ad_radius_m": 250.0, "ad_falloff_m": 2500.0 },
+  "attribution": "Derived from the Manhattan radial+daily field template, re-parameterized for Seattle; no external dataset."
+}
