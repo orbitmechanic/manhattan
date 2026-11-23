@@ -2258,8 +2258,7 @@ fn seattle_fire_probe(world: &mut World) {
             let Some((origin, height, chosen_id)) = chosen else {
                 return;
             };
-            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
-            let _ = staged;
+            let _staged = world.resource::<crate::camera_authority::StagedPose>();
             let eye = origin + Vec3::new(40.0, height * 0.55 + 6.0, 28.0);
             let look = origin + Vec3::Y * (height * 0.45);
             let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
