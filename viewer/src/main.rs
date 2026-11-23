@@ -458,6 +458,7 @@ fn main() {
     .add_plugins(manhattan_viewer::geology::GeologyPlugin)
     .add_plugins(manhattan_viewer::camera_authority::CameraAuthorityPlugin)
     .add_plugins(manhattan_viewer::trees::TreesPlugin)
+    .add_plugins(manhattan_viewer::traffic_seattle::TrafficPlugin)
     .add_plugins(manhattan_viewer::storefronts::StorefrontsPlugin)
     .add_plugins(manhattan_viewer::landmarks::LandmarksPlugin)
     .add_plugins(CityAudioPlugin)

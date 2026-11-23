@@ -30,6 +30,7 @@ pub mod storefront;
 pub mod storefronts;
 pub mod street_furniture;
 pub mod traffic;
+pub mod traffic_seattle;
 pub mod trees;
 pub mod ui;
 pub mod weather;

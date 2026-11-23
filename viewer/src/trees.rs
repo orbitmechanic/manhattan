@@ -758,9 +758,12 @@ fn tree_lod_update(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
     assets: Option<Res<TreeAssets>>,
-    mut trees: ResMut<Trees>,
+    mut trees: Option<ResMut<Trees>>,
     mut query: Query<(&Transform, &mut Mesh3d, &mut TreeVisual)>,
 ) {
+    let Some(trees) = trees.as_mut() else {
+        return;
+    };
     if trees.disabled || std::env::var_os("TREES_OFF").is_some() {
         return;
     }
