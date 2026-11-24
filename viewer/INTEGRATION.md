@@ -1907,3 +1907,37 @@ dedicated roof re-shoot remain the evidence debts.
 
 **Debts.** `tower-house-frame` (owed twice, **escalated**), `sway-frames`, `proxy-night-temperature`,
 `tree-sway-shader`, `roof-pack-bake`, `proxy-material-budget` (+2).
+
+## Iteration 77 — the rebuild regression (seattle-glass2)
+
+**Root causes, all three real.**
+
+1. **Gables and tint were missing on the player-visible layer** because near proxies (within the 250 m merge
+   radius) shared **one unit box mesh** with a single roof decision and a single tint for every building in
+   the district. The far merged mesh had both; the near layer — what a flight at altitude actually looks at —
+   did not. Fix: every near proxy now gets its **own baked box mesh** (per-building id: tint, gable, roof
+   colour, solar), the same geometry path as the merge.
+2. **The glass1 UV repair had never shipped**: the per-family material landed, but the UV block was still the
+   banked one (my edit missed the formatted text). UVs are now derived **per face from that face's own
+   extents** — vertical `height/3.0` floors, horizontal `face width / module` (12 m residential, 18 m
+   commercial) — so no face can inherit a rotated box axis. Per-family Repeat textures make both directions
+   safe.
+3. **The shipped-geometry audit exposed a chunk thrash**: res != 12 while `S3_MAX_RESIDENT_CHUNKS = 12`, so
+   the farthest chunk was evicted and immediately re-wanted every frame, rebuilding the same merged mesh
+   (the gable counters jumped by 167 per frame). Cap raised to 16; the audit now grows only on real streams.
+
+**Shipped-geometry audit.** `SHIPPED_GABLES`/`SHIPPED_FLATS` count roofs baked into the actual proxy meshes
+(near + merged), printed on every chunk spawn: last flight run `gables=3022 flats=2815`. This counts shipped
+geometry, not the parameter draw, per the Measurement Honesty clarification. The shell gable-rate table
+remains separate (doctrine vs concave fallback).
+
+**Captures now obey the Capture Law.** New `FLIGHT_CAPTURE=1` stages the camera along a **moving path at
+altitude** (default over Wallingford at 150 m) and shoots three frames from the streamed flight path:
+`captures/flight_00..02.png`. These are the evidence for gables, tint and multi-orientation window rows. The
+older boot/staged captures remain as history but no longer count as proof.
+
+**Gauntlet:** 650 m/s **50.6/96.6 ms** (in the 28–77 band). 161 tests green, clippy clean, boot clean.
+
+**Not shipped:** the **tower-beside-house window frame** — owed a third time. Per the standing rule it
+**escalates into the next marquee**. Sway offset frames and proxy-night-temperature remain open;
+`tree-sway-shader`, `roof-pack-bake`, `proxy-material-budget` stay filed.

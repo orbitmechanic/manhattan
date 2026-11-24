@@ -47,7 +47,7 @@ const S3_PROXY_MERGE_M: f32 = 250.0;
 /// Unload margin over the 650 m load radius, and a hard resident cap so a
 /// teleporting capture walk cannot accumulate chunks faster than it drops them.
 const S3_UNLOAD_M: f32 = 800.0;
-const S3_MAX_RESIDENT_CHUNKS: usize = 12;
+const S3_MAX_RESIDENT_CHUNKS: usize = 16;
 /// Shell creation is the expensive part of a chunk spawn; keep a small
 /// immediate set for the near field and amortize the rest across frames.
 const S3_SHELL_IMMEDIATE: usize = 6;
@@ -94,6 +94,7 @@ impl Plugin for GeologyPlugin {
             .init_resource::<EvidenceState>()
             .init_resource::<GhostFunnelState>()
             .init_resource::<GhostAerialState>()
+            .init_resource::<FlightCaptureState>()
             .init_resource::<MurkState>()
             .add_systems(Startup, setup_geology)
             .add_systems(
@@ -119,6 +120,7 @@ impl Plugin for GeologyPlugin {
                     evidence_capture,
                     ghost_funnel,
                     ghost_aerial,
+                    flight_capture,
                     murk_capture,
                 ),
             )
@@ -773,6 +775,11 @@ fn proxy_tint(id: u32, family: destructibles_core::family::MaterialFamily) -> [f
     ]
 }
 
+/// Shipped-geometry audit: counts the gable/flat roofs actually baked into
+/// merged and near-proxy meshes, not the parameter draw.
+pub static SHIPPED_GABLES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+pub static SHIPPED_FLATS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
     let mut positions = Vec::new();
     let mut normals = Vec::new();
@@ -837,19 +844,22 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
                 normals.push(normal.to_array());
                 colors.push(*tint);
             }
-            // Fixed metres per floor: V repeats once per 3.0 m floor row, so a
-            // window is the same physical height on a 2-storey house and a
-            // 60 m tower. U stays inside the family bank (residential left,
-            // commercial right); one bank tile is 4-6 windows across.
-            let across = if normal == Vec3::Y { 0.46 } else { 0.5 };
-            let u0 = bank + 0.02;
-            let u1 = bank + across;
-            let floors = if normal == Vec3::Y {
-                0.02
-            } else {
-                (size.y / 3.0).max(1.0)
+            // Fixed metres per floor/module, derived PER FACE from that face's
+            // own extents: vertical = height/3.0 floor rows, horizontal = this
+            // face's width/module. Never a rotated box axis. Per-family Repeat
+            // textures make the wrap safe in both directions.
+            let horizontal = match normal {
+                Vec3::X | Vec3::NEG_X => size.z,
+                _ => size.x,
             };
-            uvs.extend([[u0, floors], [u0, 0.0], [u1, 0.0], [u1, floors]]);
+            let module = if *warm > 0 { 12.0 } else { 18.0 };
+            let (u1, v1) = if normal == Vec3::Y {
+                (0.99, 0.02)
+            } else {
+                ((horizontal / module).max(0.05), (size.y / 3.0).max(0.05))
+            };
+            let _ = bank;
+            uvs.extend([[0.0, v1], [0.0, 0.0], [u1, 0.0], [u1, v1]]);
             indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
         }
         // Residential proxies carry a pitched roof: the roof parameters are
@@ -864,6 +874,11 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
             1.0 - 0.95 * (floors - 1.0) / 9.0
         };
         let pitched = *warm > 0 && hash01(id ^ 0x51ED_2701) < gable_p;
+        if pitched {
+            SHIPPED_GABLES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        } else {
+            SHIPPED_FLATS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        }
         if pitched {
             let pitch = (15.0 + 30.0 * hash01(id.wrapping_mul(0x9E37_79B9))).to_radians();
             let rise = h.y.min(h.z) * pitch.tan();
@@ -2853,6 +2868,78 @@ fn ghost_aerial(world: &mut World) {
 }
 
 #[derive(Resource, Default)]
+struct FlightCaptureState {
+    stage: u8,
+    shots: u8,
+    since: f32,
+}
+
+/// FLIGHT_CAPTURE=1: stage the camera through a *moving* path at altitude so
+/// the capture proves the streamed flight layer, not the boot/staging pose.
+/// FLIGHT_PATH="x0,z0,x1,z1,y[,look_x,look_z]" in pack-local metres.
+fn flight_capture(world: &mut World) {
+    if std::env::var_os("FLIGHT_CAPTURE").is_none() || !s2_enabled() {
+        return;
+    }
+    let elapsed = world.resource::<Time>().elapsed_secs();
+    if elapsed < 8.0 {
+        return;
+    }
+    let path = std::env::var("FLIGHT_PATH")
+        .unwrap_or_else(|_| "-300,-6200,-300,-6560,150,-300,-6700".to_string());
+    let values = path
+        .split(',')
+        .filter_map(|value| value.trim().parse::<f32>().ok())
+        .collect::<Vec<_>>();
+    if values.len() < 5 {
+        return;
+    }
+    let (x0, z0, x1, z1, y) = (values[0], values[1], values[2], values[3], values[4]);
+    let (look_x, look_z) = if values.len() >= 7 {
+        (values[5], values[6])
+    } else {
+        (x1, z1)
+    };
+    let t = ((elapsed - 8.0) / 6.0).clamp(0.0, 1.0);
+    let x = x0 + (x1 - x0) * t;
+    let z = z0 + (z1 - z0) * t;
+    {
+        let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+        crate::camera_authority::stage_look_at(
+            &mut staged,
+            "flight_capture",
+            Vec3::new(STREAM_WORLD_OFFSET + x, y, z),
+            Vec3::new(STREAM_WORLD_OFFSET + look_x, y - 45.0, look_z),
+            "flight",
+        );
+    }
+    let (shots, since, stage) = {
+        let state = world.resource::<FlightCaptureState>();
+        (state.shots, state.since, state.stage)
+    };
+    let due = [9.0f32, 11.0, 13.0].get(shots as usize).copied();
+    if let Some(due) = due
+        && elapsed >= due
+        && elapsed - since > 0.5
+    {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("captures")
+            .join(format!("flight_{shots:02}.png"));
+        world
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(path));
+        let mut state = world.resource_mut::<FlightCaptureState>();
+        state.since = elapsed;
+        state.shots += 1;
+        info!("FLIGHT CAPTURE shot {shots} at ({x:.0},{z:.0}) altitude {y:.0}");
+    }
+    if shots >= 3 && elapsed > 14.5 && stage == 0 {
+        world.resource_mut::<FlightCaptureState>().stage = 1;
+        world.write_message(AppExit::Success);
+    }
+}
+
+#[derive(Resource, Default)]
 struct MurkState {
     stage: u8,
     since: f32,
@@ -3616,13 +3703,28 @@ fn s3_buildings(world: &mut World) {
                         id,
                     ));
                 } else {
-                    let (mesh, material) = {
+                    // Near proxies get their OWN baked box: the shared unit
+                    // cube carried one tint and one roof decision for the whole
+                    // district, which is why the player saw flat, identically
+                    // coloured buildings in flight even though the far merged
+                    // mesh had both.
+                    let material = {
                         let state = world.resource::<Geology>();
                         if warm {
-                            (state.box_mesh_warm.clone(), state.box_material_warm.clone())
+                            state.box_material_warm.clone()
                         } else {
-                            (state.box_mesh.clone(), state.box_material.clone())
+                            state.box_material.clone()
                         }
+                    };
+                    let mesh = {
+                        let mut meshes = world.resource_mut::<Assets<Mesh>>();
+                        meshes.add(proxy_boxes_mesh(&[(
+                            Vec3::ZERO,
+                            Vec3::new(width, height.max(2.0), depth),
+                            u8::from(warm),
+                            proxy_tint(id, spec.family),
+                            id,
+                        )]))
                     };
                     let entity = world
                         .spawn((
@@ -3632,12 +3734,7 @@ fn s3_buildings(world: &mut World) {
                                 Vec3::from_array(origin)
                                     + Vec3::X * STREAM_WORLD_OFFSET
                                     + Vec3::Y * height * 0.5,
-                            )
-                            .with_scale(Vec3::new(
-                                width,
-                                height.max(2.0),
-                                depth,
-                            )),
+                            ),
                             Name::new(format!("S3 proxy b{id}")),
                         ))
                         .id();
@@ -3700,7 +3797,9 @@ fn s3_buildings(world: &mut World) {
             shells + proxies
         );
         info!(
-            "S3 chunk {target_name}: {count} entities -> {shells} shells, {proxies} proxies ({merged} merged) in {spawn_ms:.1} ms; resident {} chunks",
+            "S3 chunk {target_name}: {count} entities -> {shells} shells, {proxies} proxies ({merged} merged); shipped roofs gables={} flats={}; {spawn_ms:.1} ms; resident {} chunks",
+            SHIPPED_GABLES.load(std::sync::atomic::Ordering::Relaxed),
+            SHIPPED_FLATS.load(std::sync::atomic::Ordering::Relaxed),
             world.resource::<Geology>().building_chunks.len() + 1
         );
         if !world.resource::<Geology>().first_chunk_reported {
