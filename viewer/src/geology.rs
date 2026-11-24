@@ -3353,6 +3353,11 @@ fn building_spec(
             | "First Hill"
             | "Pioneer Square"
             | "Pike Place"
+            // The catch-all and the eastside suburbs must obey the same height
+            // discipline: a residential neighborhood classified as "Seattle
+            // general" was slipping past the cap at commercial mid-rise heights.
+            | "Seattle general"
+            | "Eastside"
     );
     if !residential && residential_district {
         match rule.height_bias.as_str() {
@@ -3632,6 +3637,11 @@ fn s3_buildings(world: &mut World) {
                             let y =
                                 footprint_seat(&state.dem, building.centroid, &building.perimeter)
                                     + 0.03;
+                            // The proxy height is the GATED spec height, not the
+                            // raw enriched record: proxy boxes were rendering
+                            // 141 m "residential" enrichments as skyscrapers
+                            // while the shell spec was correctly two storeys.
+                            let gated_height = spec.floor_count as f32 * spec.floor_height;
                             let mut min = [f32::MAX; 2];
                             let mut max = [f32::MIN; 2];
                             for point in &building.perimeter {
@@ -3644,7 +3654,7 @@ fn s3_buildings(world: &mut World) {
                                 building.id,
                                 spec,
                                 [building.centroid[0], y, building.centroid[1]],
-                                building.height_m,
+                                gated_height,
                                 (max[0] - min[0]).max(2.0),
                                 (max[1] - min[1]).max(2.0),
                             ))
@@ -3817,19 +3827,44 @@ fn s3_buildings(world: &mut World) {
         );
         let merged = far_boxes.len();
         if !far_boxes.is_empty() {
-            let handle = world
-                .resource_mut::<Assets<Mesh>>()
-                .add(proxy_boxes_mesh(&far_boxes));
-            let material = world.resource::<Geology>().box_material.clone();
-            let entity = world
-                .spawn((
-                    Mesh3d(handle),
-                    MeshMaterial3d(material),
-                    Transform::from_xyz(STREAM_WORLD_OFFSET, 0.0, 0.0),
-                    Name::new(format!("S3 far proxies {target_name}")),
-                ))
-                .id();
-            entities.push(entity);
+            // Far layer paints itself with the three palette variants, one
+            // merged mesh per variant: vertex-colour consumption was never
+            // provable, so the merged mesh must not rely on it.
+            // Six buckets: three palette variants x two families, so the
+            // material's own texture matches every box in the mesh.
+            let mut buckets: [Vec<(Vec3, Vec3, u8, [f32; 4], u32)>; 6] =
+                Default::default();
+            for entry in far_boxes.drain(..) {
+                let index = (entry.4 % 3) as usize + 3 * entry.2 as usize;
+                buckets[index].push(entry);
+            }
+            for (index, bucket) in buckets.into_iter().enumerate() {
+                if bucket.is_empty() {
+                    continue;
+                }
+                let handle = world
+                    .resource_mut::<Assets<Mesh>>()
+                    .add(proxy_boxes_mesh(&bucket));
+                let variant = index % 3;
+                let warm = index >= 3;
+                let material = {
+                    let state = world.resource::<Geology>();
+                    if warm {
+                        state.box_materials_warm[variant].clone()
+                    } else {
+                        state.box_materials[variant].clone()
+                    }
+                };
+                let entity = world
+                    .spawn((
+                        Mesh3d(handle),
+                        MeshMaterial3d(material),
+                        Transform::from_xyz(STREAM_WORLD_OFFSET, 0.0, 0.0),
+                        Name::new(format!("S3 far proxies {target_name} v{variant}")),
+                    ))
+                    .id();
+                entities.push(entity);
+            }
         }
         let spawn_ms = spawn_started.elapsed().as_secs_f32() * 1000.0;
         assert_eq!(

@@ -2125,3 +2125,41 @@ field** yet. Per the escalation clause the proxy path ships first and `up-vector
 remains blocking; sway frames and proxy-night-temperature filed.
 
 165 tests green, clippy clean, boot clean.
+
+## Iteration 83 — what is tall, and who paints it (seattle-veil1)
+
+**Verdict: (c) render-path ungated heights, settled with counts.** The proxy spawn used the **raw enriched
+`building.height_m`** for its box height while the shell spec was correctly gated. Residential enrichments of
+100 m+ therefore rendered as proxy skyscrapers even though the pack census (gated) reported zero. Fix: proxy
+heights now come from the **gated spec** (`floor_count × floor_height`). Re-run shipped census after the fix:
+
+| district | >15 m shipped | of |
+|---|---:|---:|
+| Seattle general | 1,219 | 100,123 |
+| Ballard | 378 | 25,010 |
+| Capitol Hill | 196 | 13,910 |
+| West Seattle | 174 | 20,390 |
+| Fremont | 165 | 9,198 |
+| Queen Anne | 137 | 9,476 |
+| **total** | **2,421** | — |
+
+**Zero** of the 2,421 are residential-classified: every survivor is a four-storey commercial box (16 m), the
+gate's own limit. The pack census and the player's flight now agree on the shipped world.
+`captures/suburban_aerial.png` (Northgate, 150 m, bare config) shows the carpet of 1–2 storey pitched houses
+with no skyscrapers.
+
+**District re-keying (escalation clause used).** "Seattle general" and "Eastside" were outside the
+residential-district cap set, so their commercial heights were slipping through at mid-rise bias. Both are
+now in the residential-district set for the height gate (commercial ≤4 storeys, slenderness), which cuts the
+catch-all's tall share to 1.2 %. A full grammar rewrite is filed rather than attempted.
+
+**Far-layer tint now paints itself.** Vertex-colour consumption was never provable, so the merged far mesh is
+built as **six buckets — three palette variants × two families — one merged mesh and material each**,
+selected per building id at merge time. `captures/far_tint_aerial.png` (300 m, cruise profile) shows muted
+neighbour-to-neighbour differences on the far layer. The machine consumption test (render two tinted quads
+through the far material) was **not implemented**; the palette fallback is the shipped mechanism, so the debt
+is closed by construction rather than by test.
+
+**Standing items.** Speed lines: still no manual-flight frame. `tower-house-frame`: still blocking. Carried:
+sway frames, proxy-night-temperature, tree-sway-shader, roof-pack-bake, up-vector-pack-migration,
+proxy-material-budget. 165 tests green, clippy clean, boot clean.
