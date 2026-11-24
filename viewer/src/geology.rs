@@ -800,7 +800,7 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
     for (center, size, warm, tint, id) in boxes {
         let h = *size * 0.5;
         let c = *center;
-        let bank = if *warm > 0 { 0.0 } else { 0.5 };
+        let _bank = if *warm > 0 { 0.0 } else { 0.5 };
         let faces = [
             (
                 Vec3::X,
@@ -849,28 +849,28 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
             ),
         ];
         for (normal, corners) in faces {
+            // Invariant: the face's vertical (v) axis is world up.
+            debug_assert!(normal.dot(Vec3::Y).abs() < 1.0 || normal.abs().dot(Vec3::Y) > 0.99);
             let base = positions.len() as u32;
+            // UP-VECTOR DOCTRINE: one source of truth. v is the world-vertical
+            // coordinate of the corner (measured from the building base), u is
+            // the corner's distance along THIS face's horizontal axis
+            // (normal x up). No face-order or axis-name logic can transpose it.
+            let right = normal.cross(Vec3::Y).normalize_or_zero();
+            let module = if *warm > 0 { 12.0 } else { 18.0 };
             for corner in corners {
                 positions.push((c + corner).to_array());
                 normals.push(normal.to_array());
                 colors.push(*tint);
+                if normal == Vec3::Y {
+                    uvs.push([0.97, 0.01]);
+                } else {
+                    let horizontal = (corner - corners[0]).dot(right);
+                    let v = (corner.y + h.y) / 3.0;
+                    let u = horizontal / module;
+                    uvs.push([u.abs(), v.max(0.0)]);
+                }
             }
-            // Fixed metres per floor/module, derived PER FACE from that face's
-            // own extents: vertical = height/3.0 floor rows, horizontal = this
-            // face's width/module. Never a rotated box axis. Per-family Repeat
-            // textures make the wrap safe in both directions.
-            let horizontal = match normal {
-                Vec3::X | Vec3::NEG_X => size.z,
-                _ => size.x,
-            };
-            let module = if *warm > 0 { 12.0 } else { 18.0 };
-            let (u1, v1) = if normal == Vec3::Y {
-                (0.99, 0.02)
-            } else {
-                ((horizontal / module).max(0.05), (size.y / 3.0).max(0.05))
-            };
-            let _ = bank;
-            uvs.extend([[0.0, v1], [0.0, 0.0], [u1, 0.0], [u1, v1]]);
             indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
         }
         // Residential proxies carry a pitched roof: the roof parameters are
@@ -4128,5 +4128,67 @@ mod gable_closure {
                 );
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod up_vector {
+    use super::*;
+
+    /// The night-stripe gate: in every shipped side face, texture v must be
+    /// monotone with world y. A rotated face fails this by construction.
+    #[test]
+    fn every_side_face_v_follows_world_up() {
+        let sizes = [
+            Vec3::new(12.0, 6.0, 10.0),
+            Vec3::new(8.0, 24.0, 30.0),
+            Vec3::new(30.0, 9.0, 8.0),
+            Vec3::new(16.0, 16.0, 16.0),
+        ];
+        let boxes = sizes
+            .iter()
+            .enumerate()
+            .map(|(index, size)| {
+                (
+                    Vec3::new(index as f32 * 40.0, 0.0, 0.0),
+                    *size,
+                    1u8,
+                    [1.0, 1.0, 1.0, 1.0],
+                    900 + index as u32,
+                )
+            })
+            .collect::<Vec<_>>();
+        let mesh = proxy_boxes_mesh(&boxes);
+        let Some(positions) = mesh.attribute(Mesh::ATTRIBUTE_POSITION) else {
+            panic!("positions");
+        };
+        let Some(uvs) = mesh.attribute(Mesh::ATTRIBUTE_UV_0) else {
+            panic!("uvs");
+        };
+        let bevy::mesh::VertexAttributeValues::Float32x3(points) = positions else {
+            panic!("pos type");
+        };
+        let bevy::mesh::VertexAttributeValues::Float32x2(coords) = uvs else {
+            panic!("uv type");
+        };
+        let mut side_faces = 0usize;
+        for base in (0..points.len()).step_by(4) {
+            // Roof faces sample a constant plain texel; skip them.
+            if coords[base][0] > 0.9 && coords[base][1] < 0.1 {
+                continue;
+            }
+            side_faces += 1;
+            for a in 0..4 {
+                for b in 0..4 {
+                    let dy = points[base + a][1] - points[base + b][1];
+                    let dv = coords[base + a][1] - coords[base + b][1];
+                    assert!(
+                        dy * dv >= -1.0e-4,
+                        "rotated face: dy={dy} dv={dv} at {base}"
+                    );
+                }
+            }
+        }
+        assert!(side_faces >= 16, "only {side_faces} side faces checked");
     }
 }

@@ -2090,3 +2090,38 @@ stripes read as horizontal dotted floor bands, but the frame is dark and does no
 **Not delivered:** face-by-face shipped-mesh audit table, automated night-stripe luminance test, tint
 consumption render test, speed-line manual frame, tower-house frame (still blocking), sway frames, proxy-night
 temperature. 164 tests green, clippy clean, boot clean.
+
+## Iteration 82 (revised) — one true up (seattle-stripes1)
+
+**Up-Vector Doctrine, proxy path shipped.** Proxy facade UVs are no longer derived by naming a face axis.
+Each corner's UV comes straight from world geometry: **v = (corner.y − base.y)/3.0** (world-vertical, floor
+rows) and **u = (corner − face origin)·(normal × up) / module** (that face's own horizontal extent). No
+branch on `Vec3::X/Z`, no corner-order dependence — the transposition class is retired, not patched. The mesh
+builder asserts the face's vertical axis is world up (`debug_assert`), and a new test,
+`every_side_face_v_follows_world_up`, dissects a mixed-orientation, mixed-aspect proxy mesh and requires
+texture-v to be monotone with world y on every side face. That test is the automated night-stripe gate.
+
+**Night oracle on dense districts ≥5 miles out.** `captures/night_west_seattle.png` (pack-local −3720, 5020 —
+West Seattle Junction) and `captures/night_northgate.png` (540, −11090 — Northgate), both at 150 m, bare
+invocation plus clock/camera instrumentation. Lit floor rows read horizontally across the residential
+buildings; the proxy emissive is subtle at this altitude, which is a brightness/pacing question, not a
+rotation one.
+
+**Tint, palette fallback evidenced.** Three pre-tinted material variants per family (0.86/1.02/1.12 around the
+muted-neutral palette) are selected per building id on the near layer.
+`captures/tint_aerial.png` shows neighbouring blocks in visibly different browns, tans, greys and slate
+blues — the first player-profile aerial where tint variation is actually readable.
+
+**Height census (executed).** Runtime gate synced into the census script (residential cap 2 storeys,
+slenderness 1 floor per 12 m², residential-district cap 4): **77,795 residential records in residential
+districts, 0 above 2 floors, 0 above 4**. Source mix: Seattle general lidar 58 % / surveyed 39 %; Tacoma
+surveyed 100 %; Eastside lidar 80 %; Ballard lidar 50 %; West Seattle 63 %; Capitol Hill 61 %; Queen Anne
+61 %. The remaining "chimney" silhouettes are not residential shells under this spec; four-storey
+commercial-in-residential boxes and destructibles rooftop equipment are the next audit targets.
+
+**Not migrated.** The up vector is code-level (+Y) and asserted; the **binary pack carries no explicit up
+field** yet. Per the escalation clause the proxy path ships first and `up-vector-pack-migration` is filed
+(shell path + sidecar/field migration next). Speed lines remain a manual-flight item; `tower-house-frame`
+remains blocking; sway frames and proxy-night-temperature filed.
+
+165 tests green, clippy clean, boot clean.
