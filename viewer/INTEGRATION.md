@@ -2058,3 +2058,35 @@ awaiting the player's sighting coordinates.
 building is cut by the HUD and does not form a clean comparison — the debt **remains blocking**.
 
 Gauntlet and boot green; 164 tests pass (two new orientation/closure tests).
+
+## Iteration 82 — stripes level (seattle-stripes1)
+
+**The rotation was the night atlas, not the UV derivation.** The proxy night texture painted full-height
+columns of light, so with `v = height/3` repeating every tile produced **vertical** light columns — read by
+the player as "rotated 90°" on roughly half the facades (the pattern is near-symmetric, so orientation looked
+arbitrary). The night atlas now paints **one horizontal band per tile** (y 0.30–0.72) with lit segments
+across the columns; with the floor repeat, every lit stripe on every face is **horizontal**. Day art already
+used a single horizontal window row, which is why day looked right while night did not.
+
+**Tint — palette fallback auto-triggered.** The merged buffer carries 61/64 distinct tint values but the
+player still sees one tan, and the consumption test was not producible in this round's budget. Per the
+standing rule the fallback was taken: **three pre-tinted material variants per family** (`0.86/0.83/0.78`,
+`1.02/1.00/0.96`, `1.12/1.06/0.96`) sharing the same day/night textures, selected per building id for the
+near-proxy layer (the layer a flight sees). Six new proxy materials replace the two, budget absorbed under
+`proxy-material-budget`.
+
+**Height census (owed twice, run).** Source mix by district (top): Seattle general lidar 58 % / surveyed 39 %;
+Tacoma surveyed 100 %; Eastside lidar 80 %; Ballard lidar 50 % / surveyed 47 %; West Seattle lidar 63 %;
+Capitol Hill lidar 61 %; Queen Anne 61 %; SODO surveyed 51 % / lidar 44 %. With the runtime gate synced into
+the census (residential cap **2 storeys**, slenderness 1 floor/12 m², residential-district cap 4):
+**77,795 residential records in residential districts, 0 above 2 floors, 0 above 4**. The chimneys are not
+residential shells under the current spec; the remaining candidates are four-storey commercial-in-residential
+boxes and the destructibles **rooftop equipment** silhouettes, which is the next audit target.
+
+**Night capture:** `captures/night_stripes.png` (bare config + clock/camera instrumentation). At 150 m the
+stripes read as horizontal dotted floor bands, but the frame is dark and does not yet meet the player's
+"screenshot everywhere" bar — the animation/emissive strength may need a pass.
+
+**Not delivered:** face-by-face shipped-mesh audit table, automated night-stripe luminance test, tint
+consumption render test, speed-line manual frame, tower-house frame (still blocking), sway frames, proxy-night
+temperature. 164 tests green, clippy clean, boot clean.

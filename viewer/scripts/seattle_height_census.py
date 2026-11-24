@@ -165,7 +165,7 @@ def governor(record: dict, rule: dict) -> dict:
             floor_count = 1
             demoted = True
     if residential:
-        floor_count = min(floor_count, 3)
+        floor_count = min(floor_count, 2)
     if not LEGACY and rule.get("_district") in RESIDENTIAL_DISTRICTS:
         area = max(record.get("area", 1.0), 1.0)
         floor_count = min(floor_count, max(1, int(area // 12)), 4)

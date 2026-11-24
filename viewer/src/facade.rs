@@ -773,42 +773,37 @@ fn proxy_windows_texture(warm: bool) -> Image {
     let size = SASH_TEX as usize;
     let plain_from = (size as f32 * 0.95) as usize;
     let mut data = vec![0u8; size * size * 4];
-    if warm {
-        let columns = 9usize;
-        let cell_w = size / columns;
-        for y in 0..size {
-            for x in 0..plain_from {
-                let column = x / cell_w;
-                let in_cell = x % cell_w;
+    // ONE horizontal band per tile. With v = height/3 repeating, every floor is
+    // a HORIZONTAL stripe on every face — the player's night oracle.
+    let band_start = (size as f32 * 0.30) as usize;
+    let band_end = (size as f32 * 0.72) as usize;
+    let columns = if warm { 9usize } else { 6 };
+    let cell_w = (plain_from / columns).max(1);
+    for y in band_start..band_end {
+        for x in 0..plain_from {
+            let column = x / cell_w;
+            let in_cell = x % cell_w;
+            let lit = if warm {
                 let cluster = hash01(column as u32 / 3);
-                let roll = hash01((column as u32).wrapping_mul(0x27D4_EB2F) ^ (y as u32 / 11));
-                if cluster > 0.30 && roll < 0.62 && in_cell > cell_w / 3 {
-                    let temperature = 0.58 + 0.14 * hash01(column as u32);
-                    let index = (y * size + x) * 4;
-                    data[index] = to_byte(1.0 * temperature);
-                    data[index + 1] = to_byte(0.66 * temperature);
-                    data[index + 2] = to_byte(0.38 * temperature);
-                    data[index + 3] = 255;
-                }
-            }
-        }
-    } else {
-        let columns = 6usize;
-        let cell_w = size / columns;
-        for y in 0..size {
-            for x in 0..plain_from {
-                let column = x / cell_w;
-                let in_cell = x % cell_w;
+                let roll = hash01((column as u32).wrapping_mul(0x27D4_EB2F));
+                cluster > 0.30 && roll < 0.62 && in_cell > cell_w / 3
+            } else {
                 let on = hash01((column as u32).wrapping_mul(0x9E37_79B9) ^ 0x51ED) < 0.55;
-                if on && in_cell > cell_w / 4 && in_cell < cell_w * 3 / 4 {
-                    let warm = 0.70 + 0.30 * hash01(column as u32);
-                    let index = (y * size + x) * 4;
-                    data[index] = to_byte(warm);
-                    data[index + 1] = to_byte(warm * 0.86);
-                    data[index + 2] = to_byte(warm * 0.62);
-                    data[index + 3] = 255;
-                }
+                on && in_cell > cell_w / 4 && in_cell < cell_w * 3 / 4
+            };
+            if !lit {
+                continue;
             }
+            let temperature = if warm {
+                0.58 + 0.14 * hash01(column as u32)
+            } else {
+                0.70 + 0.30 * hash01(column as u32)
+            };
+            let index = (y * size + x) * 4;
+            data[index] = to_byte(temperature);
+            data[index + 1] = to_byte(temperature * if warm { 0.66 } else { 0.86 });
+            data[index + 2] = to_byte(temperature * if warm { 0.38 } else { 0.62 });
+            data[index + 3] = 255;
         }
     }
     let mut image = Image::new(
@@ -830,11 +825,12 @@ fn proxy_material(
     images: &mut Assets<Image>,
     materials: &mut Assets<StandardMaterial>,
     warm: bool,
+    tint: [f32; 3],
 ) -> Handle<StandardMaterial> {
     let day = images.add(proxy_day_texture(warm));
     let night = images.add(proxy_windows_texture(warm));
     materials.add(StandardMaterial {
-        base_color: Color::WHITE,
+        base_color: Color::srgb(tint[0], tint[1], tint[2]),
         base_color_texture: Some(day),
         emissive_texture: Some(night),
         emissive: LinearRgba::BLACK,
@@ -856,10 +852,19 @@ fn install_proxy_windows(
     let Some(mut geology) = geology else {
         return;
     };
-    let cool = proxy_material(&mut images, &mut materials, false);
-    let warm = proxy_material(&mut images, &mut materials, true);
-    geology.box_material = cool;
-    geology.box_material_warm = warm;
+    // Palette fallback: three pre-tinted variants per family so neighbouring
+    // near buildings differ even if COLOR_0 is not consumed by the pipeline.
+    let palettes = [[0.86, 0.83, 0.78], [1.02, 1.00, 0.96], [1.12, 1.06, 0.96]];
+    let mut cool = [Handle::default(), Handle::default(), Handle::default()];
+    let mut warm = [Handle::default(), Handle::default(), Handle::default()];
+    for (index, tint) in palettes.iter().enumerate() {
+        cool[index] = proxy_material(&mut images, &mut materials, false, *tint);
+        warm[index] = proxy_material(&mut images, &mut materials, true, *tint);
+    }
+    geology.box_material = cool[1].clone();
+    geology.box_material_warm = warm[1].clone();
+    geology.box_materials = cool;
+    geology.box_materials_warm = warm;
 }
 
 fn proxy_night_windows(

@@ -262,6 +262,11 @@ pub struct Geology {
     pending_shells: std::collections::VecDeque<PendingShell>,
     pub box_material: Handle<StandardMaterial>,
     pub box_material_warm: Handle<StandardMaterial>,
+    /// Three pre-tinted material variants per family for the near layer: the
+    /// palette fallback, because a merged/far tint in COLOR_0 has never proven
+    /// visible to the player.
+    pub box_materials: [Handle<StandardMaterial>; 3],
+    pub box_materials_warm: [Handle<StandardMaterial>; 3],
     pub box_mesh: Handle<Mesh>,
     pub box_mesh_warm: Handle<Mesh>,
     pub targets: Vec<(u32, Vec3, f32)>,
@@ -481,7 +486,13 @@ fn setup_geology(
         pinned_chunks: std::collections::HashSet::new(),
         pending_shells: std::collections::VecDeque::new(),
         box_material: box_material.clone(),
-        box_material_warm: box_material,
+        box_material_warm: box_material.clone(),
+        box_materials: [
+            box_material.clone(),
+            box_material.clone(),
+            box_material.clone(),
+        ],
+        box_materials_warm: [box_material.clone(), box_material.clone(), box_material],
         box_mesh,
         box_mesh_warm,
         targets: Vec::new(),
@@ -3740,11 +3751,12 @@ fn s3_buildings(world: &mut World) {
                     // mesh had both.
                     let material = {
                         let state = world.resource::<Geology>();
-                        if warm {
-                            state.box_material_warm.clone()
+                        let variants = if warm {
+                            &state.box_materials_warm
                         } else {
-                            state.box_material.clone()
-                        }
+                            &state.box_materials
+                        };
+                        variants[(id % 3) as usize].clone()
                     };
                     let mesh = {
                         let mut meshes = world.resource_mut::<Assets<Mesh>>();
