@@ -1636,3 +1636,74 @@ re-enrichment debt.
 no panic and no hang; `JOURNAL STATE entries=0 structures=0 checksum=cbf29ce484222325` (empty FNV offset)
 on both; the damage soak leaves `entries=1, structures=1, checksum=2de187e59a00030b` with the chip attributed
 to `player` and no PowerLoss.
+
+## Iteration 72 — car city: district-calibrated street population (seattle-walkers1)
+
+**Pedestrians, rebuilt on Seattle priors.** `pedestrians.rs` no longer decays uniformly from one epicentre.
+The field is `max(core, parks, plazas, sprinkle)`:
+
+- **Core + waterfront**: `CORE_GAIN 0.35` over a compact window (full inside 800 m, zero past 1.7 km) on the
+  existing 8:30/17:00 pace — roughly half the Manhattan peak, per the player's lived comparison.
+- **Parks** (the real Seattle walk): 600 hotspots derived at runtime from the tree dataset's **park regime**
+  (85,844 park-regime trees; cells of ≥6 trees, 120 m), `PARK_GAIN 1.4`. Walkers **stroll park loops** (60 %
+  of the park crowd) and the rest walk the nearest frontage streets. Gas Works' cell sits at water level, so
+  the park capture uses the Green Lake frontage cell instead (logged).
+- **Plazas**: Pike Place and the Westlake seam carry a loop crowd (`PLAZA_GAIN 2.0`), which is what keeps the
+  `--pedestrians` plaza assert meaningful at a genuine site.
+- **Everything else**: `SPRINKLE 0.02` (≈0.26 walkers/chunk) — oddities, not fauna. Residential Wallingford
+  audits at **exp=0/act=0** on the street model, which is correct and is not tuned upward.
+
+The density audit prints two lines per capture so park crowds cannot masquerade as residential traffic:
+`PED CROWDS` (park/plaza-anchored chunks) and `PED DENSITY` (street model). Example at the park pose:
+`PED CROWDS … Fremont exp=129 act=93 | Wallingford exp=37 act=37`; `PED DENSITY … Ballard exp=1 act=0 |
+Wallingford exp=0 act=0`.
+
+**Traffic, rebalanced toward the car.** Fleet cap **300 → 640**, arterial weighting (kind 1|2 ×1.7,
+5|6 ×1.4), per-street share cap 4 → 8, per-chunk block cap 24 → 48, spawn budget 24 → 48/frame, and a
+6 s capture settle. AM Westlake, expected/actual per district, legacy → new:
+
+| district | legacy (cap 300) | new (cap 640) |
+|---|---:|---:|
+| Capitol Hill | 72 / 72 | 388 / **196** |
+| First Hill | 96 / 96 | 196 / **144** |
+| Downtown | 24 / 0 | 192 / **144** |
+| Pioneer Square | 24 / 24 | 48 / 48 |
+| Pike Place | 24 / 24 | 48 / 48 |
+| total actual | **216** | **532** |
+
+Midday Ballard: `exp=1252 act=480` (global cap). **Seat law corollary codified**: `road_grade()` samples the
+ribbon **centerline**; `vehicle_pose` seats on it, not on the DEM under the lane offset (a curb, retaining
+wall or hillside face lifted cars by metres). `tests/traffic.rs` now asserts the centerline seat, and a
+synthetic spike under the lane proves the car does not ride it.
+
+**Scale oracle closes.** `SCALE_ORACLE=1` now targets a walker first (and prefers a walker with a sedan
+within 60 m). At the Pike Place morning pose: **walkers=74, nearest vehicle 47.3 m**; `captures/scale_oracle.png`
+shows the walker row on the street. The park frontage frame (`captures/pedestrians_park_frontage.png`)
+carries two walkers and a sedan beside the buildings.
+
+**Proxy night character.** The night atlas is split into two banks selected by proxy family in the merged
+mesh: residential/timber proxies sample a **warm incandescent scatter** (14 × 18 cells, clustered, gaps at
+parks/ravines, ~2700-3000 K) and steel/masonry keep the **regular grid**. Day atlas split the same way
+(residential cladding + house-scale windows vs commercial grid); the roof face samples a plain strip in
+each bank. Evidence: `captures/night_proxy_banks.png`, `captures/night_residential_scatter.png`.
+
+**Steel day skin closes.** `captures/facade_steel_day.png` — a sunlit SODO steel-frame building (concrete
+panel joints, punched windows), camera south of the face at 12:00.
+
+**Verification.** fmt; clippy `-D warnings`; **161 tests** green (new road-grade seat test); `--seattle`
+boots clean. Captures committed: `pedestrians_am_westlake`, `pedestrians_pike_place` (36 in view),
+`pedestrians_park_frontage`, `pedestrians_sprinkle_wallingford` (0 = correct), `scale_oracle`,
+`traffic_am_westlake`…`traffic_capitol_ascent`, `night_proxy_banks`, `night_residential_scatter`,
+`facade_steel_day`.
+
+**Named debts.** `park-paths`: park walkers follow a synthetic loop because the pack carries no park path
+network; frontage streets are the honest analogue until paths are emitted. `proxy-tree-occlusion` (deferred
+per the escalation clause): proxy light points do not yet mute under known canopy. `capture-sun-override`:
+the pedestrian/traffic capture harness still aims the directional light along the view (the storefront
+override was removed last round; these two remain).
+
+## Someday list — authorized omissions
+
+- **homeless encampment representation** — requires locational accuracy and modeling we don't authorize;
+  omission is deliberate, not oversight. No agent session should improvise encampment scatter as scenery
+  texture.

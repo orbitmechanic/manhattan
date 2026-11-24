@@ -117,14 +117,20 @@ fn walkers_keep_to_the_sidewalk_band() {
 #[test]
 fn density_math_follows_the_heartbeat() {
     let fields = CityFields::seattle();
+    let parks = manhattan_viewer::pedestrians::ParkField::default();
     let seam = [-138.4, -614.3];
     let plaza = [-518.6, -399.4];
     let south = [3000.0, 4000.0];
     assert!(fields.pace(8.5) > fields.pace(3.0));
-    assert!(expected_walkers(&fields, 8.5, seam) > expected_walkers(&fields, 3.0, seam));
-    assert!(expected_walkers(&fields, 8.5, plaza) > expected_walkers(&fields, 8.5, south) * 0.5);
-    assert!(expected_walkers(&fields, 3.0, south) < 1.0);
-    assert!(expected_walkers(&fields, 8.5, seam) <= 26.0 * 0.5 * 2.5);
+    assert!(
+        expected_walkers(&fields, &parks, 8.5, seam) > expected_walkers(&fields, &parks, 3.0, seam)
+    );
+    assert!(
+        expected_walkers(&fields, &parks, 8.5, plaza)
+            > expected_walkers(&fields, &parks, 8.5, south) * 0.5
+    );
+    assert!(expected_walkers(&fields, &parks, 3.0, south) < 1.0);
+    assert!(expected_walkers(&fields, &parks, 8.5, seam) <= 30.0);
 }
 
 #[test]

@@ -755,6 +755,8 @@ fn spawn_camera(mut commands: Commands, args: Res<Args>) {
         "EVIDENCE_CAPTURE",
         "MINIMAP_CAPTURE",
         "STOREFRONT_CAPTURE",
+        "PEDESTRIAN_CAPTURE",
+        "TRAFFIC_CAPTURE",
         "MURK_CAPTURE",
         "GHOST_AERIAL",
     ]

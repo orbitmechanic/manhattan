@@ -79,11 +79,13 @@ fn steep_street() -> (Dem, VehicleState) {
 fn vehicles_are_tangent_to_the_grade() {
     let (dem, state) = steep_street();
     let (position, rotation) = vehicle_pose(&state, &dem);
-    let local_x = position.x - manhattan_viewer::citypack::STREAM_WORLD_OFFSET;
-    let ground = dem.height(local_x, position.z);
+    // Seat law, road-grade corollary: the ribbon centerline owns the vertical,
+    // not the DEM under the lane offset (curb, wall or hillside face).
+    let (centre, _) = state.sample(state.s);
+    let ground = dem.height(centre[0], centre[1]);
     assert!(
         (position.y - (ground + 0.35)).abs() < 0.05,
-        "belly float: y {} ground {}",
+        "belly float: y {} centreline ground {}",
         position.y,
         ground
     );

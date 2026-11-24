@@ -1,7 +1,9 @@
 //! Seattle pedestrians: walkers on derived sidewalk bands.
 //!
-//! Density is the committed pedestrian field (ad density × daily pace) from
-//! CityFields::seattle(), audited per capture as expected vs actual. Walkers
+//! Seattle-realistic density: a compact downtown core at roughly half the
+//! Manhattan peak, park hotspots derived from the park-regime trees (parks are
+//! where Seattle actually walks), and a light sprinkle everywhere else.
+//! Audited per capture as expected vs actual per district. Walkers
 //! are zero-structure props with one shared mesh and tint variation; they
 //! follow draped street polylines on a 2.2 m band beside the lane, pause and
 //! resume, and pitch with the grade like the vehicles.
@@ -26,10 +28,214 @@ const MAX_ACTIVE: usize = 500;
 const SPAWN_PER_FRAME: usize = 32;
 const BASE_PER_CHUNK: f32 = 26.0;
 const BAND: f32 = 2.2;
-const HOTSPOTS: [([f32; 2], f32); 2] = [
-    ([-518.6, -399.4], 220.0), // Pike Place plaza
-    ([-138.4, -614.3], 200.0), // Westlake seam
-];
+
+fn hash01(mut value: u32) -> f32 {
+    value ^= value >> 16;
+    value = value.wrapping_mul(0x7FEB_352D);
+    value ^= value >> 15;
+    value = value.wrapping_mul(0x846C_A68F);
+    value ^= value >> 16;
+    (value & 0x00FF_FFFF) as f32 / 16_777_216.0
+}
+/// Downtown core window: full strength inside 800 m, zero past 1.7 km, half
+/// the Manhattan peak per the player's lived comparison.
+const CORE_INNER_M: f32 = 800.0;
+const CORE_OUTER_M: f32 = 1_700.0;
+const CORE_GAIN: f32 = 0.35;
+/// Parks are the real Seattle walk. One park cell should comfortably clear a
+/// plaza crowd, so the park term carries this gain over the base.
+const PARK_GAIN: f32 = 1.4;
+/// The two genuine downtown plaza crowds: Pike Place and the Westlake seam.
+/// These are pedestrians, not scenery, and they are the only downtown points
+/// that should ever read as crowded.
+const PLAZAS: [([f32; 2], f32); 2] = [([-518.6, -399.4], 120.0), ([-138.4, -614.3], 90.0)];
+const PLAZA_GAIN: f32 = 2.0;
+/// Everything else: oddities, not fauna. This is correct at Seattle scale.
+const SPRINKLE: f32 = 0.02;
+
+/// One derived park hotspot: a dense cell of park-regime trees, in pack-local
+/// metres, with 0..1 strength from its tree count.
+#[derive(Clone, Copy, Debug)]
+pub struct ParkSite {
+    pub x: f32,
+    pub z: f32,
+    pub strength: f32,
+}
+
+/// Park walker field, built once from the tree dataset's park regime. The
+/// polygons themselves live only in the offline tree build; the regime flag is
+/// the runtime's evidence that a tree stands in a park.
+#[derive(Resource, Default, Clone)]
+pub struct ParkField {
+    sites: Vec<ParkSite>,
+    grid: HashMap<(i32, i32), Vec<u32>>,
+}
+
+const PARK_GRID_M: f32 = 400.0;
+const PARK_RADIUS_M: f32 = 170.0;
+const PARK_CELL_M: f32 = 120.0;
+
+impl ParkField {
+    pub fn sites(&self) -> usize {
+        self.sites.len()
+    }
+
+    /// Strength at a point: the strongest park cell within its radius.
+    pub fn density(&self, x: f32, z: f32) -> f32 {
+        let gx = (x / PARK_GRID_M).floor() as i32;
+        let gz = (z / PARK_GRID_M).floor() as i32;
+        let mut best = 0.0f32;
+        for dx in -1..=1 {
+            for dz in -1..=1 {
+                let Some(indices) = self.grid.get(&(gx + dx, gz + dz)) else {
+                    continue;
+                };
+                for index in indices {
+                    let site = self.sites[*index as usize];
+                    let d = ((site.x - x).powi(2) + (site.z - z).powi(2)).sqrt();
+                    if d > PARK_RADIUS_M * 2.0 {
+                        continue;
+                    }
+                    let falloff = (-(d / PARK_RADIUS_M).powi(2)).exp();
+                    best = best.max(site.strength * falloff);
+                }
+            }
+        }
+        best
+    }
+
+    /// Strongest site whose centre lies inside a partition's bounds.
+    pub fn best_in_bounds(&self, bounds: [f32; 4]) -> Option<ParkSite> {
+        self.sites
+            .iter()
+            .filter(|site| {
+                site.x >= bounds[0]
+                    && site.x <= bounds[2]
+                    && site.z >= bounds[1]
+                    && site.z <= bounds[3]
+            })
+            .max_by(|a, b| a.strength.total_cmp(&b.strength))
+            .copied()
+    }
+
+    /// Strongest site on dry, elevated ground (park lawns, not the shoreline
+    /// strip that sits at water level).
+    pub fn best_dry(&self, dem: &crate::geology::Dem, min_height: f32) -> Option<ParkSite> {
+        self.sites
+            .iter()
+            .filter(|site| dem.height(site.x, site.z) >= min_height)
+            .max_by(|a, b| a.strength.total_cmp(&b.strength))
+            .copied()
+    }
+
+    /// Nearest site inside `radius`, for camera anchoring.
+    pub fn nearest(&self, x: f32, z: f32, radius: f32) -> Option<ParkSite> {
+        self.sites
+            .iter()
+            .map(|site| {
+                let d = ((site.x - x).powi(2) + (site.z - z).powi(2)).sqrt();
+                (d, *site)
+            })
+            .filter(|(d, _)| *d <= radius)
+            .min_by(|a, b| a.0.total_cmp(&b.0))
+            .map(|(_, site)| site)
+    }
+}
+
+fn build_park_field(
+    trees: &crate::trees::TreeDataset,
+    pack: &crate::citypack::CityPack,
+) -> ParkField {
+    let mut cells: HashMap<(i32, i32), (u32, f32, f32)> = HashMap::new();
+    for index in 0..pack.nodes.len() {
+        let node = &pack.nodes[index];
+        if node.level != crate::citypack::LEVEL_NEIGHBORHOOD {
+            continue;
+        }
+        // Seattle parks only: Tacoma and Bellevue are deliberately empty.
+        let city = pack
+            .nodes
+            .get(node.parent as usize)
+            .map(|parent| parent.name.as_str())
+            .unwrap_or("");
+        if city != "Seattle" {
+            continue;
+        }
+        let count = trees.count(index);
+        if count == 0 {
+            continue;
+        }
+        for tree in trees.read_chunk(index, node.center) {
+            if tree.regime != 1 {
+                continue;
+            }
+            let key = (
+                (tree.x / PARK_CELL_M).floor() as i32,
+                (tree.z / PARK_CELL_M).floor() as i32,
+            );
+            let entry = cells.entry(key).or_insert((0, 0.0, 0.0));
+            entry.0 += 1;
+            entry.1 += tree.x;
+            entry.2 += tree.z;
+        }
+    }
+    let mut sites = cells
+        .into_iter()
+        .filter(|(_, (count, _, _))| *count >= 6)
+        .map(|(_, (count, sx, sz))| ParkSite {
+            x: sx / count as f32,
+            z: sz / count as f32,
+            strength: (count as f32 / 40.0).clamp(0.35, 1.0),
+        })
+        .collect::<Vec<_>>();
+    sites.sort_by(|a, b| b.strength.total_cmp(&a.strength));
+    sites.truncate(600);
+    let mut grid: HashMap<(i32, i32), Vec<u32>> = HashMap::new();
+    for (index, site) in sites.iter().enumerate() {
+        grid.entry((
+            (site.x / PARK_GRID_M).floor() as i32,
+            (site.z / PARK_GRID_M).floor() as i32,
+        ))
+        .or_default()
+        .push(index as u32);
+    }
+    ParkField { sites, grid }
+}
+
+/// Park activity: people walk parks at midday and into the evening, not at the
+/// 8:30 commute peak.
+pub fn park_pace(hour: f32) -> f32 {
+    let hour = hour.rem_euclid(24.0);
+    let midday = (-((hour - 13.0) / 3.0).powi(2)).exp();
+    let evening = (-((hour - 18.5) / 2.0).powi(2)).exp() * 0.55;
+    0.08 + 0.92 * midday.max(evening)
+}
+
+/// Seattle walker density: core + parks + sprinkle, never summed.
+pub fn seattle_walker_density(
+    fields: &CityFields,
+    parks: &ParkField,
+    hour: f32,
+    x: f32,
+    z: f32,
+) -> f32 {
+    let d = Vec2::new(x, z).distance(crate::city_rhythm::SEATTLE_EPICENTER);
+    let core = 1.0 - ((d - CORE_INNER_M) / (CORE_OUTER_M - CORE_INNER_M)).clamp(0.0, 1.0);
+    let downtown = CORE_GAIN * core * fields.ad_density(x, z) * fields.pace(hour);
+    let park = parks.density(x, z) * park_pace(hour) * PARK_GAIN;
+    let plaza = PLAZAS
+        .iter()
+        .map(|(anchor, radius)| {
+            let d = ((x - anchor[0]).powi(2) + (z - anchor[1]).powi(2)).sqrt();
+            if d > *radius * 2.5 {
+                return 0.0;
+            }
+            (-(d / radius).powi(2)).exp() * PLAZA_GAIN * fields.pace(hour)
+        })
+        .fold(0.0_f32, f32::max);
+    let sprinkle = SPRINKLE * (0.35 + 0.65 * fields.pace(hour));
+    downtown.max(park).max(plaza).max(sprinkle)
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct WalkerState {
@@ -41,6 +247,9 @@ pub struct WalkerState {
     pub direction: f32,
     pub pause: f32,
     pub tint: u8,
+    /// Sideways offset from the polyline: the sidewalk band for street
+    /// walkers, zero for park strollers who walk the loop itself.
+    pub offset_m: f32,
 }
 
 impl WalkerState {
@@ -97,7 +306,41 @@ pub fn walker_on_street(
         direction,
         pause: 0.0,
         tint: (seed % 3) as u8,
+        offset_m: 3.2 + BAND,
     })
+}
+
+/// Park strollers: a seeded loop around a park cell. Parks are the one place
+/// Seattle genuinely fills with feet, and they have no street polylines, so
+/// the loop is the path.
+pub fn walker_in_park(site: ParkSite, seed: u32) -> WalkerState {
+    let radius = 22.0 + (seed % 17) as f32;
+    let phase = hash01(seed ^ 0xA53C_9E11) * std::f32::consts::TAU;
+    let mut points = [([0.0_f32, 0.0_f32], 0.0_f32); 8];
+    let mut length = 0.0;
+    for index in 0..8 {
+        let angle = phase + index as f32 / 8.0 * std::f32::consts::TAU;
+        // Slightly elliptical and off-centre: a stroll, not a racetrack.
+        let wobble = 1.0 + 0.18 * (seed.wrapping_mul(index as u32 + 3) % 7) as f32 / 7.0;
+        let x = site.x + angle.cos() * radius * wobble;
+        let z = site.z + angle.sin() * radius * 0.82;
+        if index > 0 {
+            let (prev, _) = points[index - 1];
+            length += ((x - prev[0]).powi(2) + (z - prev[1]).powi(2)).sqrt();
+        }
+        points[index] = ([x, z], length);
+    }
+    WalkerState {
+        points,
+        count: 8,
+        length,
+        s: (seed as f32 / 73.0) % length,
+        speed: 0.9 + (seed % 5) as f32 * 0.08,
+        direction: if seed & 1 == 0 { 1.0 } else { -1.0 },
+        pause: 0.0,
+        tint: (seed % 3) as u8,
+        offset_m: 0.0,
+    }
 }
 
 /// Pose on the sidewalk band: offset beside the lane, y from the DEM, pitch
@@ -107,8 +350,8 @@ pub fn walker_pose(state: &WalkerState, dem: &crate::geology::Dem) -> (Vec3, Qua
     let sign = state.direction.signum();
     let nx = -dir[1] * sign;
     let nz = dir[0] * sign;
-    let x = pos[0] + nx * (3.2 + BAND);
-    let z = pos[1] + nz * (3.2 + BAND);
+    let x = pos[0] + nx * state.offset_m;
+    let z = pos[1] + nz * state.offset_m;
     let y = dem.height(x, z) + 0.9;
     let dx = dir[0] * sign;
     let dz = dir[1] * sign;
@@ -123,18 +366,16 @@ pub fn walker_pose(state: &WalkerState, dem: &crate::geology::Dem) -> (Vec3, Qua
     )
 }
 
-/// Expected walkers for a neighborhood: pedestrian field at its centre ×
-/// hotspot boost × base, halved per the performance directive.
-pub fn expected_walkers(fields: &CityFields, hour: f32, center: [f32; 2]) -> f32 {
-    let density = fields.pedestrian_density(center[0], center[1], hour);
-    let boost = HOTSPOTS
-        .iter()
-        .map(|(anchor, radius)| {
-            let d = ((center[0] - anchor[0]).powi(2) + (center[1] - anchor[1]).powi(2)).sqrt();
-            if d < *radius { 2.5 } else { 1.0 }
-        })
-        .fold(1.0_f32, f32::max);
-    (density * BASE_PER_CHUNK * boost * 0.5).max(0.0)
+/// Expected walkers for a neighborhood at an anchor (the chunk centre, or a
+/// park site inside the chunk when the park wins).
+pub fn expected_walkers(
+    fields: &CityFields,
+    parks: &ParkField,
+    hour: f32,
+    anchor: [f32; 2],
+) -> f32 {
+    let density = seattle_walker_density(fields, parks, hour, anchor[0], anchor[1]);
+    (density * BASE_PER_CHUNK * 0.5).max(0.0)
 }
 
 #[derive(Resource)]
@@ -150,6 +391,13 @@ pub struct Pedestrians {
     pending: Vec<usize>,
     pub active: usize,
     pub expected: f32,
+    /// Expected walkers per loaded neighborhood, for the per-district capture
+    /// audit (expected vs actual).
+    pub expected_by_chunk: HashMap<usize, f32>,
+    /// Chunks whose walkers are anchored to a park/plaza crowd rather than
+    /// the street sprinkle. Audited separately: a park's 37 walkers must not
+    /// read as 37 residential walkers.
+    pub park_chunks: std::collections::HashSet<usize>,
     pub enabled: bool,
 }
 
@@ -158,6 +406,8 @@ pub struct PedestriansPlugin;
 impl Plugin for PedestriansPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<PedCaptureState>()
+            .init_resource::<ParkField>()
+            .add_systems(PostStartup, build_parks)
             .add_systems(Startup, setup_pedestrians)
             .add_systems(Update, (ped_stream, walk_pedestrians, ped_capture));
     }
@@ -174,6 +424,28 @@ fn tint_material(materials: &mut Assets<StandardMaterial>, tint: u8) -> Handle<S
         perceptual_roughness: 0.8,
         ..default()
     })
+}
+
+fn build_parks(
+    trees: Option<Res<crate::trees::TreeDataset>>,
+    geology: Option<Res<Geology>>,
+    mut parks: ResMut<ParkField>,
+) {
+    let (Some(trees), Some(geology)) = (trees, geology) else {
+        return;
+    };
+    *parks = build_park_field(&trees, &geology.pack);
+    if let Some(hot) = parks.sites.first() {
+        let gas = parks.nearest(82.0, -4_390.0, 900.0);
+        info!(
+            "PEDESTRIANS parks: {} park sites (strongest {:.2} at ({:.0},{:.0}); gas works {:?})",
+            parks.sites(),
+            hot.strength,
+            hot.x,
+            hot.z,
+            gas.map(|site| (site.x, site.z, site.strength))
+        );
+    }
 }
 
 fn setup_pedestrians(
@@ -318,20 +590,112 @@ fn ped_stream(world: &mut World) {
 fn spawn_walkers(world: &mut World, node_index: usize) {
     let hour = world.resource::<SimClock>().minute_of_day as f32 / 60.0;
     let fields = CityFields::seattle();
-    let (chunk_center, streets) = {
+    let (chunk_center, bounds, mut streets) = {
         let state = world.resource::<Geology>();
         let node = &state.pack.nodes[node_index];
         let Ok(chunk) = state.pack.read_chunk(node_index) else {
             return;
         };
-        (node.center, chunk.streets.clone())
+        (node.center, node.bounds, chunk.streets.clone())
     };
-    let expected = expected_walkers(&fields, hour, chunk_center).round() as usize;
+    let parks = world.resource::<ParkField>().clone();
+    let at_center = expected_walkers(&fields, &parks, hour, chunk_center);
+    // A park inside the partition can carry more walkers than its centre: use
+    // the park site as the anchor and prefer streets near it.
+    let mut park_anchor = None;
+    let mut anchor = (at_center, chunk_center);
+    if let Some(site) = parks.best_in_bounds(bounds) {
+        let at_park = expected_walkers(&fields, &parks, hour, [site.x, site.z]);
+        if at_park > at_center {
+            park_anchor = Some(site);
+            anchor = (at_park, [site.x, site.z]);
+        }
+    }
+    // A genuine plaza inside the partition (Pike Place, Westlake) anchors a
+    // loop crowd the same way a park does.
+    for (plaza, radius) in PLAZAS {
+        let inside = plaza[0] >= bounds[0]
+            && plaza[0] <= bounds[2]
+            && plaza[1] >= bounds[1]
+            && plaza[1] <= bounds[3];
+        if !inside {
+            continue;
+        }
+        let at_plaza = expected_walkers(&fields, &parks, hour, plaza);
+        if at_plaza > anchor.0 {
+            park_anchor = Some(ParkSite {
+                x: plaza[0],
+                z: plaza[1],
+                strength: (at_plaza / (BASE_PER_CHUNK * 0.5)).min(1.0),
+            });
+            anchor = (at_plaza, plaza);
+            let _ = radius;
+        }
+    }
+    let raw = anchor.0;
+    let base = raw.floor();
+    let frac = raw - base;
+    let roll = hash01(node_index as u32 ^ 0x5EED_1234);
+    let expected = base as usize + usize::from(roll < frac);
     {
         let mut peds = world.resource_mut::<Pedestrians>();
         peds.expected += expected as f32;
+        peds.expected_by_chunk.insert(node_index, expected as f32);
+        if park_anchor.is_some() {
+            peds.park_chunks.insert(node_index);
+        }
+    }
+    // Park/frontage walkers go on the streets nearest the anchor (park
+    // interiors have no street polylines; frontage is the honest analogue).
+    if anchor.1 != chunk_center {
+        streets.sort_by(|a, b| {
+            let da = a
+                .points
+                .first()
+                .map(|p| (p[0] - anchor.1[0]).hypot(p[1] - anchor.1[1]))
+                .unwrap_or(f32::MAX);
+            let db = b
+                .points
+                .first()
+                .map(|p| (p[0] - anchor.1[0]).hypot(p[1] - anchor.1[1]))
+                .unwrap_or(f32::MAX);
+            da.total_cmp(&db)
+        });
+        streets.truncate(14);
     }
     let mut entities = Vec::new();
+    if let Some(site) = park_anchor {
+        // Parks carry the crowd: three fifths stroll the loop, the rest walk
+        // the frontage streets.
+        let target = (expected * 3).div_ceil(5);
+        for index in 0..target {
+            let seed = (node_index as u32)
+                .wrapping_mul(0x9E37_79B9)
+                .wrapping_add(index as u32 * 7919)
+                ^ 0x51ED_2701;
+            let state = walker_in_park(site, seed);
+            let (position, rotation) = {
+                let dem = &world.resource::<Geology>().dem;
+                walker_pose(&state, dem)
+            };
+            let mesh = world.resource::<PedAssets>().mesh.clone();
+            let material = world.resource::<PedAssets>().tinted[state.tint as usize].clone();
+            let entity = world
+                .spawn((
+                    Mesh3d(mesh),
+                    MeshMaterial3d(material),
+                    Transform::from_translation(position).with_rotation(rotation),
+                    NotShadowCaster,
+                    Name::new("park walker"),
+                ))
+                .id();
+            world
+                .resource_mut::<Pedestrians>()
+                .states
+                .insert(entity, state);
+            entities.push(entity);
+        }
+    }
     for (street_index, street) in streets.iter().enumerate() {
         if entities.len() >= expected {
             break;
@@ -405,6 +769,114 @@ fn walk_pedestrians(
     }
 }
 
+/// Measurement honesty: expected vs actual walkers per district, printed with
+/// every capture and available on demand (PED_DENSITY=1 logs every 10 s).
+fn log_ped_density(world: &mut World, label: &str) {
+    let Some(geology) = world.get_resource::<Geology>() else {
+        return;
+    };
+    let peds = world.resource::<Pedestrians>();
+    let mut by_district: HashMap<String, (f32, f32)> = HashMap::new();
+    let mut parks: HashMap<String, (f32, f32)> = HashMap::new();
+    for (index, expected) in &peds.expected_by_chunk {
+        let node = &geology.pack.nodes[*index];
+        let district = geology
+            .districts
+            .get(&node.name)
+            .cloned()
+            .unwrap_or_else(|| node.name.clone());
+        let actual = peds.loaded.get(index).map(Vec::len).unwrap_or(0) as f32;
+        let target = if peds.park_chunks.contains(index) {
+            &mut parks
+        } else {
+            &mut by_district
+        };
+        let entry = target.entry(district).or_insert((0.0, 0.0));
+        entry.0 += *expected;
+        entry.1 += actual;
+    }
+    let mut park_rows = parks.into_iter().collect::<Vec<_>>();
+    park_rows.sort_by(|a, b| b.1.0.total_cmp(&a.1.0));
+    let park_text = park_rows
+        .iter()
+        .take(6)
+        .map(|(district, (expected, actual))| {
+            format!("{district} exp={expected:.0} act={actual:.0}")
+        })
+        .collect::<Vec<_>>()
+        .join(" | ");
+    if !park_text.is_empty() {
+        info!("PED CROWDS {label}: {park_text}");
+    }
+    let mut rows = by_district.into_iter().collect::<Vec<_>>();
+    rows.sort_by(|a, b| b.1.0.total_cmp(&a.1.0));
+    let text = rows
+        .iter()
+        .take(8)
+        .map(|(district, (expected, actual))| {
+            format!("{district} exp={expected:.0} act={actual:.0}")
+        })
+        .collect::<Vec<_>>()
+        .join(" | ");
+    info!("PED DENSITY {label}: {text}");
+}
+
+/// Derive the park frame from a park stroller: eye 9 m behind, 2.4 m up,
+/// looking at the walker's chest. Falls back to the park overview before the
+/// crowd has spawned.
+fn park_pose(world: &mut World) -> bool {
+    let site = {
+        let geology = world.resource::<Geology>();
+        world
+            .resource::<ParkField>()
+            .nearest(80.0, -8_270.0, 1_200.0)
+            .filter(|site| geology.dem.height(site.x, site.z) > 8.0)
+            .or_else(|| world.resource::<ParkField>().best_dry(&geology.dem, 8.0))
+    };
+    let Some(site) = site else {
+        return false;
+    };
+    let target = {
+        let peds = world.resource::<Pedestrians>();
+        peds.states
+            .iter()
+            // Frontage walkers first: street-level sightlines beat a loop
+            // buried in the trees.
+            .filter(|(_, state)| state.offset_m > 0.0)
+            .filter_map(|(entity, _)| world.get::<Transform>(*entity))
+            .map(|transform| transform.translation)
+            .min_by(|a, b| {
+                let da = (a.x - (STREAM_WORLD_OFFSET + site.x)).hypot(a.z - site.z);
+                let db = (b.x - (STREAM_WORLD_OFFSET + site.x)).hypot(b.z - site.z);
+                da.total_cmp(&db)
+            })
+    };
+    let ground = world.resource::<Geology>().dem.height(site.x, site.z);
+    let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+    if let Some(target) = target {
+        info!("PEDESTRIANS park target: ({:.0},{:.0})", target.x, target.z);
+        let eye = target + Vec3::new(0.0, 1.8, 8.0);
+        let look = target + Vec3::new(0.0, 1.1, 0.0);
+        crate::camera_authority::stage_look_at(
+            &mut staged,
+            "pedestrian_capture",
+            eye,
+            look,
+            "pedestrians_park_frontage",
+        );
+        true
+    } else {
+        crate::camera_authority::stage_look_at(
+            &mut staged,
+            "pedestrian_capture",
+            Vec3::new(STREAM_WORLD_OFFSET + site.x, ground + 6.0, site.z - 20.0),
+            Vec3::new(STREAM_WORLD_OFFSET + site.x, ground + 1.4, site.z),
+            "pedestrians_park_frontage",
+        );
+        true
+    }
+}
+
 fn ped_capture(world: &mut World) {
     if std::env::var_os("PEDESTRIAN_CAPTURE").is_none() || !crate::geology::s2_enabled() {
         return;
@@ -436,15 +908,26 @@ fn ped_capture(world: &mut World) {
     if done {
         return;
     }
-    const POSES: [(&str, f32, &str); 4] = [
+    const POSES: [(&str, f32, &str); 6] = [
         ("pedestrians_am_westlake", 8.5, "am"),
         ("pedestrians_graveyard", 3.0, "grave"),
         ("pedestrians_pike_place", 8.5, "plaza"),
         ("pedestrians_capitol_ascent", 8.5, "ascent"),
+        ("pedestrians_park_frontage", 13.0, "park"),
+        ("pedestrians_sprinkle_wallingford", 13.0, "residential"),
     ];
     if index >= POSES.len() {
-        world.resource_mut::<PedCaptureState>().done = true;
-        world.write_message(AppExit::Success);
+        // Give the last screenshot observer a frame or two to land before the
+        // app exits; the capture channel closes on exit.
+        let mut state = world.resource_mut::<PedCaptureState>();
+        if !state.done {
+            state.done = true;
+            state.since = elapsed;
+            return;
+        }
+        if elapsed - state.since > 1.5 {
+            world.write_message(AppExit::Success);
+        }
         return;
     }
     let (name, hour, mode) = POSES[index];
@@ -502,21 +985,66 @@ fn ped_capture(world: &mut World) {
                 name,
             );
         } else {
-            // Curb-side template; plaza frames aim at the Pike Place anchor.
-            if mode == "plaza" {
-                let (ground, look_ground) = {
-                    let geology = world.resource::<Geology>();
-                    (
-                        geology.dem.height(-470.0, -330.0),
-                        geology.dem.height(-518.6, -399.4),
-                    )
-                };
+            // Curb-side template; plaza frames aim at the Pike Place anchor,
+            // park frames at the Gas Works site (the Sound's busiest lawn).
+            if mode == "park" {
+                park_pose(world);
+            } else if mode == "residential" {
+                let ground = world.resource::<Geology>().dem.height(-160.0, -6452.0);
                 let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
                 crate::camera_authority::stage_look_at(
                     &mut staged,
                     "pedestrian_capture",
-                    Vec3::new(STREAM_WORLD_OFFSET - 470.0, ground + 6.0, -330.0),
-                    Vec3::new(STREAM_WORLD_OFFSET - 518.6, look_ground + 3.0, -399.4),
+                    Vec3::new(STREAM_WORLD_OFFSET - 160.0, ground + 3.0, -6452.0),
+                    Vec3::new(STREAM_WORLD_OFFSET - 184.0, ground + 2.6, -6485.0),
+                    name,
+                );
+            } else if mode == "plaza" {
+                let ground = {
+                    let geology = world.resource::<Geology>();
+                    geology.dem.height(-518.6, -399.4)
+                };
+                let anchor = Vec3::new(STREAM_WORLD_OFFSET - 518.6, ground, -399.4);
+                // Framing law: stand clear of every subject. Try offsets around
+                // the plaza and take the roomiest eye; a plaza crowd moves, so
+                // a fixed bearing will eventually stand inside someone.
+                let walkers = world
+                    .resource::<Pedestrians>()
+                    .states
+                    .keys()
+                    .filter_map(|entity| world.get::<Transform>(*entity))
+                    .map(|transform| transform.translation)
+                    .collect::<Vec<_>>();
+                let mut best: Option<(f32, Vec3, Vec3)> = None;
+                for step in 0..12 {
+                    let angle = step as f32 / 12.0 * std::f32::consts::TAU;
+                    for radius in [24.0f32, 30.0, 36.0] {
+                        let offset = Vec3::new(angle.cos() * radius, 0.0, angle.sin() * radius);
+                        let (eye, look) = crate::camera_authority::plaza_eye(anchor, offset);
+                        let clearance = walkers
+                            .iter()
+                            .map(|walker| walker.distance(eye))
+                            .fold(f32::MAX, f32::min);
+                        if clearance < 4.5 {
+                            continue;
+                        }
+                        if best
+                            .as_ref()
+                            .is_none_or(|(current, _, _)| clearance > *current)
+                        {
+                            best = Some((clearance, eye, look));
+                        }
+                    }
+                }
+                let (eye, look) = best.map(|(_, eye, look)| (eye, look)).unwrap_or_else(|| {
+                    crate::camera_authority::plaza_eye(anchor, Vec3::new(0.0, 0.0, -24.0))
+                });
+                let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+                crate::camera_authority::stage_look_at(
+                    &mut staged,
+                    "pedestrian_capture",
+                    eye,
+                    look,
                     name,
                 );
             } else if !curb_pose(world, name) {
@@ -544,7 +1072,21 @@ fn ped_capture(world: &mut World) {
         return;
     }
     if elapsed - since < 4.0 {
-        if (index != 1 || !state_has_am(world)) && POSES[index].2 != "plaza" {
+        // Park and plaza frames keep their own derived pose; curb_pose would
+        // drag the camera back to a vehicle street and undo the anchor.
+        if POSES[index].2 == "park" {
+            park_pose(world);
+        } else if POSES[index].2 == "residential" {
+            let ground = world.resource::<Geology>().dem.height(-160.0, -6452.0);
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "pedestrian_capture",
+                Vec3::new(STREAM_WORLD_OFFSET - 160.0, ground + 3.0, -6452.0),
+                Vec3::new(STREAM_WORLD_OFFSET - 184.0, ground + 2.6, -6485.0),
+                name,
+            );
+        } else if (index != 1 || !state_has_am(world)) && POSES[index].2 != "plaza" {
             curb_pose(world, name);
         }
         return;
@@ -587,6 +1129,7 @@ fn ped_capture(world: &mut World) {
             "plaza eye stands inside the crowd ({nearest} m)"
         );
     }
+    log_ped_density(world, name);
     let peds = world.resource::<Pedestrians>();
     let expected = peds.expected;
     let actual = peds.active;

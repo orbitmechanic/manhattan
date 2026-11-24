@@ -633,40 +633,83 @@ fn storefront_night_glow(
     material.emissive = LinearRgba::rgb(0.34 * night, 0.24 * night, 0.14 * night);
 }
 
-/// Window-dot atlas for merged proxy boxes: the far city is nothing but these
-/// boxes, so at night they must carry the light or the map goes black.
+/// Night atlas for the merged proxy boxes. The Sound bowl is a carpet of
+/// incandescent light at night, so the residential bank is an irregular warm
+/// scatter (2700-3000 K, clusters and gaps) while the commercial bank keeps
+/// the regular grid that is correct for towers.
 fn proxy_windows_texture() -> Image {
     let size = SASH_TEX as usize;
-    let mut data = vec![0u8; size * size * 4];
-    let columns = 6usize;
-    let rows = 8usize;
+    let half = size / 2;
     let roof_strip = (size as f32 * 0.89) as usize;
-    for row in 0..rows {
-        for column in 0..columns {
-            let on = hash01(
-                (row as u32).wrapping_mul(0x9E37_79B9) ^ (column as u32).wrapping_mul(0x85EB_CA6B),
-            ) < 0.62;
-            if !on {
+    let mut data = vec![0u8; size * size * 4];
+
+    // Residential bank (bottom half): irregular warm points, clustered.
+    let r_cols = 14usize;
+    let r_rows = 18usize;
+    let cell_w = size / r_cols;
+    let cell_h = half / r_rows;
+    for row in 0..r_rows {
+        for column in 0..r_cols {
+            let cluster = hash01(
+                ((column / 3) as u32).wrapping_mul(0x9E37_79B9)
+                    ^ ((row / 3) as u32).wrapping_mul(0x85EB_CA6B),
+            );
+            let roll = hash01(
+                (column as u32).wrapping_mul(0x27D4_EB2F) ^ (row as u32).wrapping_mul(0xC2B2_AE35),
+            );
+            // Gaps where the cluster is dark (parks, ravines, empty blocks).
+            let lit = cluster > 0.28 && roll < 0.62;
+            if !lit {
                 continue;
             }
-            let cell_w = size / columns;
-            let cell_h = size / rows;
-            let x0 = column * cell_w + cell_w / 4;
-            let x1 = x0 + cell_w / 2;
-            let y0 = row * cell_h + cell_h / 4;
+            // ~2700-3000 K: warm white with a little variation.
+            let temperature = 0.55 + 0.15 * hash01((row as u32) << 8 ^ column as u32);
+            let x0 = column * cell_w + cell_w / 3;
+            let x1 = (x0 + cell_w / 2).min(roof_strip);
+            let y0 = row * cell_h + cell_h / 3;
             let y1 = y0 + cell_h / 2;
-            let warm = 0.65 + 0.35 * hash01(row as u32 * 31 + column as u32);
             for y in y0..y1 {
-                for x in x0..x1.min(roof_strip) {
+                for x in x0..x1 {
                     let index = (y * size + x) * 4;
-                    data[index] = to_byte(warm);
-                    data[index + 1] = to_byte(warm * 0.78);
-                    data[index + 2] = to_byte(warm * 0.48);
+                    data[index] = to_byte(1.0 * temperature);
+                    data[index + 1] = to_byte(0.66 * temperature);
+                    data[index + 2] = to_byte(0.38 * temperature);
                     data[index + 3] = 255;
                 }
             }
         }
     }
+
+    // Commercial bank (top half): the existing regular grid.
+    let columns = 6usize;
+    let rows = 8usize;
+    for row in 0..rows {
+        for column in 0..columns {
+            let on = hash01(
+                (row as u32).wrapping_mul(0x9E37_79B9) ^ (column as u32).wrapping_mul(0x85EB_CA6B),
+            ) < 0.55;
+            if !on {
+                continue;
+            }
+            let cw = size / columns;
+            let ch = half / rows;
+            let x0 = column * cw + cw / 4;
+            let x1 = (x0 + cw / 2).min(roof_strip);
+            let y0 = half + row * ch + ch / 4;
+            let y1 = y0 + ch / 2;
+            let warm = 0.70 + 0.30 * hash01(row as u32 * 31 + column as u32);
+            for y in y0..y1 {
+                for x in x0..x1 {
+                    let index = (y * size + x) * 4;
+                    data[index] = to_byte(warm);
+                    data[index + 1] = to_byte(warm * 0.86);
+                    data[index + 2] = to_byte(warm * 0.62);
+                    data[index + 3] = 255;
+                }
+            }
+        }
+    }
+
     let mut image = Image::new(
         Extent3d {
             width: SASH_TEX,
@@ -682,20 +725,19 @@ fn proxy_windows_texture() -> Image {
     image
 }
 
-/// Daylight atlas for the merged proxy boxes: the far city is mostly these,
-/// and a flat tan box is what "tan blocks" meant in the playtest. One shared
-/// facade atlas (panels + punched windows) so distance reads as buildings.
+/// Daylight atlas for the merged proxy boxes, split into two banks:
+/// residential (v < 0.5, warm cladding, house-scale windows) and commercial
+/// (v >= 0.5, the regular grid). The right strip is plain roof in both.
 fn proxy_day_texture() -> Image {
     let size = SASH_TEX as usize;
-    let mut data = vec![0u8; size * size * 4];
-    let columns = 6usize;
-    let rows = 8usize;
+    let half = size / 2;
     let roof_strip = (size as f32 * 0.89) as usize;
+    let mut data = vec![0u8; size * size * 4];
     for y in 0..size {
+        let residential = y < half;
         for x in 0..size {
             let index = (y * size + x) * 4;
             if x >= roof_strip {
-                // Plain roof strip: no window cells.
                 let grain = hash01((x as u32).wrapping_mul(97) ^ y as u32) * 0.05;
                 data[index] = to_byte(0.40 + grain);
                 data[index + 1] = to_byte(0.38 + grain);
@@ -703,22 +745,32 @@ fn proxy_day_texture() -> Image {
                 data[index + 3] = 255;
                 continue;
             }
-            // Cladding: light warm concrete with a little grain.
             let grain = hash01((x as u32).wrapping_mul(131) ^ y as u32) * 0.08;
-            let mut color = [0.62 + grain, 0.57 + grain, 0.50 + grain];
+            let (columns, rows) = if residential {
+                (5usize, 7usize)
+            } else {
+                (6, 8)
+            };
             let cell_w = size / columns;
-            let cell_h = size / rows;
+            let cell_h = (size / rows).max(1);
             let cx = x % cell_w;
             let cy = y % cell_h;
             let window =
-                cx > cell_w / 4 && cx < cell_w * 3 / 4 && cy > cell_h / 4 && cy < cell_h * 3 / 4;
+                cx > cell_w / 4 && cx < cell_w * 3 / 4 && cy > cell_h / 3 && cy < cell_h * 4 / 5;
+            let mut color = if residential {
+                [0.55 + grain, 0.40 + grain, 0.27 + grain]
+            } else {
+                [0.62 + grain, 0.57 + grain, 0.50 + grain]
+            };
             if window {
                 let lit = hash01(
                     ((x / cell_w) as u32).wrapping_mul(0x9E37_79B9)
-                        ^ ((y / cell_h) as u32).wrapping_mul(0x85EB_CA6B),
-                ) < 0.18;
+                        ^ (((y % half) / cell_h) as u32).wrapping_mul(0x85EB_CA6B),
+                ) < if residential { 0.10 } else { 0.18 };
                 color = if lit {
-                    [0.72, 0.58, 0.38]
+                    [0.74, 0.60, 0.40]
+                } else if residential {
+                    [0.13, 0.13, 0.13]
                 } else {
                     [0.10, 0.12, 0.14]
                 };
@@ -853,6 +905,83 @@ fn scale_oracle(world: &mut World) {
     else {
         return;
     };
+    // Walker first: the round closes with a walker in the frame. A sedan must
+    // be within 80 m; if none is, the log says so rather than pretending.
+    let walkers = world
+        .get_resource::<crate::pedestrians::Pedestrians>()
+        .map(|peds| {
+            peds.states
+                .keys()
+                .filter_map(|entity| world.get::<Transform>(*entity))
+                .map(|transform| (transform.translation, transform.rotation))
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let nearest_walker = walkers
+        .iter()
+        .min_by(|a, b| a.0.distance(camera).total_cmp(&b.0.distance(camera)))
+        .copied();
+    let vehicles = world
+        .get_resource::<crate::traffic_seattle::Traffic>()
+        .map(|traffic| {
+            traffic
+                .states
+                .keys()
+                .filter_map(|entity| world.get::<Transform>(*entity))
+                .map(|transform| transform.translation)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let with_vehicle = walkers
+        .iter()
+        .filter(|(pos, _)| pos.distance(camera) < 220.0)
+        .map(|(pos, rotation)| {
+            let vehicle_distance = vehicles
+                .iter()
+                .map(|vehicle| vehicle.distance(*pos))
+                .fold(f32::MAX, f32::min);
+            (vehicle_distance, *pos, *rotation)
+        })
+        .filter(|(vehicle_distance, _, _)| *vehicle_distance < 60.0)
+        .min_by(|a, b| a.0.total_cmp(&b.0));
+    let chosen = with_vehicle
+        .map(|(_, pos, rotation)| (pos, rotation))
+        .or_else(|| nearest_walker.filter(|(pos, _)| pos.distance(camera) < 220.0));
+    if let Some((target, rotation)) = chosen.filter(|_| stage == 0) {
+        let forward = rotation * Vec3::NEG_Z;
+        let side = Vec3::new(-forward.z, 0.0, forward.x);
+        let eye = target - forward * 8.0 + side * 5.0 + Vec3::Y * 2.3;
+        let look = target + Vec3::Y * 1.1;
+        {
+            let mut staged = world.resource_mut::<crate::camera_authority::StagedPose>();
+            crate::camera_authority::stage_look_at(
+                &mut staged,
+                "scale_oracle",
+                eye,
+                look,
+                "scale_oracle",
+            );
+        }
+        let nearest_vehicle = vehicles
+            .iter()
+            .map(|vehicle| vehicle.distance(eye))
+            .fold(f32::MAX, f32::min);
+        if stage == 0 {
+            info!(
+                "SCALE ORACLE walkers={} vehicles={} nearest_vehicle={nearest_vehicle:.1} m walker_eye={:?}",
+                walkers.len(),
+                vehicles.len(),
+                eye
+            );
+        }
+        let mut state = world.resource_mut::<ScaleOracleState>();
+        state.stage = 1;
+        state.since = elapsed;
+        state.walkers = walkers.len();
+        state.vehicles = vehicles.len();
+        state.distance = nearest_vehicle;
+        return;
+    }
     let Some((distance, walkers, vehicles)) = stage_oracle_pose(world, camera) else {
         info!("SCALE ORACLE: no vehicles in the world");
         world.resource_mut::<ScaleOracleState>().stage = 3;

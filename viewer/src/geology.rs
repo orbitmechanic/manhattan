@@ -260,6 +260,7 @@ pub struct Geology {
     pending_shells: std::collections::VecDeque<PendingShell>,
     pub box_material: Handle<StandardMaterial>,
     pub box_mesh: Handle<Mesh>,
+    pub box_mesh_warm: Handle<Mesh>,
     pub targets: Vec<(u32, Vec3, f32)>,
     pub loaded_buildings: usize,
     start_instant: std::time::Instant,
@@ -388,7 +389,11 @@ fn setup_geology(
         cull_mode: None,
         ..default()
     });
-    let box_mesh = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
+    // Proxy boxes share the facade atlas UV banks: bank 0 is residential warm
+    // scatter, bank 1 the commercial grid. Both day and night atlases use the
+    // same split, so one mesh per bank is enough.
+    let box_mesh = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 0)]));
+    let box_mesh_warm = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 1)]));
     let road_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.17, 0.17, 0.18),
         perceptual_roughness: 0.9,
@@ -474,6 +479,7 @@ fn setup_geology(
         pending_shells: std::collections::VecDeque::new(),
         box_material,
         box_mesh,
+        box_mesh_warm,
         targets: Vec::new(),
         loaded_buildings: 0,
         start_instant: started,
@@ -722,14 +728,15 @@ fn mesh(
 
 /// Five-face boxes merged into one mesh: the bottom face is never visible and
 /// is dropped, so far proxies cost 20 vertices each instead of 24.
-fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3)]) -> Mesh {
+fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8)]) -> Mesh {
     let mut positions = Vec::new();
     let mut normals = Vec::new();
     let mut uvs = Vec::new();
     let mut indices = Vec::new();
-    for (center, size) in boxes {
+    for (center, size, warm) in boxes {
         let h = *size * 0.5;
         let c = *center;
+        let bank = if *warm > 0 { 0.0 } else { 0.5 };
         let faces = [
             (
                 Vec3::X,
@@ -787,9 +794,19 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3)]) -> Mesh {
             // plain strip at the right edge of the atlas, so a flying player
             // does not see windows painted on roofs.
             if normal == Vec3::Y {
-                uvs.extend([[0.89, 1.0], [0.89, 0.0], [1.0, 0.0], [1.0, 1.0]]);
+                uvs.extend([
+                    [0.89, bank + 0.48],
+                    [0.89, bank + 0.02],
+                    [1.0, bank + 0.02],
+                    [1.0, bank + 0.48],
+                ]);
             } else {
-                uvs.extend([[0.0, 1.0], [0.0, 0.0], [1.0, 0.0], [1.0, 1.0]]);
+                uvs.extend([
+                    [0.0, bank + 0.48],
+                    [0.0, bank + 0.02],
+                    [1.0, bank + 0.02],
+                    [1.0, bank + 0.48],
+                ]);
             }
             indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
         }
@@ -3347,8 +3364,15 @@ fn s3_buildings(world: &mut World) {
         let mut entities = Vec::with_capacity(specs.len());
         let mut shells = 0usize;
         let mut proxies = 0usize;
-        let mut far_boxes: Vec<(Vec3, Vec3)> = Vec::new();
+        let mut far_boxes: Vec<(Vec3, Vec3, u8)> = Vec::new();
         for (index, (id, spec, origin, height, width, depth)) in specs.into_iter().enumerate() {
+            // Proxy night bank: timber/adobe residential reads as a scatter of
+            // warm incandescent points; steel/masonry keeps the regular grid.
+            let warm = matches!(
+                spec.family,
+                destructibles_core::family::MaterialFamily::Timber
+                    | destructibles_core::family::MaterialFamily::EarthAdobe
+            );
             if shell_set.contains(&index) {
                 shells += 1;
                 if shells > S3_SHELL_IMMEDIATE {
@@ -3401,11 +3425,16 @@ fn s3_buildings(world: &mut World) {
                     far_boxes.push((
                         Vec3::new(origin[0], origin[1] + height * 0.5, origin[2]),
                         Vec3::new(width, height.max(2.0), depth),
+                        u8::from(warm),
                     ));
                 } else {
                     let (mesh, material) = {
                         let state = world.resource::<Geology>();
-                        (state.box_mesh.clone(), state.box_material.clone())
+                        if warm {
+                            (state.box_mesh_warm.clone(), state.box_material.clone())
+                        } else {
+                            (state.box_mesh.clone(), state.box_material.clone())
+                        }
                     };
                     let entity = world
                         .spawn((

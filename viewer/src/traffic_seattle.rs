@@ -22,8 +22,13 @@ use crate::geology::Geology;
 
 const LOAD_M: f32 = 650.0;
 const UNLOAD_M: f32 = 800.0;
-const MAX_ACTIVE: usize = 300;
-const SPAWN_PER_FRAME: usize = 24;
+/// Car city: the old 300 cap is raised; the fleet is arterial-weighted.
+const MAX_ACTIVE: usize = 640;
+const LEGACY_SHARE_CAP: usize = 4;
+const SHARE_CAP: usize = 8;
+const LEGACY_BLOCK_CAP: usize = 24;
+const BLOCK_CAP: usize = 48;
+const SPAWN_PER_FRAME: usize = 48;
 const BASE_PER_CHUNK: f32 = 22.0;
 const LANE_OFFSET: f32 = 3.2;
 
@@ -103,8 +108,15 @@ pub fn vehicle_on_street(
     })
 }
 
-/// Pose on the ribbon: lane offset from the centreline, y from the DEM, pitch
-/// tangent to the drape (the hill law).
+/// Road grade: the ribbon centerline owns the vertical. Sampling the DEM under
+/// the lane offset would seat a car on the curb, a retaining wall or the
+/// hillside face — the road is its own seating authority.
+pub fn road_grade(dem: &crate::geology::Dem, center: [f32; 2]) -> f32 {
+    dem.height(center[0], center[1])
+}
+
+/// Pose on the ribbon: lane offset from the centreline, y from the road grade
+/// (not the DEM under the footprint), pitch tangent to that grade (hill law).
 pub fn vehicle_pose(state: &VehicleState, dem: &crate::geology::Dem) -> (Vec3, Quat) {
     let (pos, dir) = state.sample(state.s);
     let sign = state.direction.signum();
@@ -112,12 +124,11 @@ pub fn vehicle_pose(state: &VehicleState, dem: &crate::geology::Dem) -> (Vec3, Q
     let nz = dir[0] * sign;
     let x = pos[0] + nx * LANE_OFFSET;
     let z = pos[1] + nz * LANE_OFFSET;
-    let y = dem.height(x, z) + 0.35;
+    let y = road_grade(dem, pos) + 0.35;
     let dx = dir[0] * sign;
     let dz = dir[1] * sign;
-    let ahead_x = pos[0] + dx * 2.0;
-    let ahead_z = pos[1] + dz * 2.0;
-    let dy = dem.height(ahead_x, ahead_z) - dem.height(pos[0], pos[1]);
+    let ahead = [pos[0] + dx * 2.0, pos[1] + dz * 2.0];
+    let dy = road_grade(dem, ahead) - road_grade(dem, pos);
     let yaw = dx.atan2(dz);
     let pitch = (dy / 2.0).atan();
     let rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
@@ -144,6 +155,8 @@ pub struct Traffic {
     pub states: HashMap<Entity, VehicleState>,
     pending: Vec<(usize, Vec<VehicleState>)>,
     pub active: usize,
+    /// Expected vehicles per loaded neighborhood, for the per-district audit.
+    pub expected_by_chunk: HashMap<usize, f32>,
     pub enabled: bool,
 }
 
@@ -334,7 +347,11 @@ fn traffic_stream(world: &mut World) {
             &mut crate::citypack::Evaluations::default(),
         );
         let traffic = world.resource::<Traffic>();
-        let wanted = if traffic.active + SPAWN_PER_FRAME > MAX_ACTIVE {
+        let cap = std::env::var("TRAFFIC_CAP")
+            .ok()
+            .and_then(|value| value.parse::<usize>().ok())
+            .unwrap_or(MAX_ACTIVE);
+        let wanted = if traffic.active + SPAWN_PER_FRAME > cap {
             Vec::new()
         } else {
             candidates
@@ -369,14 +386,25 @@ fn traffic_stream(world: &mut World) {
         let hour = world.resource::<SimClock>().minute_of_day as f32 / 60.0;
         let fields = CityFields::seattle();
         let pace = fields.pace(hour);
+        let legacy = std::env::var_os("TRAFFIC_LEGACY").is_some();
+        let share_cap = if legacy { LEGACY_SHARE_CAP } else { SHARE_CAP };
+        let block_cap = if legacy { LEGACY_BLOCK_CAP } else { BLOCK_CAP };
         let blocks = {
             let state = world.resource::<Geology>();
             let node = &state.pack.nodes[index];
             let Ok(chunk) = state.pack.read_chunk(index) else {
                 continue;
             };
+            // Arterials first: the car city puts its cars on the through
+            // streets, and the class weight keeps the residential grid fed.
+            let mut streets = chunk.streets.iter().enumerate().collect::<Vec<_>>();
+            streets.sort_by_key(|(_, street)| match street.kind_idx {
+                1 | 2 => 0,
+                5 | 6 => 1,
+                _ => 2,
+            });
             let mut blocks = Vec::new();
-            for (street_index, street) in chunk.streets.iter().enumerate() {
+            for (street_index, street) in streets {
                 let toward = {
                     let mid = street.points[street.points.len() / 2];
                     let heading = Vec2::new(
@@ -386,8 +414,17 @@ fn traffic_stream(world: &mut World) {
                     fields.heading_toward(mid[0], mid[1], heading)
                 };
                 let occupancy = fields.occupancy(hour, toward);
-                let share = (BASE_PER_CHUNK * pace * occupancy * 0.5).round() as usize;
-                for k in 0..share.min(4) {
+                let weight = if legacy {
+                    1.0
+                } else {
+                    match street.kind_idx {
+                        1 | 2 => 1.7,
+                        5 | 6 => 1.4,
+                        _ => 1.0,
+                    }
+                };
+                let share = (BASE_PER_CHUNK * pace * occupancy * 0.5 * weight).round() as usize;
+                for k in 0..share.min(share_cap) {
                     let seed = (street.id.wrapping_mul(0x9E37_79B9))
                         .wrapping_add(street_index as u32)
                         .wrapping_add(k as u32 * 7919);
@@ -404,7 +441,7 @@ fn traffic_stream(world: &mut World) {
                         blocks.push(state);
                     }
                 }
-                if blocks.len() >= 24 {
+                if blocks.len() >= block_cap {
                     break;
                 }
             }
@@ -412,6 +449,10 @@ fn traffic_stream(world: &mut World) {
             blocks
         };
         if !blocks.is_empty() {
+            world
+                .resource_mut::<Traffic>()
+                .expected_by_chunk
+                .insert(index, blocks.len() as f32);
             world
                 .resource_mut::<Traffic>()
                 .pending
@@ -523,6 +564,38 @@ fn curb_pose(world: &mut World, label: &str) -> bool {
         }
     }
     false
+}
+
+/// Measurement honesty: expected vs actual vehicles per district.
+fn log_traffic_density(world: &mut World, label: &str) {
+    let Some(geology) = world.get_resource::<Geology>() else {
+        return;
+    };
+    let traffic = world.resource::<Traffic>();
+    let mut by_district: HashMap<String, (f32, f32)> = HashMap::new();
+    for (index, expected) in &traffic.expected_by_chunk {
+        let node = &geology.pack.nodes[*index];
+        let district = geology
+            .districts
+            .get(&node.name)
+            .cloned()
+            .unwrap_or_else(|| node.name.clone());
+        let actual = traffic.loaded.get(index).map(Vec::len).unwrap_or(0) as f32;
+        let entry = by_district.entry(district).or_insert((0.0, 0.0));
+        entry.0 += *expected;
+        entry.1 += actual;
+    }
+    let mut rows = by_district.into_iter().collect::<Vec<_>>();
+    rows.sort_by(|a, b| b.1.0.total_cmp(&a.1.0));
+    let text = rows
+        .iter()
+        .take(8)
+        .map(|(district, (expected, actual))| {
+            format!("{district} exp={expected:.0} act={actual:.0}")
+        })
+        .collect::<Vec<_>>()
+        .join(" | ");
+    info!("TRAFFIC DENSITY {label}: {text}");
 }
 
 fn traffic_capture(world: &mut World) {
@@ -666,7 +739,7 @@ fn traffic_capture(world: &mut World) {
         state.since = elapsed;
         return;
     }
-    if elapsed - since < 4.0 {
+    if elapsed - since < 6.0 {
         if index != 3 || !state_has_am(world) {
             curb_pose(world, name);
         } else {
@@ -688,6 +761,7 @@ fn traffic_capture(world: &mut World) {
     world
         .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
         .observe(bevy::render::view::screenshot::save_to_disk(path));
+    log_traffic_density(world, name);
     info!(
         "TRAFFIC capture {name} hour {hour} vehicles {}",
         world.resource::<Traffic>().active
@@ -721,4 +795,54 @@ struct TrafficCaptureState {
     am_eye: Vec3,
     am_look: Vec3,
     has_am: bool,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Road-grade corollary: the ribbon centerline owns the vertical. A DEM
+    /// spike under the lane offset (a curb, a wall, a hillside face) must not
+    /// lift the car.
+    #[test]
+    fn vehicle_seats_on_road_grade_not_the_lane_footprint() {
+        let mut heights = vec![0i16; 16];
+        // 10 m (100 dm) spike one cell west of the centerline, under the lane.
+        heights[0] = 100;
+        let dem = crate::geology::Dem {
+            rows: 4,
+            cols: 4,
+            spacing: 10.0,
+            origin: [-5.0, -5.0],
+            heights,
+        };
+        let state = VehicleState {
+            points: [
+                ([10.0, -5.0], 0.0),
+                ([10.0, 5.0], 10.0),
+                ([0.0, 0.0], 0.0),
+                ([0.0, 0.0], 0.0),
+                ([0.0, 0.0], 0.0),
+                ([0.0, 0.0], 0.0),
+                ([0.0, 0.0], 0.0),
+                ([0.0, 0.0], 0.0),
+            ],
+            count: 2,
+            length: 10.0,
+            s: 5.0,
+            speed: 7.0,
+            direction: 1.0,
+            species: SPECIES_SEDAN,
+        };
+        let (position, _) = vehicle_pose(&state, &dem);
+        assert!(
+            (position.y - 0.35).abs() < 0.05,
+            "seated at lane footprint instead of road grade: y={}",
+            position.y
+        );
+        assert!(
+            dem.height(position.x - STREAM_WORLD_OFFSET, position.z) > 1.0,
+            "test setup: the lane point must sit on the spike"
+        );
+    }
 }
