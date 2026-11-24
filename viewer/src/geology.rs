@@ -392,8 +392,8 @@ fn setup_geology(
     // Proxy boxes share the facade atlas UV banks: bank 0 is residential warm
     // scatter, bank 1 the commercial grid. Both day and night atlases use the
     // same split, so one mesh per bank is enough.
-    let box_mesh = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 0, [1.0; 4])]));
-    let box_mesh_warm = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 1, [1.0; 4])]));
+    let box_mesh = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 0, [1.0; 4], 0)]));
+    let box_mesh_warm = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 1, [1.0; 4], 0)]));
     let road_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.17, 0.17, 0.18),
         perceptual_roughness: 0.9,
@@ -730,6 +730,15 @@ fn mesh(
 /// is dropped, so far proxies cost 20 vertices each instead of 24.
 /// Per-building grade for the merged proxy boxes: the aerial neighbourhood is
 /// these, so the tint seed must be the building id, not the chunk or family.
+fn hash01(mut value: u32) -> f32 {
+    value ^= value >> 16;
+    value = value.wrapping_mul(0x7FEB_352D);
+    value ^= value >> 15;
+    value = value.wrapping_mul(0x846C_A68F);
+    value ^= value >> 16;
+    (value & 0x00FF_FFFF) as f32 / 16_777_216.0
+}
+
 fn proxy_tint(id: u32, family: destructibles_core::family::MaterialFamily) -> [f32; 4] {
     fn h01(mut value: u32) -> f32 {
         value ^= value >> 16;
@@ -755,13 +764,13 @@ fn proxy_tint(id: u32, family: destructibles_core::family::MaterialFamily) -> [f
     ]
 }
 
-fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4])]) -> Mesh {
+fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
     let mut positions = Vec::new();
     let mut normals = Vec::new();
     let mut uvs = Vec::new();
     let mut colors = Vec::new();
     let mut indices = Vec::new();
-    for (center, size, warm, tint) in boxes {
+    for (center, size, warm, tint, id) in boxes {
         let h = *size * 0.5;
         let c = *center;
         let bank = if *warm > 0 { 0.0 } else { 0.5 };
@@ -819,25 +828,84 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4])]) -> Mesh {
                 normals.push(normal.to_array());
                 colors.push(*tint);
             }
-            // Side faces use the full facade tile; the roof face samples the
-            // plain strip at the right edge of the atlas, so a flying player
-            // does not see windows painted on roofs.
-            if normal == Vec3::Y {
-                uvs.extend([
-                    [0.89, bank + 0.48],
-                    [0.89, bank + 0.02],
-                    [1.0, bank + 0.02],
-                    [1.0, bank + 0.48],
-                ]);
+            // Fixed metres per floor: V repeats once per 3.0 m floor row, so a
+            // window is the same physical height on a 2-storey house and a
+            // 60 m tower. U stays inside the family bank (residential left,
+            // commercial right); one bank tile is 4-6 windows across.
+            let across = if normal == Vec3::Y { 0.46 } else { 0.5 };
+            let u0 = bank + 0.02;
+            let u1 = bank + across;
+            let floors = if normal == Vec3::Y {
+                0.02
             } else {
-                uvs.extend([
-                    [0.0, bank + 0.48],
-                    [0.0, bank + 0.02],
-                    [1.0, bank + 0.02],
-                    [1.0, bank + 0.48],
-                ]);
-            }
+                (size.y / 3.0).max(1.0)
+            };
+            uvs.extend([[u0, floors], [u0, 0.0], [u1, 0.0], [u1, floors]]);
             indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+        }
+        // Residential proxies carry a pitched roof: the roof parameters are
+        // seeded by building id, same bisector pitch family as the shells.
+        // Commercial (warm == 0) stays legitimately flat.
+        if *warm > 0 {
+            let pitch = (15.0 + 30.0 * hash01(id.wrapping_mul(0x9E37_79B9))).to_radians();
+            let rise = h.y.min(h.z) * pitch.tan();
+            let ridge = (h.x.max(h.z) - h.x.min(h.z)).max(0.0);
+            let along_x = h.x >= h.z;
+            let (ra, rb) = if along_x {
+                (
+                    Vec3::new(-ridge, h.y + rise, 0.0),
+                    Vec3::new(ridge, h.y + rise, 0.0),
+                )
+            } else {
+                (
+                    Vec3::new(0.0, h.y + rise, -ridge),
+                    Vec3::new(0.0, h.y + rise, ridge),
+                )
+            };
+            let roof_color = {
+                let roll = hash01(id.rotate_left(7) ^ 0x51ED_2701);
+                if roll < 0.60 {
+                    [0.26, 0.17, 0.10, 1.0]
+                } else if roll < 0.90 {
+                    [0.22, 0.22, 0.22, 1.0]
+                } else {
+                    [0.17, 0.13, 0.10, 1.0]
+                }
+            };
+            let moss = [0.13, 0.17, 0.08, 1.0];
+            let corners = [
+                Vec3::new(-h.x, h.y, -h.z),
+                Vec3::new(h.x, h.y, -h.z),
+                Vec3::new(h.x, h.y, h.z),
+                Vec3::new(-h.x, h.y, h.z),
+            ];
+            let mut add = |a: Vec3, b: Vec3, d: Vec3, e: Vec3, col: [f32; 4]| {
+                let base = positions.len() as u32;
+                let normal = (d - a).cross(e - b).normalize_or_zero();
+                for point in [a, b, d, e] {
+                    positions.push((c + point).to_array());
+                    normals.push(normal.to_array());
+                    colors.push(col);
+                    uvs.push([0.02, 0.02]);
+                }
+                indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+            };
+            if along_x {
+                add(corners[0], corners[1], rb, ra, roof_color);
+                add(corners[3], corners[2], rb, ra, roof_color);
+                add(corners[1], corners[2], ra, rb, moss);
+                add(corners[0], corners[3], ra, rb, moss);
+            } else {
+                add(corners[0], corners[3], ra, rb, roof_color);
+                add(corners[1], corners[2], ra, rb, roof_color);
+                add(corners[0], corners[1], rb, ra, moss);
+                add(corners[2], corners[3], rb, ra, moss);
+            }
+            if hash01(id ^ 0xA53C_9E11) < 0.05 {
+                let solar = [0.035, 0.04, 0.05, 1.0];
+                let mid = (ra + rb) * 0.5;
+                add(mid, rb, rb + Vec3::new(0.0, 0.0, 0.0), mid, solar);
+            }
         }
     }
     let mut mesh = Mesh::new(
@@ -3141,6 +3209,14 @@ fn building_spec(
             _ => {}
         }
     }
+    // Slenderness gate (extends Unremarkability): a footprint hosts about one
+    // storey per 12 m2, and a residential district hosts no building above
+    // four storeys. Downtown commercial keeps its slenderness because it has
+    // real window rows and is not in a residential district.
+    if residential_district {
+        floor_count = floor_count.min((area / 12.0).floor().max(1.0) as u32);
+        floor_count = floor_count.min(4);
+    }
     // House windows on houses: a residential parcel gets a sash window with a
     // sill and a 3.1 m column pitch regardless of the district's commercial
     // grammar. Commercial floors keep their grammar's fenestration, but the
@@ -3438,7 +3514,7 @@ fn s3_buildings(world: &mut World) {
         let mut entities = Vec::with_capacity(specs.len());
         let mut shells = 0usize;
         let mut proxies = 0usize;
-        let mut far_boxes: Vec<(Vec3, Vec3, u8, [f32; 4])> = Vec::new();
+        let mut far_boxes: Vec<(Vec3, Vec3, u8, [f32; 4], u32)> = Vec::new();
         for (index, (id, spec, origin, height, width, depth)) in specs.into_iter().enumerate() {
             // Proxy night bank: timber/adobe residential reads as a scatter of
             // warm incandescent points; steel/masonry keeps the regular grid.
@@ -3501,6 +3577,7 @@ fn s3_buildings(world: &mut World) {
                         Vec3::new(width, height.max(2.0), depth),
                         u8::from(warm),
                         proxy_tint(id, spec.family),
+                        id,
                     ));
                 } else {
                     let (mesh, material) = {

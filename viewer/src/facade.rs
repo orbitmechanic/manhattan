@@ -674,83 +674,54 @@ fn storefront_night_glow(
     material.emissive = LinearRgba::rgb(0.34 * night, 0.24 * night, 0.14 * night);
 }
 
-/// Night atlas for the merged proxy boxes. The Sound bowl is a carpet of
-/// incandescent light at night, so the residential bank is an irregular warm
-/// scatter (2700-3000 K, clusters and gaps) while the commercial bank keeps
-/// the regular grid that is correct for towers.
-fn proxy_windows_texture() -> Image {
+/// Daylight atlas for the merged proxy boxes: horizontal banks (residential
+/// left, commercial right), ONE window row per bank so the V repeat is the
+/// floor count and a window is always 3.0 m tall. A plain roof strip ends each
+/// bank.
+fn proxy_day_texture() -> Image {
     let size = SASH_TEX as usize;
-    let half = size / 2;
-    let roof_strip = (size as f32 * 0.89) as usize;
+    let bank = size / 2;
     let mut data = vec![0u8; size * size * 4];
-
-    // Residential bank (bottom half): irregular warm points, clustered.
-    let r_cols = 14usize;
-    let r_rows = 18usize;
-    let cell_w = size / r_cols;
-    let cell_h = half / r_rows;
-    for row in 0..r_rows {
-        for column in 0..r_cols {
-            let cluster = hash01(
-                ((column / 3) as u32).wrapping_mul(0x9E37_79B9)
-                    ^ ((row / 3) as u32).wrapping_mul(0x85EB_CA6B),
-            );
-            let roll = hash01(
-                (column as u32).wrapping_mul(0x27D4_EB2F) ^ (row as u32).wrapping_mul(0xC2B2_AE35),
-            );
-            // Gaps where the cluster is dark (parks, ravines, empty blocks).
-            let lit = cluster > 0.28 && roll < 0.62;
-            if !lit {
+    for y in 0..size {
+        for x in 0..size {
+            let index = (y * size + x) * 4;
+            let residential = x < bank;
+            let local_x = x % bank;
+            if local_x >= (bank as f32 * 0.89) as usize {
+                let grain = hash01((x as u32).wrapping_mul(97) ^ y as u32) * 0.05;
+                data[index] = to_byte(0.40 + grain);
+                data[index + 1] = to_byte(0.38 + grain);
+                data[index + 2] = to_byte(0.34 + grain);
+                data[index + 3] = 255;
                 continue;
             }
-            // ~2700-3000 K: warm white with a little variation.
-            let temperature = 0.55 + 0.15 * hash01((row as u32) << 8 ^ column as u32);
-            let x0 = column * cell_w + cell_w / 3;
-            let x1 = (x0 + cell_w / 2).min(roof_strip);
-            let y0 = row * cell_h + cell_h / 3;
-            let y1 = y0 + cell_h / 2;
-            for y in y0..y1 {
-                for x in x0..x1 {
-                    let index = (y * size + x) * 4;
-                    data[index] = to_byte(1.0 * temperature);
-                    data[index + 1] = to_byte(0.66 * temperature);
-                    data[index + 2] = to_byte(0.38 * temperature);
-                    data[index + 3] = 255;
-                }
+            let columns = if residential { 4usize } else { 6 };
+            let cell_w = bank / columns;
+            let cx = local_x % cell_w;
+            let cy = y % size;
+            let window = cx > cell_w / 4
+                && cx < cell_w * 3 / 4
+                && (0.28 * size as f32) < cy as f32
+                && (cy as f32) < 0.74 * size as f32;
+            let grain = hash01((x as u32).wrapping_mul(131) ^ y as u32) * 0.08;
+            let mut color = if residential {
+                [0.55 + grain, 0.40 + grain, 0.27 + grain]
+            } else {
+                [0.62 + grain, 0.57 + grain, 0.50 + grain]
+            };
+            if window {
+                color = if residential {
+                    [0.13, 0.13, 0.13]
+                } else {
+                    [0.10, 0.12, 0.14]
+                };
             }
+            data[index] = to_byte(color[0]);
+            data[index + 1] = to_byte(color[1]);
+            data[index + 2] = to_byte(color[2]);
+            data[index + 3] = 255;
         }
     }
-
-    // Commercial bank (top half): the existing regular grid.
-    let columns = 6usize;
-    let rows = 8usize;
-    for row in 0..rows {
-        for column in 0..columns {
-            let on = hash01(
-                (row as u32).wrapping_mul(0x9E37_79B9) ^ (column as u32).wrapping_mul(0x85EB_CA6B),
-            ) < 0.55;
-            if !on {
-                continue;
-            }
-            let cw = size / columns;
-            let ch = half / rows;
-            let x0 = column * cw + cw / 4;
-            let x1 = (x0 + cw / 2).min(roof_strip);
-            let y0 = half + row * ch + ch / 4;
-            let y1 = y0 + ch / 2;
-            let warm = 0.70 + 0.30 * hash01(row as u32 * 31 + column as u32);
-            for y in y0..y1 {
-                for x in x0..x1 {
-                    let index = (y * size + x) * 4;
-                    data[index] = to_byte(warm);
-                    data[index + 1] = to_byte(warm * 0.86);
-                    data[index + 2] = to_byte(warm * 0.62);
-                    data[index + 3] = 255;
-                }
-            }
-        }
-    }
-
     let mut image = Image::new(
         Extent3d {
             width: SASH_TEX,
@@ -766,60 +737,52 @@ fn proxy_windows_texture() -> Image {
     image
 }
 
-/// Daylight atlas for the merged proxy boxes, split into two banks:
-/// residential (v < 0.5, warm cladding, house-scale windows) and commercial
-/// (v >= 0.5, the regular grid). The right strip is plain roof in both.
-fn proxy_day_texture() -> Image {
+/// Night atlas for the merged proxy boxes. The Sound bowl is a carpet of
+/// incandescent light at night, so the residential bank is an irregular warm
+/// scatter (2700-3000 K, clusters and gaps) while the commercial bank keeps
+/// the regular grid that is correct for towers.
+fn proxy_windows_texture() -> Image {
     let size = SASH_TEX as usize;
-    let half = size / 2;
-    let roof_strip = (size as f32 * 0.89) as usize;
+    let bank = size / 2;
     let mut data = vec![0u8; size * size * 4];
     for y in 0..size {
-        let residential = y < half;
         for x in 0..size {
-            let index = (y * size + x) * 4;
-            if x >= roof_strip {
-                let grain = hash01((x as u32).wrapping_mul(97) ^ y as u32) * 0.05;
-                data[index] = to_byte(0.40 + grain);
-                data[index + 1] = to_byte(0.38 + grain);
-                data[index + 2] = to_byte(0.34 + grain);
-                data[index + 3] = 255;
+            let residential = x < bank;
+            let local_x = x % bank;
+            if local_x >= (bank as f32 * 0.89) as usize {
                 continue;
             }
-            let grain = hash01((x as u32).wrapping_mul(131) ^ y as u32) * 0.08;
-            let (columns, rows) = if residential {
-                (5usize, 7usize)
+            let index = (y * size + x) * 4;
+            if residential {
+                // Warm scatter: irregular horizontal spacing, clustered on/off.
+                let columns = 9usize;
+                let cell_w = bank / columns;
+                let column = local_x / cell_w;
+                let in_cell = local_x % cell_w;
+                let cluster = hash01(column as u32 / 3);
+                let roll = hash01((column as u32).wrapping_mul(0x27D4_EB2F) ^ (y as u32 / 11));
+                if cluster > 0.30 && roll < 0.62 && in_cell > cell_w / 3 {
+                    let temperature = 0.58 + 0.14 * hash01(column as u32);
+                    data[index] = to_byte(1.0 * temperature);
+                    data[index + 1] = to_byte(0.66 * temperature);
+                    data[index + 2] = to_byte(0.38 * temperature);
+                    data[index + 3] = 255;
+                }
             } else {
-                (6, 8)
-            };
-            let cell_w = size / columns;
-            let cell_h = (size / rows).max(1);
-            let cx = x % cell_w;
-            let cy = y % cell_h;
-            let window =
-                cx > cell_w / 4 && cx < cell_w * 3 / 4 && cy > cell_h / 3 && cy < cell_h * 4 / 5;
-            let mut color = if residential {
-                [0.55 + grain, 0.40 + grain, 0.27 + grain]
-            } else {
-                [0.62 + grain, 0.57 + grain, 0.50 + grain]
-            };
-            if window {
-                let lit = hash01(
-                    ((x / cell_w) as u32).wrapping_mul(0x9E37_79B9)
-                        ^ (((y % half) / cell_h) as u32).wrapping_mul(0x85EB_CA6B),
-                ) < if residential { 0.10 } else { 0.18 };
-                color = if lit {
-                    [0.74, 0.60, 0.40]
-                } else if residential {
-                    [0.13, 0.13, 0.13]
-                } else {
-                    [0.10, 0.12, 0.14]
-                };
+                // Commercial grid: 6 regular cells.
+                let columns = 6usize;
+                let cell_w = bank / columns;
+                let column = local_x / cell_w;
+                let in_cell = local_x % cell_w;
+                let on = hash01((column as u32).wrapping_mul(0x9E37_79B9) ^ 0x51ED) < 0.55;
+                if on && in_cell > cell_w / 4 && in_cell < cell_w * 3 / 4 {
+                    let warm = 0.70 + 0.30 * hash01(column as u32);
+                    data[index] = to_byte(warm);
+                    data[index + 1] = to_byte(warm * 0.86);
+                    data[index + 2] = to_byte(warm * 0.62);
+                    data[index + 3] = 255;
+                }
             }
-            data[index] = to_byte(color[0]);
-            data[index + 1] = to_byte(color[1]);
-            data[index + 2] = to_byte(color[2]);
-            data[index + 3] = 255;
         }
     }
     let mut image = Image::new(

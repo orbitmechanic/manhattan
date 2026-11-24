@@ -1818,3 +1818,50 @@ blocks among trees rather than a pitched-roofline carpet; the acceptance gestalt
 proxy boxes carry a ridge/hip top. `roof-pack-bake`: roof parameters are derived per building at spawn; the
 binary pack has no roof block and the pack itself was **not rebuilt** this round — the height gate is applied
 at spec time, not re-emitted into the pack. `roof-fallback-concave`: 37 % of shells fall back to flat.
+
+## Iteration 75 — the proxy veil (seattle-proxies1)
+
+**Proxies graduate to buildings.** Each merged proxy box now carries its own **pitched roof baked into the
+merged mesh**: seeded pitch 15–45° by building id, gable along the longer axis (ridge = long − short), moss
+eave triangles, material in the shake/asphalt/tile family, and ~5 % near-black solar patches. Commercial
+proxies stay legitimately flat. The aerial majority finally shows rooflines. `ROOFS` (shells) in the same
+run: `installed=643 pitched=444 flat_fallback=199 solar=8`, materials 68/18/12/2.
+
+**Fixed metres per floor (law).** The proxy facade UV is now `V = height / 3.0` — one atlas row per 3.0 m
+floor, repeated — so a window keeps the same physical height on a 2-storey house and a 60 m tower. The atlas
+was re-authored with **horizontal family banks and one window row per bank** so the V repeat never crosses
+banks. U stays within the family bank (one bank tile is 4–6 windows across), so horizontal module is derived
+from the face width; that half of the law is the `proxy-u-module` debt. Shells already carry physical pane
+geometry.
+
+**Slenderness gate (extends Unremarkability).** A footprint hosts about one storey per 12 m², and a
+residential district hosts nothing above four storeys. Census over the model: **0 survivors >4 floors in
+residential districts** (the remaining 16 m "survivors" in the old table are 4-storey commercial, allowed).
+Demotion totals unchanged from iteration 74 (47,875) plus the slenderness caps.
+
+**Evergreen truth.** Species are re-weighted at spawn by position hash: **≥85 % conifer** (fir/cedar mix),
+deciduous minority; twelve dark tint steps. A composition table prints once past 10k trees
+(`TREE COMPOSITION fir=… cedar=… conifer=…%`).
+
+**Wind sway.** A per-frame CPU base-pivot rotation of camera-near trees: 3–5° maximum bend, one wind
+direction per 500 m cell, phase from the position hash, zero draw cost, no unique meshes. This is the
+zero-draw *approximation* of a height-proportional vertex bend; the shader version is the `tree-sway-shader`
+debt.
+
+**Proxy tint visibility.** The proxy tint bake was verified to reach the merged mesh (per-box vertex colours,
+id-keyed) and the aerial carpet now shows building-to-building cream/brown variation rather than
+neighbourhood blocks.
+
+**Gauntlet** (`--seattle` + `S2_GAUNTLET=1`): 15 m/s 63.3/425 (boot stall), 30 48.4/64.0, 100 48.2/63.2,
+**650 60.2/85.2** — in the 28–77 band with the proxy roofs added.
+
+**Texture ledger probe (measurement only, no import).** Classes needed for a future real-texture round:
+brick courses, concrete panels, glass curtain wall, timber clapboard, asphalt/wood shake roofing, moss
+border, storefront signage, window sash. One 1024² BC7 tile at 1 byte/px is **1.00 MiB** (RGBA8 4.00 MiB,
+DXT5 1.00 MiB) before mips; at 6–8 classes the atlas set adds ~6–8 MiB VRAM and ~10–20 ms load in this
+pipeline's asset path. No tile was imported this round; the prototype mapping is deferred to the
+player-approved texture round.
+
+**Debts.** `proxy-u-module` (horizontal module still face-derived), `tree-sway-shader`, `roof-pack-bake`
+(still runtime), and the tower-beside-house window-frame capture + sway offset-frame pair were not produced
+this round; the carpet and the floors-UV facades carry the window-scale evidence.

@@ -185,6 +185,8 @@ pub struct Trees {
     unloading: VecDeque<(usize, Vec<Entity>)>,
     pub active: usize,
     pub draw_groups: usize,
+    pub species_counts: [u32; 6],
+    pub composition_reported: bool,
     pub last_lod: f32,
     pub disabled: bool,
 }
@@ -193,8 +195,10 @@ pub struct TreesPlugin;
 
 impl Plugin for TreesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_trees)
-            .add_systems(Update, (tree_stream, tree_lod_update, tree_capture));
+        app.add_systems(Startup, setup_trees).add_systems(
+            Update,
+            (tree_stream, tree_lod_update, tree_wind, tree_capture),
+        );
     }
 }
 
@@ -566,9 +570,20 @@ fn spawn_records(world: &mut World, node: usize, records: &[TreeRecord]) {
         // Foliage tint is keyed to the tree position, not the dataset tint:
         // identical species still vary street to street, deterministically.
         let tint = ((hash01_pos(record.x, record.z) * TINT_COUNT as f32) as u8).min(TINT_COUNT - 1);
-        let mesh = world
-            .resource::<TreeAssets>()
-            .mesh(record.species, tint, lod);
+        // Evergreen truth: the SDOT composition is mixed, but the Sound reads as
+        // conifer. Re-weight to >=85 % conifer (fir/cedar) by position hash;
+        // deciduous survives as a minority.
+        let roll = hash01_pos(record.z, record.x);
+        let species = if roll < 0.85 {
+            if hash01_pos(record.x + 13.0, record.z - 7.0) < 0.6 {
+                0
+            } else {
+                1
+            }
+        } else {
+            record.species.max(2)
+        };
+        let mesh = world.resource::<TreeAssets>().mesh(species, tint, lod);
         let material = world.resource::<TreeAssets>().material.clone();
         let entity = world
             .spawn((
@@ -576,15 +591,33 @@ fn spawn_records(world: &mut World, node: usize, records: &[TreeRecord]) {
                 MeshMaterial3d(material),
                 Transform::from_xyz(world_x, y, record.z)
                     .with_scale(Vec3::splat(record.height.max(2.0))),
-                TreeVisual {
-                    species: record.species,
-                    tint,
-                    lod,
-                },
+                TreeVisual { species, tint, lod },
                 NotShadowCaster,
                 Name::new("tree"),
             ))
             .id();
+        {
+            let mut trees = world.resource_mut::<Trees>();
+            trees.species_counts[species as usize % 6] += 1;
+            if !trees.composition_reported {
+                let total: u32 = trees.species_counts.iter().sum();
+                if total >= 10_000 {
+                    let pct = |value: u32| 100.0 * value as f32 / total as f32;
+                    trees.composition_reported = true;
+                    let counts = trees.species_counts;
+                    info!(
+                        "TREE COMPOSITION fir={:.0}% cedar={:.0}% maple={:.0}% madrone={:.0}% cherry={:.0}% plane={:.0}% (conifer {:.0}%)",
+                        pct(counts[0]),
+                        pct(counts[1]),
+                        pct(counts[2]),
+                        pct(counts[3]),
+                        pct(counts[4]),
+                        pct(counts[5]),
+                        pct(counts[0] + counts[1])
+                    );
+                }
+            }
+        }
         entities.push(entity);
     }
     let spawned = entities.len();
@@ -687,6 +720,37 @@ const TREE_POSES: [TreePose; 8] = [
         minute: 17.0 * 60.0 + 30.0,
     },
 ];
+
+/// Subtle wind sway: 3-5 degrees of bend, one wind direction per 500 m cell,
+/// phase from the position hash. Implemented as a base-pivot rotation of the
+/// whole camera-near tree (CPU), which is the zero-draw approximation of a
+/// height-proportional vertex bend. Only near trees are rotated.
+fn tree_wind(
+    time: Res<Time>,
+    camera: Single<&Transform, With<FlyCamera>>,
+    mut query: Query<(&mut Transform, &TreeVisual), Without<FlyCamera>>,
+) {
+    let now = time.elapsed_secs();
+    let camera = camera.translation;
+    for (mut transform, _visual) in &mut query {
+        let distance = transform.translation.truncate().distance(camera.truncate());
+        if distance > 260.0 {
+            continue;
+        }
+        let cell = (
+            (transform.translation.x / 500.0).floor() as i32,
+            (transform.translation.z / 500.0).floor() as i32,
+        );
+        let phase_hash = hash01_pos(transform.translation.x, transform.translation.z);
+        let wind_angle =
+            hash01_pos(cell.0 as f32 * 500.0, cell.1 as f32 * 500.0) * std::f32::consts::TAU;
+        let axis = Vec3::new(-wind_angle.sin(), 0.0, wind_angle.cos());
+        // 3-5 degrees, slow: the player must not consciously notice it.
+        let max_bend = 0.052 + 0.035 * hash01_pos(transform.translation.z, transform.translation.x);
+        let bend = max_bend * (0.5 + 0.5 * (now * 0.9 + phase_hash * std::f32::consts::TAU).sin());
+        transform.rotation = Quat::from_axis_angle(axis, bend);
+    }
+}
 
 fn tree_capture(world: &mut World) {
     if std::env::var_os("TREES_CAPTURE").is_none() || !s2_enabled() {

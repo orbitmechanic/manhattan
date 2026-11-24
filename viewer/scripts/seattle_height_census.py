@@ -166,6 +166,9 @@ def governor(record: dict, rule: dict) -> dict:
             demoted = True
     if residential:
         floor_count = min(floor_count, 3)
+    if not LEGACY and rule.get("_district") in RESIDENTIAL_DISTRICTS:
+        area = max(record.get("area", 1.0), 1.0)
+        floor_count = min(floor_count, max(1, int(area // 12)), 4)
     if LEGACY:
         if rule.get("height_bias") == "low":
             floor_count = min(floor_count, 6)
@@ -357,6 +360,17 @@ def main() -> None:
             f"(res {row['over_cap_residential']:3}) max_recorded={row['max_recorded']:6.1f} "
             f"applied={row['max_applied']:5.1f} families={row['families']} worst={row['worst']}"
         )
+
+    survivors = []
+    for row in rows:
+        if row["district"] in RESIDENTIAL_DISTRICTS:
+            for worst in row["worst"]:
+                if worst["applied"] > 12.0:
+                    survivors.append((row["district"], row["neighborhood"], worst))
+    print()
+    print(f"SLENDERNESS SURVIVORS (>4 storeys in residential districts): {len(survivors)}")
+    for district, neighborhood, worst in survivors[:10]:
+        print(f"  {district:16} {neighborhood:20} b{worst['id']} applied={worst['applied']:.0f} source={worst['source']}")
 
     if "--json" in sys.argv:
         target = Path(sys.argv[sys.argv.index("--json") + 1])
