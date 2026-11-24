@@ -27,6 +27,13 @@ pub const ACCESSORY_RESUME_SPEED: f32 = 300.0;
 /// Sea-level speed of sound in m/s.
 pub const MACH_1_MPS: f32 = 343.0;
 
+/// Sonic camera gain: 0 at a walk, 1 at the 650 m/s flight standard. Shared by
+/// the wind-rush mixer, the pitch cue, the FOV pulse and the shake so every
+/// effect reads the same curve.
+pub fn sonic_gain(speed: f32) -> f32 {
+    ((speed - 220.0) / (650.0 - 220.0)).clamp(0.0, 1.0)
+}
+
 #[derive(Resource)]
 pub struct MotionState {
     pub velocity: Vec3,

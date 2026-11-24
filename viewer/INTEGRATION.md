@@ -1707,3 +1707,58 @@ override was removed last round; these two remain).
 - **homeless encampment representation** — requires locational accuracy and modeling we don't authorize;
   omission is deliberate, not oversight. No agent session should improvise encampment scatter as scenery
   texture.
+
+## Iteration 73 — the botanist: branch kits, material grade, camera law (seattle-trees1)
+
+**Tree kits.** The dataset reports **6 species** (Douglas fir, western red cedar, bigleaf maple, Pacific
+madrone, cherry, London plane); each gets **5 authored branch parts** (tapered limbs + a twig, real
+geometry, never a billboard). Only the rooted part carries the trunk stub, and the other parts root at a
+fork ring, so a composite has **no coplanar trunk surfaces to z-fight**. Combo = **1–3 parts**, each yawed by
+its own seeded angle, merged into one mesh. The seed is the quantised tree position + height, so journal
+replays and re-streams reproduce the identical tree.
+
+**Lazy baking, not enumeration**, because the combo space is seeded per position (continuous rotations):
+enumerating 5 + 25 + 125 subsets × yaw steps explodes. Instead a tree bakes when it comes inside **30 m** and
+drops its mesh at **45 m** (hysteresis), 16 bakes/tick. Near-camera stats from a Green Lake park run:
+`baked_combos=156–395`, `avg_combo_tris=159–166` vs `card_tris=22`, `draw_calls≈baked` — one draw per near
+tree, as specified. The card LODs remain for the far field; the 300/neighborhood cap is untouched.
+
+**Material grade.** Per-building tint is a **vertex-colour instance attribute baked into the building's own
+wall mesh** at spawn — the shared family atlas and its 20 materials are untouched, so the budget does not
+grow. Ranges are hue-constrained per family (timber +6 % warm, masonry +5 %, steel ±2 % neutral, adobe +6 %)
+with a 0.90–1.10 value nudge. Evidence: `captures/tint_contact_sheet.png` (a Wallingford row showing three
+distinct browns from one material).
+
+**Camera interior ban.** Buildings are solid to the camera. A camera ending a frame inside a hull is moved to
+the nearest edge and **glanced along the tangent**, correction scaled by speed (`glance = speed/650`, min
+0.15). Deliberate fly-through log: `INTERIOR PROBE: entering b87626 … → CAMERA DEFLECT b87626 speed=0
+resolution=(0.07,1.00) glance=0.15`. Staged capture cameras are exempt (Camera Ownership Law).
+
+**Sonic camera reinstalled.** One `sonic_gain(speed)` curve (0 at a walk, 1 at 650 m/s) drives wind-rush
+volume **and playback rate** (the speed cue), a 5° FOV pulse and a 0.15° shake. `SONIC_TABLE=1` prints the
+curve and the live gains; measured curve at the gauntlet regimes:
+
+| speed (m/s) | gain | wind vol | wind rate | fov | shake (°) |
+|---:|---:|---:|---:|---:|---:|
+| 15 | 0.000 | 0.020 | 0.85 | 70.0 | 0.000 |
+| 30 | 0.000 | 0.020 | 0.85 | 70.0 | 0.000 |
+| 100 | 0.000 | 0.020 | 0.85 | 70.0 | 0.000 |
+| 650 | 1.000 | 0.340 | 2.20 | 75.0 | 0.149 |
+
+**Gauntlet, treed district (650 m/s pass).** `--seattle` + `S2_GAUNTLET=1`, trees on:
+
+| regime | avg ms | p99 ms |
+|---|---:|---:|
+| 15 m/s | 217.4 | 1889.6 (boot stall) |
+| 30 m/s | 133.0 | 200.0 |
+| 100 m/s | 129.9 | 208.5 |
+| 650 m/s | **176.7** | **248.3** |
+
+The 650 m/s pass is **worse than the 28–77 ms standard** from playtests 66–70. Named debt `tree-650-perf`:
+the near-combo bakes and one-draw-per-tree cost are the likely cause (156–395 unique meshes in a park); the
+next step is a quantised combo cache so neighbouring trees share baked meshes, and/or a 20 m bake radius.
+This round ships the feature green with the regression measured rather than hidden.
+
+**Captures.** `trees_near.png`, `trees_far.png` (same park, 12 m vs 300 m — branchy combos vs cards),
+`tint_contact_sheet.png`, `pedestrians_park_frontage.png` (walkers scaled against near combos), gauntlet
+frames.

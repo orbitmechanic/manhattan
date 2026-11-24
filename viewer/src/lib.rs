@@ -17,6 +17,7 @@ pub mod facade;
 pub mod geology;
 pub mod horizon;
 pub mod instrument;
+pub mod interior;
 pub mod landmarks;
 pub mod lightning;
 pub mod minimap;

@@ -461,6 +461,7 @@ pub fn apply_family_skin(world: &mut World, id: u32, family: MaterialFamily) {
     world
         .entity_mut(wall)
         .insert(MeshMaterial3d(skin.wall.clone()));
+    grade_wall(world, wall, id, family);
     let Some(children) = world.get::<Children>(root) else {
         return;
     };
@@ -486,6 +487,46 @@ pub fn apply_family_skin(world: &mut World, id: u32, family: MaterialFamily) {
                 .insert(MeshMaterial3d(handle.clone()));
         }
     }
+}
+
+/// Per-building material grade, baked as a vertex-colour instance attribute on
+/// the building's own wall mesh. The shared family atlas and its material are
+/// untouched, so the 20-material / ~2 MB budget does not grow. Ranges are
+/// hue-constrained per family: timber and brick vary warm, steel stays neutral.
+fn grade_wall(world: &mut World, wall: Entity, id: u32, family: MaterialFamily) {
+    let Some(handle) = world.get::<Mesh3d>(wall).map(|mesh| mesh.0.clone()) else {
+        return;
+    };
+    let (warm, chroma) = match family {
+        MaterialFamily::Timber => (0.06, 0.02),
+        MaterialFamily::MasonryStone => (0.05, 0.02),
+        MaterialFamily::SteelFrame => (0.02, 0.03),
+        MaterialFamily::EarthAdobe => (0.06, 0.02),
+    };
+    let h = hash01(id.wrapping_mul(0x9E37_79B9));
+    let g = hash01(id.rotate_left(7) ^ 0x5EED_1234);
+    let nudge = 0.90 + 0.20 * h;
+    let hue = (g - 0.5) * 2.0;
+    let tint = [
+        (nudge * (1.0 + warm * hue)).clamp(0.70, 1.15),
+        (nudge * (1.0 + chroma * hue)).clamp(0.70, 1.15),
+        (nudge * (1.0 - warm * 0.6 * hue)).clamp(0.70, 1.15),
+        1.0,
+    ];
+    let Some(mut meshes) = world.get_resource_mut::<Assets<Mesh>>() else {
+        return;
+    };
+    let Some(mut mesh) = meshes.get_mut(&handle) else {
+        return;
+    };
+    if mesh.attribute(Mesh::ATTRIBUTE_COLOR).is_some() {
+        return;
+    }
+    let count = mesh.count_vertices();
+    if count == 0 {
+        return;
+    }
+    mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, vec![tint; count]);
 }
 
 /// The tier-up rebuild is allowed to respawn children with the stock handles;
