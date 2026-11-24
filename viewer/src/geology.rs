@@ -766,7 +766,7 @@ fn proxy_tint(id: u32, family: destructibles_core::family::MaterialFamily) -> [f
     ];
     let pick =
         MUTED[(h01(id.wrapping_mul(0x9E37_79B9)) * MUTED.len() as f32) as usize % MUTED.len()];
-    let nudge = 0.86 + 0.26 * h01(id.rotate_left(7) ^ 0x5EED_1234);
+    let nudge = 0.78 + 0.44 * h01(id.rotate_left(7) ^ 0x5EED_1234);
     [
         (pick[0] * nudge).clamp(0.70, 1.20),
         (pick[1] * nudge).clamp(0.70, 1.20),
@@ -898,11 +898,11 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
             let roof_color = {
                 let roll = hash01(id.rotate_left(7) ^ 0x51ED_2701);
                 if roll < 0.60 {
-                    [0.26, 0.17, 0.10, 1.0]
+                    [0.16, 0.10, 0.06, 1.0]
                 } else if roll < 0.90 {
-                    [0.22, 0.22, 0.22, 1.0]
+                    [0.15, 0.15, 0.15, 1.0]
                 } else {
-                    [0.17, 0.13, 0.10, 1.0]
+                    [0.11, 0.085, 0.065, 1.0]
                 }
             };
             let moss = [0.13, 0.17, 0.08, 1.0];
@@ -3462,6 +3462,13 @@ fn s3_buildings(world: &mut World) {
         camera.translation.x - STREAM_WORLD_OFFSET,
         camera.translation.z,
     ];
+    // At cruise, defer evictions so chunk churn cannot pulse the frame and
+    // swim the horizon; the resident cap still bounds memory.
+    let speed = world
+        .get_resource::<crate::motion::MotionState>()
+        .map(|motion| motion.speed)
+        .unwrap_or(0.0);
+    let defer_evict = speed > 300.0;
     let (wanted, unload): (Vec<usize>, Vec<(usize, Vec<Entity>)>) = {
         let state = world.resource::<Geology>();
         let mut evaluations = Evaluations::default();
@@ -3479,7 +3486,12 @@ fn s3_buildings(world: &mut World) {
             .iter()
             .filter(|(index, _)| {
                 let node = &state.pack.nodes[**index];
-                crate::citypack::aabb_distance2(&node.bounds, center) > S3_UNLOAD_M * S3_UNLOAD_M
+                let radius = if defer_evict {
+                    S3_UNLOAD_M * 1.8
+                } else {
+                    S3_UNLOAD_M
+                };
+                crate::citypack::aabb_distance2(&node.bounds, center) > radius * radius
             })
             .map(|(index, entities)| (*index, entities.clone()))
             .collect::<Vec<_>>();
@@ -3951,5 +3963,56 @@ mod tests {
             let ground = dem.height(p[0], p[2]);
             assert!((p[1] - ground - 0.15).abs() < 0.5);
         }
+    }
+}
+
+#[cfg(test)]
+mod proxy_dissection {
+    use super::*;
+
+    /// Merged-mesh dissection: gable roof faces and distinct tints must survive
+    /// the bake. The player cannot see what the buffer does not carry.
+    #[test]
+    fn merged_proxy_buffer_carries_gables_and_tints() {
+        let boxes = (0..64u32)
+            .map(|index| {
+                (
+                    Vec3::new(index as f32 * 20.0, 0.0, 0.0),
+                    Vec3::new(12.0, 6.0, 10.0),
+                    1u8,
+                    proxy_tint(
+                        1000 + index,
+                        destructibles_core::family::MaterialFamily::Timber,
+                    ),
+                    1000 + index,
+                )
+            })
+            .collect::<Vec<_>>();
+        let mesh = proxy_boxes_mesh(&boxes);
+        let triangles = mesh.indices().map(|indices| indices.len()).unwrap_or(0) as u32 / 3;
+        let flat_only = boxes.len() as u32 * 10;
+        let gable_faces = triangles.saturating_sub(flat_only);
+        let tints = match mesh.attribute(Mesh::ATTRIBUTE_COLOR) {
+            Some(bevy::mesh::VertexAttributeValues::Float32x4(values)) => {
+                let mut set = std::collections::HashSet::new();
+                for color in values.iter().step_by(16) {
+                    set.insert((
+                        (color[0] * 100.0) as u32,
+                        (color[1] * 100.0) as u32,
+                        (color[2] * 100.0) as u32,
+                    ));
+                }
+                set.len()
+            }
+            _ => 0,
+        };
+        println!(
+            "DISSECTION boxes={} triangles={} gable_faces={} distinct_tints={tints}",
+            boxes.len(),
+            triangles,
+            gable_faces
+        );
+        assert!(gable_faces > 0, "merged buffer dropped the gable caps");
+        assert!(tints > 16, "merged buffer dropped per-building tint");
     }
 }

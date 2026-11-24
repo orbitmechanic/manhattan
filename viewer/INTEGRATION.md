@@ -1989,3 +1989,40 @@ where the slenderness gate correctly flattens the tower, so it could not serve; 
 rows and the low building is cut by the HUD — it does not pass the window-scale comparison. Per the standing
 rule this becomes a **named debt blocking new marquee features next round**. Sway frames, proxy-night-
 temperature, `tree-sway-shader`, `roof-pack-bake`, `proxy-material-budget` remain filed.
+
+## Iteration 80 — precision and salad (seattle-mach1)
+
+**Supersonic stability — signal split.** `SONIC_TRACE=1` was added to log real frame-time maxima, speed, Mach
+and resident chunks every 0.5 s. Under the scripted gauntlet the trace reads **speed = 0** throughout: the
+harness teleports the camera each frame (`gauntlet_flight` writes the transform directly), so `MotionState`
+sees no frame-to-frame delta and no sonic effect engages. **The harness cannot judge supersonic smoothness**;
+only the player's stick can, per precedent. Three real defects were nevertheless found and fixed:
+
+- The free-fly camera moved on **virtual time** (`Time`), which Bevy clamps to 250 ms per frame. At 650 m/s a
+  stalled frame becomes a 162 m jump — geometry swims. The camera now integrates on **real time**, clamped to
+  100 ms.
+- The sonic camera added a **0.15° rotational shake at ~6 Hz** (iteration 73) plus a 5° FOV pulse. That reads
+  as the horizon warping and far mountains moving. Shake reduced to **0.023°**, FOV pulse to **2°**.
+- Speed was raw frame-to-frame motion, so chunk-load stalls punched the FOV/shake. `MotionState.speed` is now
+  a **120 ms EMA**.
+- S3 evictions are **deferred above 300 m/s** (unload radius ×1.8) so cruise cannot pulse the frame; the
+  resident cap still bounds memory.
+
+A floating-origin rebase was **not** attempted: the measured evidence (harness speed 0, virtual-dt jumps,
+self-inflicted shake) explains the symptom without it, and a rushed rebase is the higher-risk change.
+
+**Merged-mesh dissection (test, printed).** One merged proxy buffer from 64 residential boxes:
+`DISSECTION boxes=64 triangles=1142 gable_faces=502 distinct_tints=61`. Flat-only geometry would be 640
+triangles; the extra 502 faces are gable roof slopes and caps, and 61 of 64 boxes carry distinct tints. **Both
+features survive the merge**, so the report is perceptual: roof silhouettes and tints are too subtle at
+altitude. Acted on: roof colours darkened to near-black browns/greys (`0.16/0.10/0.06`, `0.15` grey,
+`0.11/0.085/0.065`), and per-building tint widened to a **0.78–1.22** value range with the muted-neutral hue
+spread. Both shell and proxy paths use the widened range.
+
+**Gauntlet:** 650 m/s **55.6 / 103.3 ms** average in band (p99 103.3). The 650 capture shows the horizon and
+mountains with no speed lines because `MotionState` is zero under the harness — the speed-line overlay
+(`speed_lines.wesl`, already present) can only be verified in manual flight.
+
+**Not produced / debts.** Height-source census (neighborhood × source × post-gate floors) not run this
+round; `tower-house-frame` remains blocking; `sway-frames`, `proxy-night-temperature`, `tree-sway-shader`,
+`roof-pack-bake`, `proxy-material-budget` filed. Speed-line evidence is a manual-flight item.

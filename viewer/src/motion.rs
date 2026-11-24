@@ -135,7 +135,15 @@ pub fn update_motion_state(
     let velocity = (position - last) / dt;
     let acceleration = (velocity - motion.velocity) / dt;
     motion.velocity = velocity;
-    motion.speed = velocity.length();
+    // SMOOTHED speed: the render effects (FOV pulse, shake, wind) must not read
+    // frame-time spikes from chunk streaming as motion. 120 ms EMA.
+    let raw = velocity.length();
+    let alpha = 1.0 - (-dt / 0.12).exp();
+    motion.speed = if motion.speed <= 0.0 {
+        raw
+    } else {
+        motion.speed + (raw - motion.speed) * alpha
+    };
     motion.acceleration = acceleration.length();
     motion.accel_g = (motion.acceleration / 9.80665).min(50.0);
 

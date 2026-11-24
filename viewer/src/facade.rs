@@ -525,7 +525,7 @@ fn grade_wall(world: &mut World, wall: Entity, id: u32, family: MaterialFamily) 
     ];
     let pick =
         MUTED[(hash01(id.wrapping_mul(0x9E37_79B9)) * MUTED.len() as f32) as usize % MUTED.len()];
-    let nudge = 0.86 + 0.26 * hash01(id.rotate_left(7) ^ 0x5EED_1234);
+    let nudge = 0.78 + 0.44 * hash01(id.rotate_left(7) ^ 0x5EED_1234);
     let tint = [
         (pick[0] * nudge).clamp(0.70, 1.20),
         (pick[1] * nudge).clamp(0.70, 1.20),

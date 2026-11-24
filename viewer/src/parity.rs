@@ -24,7 +24,7 @@ impl Plugin for ParityPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<RepAudit>()
             .add_systems(Startup, print_config)
-            .add_systems(Update, rep_audit);
+            .add_systems(Update, (rep_audit, sonic_trace));
     }
 }
 
@@ -91,6 +91,31 @@ fn print_config() {
         "CONFIG {} cmd=[{command}] world[{world}] instrument[{inst}]",
         if bare { "bare" } else { "instrumented" }
     );
+}
+
+fn sonic_trace(
+    time: Res<Time>,
+    real: Res<Time<Real>>,
+    motion: Res<crate::motion::MotionState>,
+    geology: Option<Res<Geology>>,
+    mut last: Local<f32>,
+    mut max_dt: Local<f32>,
+) {
+    if std::env::var_os("SONIC_TRACE").is_none() {
+        return;
+    }
+    let now = time.elapsed_secs();
+    *max_dt = max_dt.max(real.delta_secs());
+    if now - *last < 0.5 {
+        return;
+    }
+    *last = now;
+    let chunks = geology.map(|g| g.building_chunks.len()).unwrap_or(0);
+    info!(
+        "SONIC TRACE speed={:.1} mach={:.2} max_real_dt={:.3} chunks={chunks}",
+        motion.speed, motion.mach, *max_dt
+    );
+    *max_dt = 0.0;
 }
 
 fn rep_audit(world: &mut World) {

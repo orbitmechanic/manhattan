@@ -184,16 +184,18 @@ fn sonic_camera(
         sonic_gain(motion.speed)
     };
     if let Projection::Perspective(perspective) = &mut *projection {
-        perspective.fov = (70.0 + 5.0 * gain).to_radians();
+        perspective.fov = (70.0 + 2.0 * gain).to_radians();
     }
     if gain <= 0.01 {
         return;
     }
+    // The old 0.15 deg rotational shake at ~6 Hz read as the horizon warping
+    // and the mountains moving at cruise. Keep only a whisper of shake.
     let t = time.elapsed_secs();
-    let amp = 0.0026 * gain;
+    let amp = 0.0004 * gain;
     transform.rotate_local_y((t * 37.0).sin() * amp);
     transform.rotate_local_x((t * 53.0).cos() * amp * 0.7);
-    transform.translation.y += (t * 61.0).sin() * 0.05 * gain;
+    transform.translation.y += (t * 61.0).sin() * 0.012 * gain;
 }
 
 /// SONIC_TABLE=1: the gain curve at the gauntlet, measured rather than assumed.
@@ -233,7 +235,7 @@ fn sonic_table(
         motion.mach,
         0.02 + gain * 0.32,
         0.85 + 1.35 * gain,
-        70.0 + 5.0 * gain,
-        (0.0026 * gain).to_degrees()
+        70.0 + 2.0 * gain,
+        (0.0004 * gain).to_degrees()
     );
 }

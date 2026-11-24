@@ -236,7 +236,7 @@ fn normalize_gamepad_stick(x: f32, y: f32) -> Vec2 {
 
 #[allow(clippy::too_many_arguments)]
 pub fn fly_camera_system(
-    time: Res<Time>,
+    real: Res<Time<Real>>,
     keys: Res<ButtonInput<KeyCode>>,
     buttons: Res<ButtonInput<MouseButton>>,
     mouse_motion: Res<AccumulatedMouseMotion>,
@@ -247,7 +247,9 @@ pub fn fly_camera_system(
     grid: Option<Res<CollisionGrid>>,
     mut query: Query<(&mut Transform, &mut FlyCamera)>,
 ) {
-    let dt = time.delta_secs();
+    // Real time, clamped: the virtual clock clamps a stalled frame to 250 ms,
+    // which at 650 m/s teleports the camera 162 m and makes the world swim.
+    let dt = real.delta_secs().min(0.1);
     if keys.just_pressed(KeyCode::KeyM) {
         layout.toggle();
     }
