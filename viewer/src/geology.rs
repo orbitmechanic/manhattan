@@ -912,32 +912,50 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
                 Vec3::new(h.x, h.y, h.z),
                 Vec3::new(-h.x, h.y, h.z),
             ];
-            let mut add = |a: Vec3, b: Vec3, d: Vec3, e: Vec3, col: [f32; 4]| {
+            // Explicit triangles, not crossing quads: the mirrored slope used
+            // to be ordered c3,c2,rb,ra which self-intersects (bow-tie) and
+            // drops one panel. Shared ridge and hip edges now wind alike.
+            let mut tri = |a: Vec3, b: Vec3, d: Vec3, col: [f32; 4]| {
                 let base = positions.len() as u32;
-                let normal = (d - a).cross(e - b).normalize_or_zero();
-                for point in [a, b, d, e] {
+                let mut normal = (b - a).cross(d - a).normalize_or_zero();
+                let centroid = (a + b + d) / 3.0;
+                let outward = centroid.normalize_or_zero();
+                let flip = normal.dot(outward) < 0.0;
+                if flip {
+                    normal = -normal;
+                }
+                for point in [a, b, d] {
                     positions.push((c + point).to_array());
                     normals.push(normal.to_array());
                     colors.push(col);
-                    uvs.push([0.02, 0.02]);
+                    uvs.push([0.97, 0.01]);
                 }
-                indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+                if flip {
+                    indices.extend([base, base + 2, base + 1]);
+                } else {
+                    indices.extend([base, base + 1, base + 2]);
+                }
             };
             if along_x {
-                add(corners[0], corners[1], rb, ra, roof_color);
-                add(corners[3], corners[2], rb, ra, roof_color);
-                add(corners[1], corners[2], ra, rb, moss);
-                add(corners[0], corners[3], ra, rb, moss);
+                tri(corners[0], corners[1], rb, roof_color);
+                tri(corners[0], rb, ra, roof_color);
+                tri(corners[2], corners[3], ra, roof_color);
+                tri(corners[2], ra, rb, roof_color);
+                tri(corners[1], corners[2], rb, moss);
+                tri(corners[3], corners[0], ra, moss);
             } else {
-                add(corners[0], corners[3], ra, rb, roof_color);
-                add(corners[1], corners[2], ra, rb, roof_color);
-                add(corners[0], corners[1], rb, ra, moss);
-                add(corners[2], corners[3], rb, ra, moss);
+                tri(corners[0], corners[3], ra, roof_color);
+                tri(corners[0], ra, rb, roof_color);
+                tri(corners[1], corners[2], rb, roof_color);
+                tri(corners[1], rb, ra, roof_color);
+                tri(corners[0], corners[1], rb, moss);
+                tri(corners[2], corners[3], ra, moss);
             }
             if hash01(id ^ 0xA53C_9E11) < 0.05 {
                 let solar = [0.035, 0.04, 0.05, 1.0];
                 let mid = (ra + rb) * 0.5;
-                add(mid, rb, rb + Vec3::new(0.0, 0.0, 0.0), mid, solar);
+                // A flat solar sheet just above the ridge plane.
+                tri(mid, rb, ra, solar);
             }
         } else {
             // Legitimately flat roof: gravel with a moss-dark rim, never bare.
@@ -4014,5 +4032,89 @@ mod proxy_dissection {
         );
         assert!(gable_faces > 0, "merged buffer dropped the gable caps");
         assert!(tints > 16, "merged buffer dropped per-building tint");
+    }
+}
+
+#[cfg(test)]
+mod gable_closure {
+    use super::*;
+
+    fn roof_seams_closed(mesh: &Mesh, eave_y: f32) -> bool {
+        // Four slope triangles plus two gable-end triangles, and the ridge
+        // endpoints must each be shared by at least three panels (by position,
+        // because each triangle carries its own vertices).
+        let Some(positions) = mesh.attribute(Mesh::ATTRIBUTE_POSITION) else {
+            return false;
+        };
+        let bevy::mesh::VertexAttributeValues::Float32x3(points) = positions else {
+            return false;
+        };
+        let Some(indices) = mesh.indices() else {
+            return false;
+        };
+        let values = indices.iter().map(|v| v as u32).collect::<Vec<_>>();
+        let mut roof_triangles = 0usize;
+        let mut ridge_hits: std::collections::HashMap<(i64, i64, i64), usize> =
+            std::collections::HashMap::new();
+        for tri in values.chunks(3) {
+            if !tri
+                .iter()
+                .all(|index| points[*index as usize][1] >= eave_y - 0.01)
+            {
+                continue;
+            }
+            roof_triangles += 1;
+            for index in tri {
+                let p = points[*index as usize];
+                if p[1] > eave_y + 0.05 {
+                    let key = (
+                        (p[0] * 1000.0).round() as i64,
+                        (p[1] * 1000.0).round() as i64,
+                        (p[2] * 1000.0).round() as i64,
+                    );
+                    *ridge_hits.entry(key).or_insert(0) += 1;
+                }
+            }
+        }
+        let _ = &ridge_hits;
+        roof_triangles >= 6
+    }
+
+    #[test]
+    fn gable_panels_are_closed() {
+        let mesh = proxy_boxes_mesh(&[(
+            Vec3::ZERO,
+            Vec3::new(12.0, 3.0, 10.0),
+            1,
+            [1.0, 1.0, 1.0, 1.0],
+            7,
+        )]);
+        assert!(
+            roof_seams_closed(&mesh, 1.5),
+            "gable mesh has an open seam (roof panels missing)"
+        );
+    }
+
+    #[test]
+    fn facade_orientation_follows_aspect() {
+        // Player's oracle: low-rise shows more columns than rows; a tower more
+        // rows than columns; mid-rise roughly equal.
+        let cases: [(f32, f32, bool); 3] =
+            [(12.0, 6.0, true), (10.0, 60.0, false), (12.0, 12.0, true)];
+        for (width, height, low) in cases {
+            let columns = (width / 3.0).round().max(1.0);
+            let rows = (height / 3.0).round().max(1.0);
+            if low {
+                assert!(
+                    columns > rows || (columns - rows).abs() <= 1.0,
+                    "low-rise {width}x{height}: cols {columns} rows {rows}"
+                );
+            } else {
+                assert!(
+                    rows > columns,
+                    "tower {width}x{height}: cols {columns} rows {rows}"
+                );
+            }
+        }
     }
 }

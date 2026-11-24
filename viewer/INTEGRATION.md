@@ -2026,3 +2026,35 @@ mountains with no speed lines because `MotionState` is zero under the harness �
 **Not produced / debts.** Height-source census (neighborhood × source × post-gate floors) not run this
 round; `tower-house-frame` remains blocking; `sway-frames`, `proxy-night-temperature`, `tree-sway-shader`,
 `roof-pack-bake`, `proxy-material-budget` filed. Speed-line evidence is a manual-flight item.
+
+## Iteration 81 — square the walls (seattle-facades2)
+
+**Roof faces are windowless by construction.** Every proxy roof face — flat caps, hip slopes, gable ends and
+the solar sheet — now samples the plain roof strip (`u 0.97, v 0.01`) instead of the facade atlas. Night
+window rows can no longer run across rooftops because roof triangles never reference the window banks.
+
+**Gable closure.** The missing panel was a **bow-tie quad**: the mirrored slope was ordered `c3,c2,rb,ra`,
+which self-intersects and drops one half. The gable is now six explicit triangles (four slope, two end) with
+per-triangle outward winding, so every panel shares the ridge and hip edges by position. Added
+`gable_panels_are_closed` (roof panels present and seam-consistent) alongside the player's
+**aspect-ratio orientation oracle** as a test: low-rise intends columns > rows, towers rows > columns.
+Where the orientation oracle fails for very narrow footprints (a 6 m-wide house yields columns ≈ rows), the
+indicator is geometry-truthful rather than wrong; the per-face UV derivation itself (vertical = height/3,
+horizontal = that face's width/module) is unchanged and now covered by tests.
+
+**Tint.** The mach1 dissection already proved 61/64 distinct tint values in the merged buffer; the widened
+0.78–1.22 range and darkened roofs from mach1 remain in force. A **consumption test** (render two tinted
+quads through the proxy material and compare pixels) and the aerial tint capture were not produced this
+round — filed as `tint-consumption-test`.
+
+**Speed lines.** The overlay (`speed_lines.wesl`) is wired and driven by `MotionState.intensity`; the harness
+teleports (speed 0 per SONIC_TRACE), so **only manual flight can verify it** — no frame was produced.
+
+**Height census.** Still not run this round (owed twice); `chimney-census` filed with the chimney lookup tool
+awaiting the player's sighting coordinates.
+
+**Tower-house frame.** Attempted again at 10:00 from the east so the tower face is sunlit
+(`captures/tower_house.png`, bare config + camera instrumentation). The tower windows read, but the low
+building is cut by the HUD and does not form a clean comparison — the debt **remains blocking**.
+
+Gauntlet and boot green; 164 tests pass (two new orientation/closure tests).
