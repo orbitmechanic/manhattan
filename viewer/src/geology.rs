@@ -259,6 +259,7 @@ pub struct Geology {
     pub pinned_chunks: std::collections::HashSet<usize>,
     pending_shells: std::collections::VecDeque<PendingShell>,
     pub box_material: Handle<StandardMaterial>,
+    pub box_material_warm: Handle<StandardMaterial>,
     pub box_mesh: Handle<Mesh>,
     pub box_mesh_warm: Handle<Mesh>,
     pub targets: Vec<(u32, Vec3, f32)>,
@@ -477,7 +478,8 @@ fn setup_geology(
         building_chunks: HashMap::new(),
         pinned_chunks: std::collections::HashSet::new(),
         pending_shells: std::collections::VecDeque::new(),
-        box_material,
+        box_material: box_material.clone(),
+        box_material_warm: box_material,
         box_mesh,
         box_mesh_warm,
         targets: Vec::new(),
@@ -748,18 +750,25 @@ fn proxy_tint(id: u32, family: destructibles_core::family::MaterialFamily) -> [f
         value ^= value >> 16;
         (value & 0x00FF_FFFF) as f32 / 16_777_216.0
     }
-    let warm = match family {
-        destructibles_core::family::MaterialFamily::Timber => 0.06,
-        destructibles_core::family::MaterialFamily::MasonryStone => 0.05,
-        destructibles_core::family::MaterialFamily::SteelFrame => 0.02,
-        destructibles_core::family::MaterialFamily::EarthAdobe => 0.06,
-    };
-    let nudge = 0.90 + 0.20 * h01(id.wrapping_mul(0x9E37_79B9));
-    let hue = (h01(id.rotate_left(7) ^ 0x5EED_1234) - 0.5) * 2.0;
+    // Tint salad doctrine: owner-by-owner stock, not district code. Six muted
+    // neutral directions (brown, tan, grey, slate, off-white, dark brown) with
+    // saturation capped; hue is free to wander between neighbours.
+    let _ = family;
+    const MUTED: [[f32; 3]; 6] = [
+        [1.06, 0.96, 0.86],
+        [1.02, 1.00, 0.95],
+        [0.96, 0.96, 0.96],
+        [0.92, 0.98, 1.08],
+        [1.08, 1.06, 1.02],
+        [0.90, 0.86, 0.82],
+    ];
+    let pick =
+        MUTED[(h01(id.wrapping_mul(0x9E37_79B9)) * MUTED.len() as f32) as usize % MUTED.len()];
+    let nudge = 0.86 + 0.26 * h01(id.rotate_left(7) ^ 0x5EED_1234);
     [
-        (nudge * (1.0 + warm * hue)).clamp(0.70, 1.15),
-        (nudge * (1.0 + 0.02 * hue)).clamp(0.70, 1.15),
-        (nudge * (1.0 - warm * 0.6 * hue)).clamp(0.70, 1.15),
+        (pick[0] * nudge).clamp(0.70, 1.20),
+        (pick[1] * nudge).clamp(0.70, 1.20),
+        (pick[2] * nudge).clamp(0.70, 1.20),
         1.0,
     ]
 }
@@ -846,7 +855,16 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
         // Residential proxies carry a pitched roof: the roof parameters are
         // seeded by building id, same bisector pitch family as the shells.
         // Commercial (warm == 0) stays legitimately flat.
-        if *warm > 0 {
+        let floors = (size.y / 3.0).round().max(1.0);
+        let gable_p = if floors <= 1.0 {
+            1.0
+        } else if floors >= 10.0 {
+            0.05
+        } else {
+            1.0 - 0.95 * (floors - 1.0) / 9.0
+        };
+        let pitched = *warm > 0 && hash01(id ^ 0x51ED_2701) < gable_p;
+        if pitched {
             let pitch = (15.0 + 30.0 * hash01(id.wrapping_mul(0x9E37_79B9))).to_radians();
             let rise = h.y.min(h.z) * pitch.tan();
             let ridge = (h.x.max(h.z) - h.x.min(h.z)).max(0.0);
@@ -906,6 +924,24 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
                 let mid = (ra + rb) * 0.5;
                 add(mid, rb, rb + Vec3::new(0.0, 0.0, 0.0), mid, solar);
             }
+        } else {
+            // Legitimately flat roof: gravel with a moss-dark rim, never bare.
+            let gravel = [0.31, 0.30, 0.28, 1.0];
+            let moss = [0.14, 0.18, 0.09, 1.0];
+            let corners = [
+                Vec3::new(-h.x, h.y, -h.z),
+                Vec3::new(h.x, h.y, -h.z),
+                Vec3::new(h.x, h.y, h.z),
+                Vec3::new(-h.x, h.y, h.z),
+            ];
+            let base = positions.len() as u32;
+            for (index, point) in corners.iter().enumerate() {
+                positions.push((c + *point).to_array());
+                normals.push([0.0, 1.0, 0.0]);
+                colors.push(if index % 2 == 0 { moss } else { gravel });
+                uvs.push([0.97, 0.01]);
+            }
+            indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
         }
     }
     let mut mesh = Mesh::new(
@@ -3583,7 +3619,7 @@ fn s3_buildings(world: &mut World) {
                     let (mesh, material) = {
                         let state = world.resource::<Geology>();
                         if warm {
-                            (state.box_mesh_warm.clone(), state.box_material.clone())
+                            (state.box_mesh_warm.clone(), state.box_material_warm.clone())
                         } else {
                             (state.box_mesh.clone(), state.box_material.clone())
                         }

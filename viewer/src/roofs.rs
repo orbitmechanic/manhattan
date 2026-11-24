@@ -39,6 +39,8 @@ pub struct RoofStats {
     pub asphalt: u32,
     pub tile: u32,
     pub metal: u32,
+    pub band_gable: [u32; 5],
+    pub band_flat: [u32; 5],
     pub next_report: f32,
     /// Installed roof entities by building, so a tier-up rebuild can re-roof.
     pub roots: HashMap<u32, Entity>,
@@ -50,6 +52,16 @@ impl Plugin for RoofPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<RoofStats>()
             .add_systems(Update, install_roofs);
+    }
+}
+
+fn band(floors: u32) -> usize {
+    match floors {
+        0 | 1 => 0,
+        2 => 1,
+        3..=5 => 2,
+        6..=10 => 3,
+        _ => 4,
     }
 }
 
@@ -447,7 +459,7 @@ fn install_roofs(world: &mut World) {
         else {
             continue;
         };
-        if floors > 2 || footprint.len() < 3 {
+        if footprint.len() < 3 {
             let _ = world.entity_mut(root).insert(RoofInstalled);
             continue;
         }
@@ -465,6 +477,24 @@ fn install_roofs(world: &mut World) {
             continue;
         }
         let seed = id;
+        // Roof probability doctrine: 100 % at one storey, decaying smoothly to
+        // 5 % above ten. Monotonic in storeys; a flat roof is legitimate.
+        let floors_f = floors as f32;
+        let gable_p = if floors_f <= 1.0 {
+            1.0
+        } else if floors_f >= 10.0 {
+            0.05
+        } else {
+            1.0 - 0.95 * (floors_f - 1.0) / 9.0
+        };
+        if hash01(seed ^ 0x51ED_2701) >= gable_p {
+            let mut stats = world.resource_mut::<RoofStats>();
+            stats.installed += 1;
+            stats.flat_fallback += 1;
+            stats.band_flat[band(floors)] += 1;
+            let _ = world.entity_mut(root).insert(RoofInstalled);
+            continue;
+        }
         let pitch = (15.0 + 30.0 * hash01(seed.wrapping_mul(0x9E37_79B9))).to_radians();
         let material_roll = hash01(seed.rotate_left(7) ^ 0x51ED_2701);
         let material_index = if material_roll < 0.55 {
@@ -483,7 +513,9 @@ fn install_roofs(world: &mut World) {
             stats.installed += 1;
             if flat {
                 stats.flat_fallback += 1;
+                stats.band_flat[band(floors)] += 1;
             } else {
+                stats.band_gable[band(floors)] += 1;
                 stats.pitched += 1;
                 match material_index {
                     0 => stats.shake += 1,
@@ -528,6 +560,22 @@ fn install_roofs(world: &mut World) {
                     0.0
                 }
             };
+            let bands = ["1", "2", "3-5", "6-10", ">10"];
+            let table = (0..5)
+                .map(|index| {
+                    let g = stats.band_gable[index];
+                    let f = stats.band_flat[index];
+                    let total = g + f;
+                    let rate = if total > 0 {
+                        100.0 * g as f32 / total as f32
+                    } else {
+                        0.0
+                    };
+                    format!("{}:{:.0}%({total})", bands[index], rate)
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+            info!("ROOF GABLE RATE by storeys {table}");
             info!(
                 "ROOFS installed={} pitched={} flat_fallback={} solar={} shake={:.0}% asphalt={:.0}% tile={:.0}% metal={:.0}% chunks={chunks}",
                 stats.installed,

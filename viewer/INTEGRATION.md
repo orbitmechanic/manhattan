@@ -1865,3 +1865,45 @@ player-approved texture round.
 **Debts.** `proxy-u-module` (horizontal module still face-derived), `tree-sway-shader`, `roof-pack-bake`
 (still runtime), and the tower-beside-house window-frame capture + sway offset-frame pair were not produced
 this round; the carpet and the floors-UV facades carry the window-scale evidence.
+
+## Iteration 76 — glass and gravel (seattle-glass1)
+
+**Facade UV repair — diagnosis confirmed, strategy (a) shipped.** The proxy bug was exactly as reported:
+the single banked atlas with `V = height/3.0` and a **Clamp** sampler. V > 1 clamped to the top row
+("windows on the top floor only"), U was locked inside one bank ("one edge"), and the same Clamp state
+smeared edge pixels. Fix: **one proxy texture per family** (residential, commercial), each a single
+tileable facade with one window row and a plain 5 % roof strip, sampled with an explicit **Repeat**
+descriptor in U and V. UVs are now the plain physical mapping: `v = height / 3.0` floors, `u = width / 18 m`
+(commercial) or `width / 12 m` (residential). No banks, no shader fract, no sub-rect math. Cost: **+2 shared
+materials** (20 → 22) for the two proxy skins; the shell 20-material budget is otherwise untouched.
+Sampler audit: shell wall textures were already Repeat-descriptor; pane/sash atlases stay Clamp with
+0..1 UVs (correct). The proxy Clamp was the only offender.
+
+**Roof probability doctrine.** Gable probability is monotonic in storeys — 100 % at one storey, smooth decay
+to 5 % above ten — and flat roofs now carry a gravel top with a moss rim instead of bare grey. Measured built
+distribution (carpet run): **1 storey 62 % (177), 2 storeys 68 % (544), 3–5 storeys 7 % (14), 6–10 0 % (4),
+>10 0 % (3)**. The gap between the one-storey doctrine (100 %) and 62 % built is the concave-skeleton flat
+fallback, counted separately.
+
+**Tint doctrine reversal (tint salad).** Per-building tint is now a disorganized muted neutral salad — six
+directions (brown, tan, grey, slate blue, off-white, dark brown) with saturation capped and a 0.86–1.12
+value nudge — applied identically to shells (wall vertex colours) and proxy boxes. No district coherence.
+`captures/tint_salad_street.png` is the street-row proof.
+
+**Window day/night.** Day windows are always dark reflective glass on both the proxy atlas and the shell
+sash atlases (no lit cells in the day art). Night: towers above three storeys mix the crate's warm and cool
+window materials floor by floor (seeded, ~55 % cool), while 1–3 storey homes keep one material — one
+household, one temperature. The residential night carpet stays warm-dominant (`night_residential_carpet.png`).
+Proxy night art is warm-dominant; per-floor temperature on proxies needs a second emissive texture and is
+filed as `proxy-night-temperature`.
+
+**Carry items closed.** Evergreen composition now prints in a normal run once 4k trees have spawned:
+**fir 51 %, cedar 35 % (conifer 85 %), maple 6 %, madrone 1 %, cherry 5 %, plane 3 %**. The carpet capture is
+re-shot with full window grids on all faces. Sway offset frames, the tower-beside-house window frame, and a
+dedicated roof re-shoot remain the evidence debts.
+
+**Gauntlet** (`--seattle` + `S2_GAUNTLET=1`): 15 m/s 58.5/253.7 (boot stall), 30 42.3/66.3, 100 42.5/63.2,
+**650 58.5/95.4** — inside the 28–77 band.
+
+**Debts.** `tower-house-frame` (owed twice, **escalated**), `sway-frames`, `proxy-night-temperature`,
+`tree-sway-shader`, `roof-pack-bake`, `proxy-material-budget` (+2).

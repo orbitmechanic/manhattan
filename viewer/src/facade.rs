@@ -451,13 +451,20 @@ pub fn apply_family_skin(world: &mut World, id: u32, family: MaterialFamily) {
     let Some(skin) = skins.skin(family).cloned() else {
         return;
     };
-    let Some((wall, root)) = world
-        .resource::<Buildings>()
-        .get(id)
-        .map(|record| (record.wall_mesh, record.entity))
-    else {
+    let Some((wall, root, record_floors)) = world.resource::<Buildings>().get(id).map(|record| {
+        (
+            record.wall_mesh,
+            record.entity,
+            record.layout.spec.floor_count,
+        )
+    }) else {
         return;
     };
+    // Reuse the crate's existing cool window material for LED-temperature
+    // floors: no new material is allocated.
+    let cool_lit = world
+        .get_resource::<destructibles_bevy::assets::WorldAssets>()
+        .map(|assets| assets.window_cool.clone());
     world
         .entity_mut(wall)
         .insert(MeshMaterial3d(skin.wall.clone()));
@@ -477,8 +484,17 @@ pub fn apply_family_skin(world: &mut World, id: u32, family: MaterialFamily) {
                 .entity_mut(child)
                 .insert(MeshMaterial3d(handle.clone()));
         } else if let Some(window) = world.get::<WindowLight>(child) {
+            // Night temperature: a tower mixes warm incandescent and cool LED
+            // floor by floor; a 1-3 storey house is one household, one temp.
+            let pick_cool = window.floor > 0
+                && record_floors > 3
+                && window.floor > 1
+                && hash01(id.wrapping_mul(0x9E37_79B9) ^ window.floor.wrapping_mul(0x85EB_CA6B))
+                    < 0.55;
             let handle = if window.floor == 0 {
                 &skin.shop_lit
+            } else if pick_cool {
+                cool_lit.as_ref().unwrap_or(&skin.lit)
             } else {
                 &skin.lit
             };
@@ -497,20 +513,23 @@ fn grade_wall(world: &mut World, wall: Entity, id: u32, family: MaterialFamily) 
     let Some(handle) = world.get::<Mesh3d>(wall).map(|mesh| mesh.0.clone()) else {
         return;
     };
-    let (warm, chroma) = match family {
-        MaterialFamily::Timber => (0.06, 0.02),
-        MaterialFamily::MasonryStone => (0.05, 0.02),
-        MaterialFamily::SteelFrame => (0.02, 0.03),
-        MaterialFamily::EarthAdobe => (0.06, 0.02),
-    };
-    let h = hash01(id.wrapping_mul(0x9E37_79B9));
-    let g = hash01(id.rotate_left(7) ^ 0x5EED_1234);
-    let nudge = 0.90 + 0.20 * h;
-    let hue = (g - 0.5) * 2.0;
+    // Tint salad: six muted neutral directions, saturation capped.
+    let _ = family;
+    const MUTED: [[f32; 3]; 6] = [
+        [1.06, 0.96, 0.86],
+        [1.02, 1.00, 0.95],
+        [0.96, 0.96, 0.96],
+        [0.92, 0.98, 1.08],
+        [1.08, 1.06, 1.02],
+        [0.90, 0.86, 0.82],
+    ];
+    let pick =
+        MUTED[(hash01(id.wrapping_mul(0x9E37_79B9)) * MUTED.len() as f32) as usize % MUTED.len()];
+    let nudge = 0.86 + 0.26 * hash01(id.rotate_left(7) ^ 0x5EED_1234);
     let tint = [
-        (nudge * (1.0 + warm * hue)).clamp(0.70, 1.15),
-        (nudge * (1.0 + chroma * hue)).clamp(0.70, 1.15),
-        (nudge * (1.0 - warm * 0.6 * hue)).clamp(0.70, 1.15),
+        (pick[0] * nudge).clamp(0.70, 1.20),
+        (pick[1] * nudge).clamp(0.70, 1.20),
+        (pick[2] * nudge).clamp(0.70, 1.20),
         1.0,
     ];
     let Some(mut meshes) = world.get_resource_mut::<Assets<Mesh>>() else {
@@ -674,20 +693,21 @@ fn storefront_night_glow(
     material.emissive = LinearRgba::rgb(0.34 * night, 0.24 * night, 0.14 * night);
 }
 
-/// Daylight atlas for the merged proxy boxes: horizontal banks (residential
-/// left, commercial right), ONE window row per bank so the V repeat is the
-/// floor count and a window is always 3.0 m tall. A plain roof strip ends each
-/// bank.
-fn proxy_day_texture() -> Image {
+/// Per-family proxy facade tile. Strategy (a): **one texture per family**, so
+/// repeat is safe in both axes and the UV is the plain physical mapping
+/// (u = width / module, v = height / 3.0). No banks, no sub-rect math, no
+/// shader work. One window row per tile; a plain 5 % strip at the right edge is
+/// the roof/gravel sample.
+fn proxy_day_texture(warm: bool) -> Image {
     let size = SASH_TEX as usize;
-    let bank = size / 2;
+    let plain_from = (size as f32 * 0.95) as usize;
+    let columns = if warm { 4usize } else { 6 };
+    let cell_w = size / columns;
     let mut data = vec![0u8; size * size * 4];
     for y in 0..size {
         for x in 0..size {
             let index = (y * size + x) * 4;
-            let residential = x < bank;
-            let local_x = x % bank;
-            if local_x >= (bank as f32 * 0.89) as usize {
+            if x >= plain_from {
                 let grain = hash01((x as u32).wrapping_mul(97) ^ y as u32) * 0.05;
                 data[index] = to_byte(0.40 + grain);
                 data[index + 1] = to_byte(0.38 + grain);
@@ -695,25 +715,23 @@ fn proxy_day_texture() -> Image {
                 data[index + 3] = 255;
                 continue;
             }
-            let columns = if residential { 4usize } else { 6 };
-            let cell_w = bank / columns;
-            let cx = local_x % cell_w;
-            let cy = y % size;
+            let cx = x % cell_w;
             let window = cx > cell_w / 4
                 && cx < cell_w * 3 / 4
-                && (0.28 * size as f32) < cy as f32
-                && (cy as f32) < 0.74 * size as f32;
+                && (0.28 * size as f32) < y as f32
+                && (y as f32) < 0.74 * size as f32;
             let grain = hash01((x as u32).wrapping_mul(131) ^ y as u32) * 0.08;
-            let mut color = if residential {
+            let mut color = if warm {
                 [0.55 + grain, 0.40 + grain, 0.27 + grain]
             } else {
                 [0.62 + grain, 0.57 + grain, 0.50 + grain]
             };
             if window {
-                color = if residential {
-                    [0.13, 0.13, 0.13]
+                // DAY: windows are always dark reflective glass.
+                color = if warm {
+                    [0.10, 0.11, 0.12]
                 } else {
-                    [0.10, 0.12, 0.14]
+                    [0.09, 0.11, 0.13]
                 };
             }
             data[index] = to_byte(color[0]);
@@ -733,50 +751,58 @@ fn proxy_day_texture() -> Image {
         TextureFormat::Rgba8UnormSrgb,
         RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD,
     );
-    image.sampler = ImageSampler::linear();
+    image.sampler = repeat_sampler();
     image
 }
 
-/// Night atlas for the merged proxy boxes. The Sound bowl is a carpet of
-/// incandescent light at night, so the residential bank is an irregular warm
-/// scatter (2700-3000 K, clusters and gaps) while the commercial bank keeps
-/// the regular grid that is correct for towers.
-fn proxy_windows_texture() -> Image {
+fn repeat_sampler() -> ImageSampler {
+    ImageSampler::Descriptor(bevy::image::ImageSamplerDescriptor {
+        address_mode_u: bevy::image::ImageAddressMode::Repeat,
+        address_mode_v: bevy::image::ImageAddressMode::Repeat,
+        address_mode_w: bevy::image::ImageAddressMode::Repeat,
+        mag_filter: bevy::image::ImageFilterMode::Linear,
+        min_filter: bevy::image::ImageFilterMode::Linear,
+        mipmap_filter: bevy::image::ImageFilterMode::Linear,
+        ..default()
+    })
+}
+
+/// Night tile: one row, warm scatter for residential and the regular grid for
+/// commercial. Repeat-safe because each family owns its own texture.
+fn proxy_windows_texture(warm: bool) -> Image {
     let size = SASH_TEX as usize;
-    let bank = size / 2;
+    let plain_from = (size as f32 * 0.95) as usize;
     let mut data = vec![0u8; size * size * 4];
-    for y in 0..size {
-        for x in 0..size {
-            let residential = x < bank;
-            let local_x = x % bank;
-            if local_x >= (bank as f32 * 0.89) as usize {
-                continue;
-            }
-            let index = (y * size + x) * 4;
-            if residential {
-                // Warm scatter: irregular horizontal spacing, clustered on/off.
-                let columns = 9usize;
-                let cell_w = bank / columns;
-                let column = local_x / cell_w;
-                let in_cell = local_x % cell_w;
+    if warm {
+        let columns = 9usize;
+        let cell_w = size / columns;
+        for y in 0..size {
+            for x in 0..plain_from {
+                let column = x / cell_w;
+                let in_cell = x % cell_w;
                 let cluster = hash01(column as u32 / 3);
                 let roll = hash01((column as u32).wrapping_mul(0x27D4_EB2F) ^ (y as u32 / 11));
                 if cluster > 0.30 && roll < 0.62 && in_cell > cell_w / 3 {
                     let temperature = 0.58 + 0.14 * hash01(column as u32);
+                    let index = (y * size + x) * 4;
                     data[index] = to_byte(1.0 * temperature);
                     data[index + 1] = to_byte(0.66 * temperature);
                     data[index + 2] = to_byte(0.38 * temperature);
                     data[index + 3] = 255;
                 }
-            } else {
-                // Commercial grid: 6 regular cells.
-                let columns = 6usize;
-                let cell_w = bank / columns;
-                let column = local_x / cell_w;
-                let in_cell = local_x % cell_w;
+            }
+        }
+    } else {
+        let columns = 6usize;
+        let cell_w = size / columns;
+        for y in 0..size {
+            for x in 0..plain_from {
+                let column = x / cell_w;
+                let in_cell = x % cell_w;
                 let on = hash01((column as u32).wrapping_mul(0x9E37_79B9) ^ 0x51ED) < 0.55;
                 if on && in_cell > cell_w / 4 && in_cell < cell_w * 3 / 4 {
                     let warm = 0.70 + 0.30 * hash01(column as u32);
+                    let index = (y * size + x) * 4;
                     data[index] = to_byte(warm);
                     data[index + 1] = to_byte(warm * 0.86);
                     data[index + 2] = to_byte(warm * 0.62);
@@ -796,30 +822,44 @@ fn proxy_windows_texture() -> Image {
         TextureFormat::Rgba8UnormSrgb,
         RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD,
     );
-    image.sampler = ImageSampler::linear();
+    image.sampler = repeat_sampler();
     image
 }
 
-/// Install the proxy window atlas on the shared box material once the geology
-/// resource exists, and drive its emissive from the scene clock each frame.
+fn proxy_material(
+    images: &mut Assets<Image>,
+    materials: &mut Assets<StandardMaterial>,
+    warm: bool,
+) -> Handle<StandardMaterial> {
+    let day = images.add(proxy_day_texture(warm));
+    let night = images.add(proxy_windows_texture(warm));
+    materials.add(StandardMaterial {
+        base_color: Color::WHITE,
+        base_color_texture: Some(day),
+        emissive_texture: Some(night),
+        emissive: LinearRgba::BLACK,
+        perceptual_roughness: 0.92,
+        metallic: 0.0,
+        ..default()
+    })
+}
+
+/// Strategy (a): replace the single banked proxy material with one material per
+/// family. Two materials, two textures; repeat is safe in both axes and the
+/// sampler is Repeat (the old Clamp sampler was smearing edge pixels — that was
+/// half of the "windows on one edge and the top floor" defect).
 fn install_proxy_windows(
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    geology: Option<Res<crate::geology::Geology>>,
+    geology: Option<ResMut<crate::geology::Geology>>,
 ) {
-    let Some(geology) = geology else {
+    let Some(mut geology) = geology else {
         return;
     };
-    let night_texture = images.add(proxy_windows_texture());
-    let day_texture = images.add(proxy_day_texture());
-    if let Some(mut material) = materials.get_mut(&geology.box_material) {
-        material.emissive_texture = Some(night_texture);
-        material.emissive = LinearRgba::BLACK;
-        // The shell skin audit: proxies now carry a daylight facade atlas
-        // instead of the flat tan box colour.
-        material.base_color = Color::WHITE;
-        material.base_color_texture = Some(day_texture);
-    }
+    let cool = proxy_material(&mut images, &mut materials, false);
+    let warm = proxy_material(&mut images, &mut materials, true);
+    geology.box_material = cool;
+    geology.box_material_warm = warm;
 }
 
 fn proxy_night_windows(
@@ -830,11 +870,12 @@ fn proxy_night_windows(
     let Some(geology) = geology else {
         return;
     };
-    let Some(mut material) = materials.get_mut(&geology.box_material) else {
-        return;
-    };
     let night = night_factor(scene.hours);
-    material.emissive = LinearRgba::rgb(2.1 * night, 1.5 * night, 0.85 * night);
+    for handle in [&geology.box_material, &geology.box_material_warm] {
+        if let Some(mut material) = materials.get_mut(handle) {
+            material.emissive = LinearRgba::rgb(2.1 * night, 1.5 * night, 0.85 * night);
+        }
+    }
 }
 
 #[derive(Resource, Default)]

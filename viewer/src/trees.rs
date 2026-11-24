@@ -601,7 +601,7 @@ fn spawn_records(world: &mut World, node: usize, records: &[TreeRecord]) {
             trees.species_counts[species as usize % 6] += 1;
             if !trees.composition_reported {
                 let total: u32 = trees.species_counts.iter().sum();
-                if total >= 10_000 {
+                if total >= 4_000 {
                     let pct = |value: u32| 100.0 * value as f32 / total as f32;
                     trees.composition_reported = true;
                     let counts = trees.species_counts;
