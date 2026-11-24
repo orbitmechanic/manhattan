@@ -1941,3 +1941,51 @@ older boot/staged captures remain as history but no longer count as proof.
 **Not shipped:** the **tower-beside-house window frame** — owed a third time. Per the standing rule it
 **escalates into the next marquee**. Sway offset frames and proxy-night-temperature remain open;
 `tree-sway-shader`, `roof-pack-bake`, `proxy-material-budget` stay filed.
+
+## Iteration 79 — same ship, same sky (seattle-parity1)
+
+**Verbatim player command (certified atop this report and in every future one):**
+`./Work/games/Manhattan/viewer/target/release/manhattan-viewer --seattle`
+
+**Config parity forensics.** New `parity.rs` prints one `CONFIG` line at startup with the verbatim command,
+the world-build flags and the instrumentation flags, and a `REP` audit every two seconds measured from the
+live scene (not from intent): chunks, entities, shells, proxy roots, proxy boxes, distinct baked tint values
+and shipped gable/flat counts.
+
+| run | command | world flags | chunks | shells | proxy boxes | tint values | shipped gables/flats |
+|---|---|---|---:|---:|---:|---:|---:|
+| bare (player profile, downtown boot) | `--seattle` | S2,S3,BOOT,LANDMARKS,HORIZON | 6 | 47 | 1,722 | 307 | 1 / 1,151 |
+| bare + altitude pose (camera instrumentation only) | `--seattle` + `SEATTLE_BOOT_AT` | identical | 19 | 230 | 12,501 | 385 | 3,712 / 2,768 |
+| gauntlet (canonical after the fix) | `--seattle` + `S2_GAUNTLET=1` | identical | 6 | 47 | 1,769 | 308 | 1 / 1,289 |
+
+The world-build flags are **identical** in all three: the bare boot is the canonical full configuration. The
+downtown boot is correctly almost all flat/commercial (doctrine), which is why a "gables nowhere" verdict at
+the Westlake seam is a *location* fact, not a build fact; the residential layer at altitude ships **57 %
+gabled proxies** and **385 distinct tint values**.
+
+**Unification.** `--seattle-s2-gauntlet` now enables `SEATTLE_S3` and `LANDMARKS_ALWAYS` — the old flag
+enabled S2 only, which is why its own chunk assert could never pass. Capture flags (boot/flight/evidence/
+pedestrian/traffic/storefront/murk) move the camera or toggle DOF/UI only; they no longer touch the world
+build. `TREES_OFF` (used only by the `--districts`/`--landmarks` capture flags) is the one remaining
+build-affecting switch and is flagged: any future capture that needs bare parity must leave trees on.
+`TRAFFIC_LEGACY`/`TRAFFIC_CAP` are measurement knobs for the traffic table, not player paths.
+
+**Instantiation radius extension.** Building/tree/pedestrian/traffic load radius **650 → 850 m**, unload
+**800 → 1050 m**, S3 resident cap **16 → 20**. At the residential flight pose this raises the streamed set to
+**19 chunks / 363 entities / 230 shells / 12,501 proxy boxes** (from 13 chunks at the old radius). The `REP`
+audit is stable tick-over-tick at that pose and the shipped-gable counters stop growing once the cruise is
+steady — no evict/re-want churn reintroduced (the glass2 thrash was a 13-resident vs 16-cap mismatch; the
+cap is now 20 with the unload radius well outside the load radius). Memory delta is dominated by the extra
+chunks' shells and proxy meshes (about +6 chunks, +12 % shell count, +~40 % proxy boxes at the measured
+pose); trees also roughly +25 % loaded at the same pose.
+
+**Gauntlet post-extension** (`--seattle` + `S2_GAUNTLET=1`): 15 m/s 60.3/410 (boot stall), 30 44.8/67.9,
+100 46.8/78.2, **650 59.7/91.0** — in the 28–77 band.
+
+**Escalated items.** `tower-house-frame` is **not shipped**. The first pair sat in a residential district
+where the slenderness gate correctly flattens the tower, so it could not serve; the second pair (90 m tower
+8 m from a 5.5 m low building in "Seattle general") was captured (`captures/tower_house.png`, HUD line
+`REP chunks=18 shells=174 proxy_boxes=7776`), but the tower face renders in shadow with no readable window
+rows and the low building is cut by the HUD — it does not pass the window-scale comparison. Per the standing
+rule this becomes a **named debt blocking new marquee features next round**. Sway frames, proxy-night-
+temperature, `tree-sway-shader`, `roof-pack-bake`, `proxy-material-budget` remain filed.

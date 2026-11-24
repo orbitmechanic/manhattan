@@ -20,8 +20,8 @@ use crate::citypack::{STREAM_WORLD_OFFSET, wanted_neighborhoods};
 use crate::geology::{Geology, s2_enabled};
 
 pub const TREES_PATH: &str = "assets/datasets/seattle_trees.bin";
-const LOAD_M: f32 = 650.0;
-const UNLOAD_M: f32 = 800.0;
+const LOAD_M: f32 = 850.0;
+const UNLOAD_M: f32 = 1050.0;
 pub const SPAWN_PER_FRAME: usize = 320;
 pub const MAX_ACTIVE: usize = 6500;
 const UNLOAD_PER_FRAME: usize = 450;

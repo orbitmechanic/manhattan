@@ -22,8 +22,8 @@ use crate::citypack::{STREAM_WORLD_OFFSET, wanted_neighborhoods};
 use crate::clock::SimClock;
 use crate::geology::Geology;
 
-const LOAD_M: f32 = 650.0;
-const UNLOAD_M: f32 = 800.0;
+const LOAD_M: f32 = 850.0;
+const UNLOAD_M: f32 = 1050.0;
 const MAX_ACTIVE: usize = 500;
 const SPAWN_PER_FRAME: usize = 32;
 const BASE_PER_CHUNK: f32 = 26.0;

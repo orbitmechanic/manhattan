@@ -194,9 +194,13 @@ fn parse_args() -> Args {
                 }
             }
             "--seattle-s2-gauntlet" => {
+                // Canonical build: S3 on, same as bare --seattle. The old flag
+                // enabled S2 only, so its own chunk assert could never pass.
                 args.pilot = true;
                 unsafe {
                     std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("LANDMARKS_ALWAYS", "1");
                     std::env::set_var("PILOT_HORIZON", "1");
                     std::env::set_var("PILOT_CLEAN", "1");
                     std::env::set_var("S2_GAUNTLET", "1");
@@ -488,6 +492,7 @@ fn main() {
     .add_plugins(manhattan_viewer::facade::FacadePlugin)
     .add_plugins(manhattan_viewer::interior::InteriorPlugin)
     .add_plugins(manhattan_viewer::roofs::RoofPlugin)
+    .add_plugins(manhattan_viewer::parity::ParityPlugin)
     .add_plugins(manhattan_viewer::pedestrians::PedestriansPlugin)
     .add_plugins(manhattan_viewer::storefronts::StorefrontsPlugin)
     .add_plugins(manhattan_viewer::landmarks::LandmarksPlugin)

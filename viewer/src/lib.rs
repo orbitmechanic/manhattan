@@ -24,6 +24,7 @@ pub mod minimap;
 pub mod motion;
 pub mod neighborhood;
 pub mod night_ambient;
+pub mod parity;
 pub mod pedestrians;
 pub mod people;
 pub mod pilot;

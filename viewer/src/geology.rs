@@ -46,8 +46,8 @@ const S3_SHELL_CAP: usize = 64;
 const S3_PROXY_MERGE_M: f32 = 250.0;
 /// Unload margin over the 650 m load radius, and a hard resident cap so a
 /// teleporting capture walk cannot accumulate chunks faster than it drops them.
-const S3_UNLOAD_M: f32 = 800.0;
-const S3_MAX_RESIDENT_CHUNKS: usize = 16;
+const S3_UNLOAD_M: f32 = 1050.0;
+const S3_MAX_RESIDENT_CHUNKS: usize = 20;
 /// Shell creation is the expensive part of a chunk spawn; keep a small
 /// immediate set for the near field and amortize the rest across frames.
 const S3_SHELL_IMMEDIATE: usize = 6;
@@ -1418,7 +1418,7 @@ fn nearest_chunk_loaded(state: &Geology, center: [f32; 2]) -> bool {
     // building load radius of the camera.
     state.building_chunks.keys().any(|index| {
         let node = &state.pack.nodes[*index];
-        (node.center[0] - center[0]).hypot(node.center[1] - center[1]) <= 650.0
+        (node.center[0] - center[0]).hypot(node.center[1] - center[1]) <= 850.0
     })
 }
 
@@ -3465,7 +3465,7 @@ fn s3_buildings(world: &mut World) {
     let (wanted, unload): (Vec<usize>, Vec<(usize, Vec<Entity>)>) = {
         let state = world.resource::<Geology>();
         let mut evaluations = Evaluations::default();
-        let candidates = wanted_neighborhoods(&state.pack.nodes, center, 650.0, &mut evaluations);
+        let candidates = wanted_neighborhoods(&state.pack.nodes, center, 850.0, &mut evaluations);
         let wanted = candidates
             .into_iter()
             .filter(|index| !state.building_chunks.contains_key(index))
