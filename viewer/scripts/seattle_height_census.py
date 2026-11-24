@@ -97,11 +97,22 @@ def parse_buildings(data: bytes, node: dict) -> list[dict]:
         pos += 23
         cx = center[0] + qx * 0.25
         cz = center[1] + qz * 0.25
+        # Re-read the perimeter to size the plausibility gate.
+        ring = []
+        for index in range(vertex_count):
+            vx, vz = struct.unpack_from("<hh", blob, pos + index * 4)
+            ring.append((cx + vx * 0.25, cz + vz * 0.25))
+        area = 0.0
+        for index in range(vertex_count):
+            ax, az = ring[index]
+            bx, bz = ring[(index + 1) % vertex_count]
+            area += ax * bz - bx * az
         pos += 4 * vertex_count
         out.append(
             {
                 "id": building_id,
                 "height": height_cm / 100.0,
+                "area": abs(area) * 0.5,
                 "centroid": [cx, cz],
                 "category": strings[category_idx] if category_idx < len(strings) else "unknown",
                 "source": strings[source_idx] if source_idx < len(strings) else "unknown",
@@ -124,6 +135,8 @@ def match_rule(style: dict, city: str, district: str) -> dict:
 
 
 LEGACY = "--legacy" in sys.argv
+DEMOTED_TOTAL = [0]
+DEMOTED_SOURCES = Counter()
 
 RESIDENTIAL_DISTRICTS = {
     "Ballard",
@@ -143,6 +156,14 @@ def governor(record: dict, rule: dict) -> dict:
     residential = record["category"].lower() == CATEGORY_RESIDENTIAL
     floor_height = 3.0 if residential else 4.0
     floor_count = max(1, round(record["height"] / floor_height))
+    demoted = False
+    if residential and not LEGACY:
+        area = max(record.get("area", 1.0), 1.0)
+        weak = record["source"] in ("area_heuristic", "msml_estimate")
+        plausible = record["height"] <= 4.0 + 3.2 * area**0.5
+        if weak or not plausible:
+            floor_count = 1
+            demoted = True
     if residential:
         floor_count = min(floor_count, 3)
     if LEGACY:
@@ -160,6 +181,7 @@ def governor(record: dict, rule: dict) -> dict:
         "floor_height": floor_height,
         "floor_count": floor_count,
         "applied": floor_count * floor_height,
+        "demoted": demoted,
     }
 
 
@@ -187,12 +209,17 @@ def main() -> None:
         max_recorded = 0.0
         max_applied = 0.0
         max_res_over = 0.0
+        demoted = 0
         for building in buildings:
             gov = governor(building, rule)
             counts["records"] += 1
             if gov["residential"]:
                 counts["residential"] += 1
             sources[building["source"]] += 1
+            if gov["demoted"]:
+                demoted += 1
+                DEMOTED_TOTAL[0] += 1
+                DEMOTED_SOURCES[building["source"]] += 1
             families[rule.get("family", "unknown")] += 1
             max_recorded = max(max_recorded, building["height"])
             max_applied = max(max_applied, gov["applied"])
@@ -227,6 +254,7 @@ def main() -> None:
                 "max_applied": round(max_applied, 2),
                 "max_residential_excess": round(max_res_over, 2),
                 "families": dict(families),
+                "demoted": demoted,
                 "sources": dict(sources),
                 "worst": sorted(over, key=lambda item: -item["height"])[:3],
             }
@@ -254,11 +282,23 @@ def main() -> None:
     )
     print(f"CENSUS sources {dict(sources)}")
     print(f"CENSUS families {dict(families)}")
+    print(
+        f"DEMOTION total={DEMOTED_TOTAL[0]} by_source={dict(DEMOTED_SOURCES)}"
+    )
     print()
     print(
         f"{'neighborhood':24} {'district':16} {'rec':>5} {'res':>5} {'over':>5} "
         f"{'over_res':>8} {'max_rec':>8} {'max_gov':>8} {'excess':>7}  sources"
     )
+    print()
+    print("DEMOTION BY DISTRICT (residential records demoted to single-story)")
+    demo = Counter()
+    for row in rows:
+        demo[row["district"]] += row.get("demoted", 0)
+    for district, count in demo.most_common(16):
+        if count:
+            print(f"  {district:18} {count:7}")
+    print()
     for row in rows[:30]:
         print(
             f"{row['neighborhood']:24} {row['district']:16} {row['records']:5} "

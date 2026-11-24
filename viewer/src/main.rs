@@ -487,6 +487,7 @@ fn main() {
     .add_plugins(manhattan_viewer::traffic_seattle::TrafficPlugin)
     .add_plugins(manhattan_viewer::facade::FacadePlugin)
     .add_plugins(manhattan_viewer::interior::InteriorPlugin)
+    .add_plugins(manhattan_viewer::roofs::RoofPlugin)
     .add_plugins(manhattan_viewer::pedestrians::PedestriansPlugin)
     .add_plugins(manhattan_viewer::storefronts::StorefrontsPlugin)
     .add_plugins(manhattan_viewer::landmarks::LandmarksPlugin)

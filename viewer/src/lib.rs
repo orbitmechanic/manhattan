@@ -28,6 +28,7 @@ pub mod pedestrians;
 pub mod people;
 pub mod pilot;
 pub mod restoration;
+pub mod roofs;
 pub mod stationing;
 pub mod storefront;
 pub mod storefronts;

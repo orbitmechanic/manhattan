@@ -1762,3 +1762,59 @@ This round ships the feature green with the regression measured rather than hidd
 **Captures.** `trees_near.png`, `trees_far.png` (same park, 12 m vs 300 m — branchy combos vs cards),
 `tint_contact_sheet.png`, `pedestrians_park_frontage.png` (walkers scaled against near combos), gauntlet
 frames.
+
+## Iteration 74 — the roofline carpet (seattle-homes1)
+
+**Tree revert, two truths kept.** The pre-trees1 card model is restored wholesale (no combos, no baking, no
+unique meshes). Trunks are now dark bark/moss-dark (`0.085/0.075/0.060`, was `0.30/0.22/0.15`), and foliage
+varies per tree through **twelve shared dark tint steps selected by a position hash** — still one material,
+still shared meshes. Gauntlet is back in the band (below). The draw-call regression dissolved as expected.
+
+**Unremarkability Doctrine (data law).** A residential building without credible height data is
+**single-storey**. The gate strips `area_heuristic` and `msml_estimate` outright and demotes surveyed heights
+failing an area plausibility test (`h ≤ 4 + 3.2·√area`) — 141 m on a 10 × 16 m footprint is not a house.
+Credible residential is capped at **two storeys** (the carpet gate; the old three-storey cap still produced
+flat-topped blocks). Demotion census: **47,875 records** — `real_surveyed` 31,298, `area_heuristic` 13,658,
+`msml_estimate` 2,657, `lidar_overture` 261, `osm_levels_derived` 1. By district: Seattle general 19,218,
+Eastside 8,311, Ballard 5,746, West Seattle 3,652, Bellevue CBD 2,643, Fremont 2,507. Script:
+`scripts/seattle_height_census.py` (prints `DEMOTION total` and the district table; `--legacy` reproduces
+the pre-gate world).
+
+**Pitched roofs (runtime bisector, convex).** For 1–2 storey shells the roof is the first straight-skeleton
+step: each footprint corner's bisector is intersected on the roof plane, giving a hip ring; rectangles
+collapse to a ridge and are built as a gable. Pitch is seeded 15–45°, one angle per building. Materials are
+vertex colours over the shared destructibles roof material: **wood shake 57 %, asphalt 27 %, tile 12 %,
+metal 4 %**, a moss-green eave band on every roof, and **~5 % seeded solar arrays**. Stats from the carpet
+run: `installed=81 pitched=51 flat_fallback=30 solar=1` — **37 % fallback** (concave/L-shaped footprints
+that neither hip nor gable cleanly), counted, not hidden. Colliders stay the shell's flat roof AABB (visual
+wedge only), as permitted.
+
+**Tint seed domain.** Shell tint was already building-id-keyed; the neighbourhood-level uniformity the player
+saw comes from **proxies** (the majority of an aerial view), which carry no per-building signal. Proxy boxes
+now bake a **per-building vertex-colour tint** into the merged block mesh (same id-keyed, hue-constrained
+range), so individual buildings vary in the far field too. New contact sheet shows a row of individual
+houses with visibly different browns from one family material.
+
+**Ledger (accepted-for-now, not to be changed on agent initiative):** the player accepts the current uniform
+black night structures with uniform incandescent window glow as adequate for now; any future change to night
+rendering is a player-requested round.
+
+**Gauntlet, trees restored** (`--seattle` + `S2_GAUNTLET=1`):
+
+| regime | avg ms | p99 ms |
+|---|---:|---:|
+| 15 m/s | 65.5 | 262.5 (boot stall) |
+| 30 m/s | 49.9 | 61.5 |
+| 100 m/s | 49.2 | 64.5 |
+| 650 m/s | **62.4** | **96.2** |
+
+Back inside the 28–77 ms band; the seattle-trees1 177/248 pass is gone.
+
+**Captures.** `carpet_residential.png` (aerial over the residential grid), `roofs_residential.png`,
+`tint_contact_sheet.png`, `trees_dark_street.png`, regenerated gauntlet frames.
+
+**Named debts.** `proxy-roofs`: proxies (the aerial majority) are still flat boxes, so the carpet reads as
+blocks among trees rather than a pitched-roofline carpet; the acceptance gestalt is **not yet met** until
+proxy boxes carry a ridge/hip top. `roof-pack-bake`: roof parameters are derived per building at spawn; the
+binary pack has no roof block and the pack itself was **not rebuilt** this round — the height gate is applied
+at spec time, not re-emitted into the pack. `roof-fallback-concave`: 37 % of shells fall back to flat.

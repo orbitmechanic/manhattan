@@ -29,11 +29,10 @@ pub const LOD_NEAR_M: f32 = 80.0;
 pub const LOD_MID_M: f32 = 180.0;
 const LOD_TICK_SECS: f32 = 0.3;
 
-/// Near-camera combo upgrade: bake at 55 m, drop at 85 m (hysteresis).
-const NEAR_BAKE_M: f32 = 30.0;
-const NEAR_DROP_M: f32 = 45.0;
-const BAKE_PER_TICK: usize = 16;
-pub const PARTS_PER_SPECIES: usize = 5;
+/// Shared foliage palette: still one material and one mesh per (species, tint,
+/// LOD), but twelve dark, seeded steps so neighbouring trees differ. The player
+/// asked for darker and varied; no unique meshes and no baking.
+pub const TINT_COUNT: u8 = 12;
 
 pub const SPECIES: [&str; 6] = [
     "douglas_fir",
@@ -177,9 +176,6 @@ pub struct TreeVisual {
     pub species: u8,
     pub tint: u8,
     pub lod: u8,
-    /// Baked near-camera combo mesh; `None` means the shared card mesh.
-    pub combo: Option<Handle<Mesh>>,
-    pub combo_tris: u32,
 }
 
 #[derive(Resource, Default)]
@@ -189,9 +185,6 @@ pub struct Trees {
     unloading: VecDeque<(usize, Vec<Entity>)>,
     pub active: usize,
     pub draw_groups: usize,
-    pub baked: usize,
-    pub combos_baked: u64,
-    pub last_report: f32,
     pub last_lod: f32,
     pub disabled: bool,
 }
@@ -234,7 +227,7 @@ fn setup_trees(
     let mut all = Vec::new();
     for species in 0..SPECIES.len() {
         let mut tints = Vec::new();
-        for tint in 0..3 {
+        for tint in 0..TINT_COUNT {
             let mut lods = Vec::new();
             for lod in 0..3 {
                 let mesh = tree_mesh(species, tint, lod);
@@ -276,14 +269,19 @@ fn tree_mesh(species: usize, tint: u8, lod: u8) -> Mesh {
         1 => 2,
         _ => 1,
     };
-    let tint_scale: f32 = [1.0, 0.86, 1.12][tint as usize % 3];
+    // Dark-to-darker Pacific NW foliage: twelve seeded steps, green-biased so
+    // a tint never wanders off-family.
+    let step = tint as f32 / (TINT_COUNT as f32 - 1.0);
+    let tint_scale = 0.55 + 0.40 * step;
+    let green = 0.90 + 0.20 * step;
     let color = [
-        (base_color[0] * tint_scale).clamp(0.0, 1.0),
-        (base_color[1] * tint_scale).clamp(0.0, 1.0),
-        (base_color[2] * tint_scale).clamp(0.0, 1.0),
+        (base_color[0] * tint_scale * 0.90).clamp(0.0, 1.0),
+        (base_color[1] * tint_scale * green).clamp(0.0, 1.0),
+        (base_color[2] * tint_scale * 0.85).clamp(0.0, 1.0),
         1.0,
     ];
-    let trunk = [0.30, 0.22, 0.15, 1.0];
+    // Dark bark, moss-dark: the player's ground truth. Old trunk was 0.30/0.22.
+    let trunk = [0.085, 0.075, 0.060, 1.0];
     let mut positions: Vec<[f32; 3]> = Vec::new();
     let mut normals: Vec<[f32; 3]> = Vec::new();
     let mut colors: Vec<[f32; 4]> = Vec::new();
@@ -565,9 +563,12 @@ fn spawn_records(world: &mut World, node: usize, records: &[TreeRecord]) {
         let world_x = record.x + STREAM_WORLD_OFFSET;
         let distance = ((record.x + STREAM_WORLD_OFFSET) - camera.x).hypot(record.z - camera.z);
         let lod = lod_for(distance);
+        // Foliage tint is keyed to the tree position, not the dataset tint:
+        // identical species still vary street to street, deterministically.
+        let tint = ((hash01_pos(record.x, record.z) * TINT_COUNT as f32) as u8).min(TINT_COUNT - 1);
         let mesh = world
             .resource::<TreeAssets>()
-            .mesh(record.species, record.tint, lod);
+            .mesh(record.species, tint, lod);
         let material = world.resource::<TreeAssets>().material.clone();
         let entity = world
             .spawn((
@@ -577,10 +578,8 @@ fn spawn_records(world: &mut World, node: usize, records: &[TreeRecord]) {
                     .with_scale(Vec3::splat(record.height.max(2.0))),
                 TreeVisual {
                     species: record.species,
-                    tint: record.tint,
+                    tint,
                     lod,
-                    combo: None,
-                    combo_tris: 0,
                 },
                 NotShadowCaster,
                 Name::new("tree"),
@@ -601,6 +600,16 @@ fn spawn_records(world: &mut World, node: usize, records: &[TreeRecord]) {
             trees.active
         );
     }
+}
+
+fn hash01_pos(x: f32, z: f32) -> f32 {
+    let ix = (x * 10.0).round() as i32 as u32;
+    let iz = (z * 10.0).round() as i32 as u32;
+    let mut value = ix.wrapping_mul(0x9E37_79B9) ^ iz.rotate_left(13);
+    value ^= value >> 16;
+    value = value.wrapping_mul(0x7FEB_352D);
+    value ^= value >> 15;
+    (value & 0x00FF_FFFF) as f32 / 16_777_216.0
 }
 
 struct TreePose {
@@ -768,179 +777,10 @@ struct TreeCaptureState {
     done: bool,
 }
 
-/// Author one of the five branch parts for a species. Each part is real
-/// branch geometry (tapered limbs + a twig), not a billboard; only the rooted
-/// part carries the trunk stub, so combined parts never share a coplanar
-/// trunk surface.
-fn branch_part(species: usize, part: usize, tint_scale: f32, rooted: bool, out: &mut MeshBuffers) {
-    let (base, conifer): ([f32; 3], bool) = match species {
-        0 => ([0.045, 0.115, 0.058], true),
-        1 => ([0.038, 0.095, 0.052], true),
-        2 => ([0.085, 0.18, 0.065], false),
-        3 => ([0.10, 0.17, 0.07], false),
-        4 => ([0.14, 0.18, 0.085], false),
-        _ => ([0.09, 0.16, 0.065], false),
-    };
-    let leaf = [
-        (base[0] * tint_scale).clamp(0.0, 1.0),
-        (base[1] * tint_scale).clamp(0.0, 1.0),
-        (base[2] * tint_scale).clamp(0.0, 1.0),
-        1.0,
-    ];
-    let bark = [0.28, 0.20, 0.13, 1.0];
-    if rooted {
-        out.limb(Vec3::ZERO, Vec3::new(0.0, 0.58, 0.0), 0.055, bark);
-        out.limb(
-            Vec3::new(0.0, 0.50, 0.0),
-            Vec3::new(0.10, 0.72, -0.05),
-            0.028,
-            bark,
-        );
-    }
-    let fork_y = 0.34 + 0.10 * part as f32;
-    let arm_count = if conifer { 4 } else { 3 } + (part % 2);
-    let spread = if conifer { 0.55 } else { 0.95 };
-    for arm in 0..arm_count {
-        let yaw = part as f32 * 1.7 + arm as f32 * (std::f32::consts::TAU / arm_count as f32);
-        let pitch = if conifer {
-            -0.12 - 0.10 * ((part + arm) % 3) as f32 / 3.0
-        } else {
-            0.35 + 0.25 * ((part + arm) % 3) as f32 / 3.0
-        };
-        let length = spread * (0.55 + 0.12 * ((arm + part) % 3) as f32);
-        let start = Vec3::new(0.0, fork_y + 0.06 * arm as f32, 0.0);
-        let dir = Vec3::new(yaw.cos(), pitch, yaw.sin()).normalize_or_zero();
-        let elbow = start + dir * length * 0.62;
-        let tip = elbow + Vec3::new(dir.x * 0.5, dir.y * 0.55 + 0.10, dir.z * 0.5);
-        out.limb(start, elbow, 0.022, bark);
-        out.limb(elbow, tip, 0.012, leaf);
-        if arm % 2 == 0 {
-            let twig = elbow + Vec3::new(-dir.z * 0.25, dir.y * 0.3 + 0.08, dir.x * 0.25);
-            out.limb(elbow, twig, 0.009, leaf);
-        }
-    }
-}
-
-struct MeshBuffers {
-    positions: Vec<[f32; 3]>,
-    normals: Vec<[f32; 3]>,
-    colors: Vec<[f32; 4]>,
-    indices: Vec<u32>,
-}
-
-impl MeshBuffers {
-    fn new() -> Self {
-        Self {
-            positions: Vec::new(),
-            normals: Vec::new(),
-            colors: Vec::new(),
-            indices: Vec::new(),
-        }
-    }
-
-    /// One tapered four-sided limb from `a` to `b`, welded as its own strip
-    /// (no shared faces between parts).
-    fn limb(&mut self, a: Vec3, b: Vec3, radius: f32, color: [f32; 4]) {
-        let dir = (b - a).normalize_or_zero();
-        if dir.length_squared() < 1.0e-6 {
-            return;
-        }
-        let up = if dir.y.abs() > 0.9 { Vec3::X } else { Vec3::Y };
-        let right = dir.cross(up).normalize_or_zero() * radius;
-        let forward = right.cross(dir).normalize_or_zero() * radius;
-        let corners = [
-            right + forward,
-            -right + forward,
-            -right - forward,
-            right - forward,
-        ];
-        let base = self.positions.len() as u32;
-        for (end, scale) in [(a, 1.0f32), (b, 0.55f32)] {
-            for corner in corners {
-                let point = end + corner * scale;
-                self.positions.push(point.to_array());
-                self.normals.push(dir.to_array());
-                self.colors.push(color);
-            }
-        }
-        for side in 0..4u32 {
-            let next = (side + 1) % 4;
-            let a0 = base + side;
-            let a1 = base + next;
-            let b0 = base + 4 + side;
-            let b1 = base + 4 + next;
-            self.indices.extend([a0, b0, b1, a0, b1, a1]);
-        }
-    }
-
-    fn into_mesh(self) -> Mesh {
-        let mut mesh = Mesh::new(
-            PrimitiveTopology::TriangleList,
-            RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-        );
-        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, self.positions);
-        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, self.normals);
-        mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, self.colors);
-        mesh.insert_indices(Indices::U32(self.indices));
-        mesh
-    }
-}
-
-fn hash32(mut value: u32) -> u32 {
-    value ^= value >> 16;
-    value = value.wrapping_mul(0x7FEB_352D);
-    value ^= value >> 15;
-    value = value.wrapping_mul(0x846C_A68F);
-    value ^ (value >> 16)
-}
-
-fn hash01(value: u32) -> f32 {
-    (hash32(value) & 0x00FF_FFFF) as f32 / 16_777_216.0
-}
-
-/// Seed a tree from its quantised world position: journal replays and
-/// re-streams reproduce the identical combo.
-fn tree_seed(translation: Vec3, height: f32) -> u32 {
-    let x = (translation.x * 10.0).round() as i64;
-    let z = (translation.z * 10.0).round() as i64;
-    let h = (height * 10.0).round() as i64;
-    hash32((x as u32) ^ (x >> 32) as u32 ^ (z as u32).rotate_left(11))
-        ^ hash32((z >> 32) as u32 ^ (h as u32).rotate_left(19))
-}
-
-/// Build the baked combo for one tree: 1-3 authored parts, each yawed by its
-/// own seeded angle, merged into ONE mesh (one draw call).
-fn combo_mesh(species: usize, tint: u8, seed: u32) -> Mesh {
-    let tint_scale = [1.0, 0.86, 1.12][tint as usize % 3];
-    let count = 1 + (seed % 3) as usize;
-    let mut buffers = MeshBuffers::new();
-    for index in 0..count {
-        let part =
-            (hash32(seed ^ (index as u32 * 0x9E37_79B9)) % PARTS_PER_SPECIES as u32) as usize;
-        let yaw = hash01(seed ^ (index as u32 * 0x85EB_CA6B)) * std::f32::consts::TAU;
-        let before = buffers.positions.len();
-        branch_part(species, part, tint_scale, index == 0, &mut buffers);
-        // Yaw the freshly appended part around the shared base.
-        let (sin, cos) = yaw.sin_cos();
-        for position in &mut buffers.positions[before..] {
-            let (x, z) = (position[0], position[2]);
-            position[0] = x * cos - z * sin;
-            position[2] = x * sin + z * cos;
-        }
-        for normal in &mut buffers.normals[before..] {
-            let (x, z) = (normal[0], normal[2]);
-            normal[0] = x * cos - z * sin;
-            normal[2] = x * sin + z * cos;
-        }
-    }
-    buffers.into_mesh()
-}
-
 fn tree_lod_update(
     time: Res<Time>,
     camera: Single<&Transform, With<FlyCamera>>,
     assets: Option<Res<TreeAssets>>,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut trees: Option<ResMut<Trees>>,
     mut query: Query<(&Transform, &mut Mesh3d, &mut TreeVisual)>,
 ) {
@@ -961,65 +801,16 @@ fn tree_lod_update(
     let camera = camera.translation;
     let mut groups: HashSet<(u8, u8, u8)> = HashSet::new();
     let mut active = 0usize;
-    let mut baked = 0usize;
-    let mut combo_tris = 0u32;
-    let mut budget = BAKE_PER_TICK;
     for (transform, mut mesh, mut visual) in &mut query {
         let distance = transform.translation.truncate().distance(camera.truncate());
         let lod = lod_for(distance);
         groups.insert((visual.species, visual.tint, lod));
-        let card = |visual: &TreeVisual| assets.mesh(visual.species, visual.tint, lod);
-        if visual.combo.is_none() && distance < NEAR_BAKE_M && budget > 0 {
-            let height = transform.scale.y.max(2.0);
-            let seed = tree_seed(transform.translation, height);
-            let combo = combo_mesh(visual.species as usize, visual.tint, seed);
-            let tris = combo.indices().map(Indices::len).unwrap_or(0) as u32 / 3;
-            let handle = meshes.add(combo);
-            visual.combo = Some(handle.clone());
-            visual.combo_tris = tris;
-            mesh.0 = handle;
-            budget -= 1;
-            trees.combos_baked += 1;
-            baked += 1;
-        } else if visual.combo.is_some() && distance > NEAR_DROP_M {
-            if let Some(handle) = visual.combo.take() {
-                meshes.remove(&handle);
-            }
-            visual.combo_tris = 0;
-            mesh.0 = card(&visual);
+        if lod != visual.lod {
+            mesh.0 = assets.mesh(visual.species, visual.tint, lod);
             visual.lod = lod;
-            baked += 0;
-        } else if visual.combo.is_none() && lod != visual.lod {
-            mesh.0 = card(&visual);
-            visual.lod = lod;
-        }
-        if visual.combo.is_some() {
-            baked += 1;
-            combo_tris += visual.combo_tris;
         }
         active += 1;
     }
     trees.active = active;
-    trees.baked = baked;
     trees.draw_groups = groups.len();
-    if now - trees.last_report > 5.0 {
-        trees.last_report = now;
-        let cards = meshes
-            .get(&assets.mesh(2, 0, 0))
-            .and_then(|mesh| mesh.indices())
-            .map(Indices::len)
-            .unwrap_or(0) as u32
-            / 3;
-        let avg_combo = if baked > 0 {
-            combo_tris / baked as u32
-        } else {
-            0
-        };
-        info!(
-            "TREE LOD active={active} baked_combos={baked} avg_combo_tris={avg_combo} card_draw_groups={} card_tris={cards} draw_calls~={} combo_baked_total={}",
-            groups.len(),
-            baked,
-            trees.combos_baked
-        );
-    }
 }

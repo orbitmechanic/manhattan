@@ -392,8 +392,8 @@ fn setup_geology(
     // Proxy boxes share the facade atlas UV banks: bank 0 is residential warm
     // scatter, bank 1 the commercial grid. Both day and night atlases use the
     // same split, so one mesh per bank is enough.
-    let box_mesh = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 0)]));
-    let box_mesh_warm = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 1)]));
+    let box_mesh = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 0, [1.0; 4])]));
+    let box_mesh_warm = meshes.add(proxy_boxes_mesh(&[(Vec3::ZERO, Vec3::ONE, 1, [1.0; 4])]));
     let road_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.17, 0.17, 0.18),
         perceptual_roughness: 0.9,
@@ -728,12 +728,40 @@ fn mesh(
 
 /// Five-face boxes merged into one mesh: the bottom face is never visible and
 /// is dropped, so far proxies cost 20 vertices each instead of 24.
-fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8)]) -> Mesh {
+/// Per-building grade for the merged proxy boxes: the aerial neighbourhood is
+/// these, so the tint seed must be the building id, not the chunk or family.
+fn proxy_tint(id: u32, family: destructibles_core::family::MaterialFamily) -> [f32; 4] {
+    fn h01(mut value: u32) -> f32 {
+        value ^= value >> 16;
+        value = value.wrapping_mul(0x7FEB_352D);
+        value ^= value >> 15;
+        value = value.wrapping_mul(0x846C_A68F);
+        value ^= value >> 16;
+        (value & 0x00FF_FFFF) as f32 / 16_777_216.0
+    }
+    let warm = match family {
+        destructibles_core::family::MaterialFamily::Timber => 0.06,
+        destructibles_core::family::MaterialFamily::MasonryStone => 0.05,
+        destructibles_core::family::MaterialFamily::SteelFrame => 0.02,
+        destructibles_core::family::MaterialFamily::EarthAdobe => 0.06,
+    };
+    let nudge = 0.90 + 0.20 * h01(id.wrapping_mul(0x9E37_79B9));
+    let hue = (h01(id.rotate_left(7) ^ 0x5EED_1234) - 0.5) * 2.0;
+    [
+        (nudge * (1.0 + warm * hue)).clamp(0.70, 1.15),
+        (nudge * (1.0 + 0.02 * hue)).clamp(0.70, 1.15),
+        (nudge * (1.0 - warm * 0.6 * hue)).clamp(0.70, 1.15),
+        1.0,
+    ]
+}
+
+fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4])]) -> Mesh {
     let mut positions = Vec::new();
     let mut normals = Vec::new();
     let mut uvs = Vec::new();
+    let mut colors = Vec::new();
     let mut indices = Vec::new();
-    for (center, size, warm) in boxes {
+    for (center, size, warm, tint) in boxes {
         let h = *size * 0.5;
         let c = *center;
         let bank = if *warm > 0 { 0.0 } else { 0.5 };
@@ -789,6 +817,7 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8)]) -> Mesh {
             for corner in corners {
                 positions.push((c + corner).to_array());
                 normals.push(normal.to_array());
+                colors.push(*tint);
             }
             // Side faces use the full facade tile; the roof face samples the
             // plain strip at the right edge of the atlas, so a flying player
@@ -818,6 +847,7 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8)]) -> Mesh {
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
     mesh.insert_indices(bevy::render::mesh::Indices::U32(indices));
     mesh
 }
@@ -1603,9 +1633,16 @@ fn s3_damage(world: &mut World) {
                             .map(String::as_str)
                             .unwrap_or(&node.name);
                         let category = chunk.string(building.category_idx as u16).to_string();
-                        if let Some(spec) =
-                            building_spec(&state.style, node, building, city, district, &category)
-                        {
+                        let source = chunk.string(building.source_idx as u16).to_string();
+                        if let Some(spec) = building_spec(
+                            &state.style,
+                            node,
+                            building,
+                            city,
+                            district,
+                            &category,
+                            &source,
+                        ) {
                             let y =
                                 footprint_seat(&state.dem, building.centroid, &building.perimeter)
                                     + 0.03;
@@ -2916,8 +2953,16 @@ fn s3_list_targets(world: &mut World) {
             .unwrap_or(&node.name);
         for building in &chunk.buildings {
             let category = chunk.string(building.category_idx as u16).to_string();
-            let Some(spec) = building_spec(&state.style, node, building, city, district, &category)
-            else {
+            let source = chunk.string(building.source_idx as u16).to_string();
+            let Some(spec) = building_spec(
+                &state.style,
+                node,
+                building,
+                city,
+                district,
+                &category,
+                &source,
+            ) else {
                 continue;
             };
             let family = family_name(spec.family).to_string();
@@ -3009,6 +3054,7 @@ fn building_spec(
     city: &str,
     district: &str,
     category: &str,
+    source: &str,
 ) -> Option<BuildingSpec> {
     if building.perimeter.len() < 3 {
         return None;
@@ -3038,9 +3084,35 @@ fn building_spec(
     // is re-emitted; commercial keeps 4.0 m.
     let residential = category.eq_ignore_ascii_case("residential");
     let floor_height = if residential { 3.0 } else { 4.0 };
-    let mut floor_count = (building.height_m / floor_height).round().max(1.0) as u32;
-    if residential {
-        floor_count = floor_count.min(3);
+    // Unremarkability Doctrine: a building without credible height data is
+    // UNREMARKABLE, and unremarkable means SINGLE-STORY. Weak enrichments are
+    // stripped outright; surveyed heights must also pass an area plausibility
+    // gate (141 m on a 10 x 16 m footprint is not a house).
+    let area = {
+        let count = perimeter.len();
+        (0..count)
+            .map(|index| {
+                let a = perimeter[index];
+                let b = perimeter[(index + 1) % count];
+                a[0] * b[1] - b[0] * a[1]
+            })
+            .sum::<f32>()
+            .abs()
+            * 0.5
+    };
+    let weak_source = matches!(source, "area_heuristic" | "msml_estimate");
+    let plausible = building.height_m <= 4.0 + 3.2 * area.sqrt().max(1.0);
+    let demoted = residential && (weak_source || !plausible);
+    let mut floor_count = if demoted {
+        1
+    } else {
+        (building.height_m / floor_height).round().max(1.0) as u32
+    };
+    if residential && !demoted {
+        // The carpet gate: Seattle houses are a 1-2 storey carpet. The old
+        // three-storey cap still produced flat-topped blocks; two storeys lets
+        // every credible house carry a pitched roof.
+        floor_count = floor_count.min(2);
     }
     // Interim caps from the playtest-70 census: low districts 6 floors, mid
     // districts 8; towers (Downtown/Bellevue core) stay uncapped. The census
@@ -3307,6 +3379,7 @@ fn s3_buildings(world: &mut World) {
                                 .map(String::as_str)
                                 .unwrap_or(&node.name);
                             let category = chunk.string(building.category_idx as u16).to_string();
+                            let source = chunk.string(building.source_idx as u16).to_string();
                             let spec = building_spec(
                                 &state.style,
                                 node,
@@ -3314,6 +3387,7 @@ fn s3_buildings(world: &mut World) {
                                 city,
                                 district,
                                 &category,
+                                &source,
                             )?;
                             let y =
                                 footprint_seat(&state.dem, building.centroid, &building.perimeter)
@@ -3364,7 +3438,7 @@ fn s3_buildings(world: &mut World) {
         let mut entities = Vec::with_capacity(specs.len());
         let mut shells = 0usize;
         let mut proxies = 0usize;
-        let mut far_boxes: Vec<(Vec3, Vec3, u8)> = Vec::new();
+        let mut far_boxes: Vec<(Vec3, Vec3, u8, [f32; 4])> = Vec::new();
         for (index, (id, spec, origin, height, width, depth)) in specs.into_iter().enumerate() {
             // Proxy night bank: timber/adobe residential reads as a scatter of
             // warm incandescent points; steel/masonry keeps the regular grid.
@@ -3426,6 +3500,7 @@ fn s3_buildings(world: &mut World) {
                         Vec3::new(origin[0], origin[1] + height * 0.5, origin[2]),
                         Vec3::new(width, height.max(2.0), depth),
                         u8::from(warm),
+                        proxy_tint(id, spec.family),
                     ));
                 } else {
                     let (mesh, material) = {
