@@ -2308,3 +2308,76 @@ and night-stripe geometry gate still hold; the photographic night capture was no
 clean. Still blocking: tower-house frame; speed lines close by player stick. Carried: sway frames,
 proxy-night-temperature, tree-sway-shader, roof-pack-bake, up-vector-pack-migration, proxy-material-budget,
 chimney spot-audit, bc7-compression.
+
+## Iteration 89 — windows and walls together (seattle-windows1)
+
+**Layer audit (printed at every bare boot, window-art state included).**
+
+| layer | wall asset (live, photographic) | window art | flag |
+|---|---|---|---|
+| shell walls, masonry | `brick_wall.ktx2` | pane/sash geometry (unchanged) | default |
+| shell walls, timber/adobe | `siding_wall.ktx2` | pane/sash geometry | default |
+| shell walls, steel | generated atlas | pane/sash geometry | no CC0 steel tile imported |
+| shell roofs | `roof_wall.ktx2` | n/a | default |
+| near proxies (cool/commercial) | `brick_windows.ktx2` | **baked punched row** | default |
+| near proxies (warm/residential) | `siding_windows.ktx2` | **baked punched row** | default |
+| far merged, all six buckets | the same two window tiles | **baked punched row** | default |
+| landmarks | stock destructibles materials | stock | n/a |
+
+`TEXTURES_GENERATED=1` reverts every row above uniformly. The day defect was exactly this: the proxies (which
+are what the player flies over) had photographic walls with no window art; the panes on shells were never lost.
+
+**Window grid without a shader.** `scripts/bake_photo_tiles.py` composites one floor's window row onto the CC0
+photograph (band 30–72 % of the tile, punched every 3 m bay: 6 bays across the 18 m commercial module, 4 across
+the 12 m residential module) and writes a 1024² tile. Proxy UVs already are `v = local y / 3.0`,
+`u = horizontal / module`, so one tile = one floor and the rows land on the fixed-metres floor grid; the
+Up-Vector Doctrine and UV Orientation Validation Law are untouched. Dark reflective glass by day; the night
+emissive path is a separate texture and is unchanged.
+
+**BC7 — installed, not waived.** KTX-Software 4.4.2 ships as a prebuilt Linux tarball (no root): extracted to
+`~/.local/ktx`, `ktx create --encode uastc --zstd 18 --generate-mipmap` per tile. Bevy now loads them with
+`ktx2 + basis-universal + zstd_rust` and transcodes UASTC → **BC7** on this GPU. Measured at boot:
+
+```
+PHOTO FORMAT near_proxy_cool=Bc7RgbaUnormSrgb 1024x1024 mips=11
+            near_proxy_warm=Bc7RgbaUnormSrgb 1024x1024 mips=11
+            far_merged_cool=Bc7RgbaUnormSrgb 1024x1024 mips=11
+```
+
+| receipt | before (RGBA8) | after (BC7) |
+|---|---:|---:|
+| VRAM, five 1024² tiles, base level | 20.0 MiB | **5.0 MiB** |
+| VRAM with the full mip chain | 26.7 MiB | **6.7 MiB** |
+| pack on disk (loaded assets) | 2.04 MiB JPEG | 5.06 MiB KTX2 |
+| first streamed chunk | 751 / 809 ms | 771 / 832 ms |
+
+**Camera solidity for the box world.** Proxy AABBs are registered at spawn (near boxes) and at merge time (far
+buckets, one coarse AABB per building — never the merged mesh), then queried through a 200 m sector grid keyed
+by a `proxy_stamp` so it rebuilds only when the collider set changes. The shell ban keeps priority; the box path
+catches what the shells do not cover. Speed 0 resolves outward and stops; speed adds the staged glance.
+
+```
+PROXY PROBE entering far bucket chunk=349 b84680 at (-73.4,50.5,-377.9)
+CAMERA DEFLECT proxy b84680 speed=0   probe resolution=(1.00,0.00)
+CAMERA DEFLECT proxy b75224 speed=650 probe resolution=(1.00,0.00)
+COLLISION COST proxy_boxes_total=6602 sectors=187 checked=1 query_us=21 rebuilds=28 worst_rebuild_ms=1.8
+```
+
+Cost: **21–25 µs** per frame at 1,211–6,602 boxes in radius, ≤2 AABBs tested; sector rebuild ≤1.8 ms and only
+on collider change. Tests: `speed_zero_resolves_outward_and_stops`, `speed_adds_a_glancing_deflection`.
+
+**Gauntlet, still in band with solidity and windows live.** 650 m/s: **60.1 ms avg / 87.5 ms p99** (runs this
+round 59.6/74.5, 60.6/93.0, 60.1/87.5). 30 ms: 52–54 ms; 100 ms: 53–57 ms.
+
+**Night-stripe gate on photographic materials (automated).** `photo_gate::photographic_window_band_is_horizontal`
+reads the shipped tile and fails if the punched band staggers across columns or touches a tile edge;
+`photo_gate::photographic_tiles_repeat_and_declare_up` asserts Repeat sampling, the five compressed tiles and
+`up: v+` for every manifest entry; `up_vector::every_side_face_v_follows_world_up` still proves v follows world
+y in the shipped face geometry. Twin acceptance images: `captures/day_windows_photo.png` (window grid over
+photographic walls) and `captures/night_windows_photo.png` (emissive rows unchanged).
+
+**UV repetition:** not needed at these framings — the day aerial shows no legible tile repeat on the long
+facades (the window band and mip chain mask the brick period), so the seeded per-building UV offset stays off.
+
+**CodeGraph:** refreshed at session start — 25 projects, 566 files, 0 failures; verdict fresh at start, edits
+since this refresh are in this commit. 171 tests green, clippy clean, boot clean (no asset errors).

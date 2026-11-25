@@ -257,6 +257,12 @@ pub struct Geology {
     style: StylePack,
     pub districts: HashMap<String, String>,
     pub building_chunks: HashMap<usize, Vec<Entity>>,
+    /// Per-chunk solid AABBs for proxy boxes (near and merged): the interior
+    /// ban must cover the box world, not just registered shells.
+    pub proxy_colliders: HashMap<usize, Vec<(Vec3, Vec3, u32)>>,
+    /// Bumped whenever the collider set changes, so the broadphase can rebuild
+    /// its sector grid only when it must.
+    pub proxy_stamp: u64,
     /// Chunks pinned because they hold a damaged building; logged once.
     pub pinned_chunks: std::collections::HashSet<usize>,
     pending_shells: std::collections::VecDeque<PendingShell>,
@@ -483,6 +489,8 @@ fn setup_geology(
         style,
         districts,
         building_chunks: HashMap::new(),
+        proxy_colliders: HashMap::new(),
+        proxy_stamp: 0,
         pinned_chunks: std::collections::HashSet::new(),
         pending_shells: std::collections::VecDeque::new(),
         box_material: box_material.clone(),
@@ -3672,6 +3680,11 @@ fn s3_buildings(world: &mut World) {
             .resource_mut::<Geology>()
             .building_chunks
             .remove(&index);
+        {
+            let mut state = world.resource_mut::<Geology>();
+            state.proxy_colliders.remove(&index);
+            state.proxy_stamp = state.proxy_stamp.wrapping_add(1);
+        }
         world
             .resource_mut::<Geology>()
             .pending_shells
@@ -3879,15 +3892,23 @@ fn s3_buildings(world: &mut World) {
                             id,
                         )]))
                     };
+                    let center = Vec3::from_array(origin)
+                        + Vec3::X * STREAM_WORLD_OFFSET
+                        + Vec3::Y * height * 0.5;
+                    {
+                        let mut state = world.resource_mut::<Geology>();
+                        state.proxy_colliders.entry(index_chunk).or_default().push((
+                            center,
+                            Vec3::new(width, height, depth) * 0.5,
+                            id,
+                        ));
+                        state.proxy_stamp = state.proxy_stamp.wrapping_add(1);
+                    }
                     let entity = world
                         .spawn((
                             Mesh3d(mesh),
                             MeshMaterial3d(material),
-                            Transform::from_translation(
-                                Vec3::from_array(origin)
-                                    + Vec3::X * STREAM_WORLD_OFFSET
-                                    + Vec3::Y * height * 0.5,
-                            ),
+                            Transform::from_translation(center),
                             Name::new(format!("S3 proxy b{id}")),
                         ))
                         .id();
@@ -3933,6 +3954,28 @@ fn s3_buildings(world: &mut World) {
             // provable, so the merged mesh must not rely on it.
             // Six buckets: three palette variants x two families, so the
             // material's own texture matches every box in the mesh.
+            // Solid far buckets: one coarse AABB per building at merge time,
+            // never the whole merged mesh. World space, since the merged entity
+            // carries the stream offset in its transform.
+            {
+                let colliders = far_boxes
+                    .iter()
+                    .map(|entry| {
+                        (
+                            entry.0 + Vec3::X * STREAM_WORLD_OFFSET,
+                            entry.1 * 0.5,
+                            entry.4,
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                let mut state = world.resource_mut::<Geology>();
+                state
+                    .proxy_colliders
+                    .entry(index_chunk)
+                    .or_default()
+                    .extend(colliders);
+                state.proxy_stamp = state.proxy_stamp.wrapping_add(1);
+            }
             let mut buckets: [Vec<(Vec3, Vec3, u8, [f32; 4], u32)>; 6] = Default::default();
             for entry in far_boxes.drain(..) {
                 let index = (entry.4 % 3) as usize + 3 * entry.2 as usize;

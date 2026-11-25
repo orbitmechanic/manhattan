@@ -438,18 +438,10 @@ fn setup_facades(
     // LIVE-BY-DEFAULT: photographic materials are the shipped skin. The
     // generated atlases remain as an opt-out for A/B and regression insurance.
     let photo = std::env::var_os("TEXTURES_GENERATED").is_none();
-    let photo_brick = photo.then(|| {
-        repeat_load(
-            &asset_server,
-            "textures/photographic/Bricks075A_1K-JPG_Color.jpg",
-        )
-    });
-    let photo_siding = photo.then(|| {
-        repeat_load(
-            &asset_server,
-            "textures/photographic/WoodSiding008_1K-JPG_Color.jpg",
-        )
-    });
+    let photo_brick =
+        photo.then(|| repeat_load(&asset_server, "textures/photographic/brick_wall.ktx2"));
+    let photo_siding =
+        photo.then(|| repeat_load(&asset_server, "textures/photographic/siding_wall.ktx2"));
     let mut skins = FacadeSkins::default();
     let mut bytes = 0;
     for family in [
@@ -480,7 +472,7 @@ fn setup_facades(
         "photographic"
     };
     info!(
-        "LAYER AUDIT mode={mode} shell_wall[masonry]=brick shell_wall[timber]=siding shell_wall[steel]=generated shell_roof=photo_roof_tiles near_proxy_cool=brick near_proxy_warm=siding far_merged=brick/siding landmark_override=stock_destructibles"
+        "LAYER AUDIT mode={mode} shell_wall[masonry]=brick+pane_geometry shell_wall[timber]=siding+pane_geometry shell_wall[steel]=generated+pane_geometry shell_roof=photo_roof_tiles near_proxy_cool=brick+baked_windows near_proxy_warm=siding+baked_windows far_merged=brick+baked_windows/siding+baked_windows landmark_override=stock_destructibles"
     );
     info!(
         "FACADE skins: {} families, {} shared materials, {:.1} MB CPU textures (mipmaps extra)",
@@ -882,10 +874,7 @@ fn install_photo_roof(
     let Some(assets) = assets else {
         return;
     };
-    let texture = repeat_load(
-        &asset_server,
-        "textures/photographic/RoofingTiles006_1K-JPG_Color.jpg",
-    );
+    let texture = repeat_load(&asset_server, "textures/photographic/roof_wall.ktx2");
     if let Some(mut material) = materials.get_mut(&assets.roof) {
         material.base_color_texture = Some(texture);
     }
@@ -894,27 +883,15 @@ fn install_photo_roof(
 fn proxy_material(
     images: &mut Assets<Image>,
     materials: &mut Assets<StandardMaterial>,
-    asset_server: &AssetServer,
+    photo_day: Option<Handle<Image>>,
     warm: bool,
     tint: [f32; 3],
 ) -> Handle<StandardMaterial> {
     // FLIGHT-VISIBLE LAYER: the near proxies and the far merged buckets share
     // these materials. Photographic by default, exactly like the shells.
-    let photo = std::env::var_os("TEXTURES_GENERATED").is_none();
-    let day = if photo {
-        if warm {
-            repeat_load(
-                asset_server,
-                "textures/photographic/WoodSiding008_1K-JPG_Color.jpg",
-            )
-        } else {
-            repeat_load(
-                asset_server,
-                "textures/photographic/Bricks075A_1K-JPG_Color.jpg",
-            )
-        }
-    } else {
-        images.add(proxy_day_texture(warm))
+    let day = match photo_day {
+        Some(handle) => handle,
+        None => images.add(proxy_day_texture(warm)),
     };
     let night = images.add(proxy_windows_texture(warm));
     materials.add(StandardMaterial {
@@ -946,10 +923,32 @@ fn install_proxy_windows(
     let palettes = [[0.86, 0.83, 0.78], [1.02, 1.00, 0.96], [1.12, 1.06, 0.96]];
     let mut cool = [Handle::default(), Handle::default(), Handle::default()];
     let mut warm = [Handle::default(), Handle::default(), Handle::default()];
+    // BC7 window tiles: baked offline by scripts/bake_photo_tiles.py, shipped
+    // as UASTC/zstd KTX2 (transcoded to BC7 at load: ~1.3 MiB each instead of
+    // the 4 MiB an RGBA8 1024^2 tile costs).
+    let (photo_cool, photo_warm) = if std::env::var_os("TEXTURES_GENERATED").is_none() {
+        (
+            Some(repeat_load(
+                &asset_server,
+                "textures/photographic/brick_windows.ktx2",
+            )),
+            Some(repeat_load(
+                &asset_server,
+                "textures/photographic/siding_windows.ktx2",
+            )),
+        )
+    } else {
+        (None, None)
+    };
     for (index, tint) in palettes.iter().enumerate() {
-        cool[index] =
-            proxy_material(&mut images, &mut materials, &asset_server, false, *tint);
-        warm[index] = proxy_material(&mut images, &mut materials, &asset_server, true, *tint);
+        cool[index] = proxy_material(
+            &mut images,
+            &mut materials,
+            photo_cool.clone(),
+            false,
+            *tint,
+        );
+        warm[index] = proxy_material(&mut images, &mut materials, photo_warm.clone(), true, *tint);
     }
     geology.box_material = cool[1].clone();
     geology.box_material_warm = warm[1].clone();
@@ -1256,6 +1255,53 @@ fn skin_audit(world: &mut World) {
     }
 }
 
+/// Boot receipt: print the GPU format the photographic tiles actually landed in,
+/// so "BC7" is measured, not asserted.
+fn photo_receipt(
+    geology: Option<Res<crate::geology::Geology>>,
+    materials: Res<Assets<StandardMaterial>>,
+    images: Res<Assets<Image>>,
+    time: Res<Time>,
+    mut done: Local<bool>,
+) {
+    if *done || time.elapsed_secs() < 6.0 {
+        return;
+    }
+    let Some(geology) = geology else {
+        return;
+    };
+    let mut formats = Vec::new();
+    for (label, material) in [
+        ("near_proxy_cool", geology.box_materials[0].clone()),
+        ("near_proxy_warm", geology.box_materials_warm[0].clone()),
+        ("far_merged_cool", geology.box_materials[1].clone()),
+    ] {
+        let Some(material) = materials.get(&material) else {
+            continue;
+        };
+        let Some(texture) = material.base_color_texture.as_ref() else {
+            continue;
+        };
+        let Some(image) = images.get(texture) else {
+            formats.push(format!("{label}=pending"));
+            continue;
+        };
+        let descriptor = &image.texture_descriptor;
+        formats.push(format!(
+            "{label}={:?} {}x{} mips={}",
+            descriptor.format,
+            descriptor.size.width,
+            descriptor.size.height,
+            descriptor.mip_level_count
+        ));
+    }
+    if formats.is_empty() {
+        return;
+    }
+    *done = true;
+    info!("PHOTO FORMAT {}", formats.join(" "));
+}
+
 pub struct FacadePlugin;
 
 impl Plugin for FacadePlugin {
@@ -1275,7 +1321,110 @@ impl Plugin for FacadePlugin {
                     scale_oracle,
                     skin_audit,
                     skin_guard,
+                    photo_receipt,
                 ),
             );
+    }
+}
+
+#[cfg(test)]
+mod photo_gate {
+    use super::*;
+
+    /// The shipped window tile (baked offline, encoded to BC7 KTX2).
+    fn tile() -> (usize, Vec<u8>) {
+        let bytes = std::fs::read(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/assets/textures/photographic/brick_windows.png"
+        ))
+        .expect("baked window tile");
+        let decoded = image::load_from_memory(&bytes).expect("decode").to_rgba8();
+        let size = decoded.width() as usize;
+        (size, decoded.into_raw())
+    }
+
+    /// Night-stripe gate on the photographic materials: every punched window
+    /// occupies the SAME rows in every column, so a lit row reads as a stripe
+    /// parallel to the ground. A rolled tile would stagger the cells.
+    #[test]
+    fn photographic_window_band_is_horizontal() {
+        let (size, data) = tile();
+        let data = &data;
+        let cell = size / 6;
+        let mut spans = Vec::new();
+        for column in 0..6 {
+            let x = column * cell + cell / 2;
+            let glass = |y: usize| {
+                let i = (y * size + x) * 4;
+                (data[i].abs_diff(19) < 8)
+                    && (data[i + 1].abs_diff(24) < 8)
+                    && (data[i + 2].abs_diff(29) < 8)
+            };
+            let dark = (0..size).filter(|y| glass(*y)).collect::<Vec<_>>();
+            assert!(!dark.is_empty(), "no window in column {column}");
+            spans.push((dark[0], *dark.last().unwrap()));
+        }
+        let (first_top, first_bottom) = spans[0];
+        for (top, bottom) in &spans {
+            assert_eq!(
+                (*top, *bottom),
+                (first_top, first_bottom),
+                "window rows stagger across columns: {spans:?}"
+            );
+        }
+        // The band sits inside the tile, not on an edge: wall above and below.
+        assert!(
+            first_top > 0 && first_bottom < size - 1,
+            "band touches the edge"
+        );
+        // And the band is the same rows across the full width pitch: the tile
+        // is upright (v+) and the floor pitch stays fixed.
+        assert!(
+            first_bottom - first_top > size / 8,
+            "band too thin: {spans:?}"
+        );
+    }
+
+    #[test]
+    fn photographic_tiles_repeat_and_declare_up() {
+        let ImageSampler::Descriptor(sampler) = repeat_sampler() else {
+            panic!("sampler is not a descriptor");
+        };
+        assert_eq!(
+            sampler.address_mode_u,
+            bevy::image::ImageAddressMode::Repeat
+        );
+        assert_eq!(
+            sampler.address_mode_v,
+            bevy::image::ImageAddressMode::Repeat
+        );
+        for name in [
+            "brick_windows.ktx2",
+            "siding_windows.ktx2",
+            "brick_wall.ktx2",
+            "siding_wall.ktx2",
+            "roof_wall.ktx2",
+        ] {
+            let path = format!(
+                "{}/assets/textures/photographic/{name}",
+                env!("CARGO_MANIFEST_DIR")
+            );
+            assert!(
+                std::fs::metadata(&path)
+                    .map(|meta| meta.len() > 1000)
+                    .unwrap_or(false),
+                "missing compressed tile {name}"
+            );
+        }
+        let manifest = std::fs::read_to_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/assets/textures/photographic/manifest.json"
+        ))
+        .expect("manifest");
+        assert_eq!(
+            manifest.matches("\"up\": \"v+\"").count(),
+            manifest.matches("\"class\"").count(),
+            "every imported tile must declare up=v+"
+        );
     }
 }
