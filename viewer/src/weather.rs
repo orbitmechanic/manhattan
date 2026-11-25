@@ -143,6 +143,9 @@ pub struct Weather {
     /// 0..1 rain-soaked ground state (smoothed precipitation); the fire round
     /// will read it for suppression, the wetness pass will read it for albedo.
     pub wetness: f32,
+    /// 0..1 patchiness of the deck: 0 is a sealed lid, 1 is a torn one with
+    /// real holes. Seeded per day, drifts on the wind, and gates the shafts.
+    pub holes: f32,
     /// Set when a preset asks for a fixed temperature (for example snow in
     /// July); the normal seasonal curve is then left alone.
     manual_temperature: bool,
@@ -168,6 +171,7 @@ impl Default for Weather {
             auto: true,
             seed_day: 0,
             wetness: 0.0,
+            holes: 0.0,
             manual_temperature: false,
             elapsed: 0.0,
             wind_angle: 28.0_f32.to_radians(),
@@ -226,9 +230,10 @@ impl Weather {
 
     pub fn summary(&self) -> String {
         format!(
-            "{}  cloud {:.0}%  precip {:.0}%  wind {:.0} km/h  {:.0} C",
+            "{}  cloud {:.0}%  holes {:.0}%  precip {:.0}%  wind {:.0} km/h  {:.0} C",
             self.target.label(),
             self.cloud_cover * 100.0,
+            self.holes * 100.0,
             self.precipitation * 100.0,
             self.wind_kmh,
             self.temperature_c,
@@ -420,6 +425,26 @@ pub fn update_weather(time: Res<Time>, clock: Res<SimClock>, mut weather: ResMut
     // Ground soak lags the rain and dries slowly; exposed as a field so the
     // fire round can suppress and the wetness pass can darken.
     weather.wetness = approach(weather.wetness, weather.precipitation, dt, 25.0);
+    // Patchy cover: the lid is not a sheet. A seeded slow wave tears it open,
+    // strongest under overcast (the cover is the master state; holes ride on
+    // top), and a sunbreak is the extreme case.
+    let tear = {
+        let phase = weather.elapsed * 0.017 + weather.next_rand() * 0.15;
+        let wave = (phase.sin() * 0.5 + 0.5).powf(2.2);
+        let base = match weather.target {
+            WeatherKind::Sunbreak => 0.95,
+            WeatherKind::Clear => 0.6,
+            WeatherKind::Fair => 0.45,
+            WeatherKind::Overcast => 0.55,
+            WeatherKind::Drizzle => 0.25,
+            WeatherKind::Rain => 0.12,
+            WeatherKind::Storm => 0.05,
+            WeatherKind::Snow => 0.10,
+        };
+        // The lid closes in rain: holes only exist where the deck is torn.
+        base * (0.35 + 0.65 * wave) * (1.0 - 0.85 * weather.precipitation)
+    };
+    weather.holes = approach(weather.holes, tear.clamp(0.0, 1.0), dt, 9.0);
 
     // Wind slowly veers and gusts; the same value slants the precipitation
     // and drifts the cloud shader.
@@ -821,6 +846,200 @@ pub fn update_weather_visuals(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Sunbeams / moonbeams: hole-anchored billboard shafts (the cheap tier).
+// A post-process god-ray pass would have to fight the transparent city, the
+// clouds and the frame budget at 650 m/s; crossed additive planes anchored to
+// holes read at both cruise and street level for a handful of draws.
+// ---------------------------------------------------------------------------
+
+const SHAFT_COUNT: usize = 5;
+const SHAFT_HEIGHT: f32 = 900.0;
+const SHAFT_WIDTH: f32 = 55.0;
+
+#[derive(Component)]
+pub struct LightShaft {
+    index: usize,
+}
+
+#[derive(Resource, Default)]
+pub struct ShaftState {
+    /// Seeded per day: azimuth (radians) and radius (m) of each hole.
+    holes: Vec<(f32, f32)>,
+    seeded_day: u32,
+}
+
+fn shaft_mesh() -> Mesh {
+    let mut positions: Vec<[f32; 3]> = Vec::new();
+    let mut normals: Vec<[f32; 3]> = Vec::new();
+    let mut uvs: Vec<[f32; 2]> = Vec::new();
+    let mut indices: Vec<u32> = Vec::new();
+    for plane in 0..2 {
+        let angle = plane as f32 * std::f32::consts::FRAC_PI_2;
+        let (sin, cos) = angle.sin_cos();
+        let half = SHAFT_WIDTH * 0.5;
+        let base = positions.len() as u32;
+        for (x, v) in [(-half, 0.0_f32), (half, 0.0), (half, 1.0), (-half, 1.0)] {
+            positions.push([cos * x, v * SHAFT_HEIGHT, sin * x]);
+            normals.push([0.0, 1.0, 0.0]);
+            uvs.push([if x < 0.0 { 0.0 } else { 1.0 }, v]);
+        }
+        indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    let mut mesh = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+    );
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.insert_indices(Indices::U32(indices));
+    mesh
+}
+
+fn shaft_texture() -> Image {
+    let size = 64usize;
+    let mut data = vec![0u8; size * size * 4];
+    for y in 0..size {
+        for x in 0..size {
+            let v = (y as f32 + 0.5) / size as f32;
+            let u = (x as f32 + 0.5) / size as f32 * 2.0 - 1.0;
+            // Soft at both ends, a little brighter down the middle.
+            let along = (v * std::f32::consts::PI).sin().powf(0.6);
+            let across = (1.0 - u.abs()).max(0.0).powf(1.2);
+            let index = (y * size + x) * 4;
+            data[index] = 255;
+            data[index + 1] = 255;
+            data[index + 2] = 255;
+            data[index + 3] = (along * across * 255.0) as u8;
+        }
+    }
+    let mut image = Image::new(
+        bevy::render::render_resource::Extent3d {
+            width: size as u32,
+            height: size as u32,
+            depth_or_array_layers: 1,
+        },
+        bevy::render::render_resource::TextureDimension::D2,
+        data,
+        bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+    );
+    image.sampler = bevy::image::ImageSampler::linear();
+    image
+}
+
+pub fn setup_shafts(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut images: ResMut<Assets<Image>>,
+) {
+    let texture = images.add(shaft_texture());
+    let material = materials.add(StandardMaterial {
+        base_color: Color::srgba(1.0, 0.93, 0.78, 0.0),
+        base_color_texture: Some(texture),
+        unlit: true,
+        alpha_mode: AlphaMode::Add,
+        cull_mode: None,
+        ..default()
+    });
+    let mesh = meshes.add(shaft_mesh());
+    for index in 0..SHAFT_COUNT {
+        commands.spawn((
+            LightShaft { index },
+            Name::new(format!("light shaft {index}")),
+            Mesh3d(mesh.clone()),
+            MeshMaterial3d(material.clone()),
+            Transform::IDENTITY,
+            Visibility::Hidden,
+        ));
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn update_shafts(
+    time: Res<Time>,
+    clock: Res<SimClock>,
+    env: Res<Environment>,
+    weather: Res<Weather>,
+    camera: Single<&Transform, With<FlyCamera>>,
+    mut state: ResMut<ShaftState>,
+    mut shafts: Query<(&LightShaft, &mut Transform, &mut Visibility), Without<FlyCamera>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut mesh_materials: Query<&MeshMaterial3d<StandardMaterial>, With<LightShaft>>,
+) {
+    // Seed the holes per day: a given date always tears the deck in the same
+    // places, and the wind carries them slowly.
+    if state.seeded_day != clock.date.day_of_year() || state.holes.is_empty() {
+        state.seeded_day = clock.date.day_of_year();
+        let mut seed = 0x9E37_79B9u32 ^ state.seeded_day.wrapping_mul(2_654_435_761);
+        let mut rand = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
+            (seed >> 8) as f32 / 16_777_216.0
+        };
+        state.holes = (0..SHAFT_COUNT)
+            .map(|_| (rand() * std::f32::consts::TAU, 260.0 + rand() * 520.0))
+            .collect();
+    }
+    let night = env.night || env.daylight < 0.35;
+    let moon_lit = env.moon_illumination >= 0.55 && env.moon.altitude_deg > 4.0;
+    let strength = if night { 0.0 } else { weather.holes };
+    let moon_strength = if night && moon_lit {
+        0.55 * env.moon_illumination
+    } else {
+        0.0
+    };
+    let visible = strength > 0.12 || moon_strength > 0.1;
+    let cam = camera.translation;
+    let drift = time.elapsed_secs() * 0.004 + weather.wind.x * 0.05;
+    // Warm sunlight by day; silver-blue moonlight by night.
+    let tint = if night {
+        Color::srgba(0.62, 0.72, 1.0, 0.55 * moon_strength)
+    } else {
+        Color::srgba(1.0, 0.94, 0.80, (0.95 * strength).clamp(0.0, 0.9))
+    };
+    for material in mesh_materials.iter_mut() {
+        if let Some(mut material) = materials.get_mut(&material.0) {
+            material.base_color = tint;
+        }
+    }
+    if std::env::var_os("BEAM_TRACE").is_some() {
+        info!(
+            "BEAM holes={:.2} strength={:.2} moon={:.2} visible={} cam={:?}",
+            weather.holes, strength, moon_strength, visible, cam
+        );
+    }
+    for (shaft, mut transform, mut visibility) in &mut shafts {
+        if !visible {
+            *visibility = Visibility::Hidden;
+            continue;
+        }
+        let (azimuth, radius) = state.holes[shaft.index % state.holes.len()];
+        // Holes live in the forward half-space: a shaft behind the player is
+        // weather nobody sees. Seeded spread mapped into ±60° of the heading.
+        let forward = camera.rotation * Vec3::NEG_Z;
+        let heading = f32::atan2(forward.x, forward.z);
+        let spread = (azimuth / std::f32::consts::TAU - 0.5) * 2.1;
+        let angle = heading + spread + drift;
+        let base = Vec3::new(
+            cam.x + angle.cos() * radius,
+            (cam.y - 260.0).max(4.0),
+            cam.z + angle.sin() * radius,
+        );
+        transform.translation = base;
+        // Face the camera around Y so the two crossed planes always show, and
+        // lean the shaft along the sun's azimuth.
+        let to_camera = Vec3::new(cam.x - base.x, 0.0, cam.z - base.z);
+        let yaw = f32::atan2(to_camera.x, to_camera.z);
+        let lean = (env.sun.altitude_deg * 0.012).clamp(-0.35, 0.2);
+        transform.rotation = Quat::from_rotation_y(yaw) * Quat::from_rotation_x(lean);
+        *visibility = Visibility::Inherited;
+    }
+}
+
 pub struct WeatherPlugin;
 
 impl Plugin for WeatherPlugin {
@@ -830,7 +1049,9 @@ impl Plugin for WeatherPlugin {
             MaterialPlugin::<PrecipMaterial>::default(),
         ))
         .init_resource::<Weather>()
-        .add_systems(Startup, setup_weather);
+        .init_resource::<ShaftState>()
+        .add_systems(Startup, (setup_weather, setup_shafts))
+        .add_systems(Update, update_shafts);
     }
 }
 

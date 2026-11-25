@@ -3362,13 +3362,28 @@ pub fn effective_width(footprint: &[[f32; 2]]) -> f32 {
     2.0 * inner.max(0.0)
 }
 
-/// Floors allowed by the aspect gate for a given plan width.
-pub fn aspect_capped_floors(floors: u32, floor_height: f32, width: f32) -> u32 {
+/// The ASPECT DOCTRINE is two-zone: a blanket 10:1 backstop everywhere the
+/// chimney census earned it, and 18:1 inside Footprint-Doctrine cores and the
+/// appeals list, where a real skyline lives. The zone mirrors the height-cap
+/// structure: cores exempt, caps govern outside.
+pub const ASPECT_LIMIT_OUTSIDE: f32 = 10.0;
+pub const ASPECT_LIMIT_CORE: f32 = 18.0;
+
+pub fn aspect_limit(district: &str) -> f32 {
+    if governance_core(district) {
+        ASPECT_LIMIT_CORE
+    } else {
+        ASPECT_LIMIT_OUTSIDE
+    }
+}
+
+/// Floors allowed by the aspect gate for a given plan width and zone limit.
+pub fn aspect_capped_floors(floors: u32, floor_height: f32, width: f32, limit: f32) -> u32 {
     if width <= 0.01 || floor_height <= 0.0 {
         return floors;
     }
-    let limit = (10.0 * width / floor_height).floor().max(1.0) as u32;
-    floors.min(limit)
+    let capped = (limit * width / floor_height).floor().max(1.0) as u32;
+    floors.min(capped)
 }
 
 /// Building ids exempted by the player's aspect appeals.
@@ -3397,20 +3412,45 @@ fn aspect_appeals() -> &'static std::collections::HashSet<u32> {
     })
 }
 
-/// Per-district aspect census: (buildings seen, buildings clamped, worst ratio).
+/// Per-district aspect census: seen, clamped, worst ratio, >=6-storey before
+/// and after (the skyline the player actually flies).
+#[derive(Clone, Copy, Default)]
+struct AspectRow {
+    seen: u32,
+    clamped: u32,
+    worst: f32,
+    tall_before: u32,
+    tall_after: u32,
+    limit: f32,
+}
+
 static ASPECT_CENSUS: std::sync::OnceLock<
-    std::sync::Mutex<std::collections::BTreeMap<String, (u32, u32, f32)>>,
+    std::sync::Mutex<std::collections::BTreeMap<String, AspectRow>>,
 > = std::sync::OnceLock::new();
 
-fn aspect_census_note(district: &str, ratio: f32, clamped: bool) {
+#[allow(clippy::too_many_arguments)]
+fn aspect_census_note(
+    district: &str,
+    ratio: f32,
+    before_floors: u32,
+    after_floors: u32,
+    limit: f32,
+) {
     let census = ASPECT_CENSUS.get_or_init(|| std::sync::Mutex::new(Default::default()));
     if let Ok(mut map) = census.lock() {
-        let entry = map.entry(district.to_string()).or_insert((0, 0, 0.0));
-        entry.0 += 1;
-        if clamped {
-            entry.1 += 1;
+        let entry = map.entry(district.to_string()).or_default();
+        entry.seen += 1;
+        entry.limit = limit;
+        if after_floors < before_floors {
+            entry.clamped += 1;
         }
-        entry.2 = entry.2.max(ratio);
+        if before_floors >= 6 {
+            entry.tall_before += 1;
+        }
+        if after_floors >= 6 {
+            entry.tall_after += 1;
+        }
+        entry.worst = entry.worst.max(ratio);
     }
 }
 
@@ -3422,8 +3462,11 @@ pub fn aspect_census_print() {
     let Ok(map) = census.lock() else {
         return;
     };
-    for (district, (seen, clamped, worst)) in map.iter() {
-        info!("ASPECT CENSUS {district}: seen={seen} clamped={clamped} worst_ratio={worst:.1}:1");
+    for (district, row) in map.iter() {
+        info!(
+            "ASPECT CENSUS {district}: limit={:.0}:1 seen={} clamped={} worst_ratio={:.1}:1 tall6_before={} tall6_after={}",
+            row.limit, row.seen, row.clamped, row.worst, row.tall_before, row.tall_after
+        );
     }
 }
 
@@ -3543,8 +3586,8 @@ fn building_spec(
     let width = effective_width(&footprint);
     let height_before = floor_count as f32 * floor_height;
     let appealed = aspect_appeals().contains(&building.id);
-    if !appealed {
-        let capped = aspect_capped_floors(floor_count, floor_height, width);
+    let limit = aspect_limit(district);
+    if appealed {
         aspect_census_note(
             district,
             if width > 0.01 {
@@ -3552,7 +3595,22 @@ fn building_spec(
             } else {
                 0.0
             },
-            capped < floor_count,
+            floor_count,
+            floor_count,
+            limit,
+        );
+    } else {
+        let capped = aspect_capped_floors(floor_count, floor_height, width, limit);
+        aspect_census_note(
+            district,
+            if width > 0.01 {
+                height_before / width
+            } else {
+                0.0
+            },
+            floor_count,
+            capped,
+            limit,
         );
         floor_count = capped;
     }
@@ -4400,17 +4458,39 @@ mod aspect_gate {
     use super::*;
 
     #[test]
-    fn a_chimney_is_clamped_to_ten_to_one() {
-        // 8 m wide, 4 m floors: 20 floors is the ceiling (80 m).
-        assert_eq!(aspect_capped_floors(40, 4.0, 8.0), 20);
-        assert_eq!(aspect_capped_floors(20, 4.0, 8.0), 20);
-        assert_eq!(aspect_capped_floors(19, 4.0, 8.0), 19);
+    fn a_chimney_is_clamped_to_ten_to_one_outside_cores() {
+        // 8 m wide, 4 m floors, 10:1 zone: 20 floors is the ceiling (80 m).
+        assert_eq!(aspect_capped_floors(40, 4.0, 8.0, 10.0), 20);
+        assert_eq!(aspect_capped_floors(20, 4.0, 8.0, 10.0), 20);
+        assert_eq!(aspect_capped_floors(19, 4.0, 8.0, 10.0), 19);
+        assert_eq!(ASPECT_LIMIT_OUTSIDE, 10.0);
+    }
+
+    #[test]
+    fn a_core_gets_eighteen_to_one_and_the_fraud_is_still_clamped() {
+        // 8 m wide, 4 m floors, 18:1 zone: 36 floors (144 m). The 4,300:1
+        // records sit on ~1 m widths and stay clamped in every zone.
+        assert_eq!(aspect_capped_floors(80, 4.0, 8.0, 18.0), 36);
+        assert_eq!(aspect_capped_floors(40, 4.0, 1.0, 18.0), 4);
+        assert_eq!(aspect_capped_floors(40, 4.0, 1.0, 10.0), 2);
+        assert_eq!(ASPECT_LIMIT_CORE, 18.0);
+    }
+
+    #[test]
+    fn the_zone_follows_the_footprint_doctrine() {
+        // Downtown is a core (18:1); Ballard is not (10:1); Bellevue CBD is a
+        // core by appeal.
+        assert_eq!(aspect_limit("Downtown"), ASPECT_LIMIT_CORE);
+        assert_eq!(aspect_limit("Ballard"), ASPECT_LIMIT_OUTSIDE);
+        assert_eq!(aspect_limit("Bellevue CBD"), ASPECT_LIMIT_CORE);
     }
 
     #[test]
     fn a_plausible_tower_keeps_its_height() {
-        // 46 m plan width: 115 floors would be allowed; a 70-floor tower passes.
-        assert_eq!(aspect_capped_floors(70, 4.0, 46.0), 70);
+        // 46 m plan width: 115 floors at 10:1, 207 at 18:1; a 70-floor tower
+        // passes in either zone.
+        assert_eq!(aspect_capped_floors(70, 4.0, 46.0, 10.0), 70);
+        assert_eq!(aspect_capped_floors(70, 4.0, 46.0, 18.0), 70);
     }
 
     #[test]

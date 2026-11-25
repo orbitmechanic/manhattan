@@ -1,0 +1,34 @@
+{
+ "asset": "Space Needle",
+ "status": "blocked — no retrievable license-clean 3D model on this machine",
+ "gate": "CC0 / CC-BY / CC-BY-Zero only; no license, no import",
+ "searches": [
+  {
+   "source": "Wikimedia Commons (namespace 6, file search)",
+   "query": "Space Needle 3D model",
+   "result": "no 3D model; only unrelated text media",
+   "date": "2026-11-25"
+  },
+  {
+   "source": "Sketchfab API (license=cc0 filter)",
+   "query": "space needle",
+   "result": "0 CC0 results",
+   "date": "2026-11-25"
+  },
+  {
+   "source": "Sketchfab API (all licenses)",
+   "query": "space needle",
+   "result": "candidates exist under CC Attribution (e.g. 'The Seattle Space Needle', 'Space Needle'), which the gate would accept",
+   "blocker": "Sketchfab downloads require an authenticated API token/OAuth; this machine has none, and scraping the viewer is out of scope for a build asset.",
+   "date": "2026-11-25"
+  },
+  {
+   "source": "Smithsonian Open Access",
+   "query": "space needle",
+   "result": "no 3D model (textile tools only)",
+   "date": "2026-11-25"
+  }
+ ],
+ "fallback": "procedural massing remains live (LANDMARKS_ALWAYS); no authored replacement was shipped this round",
+ "debt": "needle-real-model"
+}

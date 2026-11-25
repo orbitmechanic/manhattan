@@ -2497,3 +2497,41 @@ geometric backstop: ratios of 1 800–4 300 : 1 were passing every previous gate
 **Still blocking:** `tower-house-frame` (ninth demand) — a player-shot frame retires it; the agent can stage under
 nominal overcast but has not produced a passing pair. Newly filed: `streetlight-visibility`, `night-emissive-verdict`.
 177 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files).
+
+## Iteration 92 — the needle and the arches (seattle-needle1)
+
+**ASPECT DOCTRINE is now two-zone (shipped).** 10:1 default everywhere; **18:1** inside Footprint-Doctrine
+cores and the appeals list; the zone is read from the same `governance_core` that governs height caps. The
+shipped-chunk assert is zone-aware (18.05:1 inside, 10.05:1 outside) and the census now prints the tall
+(>=6-storey) counts before/after:
+
+```
+Capitol Hill   limit=10:1 seen=113 clamped=17  worst 319.0:1   tall6 0 -> 0
+Downtown       limit=18:1 seen=153 clamped=61  worst 1815.1:1  tall6 123 -> 98
+First Hill     limit=18:1 seen=576 clamped=103 worst 2181.0:1  tall6 243 -> 197
+Pike Place     limit=18:1 seen=171 clamped=50  worst 4339.2:1  tall6 143 -> 120
+Pioneer Square limit=18:1 seen=185 clamped=51  worst 1135.7:1  tall6 144 -> 129
+Queen Anne     limit=10:1 seen=196 clamped=31  worst 600.7:1   tall6 0 -> 0
+```
+
+The 1 800–4 300 : 1 fraud records stay clamped in both zones (a 1 m-wide "tower" is 4 floors at 18:1 and 2 at
+10:1); suburbs keep the 10:1 backstop. Tests: `a_chimney_is_clamped_to_ten_to_one_outside_cores`,
+`a_core_gets_eighteen_to_one_and_the_fraud_is_still_clamped`, `the_zone_follows_the_footprint_doctrine`.
+
+**Patchy cover + shafts (partial).** `Weather.holes` ships: a seeded slow tear of the deck, strongest under
+overcast, closing in rain, disclosed in `Weather::summary`. The cheap tier is implemented (five hole-anchored
+crossed-plane shafts, additive, forward half-space, sun by day, silver-blue gated on moon illumination >= 0.55
+at night) — **but the shafts are not verifiably visible in the verdict frames**, so `sunbeam-shafts` is filed
+rather than claimed. No post-process god-ray tier was attempted.
+
+**Space Needle: search evidenced, no import.** A genuine search ran and is committed as
+`assets/models/space_needle.manifest.json`: Wikimedia Commons has no 3D model; Sketchfab CC0 returns zero;
+Sketchfab CC-BY candidates exist but **download requires an authenticated API token this machine does not
+have**; Smithsonian Open Access has none. Per the escalation clause the procedural massing stays live and
+`needle-real-model` is tagged. No authored replacement shipped this round.
+
+**Science Center arches: not shipped.** Filed with the Needle work (`seattle-center-ensemble`).
+
+**Gauntlet with the new systems live:** 650 m/s **54.5 ms avg / 71.0 p99**; 100 m/s 48.9/67.4 — in band.
+179 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files, 0
+failures).
