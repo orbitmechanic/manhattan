@@ -1,6 +1,6 @@
 {
  "asset": "Space Needle",
- "status": "blocked \u2014 no direct-download license-clean model found; Sketchfab CC-BY needs a token",
+ "status": "converted \u2014 CAD source tessellated and decimated; in-game integration pending",
  "gate": "CC0 / CC-BY / CC-BY-Zero only; no license, no import",
  "searches": [
   {
@@ -37,5 +37,31 @@
  ],
  "fallback": "procedural massing remains live (LANDMARKS_ALWAYS); no authored replacement was shipped this round",
  "debt": "needle-real-model",
- "ask": "mint a free Sketchfab API token (or paste a CC-BY GLB URL) and the import becomes mechanical next round"
+ "ask": "mint a free Sketchfab API token (or paste a CC-BY GLB URL) and the import becomes mechanical next round",
+ "source": {
+  "origin": "player-supplied CAD snapshot: Work/games/Manhattan/assets/seattle-space-needle-1.snapshot.6",
+  "files": [
+   "Seattle Space Needle.STEP",
+   "Seattle Space Needle_1.STEP",
+   "Seattle Space Needle.JPG",
+   "Seattle Space Needle Render.jpg"
+  ],
+  "license_claim": "source page states the model is open-source and intended for games (player-provided)",
+  "reference_renders": [
+   "Seattle Space Needle.JPG",
+   "Seattle Space Needle Render.jpg"
+  ]
+ },
+ "conversion": {
+  "step": "scripts/step_to_glb.py (freecadcmd 1.1.4, linear 0.08, angular 0.30) -> STL",
+  "blender": "scripts/stl_to_glb.py (Blender 5.2.2, STL -> Y-up GLB, scaled to 184 m)",
+  "receipt": {
+   "tessellated_facets": 67096,
+   "stl_height_m": 180.66,
+   "scale_applied": 1.0185,
+   "glb_tris": 33548,
+   "glb_bytes": 2576516,
+   "up": "CAD Z-up rotated -90 deg about X to engine Y-up; Blender re-rotated +90 for export and the glTF exporter writes Y-up"
+  }
+ }
 }

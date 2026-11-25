@@ -857,7 +857,7 @@ pub fn update_weather_visuals(
 // ---------------------------------------------------------------------------
 
 const SHAFT_LOW_SUN_MIN: f32 = 2.0;
-const SHAFT_LOW_SUN_MAX: f32 = 30.0;
+const SHAFT_LOW_SUN_MAX: f32 = 40.0;
 
 #[derive(Asset, AsBindGroup, Debug, Clone, TypePath)]
 pub struct SunShaftMaterial {
@@ -970,6 +970,19 @@ pub fn update_sun_shafts(
         (Vec3::ZERO, 0.0, Vec3::ZERO)
     };
 
+    // Discoverability: narrate the opportunity so a console can say whether a
+    // flight ever crossed an eligible window.
+    if std::env::var_os("BEAM_TRACE").is_some() {
+        info!(
+            "BEAMS {} sun_alt={:.1} moon_alt={:.1} illum={:.2} holes={:.2} night={}",
+            if strength > 0.05 { "eligible" } else { "idle" },
+            env.sun.altitude_deg,
+            env.moon.altitude_deg,
+            env.moon_illumination,
+            weather.holes,
+            !day
+        );
+    }
     let position = if strength > 0.05 {
         screen_position(&camera, direction)
     } else {

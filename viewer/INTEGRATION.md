@@ -2577,3 +2577,30 @@ face reads with window rows, but the tower/low-building pair is not clean, so th
 
 **Gauntlet** unchanged by the beam overlay: last measured 650 m/s 54.5 ms avg / 71.0 p99; 179 tests green, clippy
 clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files, 0 failures).
+
+## Iteration 94 — CAD to castle (seattle-needle3)
+
+**Speed-line overlay: latch removed.** `MotionState.intensity` is now a pure function of the current smoothed speed
+(`speed_line_level(speed, suspended)`: 1.0 at cruise, fading across a 140 m/s band above the resume threshold, 0
+whenever accessories are back), and the visibility test no longer ORs in `mach >= 1.0` — that OR was the latch that
+kept the overlay up after a downshift. Tests: `overlay_lives_only_inside_the_regime`,
+`overlay_is_monotone_on_deceleration` (sweep 650 -> 0, level never rises, ends at zero).
+
+**Beams: discoverability fixed.** The gate ceiling moved 30° -> **40°**, holes now count in any weather, and a
+`BEAMS eligible|idle sun_alt=… moon_alt=… illum=… holes=… night=…` trace narrates opportunity. At the boot clock's
+evening (17:30, unforced overcast) the trace reads `BEAMS eligible sun_alt=20.1 holes=0.19` — a normal session now
+crosses eligible windows; `captures/beams_normal_session.png` is the unforced-session frame.
+
+**Space Needle CAD: converted, not yet in-game.** The player's STEP is through the full scripted pipeline —
+`scripts/step_to_glb.py` (freecadcmd 1.1.4, linear 0.08 / angular 0.30) → 67 096 tessellated facets → STL
+(180.66 m) → `scripts/stl_to_glb.py` (Blender 5.2.2, Z-up → Y-up, scaled 1.0185 to 184 m) → **33 548-tri GLB,
+2.58 MB**, committed at `assets/models/space_needle.glb` with the receipt and license claim in the manifest. The
+in-game swap (spawn at anchor `[-1006.1,-1609.9]`, hide the procedural components behind `NEEDLE_PROCEDURAL=1`,
+shell/phase-map wiring) is **not done**; the conversion is repeatable and committed.
+
+**Core fraud floor shipped.** In every zone, a plan width below **3 m** demotes the record to two floors — the
+1 800–4 300 : 1 class cannot ship as a "tower" even where aspect is unclamped. Real towers are untouched (3 m is far
+below any plausible plan).
+
+**Not shipped:** Science Center arches (third deferral), tower-house frame, the Needle's in-game integration.
+181 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files, 0 failures).

@@ -34,6 +34,16 @@ pub fn sonic_gain(speed: f32) -> f32 {
     ((speed - 220.0) / (650.0 - 220.0)).clamp(0.0, 1.0)
 }
 
+/// Speed-line level 0..1. Symmetric with the accessory cut: full at the cruise
+/// standard, fading out across a narrow band above the resume threshold, zero
+/// whenever accessories are back. Never stores state, so it cannot stick.
+pub fn speed_line_level(speed: f32, suspended: bool) -> f32 {
+    if !suspended {
+        return 0.0;
+    }
+    ((speed - ACCESSORY_RESUME_SPEED) / 140.0).clamp(0.0, 1.0)
+}
+
 #[derive(Resource)]
 pub struct MotionState {
     pub velocity: Vec3,
@@ -196,13 +206,10 @@ pub fn update_motion_state(
         motion.suspended = true;
     }
 
-    motion.intensity = if motion.suspended {
-        ((motion.speed - ACCESSORY_RESUME_SPEED)
-            / (ACCESSORY_SUSPEND_SPEED - ACCESSORY_RESUME_SPEED))
-            .clamp(0.0, 1.0)
-    } else {
-        0.0
-    };
+    // Overlay state is a pure function of the CURRENT smoothed speed: no latch,
+    // no asymmetry. It fades out fast below the resume threshold (~0.4 s), so a
+    // downshift clears the lines while the hand is still on the keys.
+    motion.intensity = speed_line_level(motion.speed, motion.suspended);
 }
 
 pub fn apply_accessory_visibility(
@@ -275,7 +282,7 @@ pub fn update_speed_lines(
             material.tint.w = 0.45;
             material.boom = Vec4::new(motion.boom_age, 1.0, motion.mach, 0.0);
         }
-        *visibility = if intensity > 0.01 || motion.mach >= 1.0 {
+        *visibility = if intensity > 0.01 {
             Visibility::Inherited
         } else {
             Visibility::Hidden
@@ -374,5 +381,37 @@ mod boom_tests {
             }
         }
         assert_eq!(booms, 3, "re-arm path broken: {booms} booms");
+    }
+}
+
+#[cfg(test)]
+mod overlay_state {
+    use super::*;
+
+    #[test]
+    fn overlay_lives_only_inside_the_regime() {
+        assert_eq!(speed_line_level(650.0, true), 1.0);
+        assert_eq!(speed_line_level(440.0, true), 1.0);
+        assert!(speed_line_level(380.0, true) < 0.6);
+        assert!(speed_line_level(310.0, true) < 0.1);
+        // Below the resume threshold the accessory cut is off, so the lines are
+        // off: no latch survives a downshift to hover.
+        assert_eq!(speed_line_level(299.0, false), 0.0);
+        assert_eq!(speed_line_level(0.0, false), 0.0);
+        assert_eq!(speed_line_level(100.0, false), 0.0);
+    }
+
+    #[test]
+    fn overlay_is_monotone_on_deceleration() {
+        // Sweep down from cruise; the level must fall every step and hit zero.
+        let mut last = 1.0;
+        let mut speed = 650.0;
+        while speed >= 0.0 {
+            let level = speed_line_level(speed, speed > ACCESSORY_RESUME_SPEED);
+            assert!(level <= last + 1e-4, "level rose on decel at {speed}");
+            last = level;
+            speed -= 10.0;
+        }
+        assert_eq!(last, 0.0);
     }
 }

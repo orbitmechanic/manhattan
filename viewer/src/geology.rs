@@ -3602,7 +3602,14 @@ fn building_spec(
     let height_before = floor_count as f32 * floor_height;
     let appealed = aspect_appeals().contains(&building.id);
     let limit = aspect_limit(district);
-    if appealed {
+    // MINIMUM PLAN-WIDTH FRAUD FLOOR: a "tower" a metre wide is a data defect,
+    // not a building, in every zone. The aspect freedom for real towers is
+    // untouched (3 m is far below any plausible plan).
+    if width < 3.0 {
+        let before = floor_count;
+        floor_count = floor_count.min(2);
+        aspect_census_note(district, 0.0, before, floor_count, limit);
+    } else if appealed {
         aspect_census_note(
             district,
             if width > 0.01 {
