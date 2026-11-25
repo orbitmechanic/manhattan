@@ -114,6 +114,7 @@ impl Plugin for GeologyPlugin {
                     s3_buildings,
                     s3_damage,
                     s3_list_targets,
+                    aspect_census_tick,
                     district_capture,
                     seattle_boot_camera,
                     seattle_fire_probe,
@@ -3157,6 +3158,26 @@ fn seattle_boot_camera(
     }
 }
 
+/// Print the aspect census as the boot streams districts in: early, mid and
+/// settled, so every district that ships is in the table.
+fn aspect_census_tick(time: Res<Time>, mut marks: Local<u8>) {
+    let elapsed = time.elapsed_secs();
+    let stage = if elapsed > 40.0 {
+        3
+    } else if elapsed > 20.0 {
+        2
+    } else if elapsed > 8.0 {
+        1
+    } else {
+        0
+    };
+    if stage > *marks {
+        *marks = stage;
+        info!("ASPECT CENSUS stage={stage} at {elapsed:.0}s");
+        aspect_census_print();
+    }
+}
+
 fn s3_list_targets(world: &mut World) {
     if std::env::var_os("S3_LIST_TARGETS").is_none() || !s3_enabled() {
         return;
@@ -3304,6 +3325,108 @@ pub fn footprint_seat(dem: &Dem, centroid: [f32; 2], perimeter: &[[f32; 2]]) -> 
     height
 }
 
+/// 10:1 ASPECT GATE (player rule). Effective width is the diameter of the
+/// largest circle inscribed at the footprint's area centroid: it is rotation
+/// invariant (a bounding box flatters a diamond by 41 %) and it is the
+/// building's real structural width, so a needle cannot pass on a long sliver.
+pub fn effective_width(footprint: &[[f32; 2]]) -> f32 {
+    let count = footprint.len();
+    if count < 3 {
+        return 0.0;
+    }
+    let (mut area, mut cx, mut cz) = (0.0_f32, 0.0_f32, 0.0_f32);
+    for index in 0..count {
+        let a = footprint[index];
+        let b = footprint[(index + 1) % count];
+        let cross = a[0] * b[1] - b[0] * a[1];
+        area += cross;
+        cx += (a[0] + b[0]) * cross;
+        cz += (a[1] + b[1]) * cross;
+    }
+    area *= 0.5;
+    if area.abs() < 1.0e-3 {
+        return 0.0;
+    }
+    cx /= 6.0 * area;
+    cz /= 6.0 * area;
+    let mut inner = f32::MAX;
+    for index in 0..count {
+        let a = footprint[index];
+        let b = footprint[(index + 1) % count];
+        let edge = [b[0] - a[0], b[1] - a[1]];
+        let length = (edge[0] * edge[0] + edge[1] * edge[1]).sqrt().max(1.0e-4);
+        let to_centroid = [cx - a[0], cz - a[1]];
+        let distance = (to_centroid[0] * edge[1] - to_centroid[1] * edge[0]).abs() / length;
+        inner = inner.min(distance);
+    }
+    2.0 * inner.max(0.0)
+}
+
+/// Floors allowed by the aspect gate for a given plan width.
+pub fn aspect_capped_floors(floors: u32, floor_height: f32, width: f32) -> u32 {
+    if width <= 0.01 || floor_height <= 0.0 {
+        return floors;
+    }
+    let limit = (10.0 * width / floor_height).floor().max(1.0) as u32;
+    floors.min(limit)
+}
+
+/// Building ids exempted by the player's aspect appeals.
+fn aspect_appeals() -> &'static std::collections::HashSet<u32> {
+    static APPEALS: std::sync::OnceLock<std::collections::HashSet<u32>> =
+        std::sync::OnceLock::new();
+    APPEALS.get_or_init(|| {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("assets/styles/seattle_governance.json");
+        std::fs::read_to_string(path)
+            .ok()
+            .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+            .and_then(|value| {
+                value
+                    .get("appeals")?
+                    .get("aspect")?
+                    .get("buildings")?
+                    .as_array()
+                    .map(|list| {
+                        list.iter()
+                            .filter_map(|entry| entry.as_u64().map(|id| id as u32))
+                            .collect()
+                    })
+            })
+            .unwrap_or_default()
+    })
+}
+
+/// Per-district aspect census: (buildings seen, buildings clamped, worst ratio).
+static ASPECT_CENSUS: std::sync::OnceLock<
+    std::sync::Mutex<std::collections::BTreeMap<String, (u32, u32, f32)>>,
+> = std::sync::OnceLock::new();
+
+fn aspect_census_note(district: &str, ratio: f32, clamped: bool) {
+    let census = ASPECT_CENSUS.get_or_init(|| std::sync::Mutex::new(Default::default()));
+    if let Ok(mut map) = census.lock() {
+        let entry = map.entry(district.to_string()).or_insert((0, 0, 0.0));
+        entry.0 += 1;
+        if clamped {
+            entry.1 += 1;
+        }
+        entry.2 = entry.2.max(ratio);
+    }
+}
+
+/// Print the aspect demotion census (before/after per district).
+pub fn aspect_census_print() {
+    let Some(census) = ASPECT_CENSUS.get() else {
+        return;
+    };
+    let Ok(map) = census.lock() else {
+        return;
+    };
+    for (district, (seen, clamped, worst)) in map.iter() {
+        info!("ASPECT CENSUS {district}: seen={seen} clamped={clamped} worst_ratio={worst:.1}:1");
+    }
+}
+
 fn building_spec(
     pack: &StylePack,
     node: &crate::citypack::PackNode,
@@ -3413,6 +3536,25 @@ fn building_spec(
     if residential_district && !core {
         floor_count = floor_count.min((area / 12.0).floor().max(1.0) as u32);
         floor_count = floor_count.min(4);
+    }
+    // 10:1 ASPECT GATE: no building is taller than ten times its plan width.
+    // Applied after every other gate, so a chimney that survived the census is
+    // still clamped here. Appeals are by building id and default to empty.
+    let width = effective_width(&footprint);
+    let height_before = floor_count as f32 * floor_height;
+    let appealed = aspect_appeals().contains(&building.id);
+    if !appealed {
+        let capped = aspect_capped_floors(floor_count, floor_height, width);
+        aspect_census_note(
+            district,
+            if width > 0.01 {
+                height_before / width
+            } else {
+                0.0
+            },
+            capped < floor_count,
+        );
+        floor_count = capped;
     }
     // House windows on houses: a residential parcel gets a sash window with a
     // sill and a 3.1 m column pitch regardless of the district's commercial
@@ -4250,6 +4392,41 @@ mod gable_closure {
                 );
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod aspect_gate {
+    use super::*;
+
+    #[test]
+    fn a_chimney_is_clamped_to_ten_to_one() {
+        // 8 m wide, 4 m floors: 20 floors is the ceiling (80 m).
+        assert_eq!(aspect_capped_floors(40, 4.0, 8.0), 20);
+        assert_eq!(aspect_capped_floors(20, 4.0, 8.0), 20);
+        assert_eq!(aspect_capped_floors(19, 4.0, 8.0), 19);
+    }
+
+    #[test]
+    fn a_plausible_tower_keeps_its_height() {
+        // 46 m plan width: 115 floors would be allowed; a 70-floor tower passes.
+        assert_eq!(aspect_capped_floors(70, 4.0, 46.0), 70);
+    }
+
+    #[test]
+    fn effective_width_reads_the_narrow_side() {
+        let footprint = [[0.0, 0.0], [30.0, 0.0], [30.0, 12.0], [0.0, 12.0]];
+        assert_eq!(effective_width(&footprint), 12.0);
+        let rotated = [[0.0, 0.0], [8.0, 8.0], [4.0, 12.0], [-4.0, 4.0]];
+        assert!(effective_width(&rotated) <= 10.0);
+    }
+
+    #[test]
+    fn appeals_are_a_building_id_list_and_default_to_the_gate() {
+        // The shipped file must parse; the default list is empty, so the gate
+        // applies to every building unless the player adds an id.
+        let appeals = aspect_appeals();
+        assert!(appeals.len() <= 32, "unexpected appeal count");
     }
 }
 

@@ -33,6 +33,11 @@ pub struct Environment {
     pub fog_rgb: Vec3,
     /// Final blended sky colour (after weather), 0..1 linear.
     pub sky_rgb: Vec3,
+    /// City-glow strength at the camera: the integral of built density around
+    /// it. 0 over water and forest, ~1-2 over downtown. Drives the night
+    /// ambient dome, the underside of the cloud deck, the sky's amber foot and
+    /// the mountain silhouette.
+    pub city_glow: f32,
 }
 
 impl Default for Environment {
@@ -49,6 +54,7 @@ impl Default for Environment {
             fog_strength: 0.35,
             fog_rgb: Vec3::new(0.55, 0.68, 0.85),
             sky_rgb: Vec3::new(0.30, 0.50, 0.82),
+            city_glow: 0.0,
         }
     }
 }
@@ -197,6 +203,7 @@ pub fn update_environment(
     clock: Res<SimClock>,
     weather: Res<Weather>,
     hazards: Option<Res<destructibles_bevy::hazards::Hazards>>,
+    geology: Option<Res<crate::geology::Geology>>,
     mut env: ResMut<Environment>,
     mut clear_color: ResMut<ClearColor>,
     camera: Single<
@@ -305,11 +312,32 @@ pub fn update_environment(
     let (cam_transform, mut ambient, mut fog) = camera.into_inner();
     let camera_pos = cam_transform.translation;
 
+    // ---- city glow ------------------------------------------------------
+    // The night is lit from the ground: windows, streetlights and headlights
+    // bounce off the deck and come back as an amber dome. Its strength is the
+    // built density around the camera, integrated over the neighbourhood
+    // hierarchy, not a hand-set constant: downtown glows, water and forest go
+    // black, and the mountains are only ever silhouettes.
+    let mut glow = 0.0_f32;
+    if let Some(geology) = geology.as_ref() {
+        for node in &geology.pack.nodes {
+            let dx = node.center[0] - (camera_pos.x - crate::citypack::STREAM_WORLD_OFFSET);
+            let dz = node.center[1] - camera_pos.z;
+            let distance = dx.hypot(dz);
+            let weight = 1.0 / (1.0 + (distance / 1_600.0).powi(2));
+            let mass = (node.mean_height_m / 32.0).clamp(0.15, 2.6);
+            glow += weight * mass;
+        }
+    }
+    env.city_glow = glow * 0.42;
+
     // ---- sky colour -----------------------------------------------------
     let day_sky = Vec3::new(0.30, 0.50, 0.82);
     let night_sky = Vec3::new(0.010, 0.018, 0.045);
     let sunset = Vec3::new(0.95, 0.36, 0.12);
     let t = smoothstep(-8.0, 12.0, sun_pos.altitude_deg);
+    // 1 at astronomical night, 0 in full day: the sky's own clock.
+    let night = (1.0 - t).clamp(0.0, 1.0);
     let mut sky = night_sky.lerp(day_sky, t);
     let sunset_glow = (-(sun_pos.altitude_deg / 5.5).powi(2)).exp()
         * (1.0 - smoothstep(4.0, 22.0, sun_pos.altitude_deg));
@@ -324,6 +352,10 @@ pub fn update_environment(
     let cloud_sky = cloud_grey * (0.10 + 0.90 * t);
     sky = sky.lerp(cloud_sky, cover * 0.82);
     sky += Vec3::splat(weather.flash * 0.55);
+    // Glowing-sky foot: the dome lights the air above the city, strongest at
+    // the horizon, so mountains and rooftops read as dark shapes against it.
+    let night_lift = (1.0 - t).clamp(0.0, 1.0) * night * env.city_glow.min(2.0);
+    sky += Vec3::new(0.16, 0.10, 0.055) * night_lift * 0.40;
     let sky_color = Color::srgb(sky.x, sky.y, sky.z);
     clear_color.0 = sky_color;
     env.sky_rgb = sky;
@@ -360,8 +392,12 @@ pub fn update_environment(
     let noon_ambient = Vec3::new(0.34, 0.52, 0.78);
     let sun_warm = 1.0 - smoothstep(0.0, 26.0, sun_pos.altitude_deg);
     let day_ambient = noon_ambient.lerp(horizon_ambient, sun_warm * 0.85);
+    let glow_lift = (env.city_glow * 0.55).clamp(0.0, 1.0);
     let ambient_rgb = day_ambient
-        .lerp(Vec3::new(0.12, 0.14, 0.20), 1.0 - env.daylight)
+        .lerp(
+            Vec3::new(0.10, 0.12, 0.17).lerp(Vec3::new(0.30, 0.25, 0.21), glow_lift),
+            night,
+        )
         // Under the lid the fill is cool, neutral and directionless: the sky
         // hemisphere, not a blue noon.
         .lerp(Vec3::new(0.60, 0.65, 0.72), grey_mix);
@@ -372,8 +408,11 @@ pub fn update_environment(
     // The diffuse dome carries the scene: under the lid the fill is several
     // times a clear-sky fill, because there is no sun left to do the work.
     // Bright and flat, never dim.
-    ambient.brightness =
-        14.0 + env.daylight * (92.0 + 3200.0 * cover) + 26.0 * cover + 320.0 * weather.flash;
+    ambient.brightness = 14.0
+        + env.daylight * (92.0 + 3200.0 * cover)
+        + 26.0 * cover
+        + night * 70.0 * env.city_glow
+        + 320.0 * weather.flash;
 
     // ---- lights ---------------------------------------------------------
     let sun_up = sun_pos.altitude_deg.to_radians().sin().max(0.0);

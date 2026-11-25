@@ -2443,3 +2443,57 @@ startup, not flight. Structural deferred: streaming spike smoothing (`stream-p99
 **Not shipped this round:** wet-ground darkening (the `/wetness` field ships, the albedo pass does not), snow
 (filed), marine fog layer (optional stretch). 173 tests green, clippy clean, boot clean; CodeGraph refreshed at
 session start (25 projects, 567 files, 0 failures).
+
+## Iteration 91 — the glowing ground (seattle-nightglow1)
+
+**Night is now lit from the ground up.** `Environment.city_glow` is the integral of built density around the camera
+over the neighbourhood hierarchy (`mean_height_m` weighted by 1/(1 + (d/1600)²) — downtown glows, water and forest
+go dark). Four consumers, one model:
+
+| consumer | what it does |
+|---|---|
+| ambient | night fill rises with glow and shifts warm-neutral; streets and facades stay faintly readable |
+| sky | amber foot above the city at night, strongest at the horizon |
+| cloud deck | the overcast deck is lit from beneath: `lit += amber · (1−daylight) · glow` |
+| horizon | ridge palette becomes a silhouette rule: near/mid/far darken at night, far keeps a faint warm rim |
+
+Frames: `captures/night_glow_aerial.png` (downtown aerial), `night_street_glow.png` (facade-level warm rows),
+`night_residential.png` (carpet, no lamps in the frame), `night_horizon.png` (mountains as a dark band under the
+amber deck). The complaint "night too dark" is answered by the dome + the existing block fills; "mountains too
+bright" by the palette change; "glows through the clouds" by the deck term.
+
+**Street lights: the real defect was that none existed.** `stream_street_furniture` compared pack-local building
+centroids against the **world** camera (a 60 km offset), so no lamp had ever spawned, and the ones that would have
+been placed sat at `y = 0.06` (buried on every hill). Both fixed: lamps spawn on the DEM at the world position —
+**176 lamps in the boot radius, 95 near**, and a pooled set of 110 warm point lights (range 19 m) rides the nearest
+lamps at night at 0.25 s cadence. **Honest gap:** the verdict frames do not yet show the lamp necklaces convincingly,
+so `streetlight-visibility` is filed with the count evidence rather than claimed as shipped-looking.
+
+**Car headlights.** A pooled 56-beam + 56-tail quad set is placed from each vehicle's `GlobalTransform` (beams 16 m
+ahead, tails 6 m behind), night-only, positioned/rotated per frame at 0.1 s cadence; the car mesh's own emissive
+lamp quads remain. Instance budget: 112 quads, two draws. Same honest gap as above — filed with the streetlight
+item, `night-emissive-verdict`.
+
+**10:1 ASPECT GATE (player rule), shipped.** Effective width = the diameter of the largest circle inscribed at the
+footprint's area centroid: rotation invariant (a bounding box flatters a diamond by 41 %) and the building's real
+structural width. The gate runs after slenderness, unremarkability and the footprint doctrine; appeals are by
+building id in `seattle_governance.json → appeals.aspect.buildings` (empty by default, mechanism tested).
+
+```
+ASPECT CENSUS Capitol Hill:   seen=113 clamped=17  worst_ratio=319.0:1
+ASPECT CENSUS Downtown:       seen=153 clamped=78  worst_ratio=1815.1:1
+ASPECT CENSUS First Hill:     seen=576 clamped=163 worst_ratio=2181.0:1
+ASPECT CENSUS Pike Place:     seen=171 clamped=64  worst_ratio=4339.2:1
+ASPECT CENSUS Pioneer Square: seen=185 clamped=76  worst_ratio=1135.7:1
+ASPECT CENSUS Queen Anne:     seen=196 clamped=31  worst_ratio=600.7:1
+```
+
+(The census covers the districts a boot streams; a 40 s boot prints all loaded districts.) Shipped-geometry check:
+every streamed chunk asserts **zero** specs above 10.05:1 after the gate. The chimney ledger now has a hard
+geometric backstop: ratios of 1 800–4 300 : 1 were passing every previous gate and are now clamped.
+
+**Gauntlet, night systems live:** 650 m/s **58.6 ms avg / 83.6 p99**; 30 m/s 59.7/76.2; 100 m/s 60.6/77.3 — avg in band.
+
+**Still blocking:** `tower-house-frame` (ninth demand) — a player-shot frame retires it; the agent can stage under
+nominal overcast but has not produced a passing pair. Newly filed: `streetlight-visibility`, `night-emissive-verdict`.
+177 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files).

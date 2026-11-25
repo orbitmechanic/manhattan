@@ -66,11 +66,11 @@ use manhattan_viewer::{
     storefront::{StorefrontData, StorefrontState, spawn_storefronts},
     street_furniture::{
         Intersections, StreetFurniture, setup_street_furniture, stream_street_furniture,
-        update_street_lights,
+        update_lamp_pools, update_street_lights,
     },
     traffic::{
-        Traffic, TrafficLanes, setup_vehicle_catalog, stream_traffic, update_traffic,
-        update_vehicle_light_lod, update_vehicle_lights,
+        Traffic, TrafficLanes, setup_vehicle_beams, setup_vehicle_catalog, stream_traffic,
+        update_traffic, update_vehicle_beams, update_vehicle_light_lod, update_vehicle_lights,
     },
     ui::{
         handle_calendar_keys, spawn_ui, update_controls_text, update_station_text, update_status,
@@ -547,7 +547,7 @@ fn main() {
     .add_systems(Startup, spawn_storefronts)
     .add_systems(Startup, (spawn_trees, spawn_antennas, spawn_signs))
     .add_systems(Startup, setup_people_catalog)
-    .add_systems(Startup, setup_vehicle_catalog)
+    .add_systems(Startup, (setup_vehicle_catalog, setup_vehicle_beams))
     .add_systems(Startup, setup_street_furniture)
     .add_systems(Update, tick_processing_clock)
     .add_systems(
@@ -600,13 +600,18 @@ fn main() {
             update_traffic,
             update_vehicle_lights,
             update_vehicle_light_lod,
+            update_vehicle_beams,
         )
             .chain()
             .run_if(accessories_active),
     )
     .add_systems(
         Update,
-        (stream_street_furniture, update_street_lights)
+        (
+            stream_street_furniture,
+            update_street_lights,
+            update_lamp_pools,
+        )
             .chain()
             .run_if(accessories_active),
     );

@@ -80,6 +80,10 @@
   "core": false
  },
  "appeals": {
+  "aspect": {
+   "buildings": [],
+   "note": "10:1 height:width gate exemptions by building id; the default is the gate, appeals are the exception"
+  },
   "core": [
    "Bellevue CBD"
   ],

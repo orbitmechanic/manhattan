@@ -742,9 +742,13 @@ pub fn update_weather_visuals(
     // Warm light near sunrise/sunset still catches the cloud bases.
     let warm = smoothstep(-6.0, 2.0, env.sun.altitude_deg)
         * (1.0 - smoothstep(2.0, 22.0, env.sun.altitude_deg));
+    // Night deck lighting: the city glows from below, so the cloud bases take
+    // an amber cast over the dense districts and stay dark over the water.
+    let glow = env.city_glow.min(2.0);
     let lit = sky * (0.96 + 0.22 * (1.0 - cover))
         + Vec3::new(0.20, 0.09, 0.02) * warm * (1.0 - cover)
         + Vec3::new(0.035, 0.045, 0.065) * (1.0 - daylight) * (1.0 - cover)
+        + Vec3::new(0.20, 0.11, 0.045) * (1.0 - daylight) * glow * 0.45
         + Vec3::splat(flash * 0.8);
     let shade = sky * 0.46 + Vec3::new(0.018, 0.022, 0.030) * daylight + Vec3::splat(flash * 0.25);
 

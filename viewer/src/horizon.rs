@@ -39,6 +39,50 @@ pub struct Lines {
 #[derive(Component)]
 pub struct HorizonRing;
 
+/// Ridge palette. Night is a silhouette rule, not a colour tweak: under a
+/// glowing deck the Cascades and Olympics are dark shapes with a faint warm
+/// rim, never bright geometry.
+#[derive(Clone, Copy)]
+struct SkyPalette {
+    near: [f32; 4],
+    mid: [f32; 4],
+    far: [f32; 4],
+}
+
+impl SkyPalette {
+    fn for_sky(daylight: f32, glow: f32) -> Self {
+        let day = SkyPalette {
+            near: [0.010, 0.010, 0.014, 1.0],
+            mid: [0.36, 0.43, 0.52, 1.0],
+            far: [0.96, 0.98, 1.0, 1.0],
+        };
+        let glow = glow.clamp(0.0, 2.0);
+        let night = SkyPalette {
+            near: [0.004, 0.004, 0.006, 1.0],
+            mid: [0.020, 0.018, 0.018, 1.0],
+            far: [
+                0.055 + 0.030 * glow,
+                0.042 + 0.018 * glow,
+                0.034 + 0.010 * glow,
+                1.0,
+            ],
+        };
+        let mix = |a: [f32; 4], b: [f32; 4]| {
+            [
+                a[0] + (b[0] - a[0]) * daylight,
+                a[1] + (b[1] - a[1]) * daylight,
+                a[2] + (b[2] - a[2]) * daylight,
+                1.0,
+            ]
+        };
+        SkyPalette {
+            near: mix(night.near, day.near),
+            mid: mix(night.mid, day.mid),
+            far: mix(night.far, day.far),
+        }
+    }
+}
+
 #[derive(Resource)]
 pub struct HorizonState {
     pub profiles: Vec<u16>,
@@ -109,7 +153,8 @@ fn setup_horizon(
         cull_mode: None,
         ..default()
     });
-    let (initial_mesh, triangles) = build_mesh(&vec![Lines::default(); BINS]);
+    let (initial_mesh, triangles) =
+        build_mesh(&vec![Lines::default(); BINS], SkyPalette::for_sky(1.0, 0.0));
     let mesh = meshes.add(initial_mesh);
     let entity = commands
         .spawn((
@@ -169,6 +214,7 @@ pub fn band_lines(profiles: &[u16], camera_y: f32) -> Vec<Lines> {
 
 fn horizon_update(
     time: Res<Time>,
+    env: Res<crate::environment::Environment>,
     state: Option<ResMut<HorizonState>>,
     mut meshes: ResMut<Assets<Mesh>>,
     camera: Query<&Transform, With<FlyCamera>>,
@@ -213,7 +259,10 @@ fn horizon_update(
     if let Ok(mut ring) = rings.single_mut() {
         ring.translation = position;
     }
-    let (new_mesh, triangles) = build_mesh(&state.current);
+    let (new_mesh, triangles) = build_mesh(
+        &state.current,
+        SkyPalette::for_sky(env.daylight, env.city_glow),
+    );
     state.triangles = triangles;
     if let Some(mut mesh) = meshes.get_mut(&state.mesh.clone()) {
         *mesh = new_mesh;
@@ -229,14 +278,14 @@ fn horizon_update(
     }
 }
 
-fn build_mesh(lines: &[Lines]) -> (Mesh, usize) {
+fn build_mesh(lines: &[Lines], palette: SkyPalette) -> (Mesh, usize) {
     let mut positions: Vec<[f32; 3]> = Vec::new();
     let mut normals: Vec<[f32; 3]> = Vec::new();
     let mut colors: Vec<[f32; 4]> = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
-    let black = [0.010, 0.010, 0.014, 1.0];
-    let grey = [0.36, 0.43, 0.52, 1.0];
-    let white = [0.96, 0.98, 1.0, 1.0];
+    let black = palette.near;
+    let grey = palette.mid;
+    let white = palette.far;
     let base = -0.02_f32;
     let min_gap = 0.0012_f32;
 
