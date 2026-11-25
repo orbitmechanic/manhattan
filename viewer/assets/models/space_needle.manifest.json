@@ -1,8 +1,14 @@
 {
  "asset": "Space Needle",
- "status": "blocked — no retrievable license-clean 3D model on this machine",
+ "status": "blocked \u2014 no direct-download license-clean model found; Sketchfab CC-BY needs a token",
  "gate": "CC0 / CC-BY / CC-BY-Zero only; no license, no import",
  "searches": [
+  {
+   "source": "poly.pizza (direct GLB, no account)",
+   "query": "space needle / needle / seattle / tower",
+   "result": "no Space Needle model: 'space needle' returns spaceship packs; 'needle' returns sewing needles; 'seattle' returns fantasy packs; 'tower' returns generic towers (radio, bell, guard). Poly Pizza's Sketchfab mirrors are curated low-poly packs, not this landmark.",
+   "date": "2026-11-25"
+  },
   {
    "source": "Wikimedia Commons (namespace 6, file search)",
    "query": "Space Needle 3D model",
@@ -30,5 +36,6 @@
   }
  ],
  "fallback": "procedural massing remains live (LANDMARKS_ALWAYS); no authored replacement was shipped this round",
- "debt": "needle-real-model"
+ "debt": "needle-real-model",
+ "ask": "mint a free Sketchfab API token (or paste a CC-BY GLB URL) and the import becomes mechanical next round"
 }

@@ -2535,3 +2535,45 @@ have**; Smithsonian Open Access has none. Per the escalation clause the procedur
 **Gauntlet with the new systems live:** 650 m/s **54.5 ms avg / 71.0 p99**; 100 m/s 48.9/67.4 — in band.
 179 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files, 0
 failures).
+
+## Iteration 93 — low sun, real needle (seattle-needle2)
+
+**Aspect doctrine, amended: cores unclamped.** Footprint-Doctrine cores and the appeals list now carry **no aspect
+limit** (`ASPECT_LIMIT_NONE`); everywhere else keeps the 10:1 backstop. The shipped-chunk assert is zone-aware
+(unclamped in cores, 10.05:1 outside) and the census returns the tall counts:
+
+```
+Capitol Hill   limit=10:1     seen=113 clamped=17  worst 319.0:1   tall6   0 ->   0
+Downtown       limit=unclamped seen=153 clamped=0  worst 1815.1:1  tall6 123 -> 123
+First Hill     limit=unclamped seen=576 clamped=0  worst 2181.0:1  tall6 243 -> 243
+Pike Place     limit=unclamped seen=171 clamped=0  worst 4339.2:1  tall6 143 -> 143
+Pioneer Square limit=unclamped seen=185 clamped=0  worst 1135.7:1  tall6 144 -> 144
+Queen Anne     limit=10:1     seen=196 clamped=31  worst 600.7:1   tall6   0 ->   0
+```
+
+**Reported defect (not accepted as a consequence):** with cores unclamped the 1 800–4 300 : 1 records now ship in
+cores (Pike Place worst 4339.2:1). Per the player's ruling that is a defect, not a consequence: filed as
+`core-fraud-aspect` — the weak-source demotion does not catch them, so the next fix is a footprint-integrity check
+(minimum plan width), not an aspect clamp.
+
+**Sunbeams, reworked and finally visible.** The billboard-volume tier never read on screen; it is replaced by the
+screen-space god-ray tier — a camera-child overlay (same proven path as the speed lines) whose ray fan is anchored
+to the **sun's screen position**, so the beams converge in perspective and rake at low sun. Gates: sun elevation
+2–30°, `Weather.holes` strength, and at night moon illumination >= 0.55 with the moon 2–30° up (silver-blue over the
+amber dome). Frames: `captures/beams_morning.png` (06:30, sun alt 20.9°, wide spread from altitude),
+`beams_street.png` (raking on masonry at street level), `moonbeam.png` (2026-12-24 19:00, moon full 98% at +19.8°).
+`SEATTLE_DATE` added so a lunar phase can be evidenced.
+
+**Space Needle: still blocked, search extended.** poly.pizza (direct GLB, no account) has no Space Needle — "space
+needle" returns spaceship packs, "needle" sewing needles, "seattle" fantasy packs, "tower" generic towers. That is
+now recorded at the top of `assets/models/space_needle.manifest.json`. **Ask: mint a free Sketchfab API token (or
+paste a CC-BY GLB URL) and the import is mechanical next round.** Procedural massing remains live; `needle-real-model`
+tagged.
+
+**Science Center arches: still owed** (`seattle-center-ensemble`).
+
+**Tower-house frame:** staged under nominal overcast at street level (`captures/tower_house_93.png`) — the tower
+face reads with window rows, but the tower/low-building pair is not clean, so the item **remains blocking**.
+
+**Gauntlet** unchanged by the beam overlay: last measured 650 m/s 54.5 ms avg / 71.0 p99; 179 tests green, clippy
+clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files, 0 failures).

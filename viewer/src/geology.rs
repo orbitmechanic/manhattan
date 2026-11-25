@@ -3084,6 +3084,16 @@ fn seattle_boot_camera(
         return;
     }
     if *done == 0 {
+        // Date override for lunar-phase evidence (sun/moon disclosed per frame).
+        if let Ok(text) = std::env::var("SEATTLE_DATE") {
+            let parts = text
+                .split('-')
+                .filter_map(|part| part.parse::<i32>().ok())
+                .collect::<Vec<_>>();
+            if parts.len() == 3 {
+                clock.date = crate::astro::Date::new(parts[0], parts[1] as u32, parts[2] as u32);
+            }
+        }
         clock.minute_of_day = std::env::var("SEATTLE_HOUR")
             .ok()
             .and_then(|value| value.parse::<f64>().ok())
@@ -3362,16 +3372,16 @@ pub fn effective_width(footprint: &[[f32; 2]]) -> f32 {
     2.0 * inner.max(0.0)
 }
 
-/// The ASPECT DOCTRINE is two-zone: a blanket 10:1 backstop everywhere the
-/// chimney census earned it, and 18:1 inside Footprint-Doctrine cores and the
-/// appeals list, where a real skyline lives. The zone mirrors the height-cap
-/// structure: cores exempt, caps govern outside.
+/// The ASPECT DOCTRINE, amended: cores are **unclamped** (the pack's own
+/// height gates and weak-source demotion already govern there), everywhere else
+/// keeps the 10:1 chimney backstop that killed the suburban needles.
 pub const ASPECT_LIMIT_OUTSIDE: f32 = 10.0;
-pub const ASPECT_LIMIT_CORE: f32 = 18.0;
+/// Sentinel for "no aspect limit" in the core zone.
+pub const ASPECT_LIMIT_NONE: f32 = f32::INFINITY;
 
 pub fn aspect_limit(district: &str) -> f32 {
     if governance_core(district) {
-        ASPECT_LIMIT_CORE
+        ASPECT_LIMIT_NONE
     } else {
         ASPECT_LIMIT_OUTSIDE
     }
@@ -3379,7 +3389,7 @@ pub fn aspect_limit(district: &str) -> f32 {
 
 /// Floors allowed by the aspect gate for a given plan width and zone limit.
 pub fn aspect_capped_floors(floors: u32, floor_height: f32, width: f32, limit: f32) -> u32 {
-    if width <= 0.01 || floor_height <= 0.0 {
+    if !limit.is_finite() || width <= 0.01 || floor_height <= 0.0 {
         return floors;
     }
     let capped = (limit * width / floor_height).floor().max(1.0) as u32;
@@ -3463,9 +3473,14 @@ pub fn aspect_census_print() {
         return;
     };
     for (district, row) in map.iter() {
+        let limit = if row.limit.is_finite() {
+            format!("{:.0}:1", row.limit)
+        } else {
+            "unclamped".to_string()
+        };
         info!(
-            "ASPECT CENSUS {district}: limit={:.0}:1 seen={} clamped={} worst_ratio={:.1}:1 tall6_before={} tall6_after={}",
-            row.limit, row.seen, row.clamped, row.worst, row.tall_before, row.tall_after
+            "ASPECT CENSUS {district}: limit={limit} seen={} clamped={} worst_ratio={:.1}:1 tall6_before={} tall6_after={}",
+            row.seen, row.clamped, row.worst, row.tall_before, row.tall_after
         );
     }
 }
@@ -4467,22 +4482,22 @@ mod aspect_gate {
     }
 
     #[test]
-    fn a_core_gets_eighteen_to_one_and_the_fraud_is_still_clamped() {
-        // 8 m wide, 4 m floors, 18:1 zone: 36 floors (144 m). The 4,300:1
-        // records sit on ~1 m widths and stay clamped in every zone.
-        assert_eq!(aspect_capped_floors(80, 4.0, 8.0, 18.0), 36);
-        assert_eq!(aspect_capped_floors(40, 4.0, 1.0, 18.0), 4);
-        assert_eq!(aspect_capped_floors(40, 4.0, 1.0, 10.0), 2);
-        assert_eq!(ASPECT_LIMIT_CORE, 18.0);
+    fn cores_are_unclamped_and_the_suburban_backstop_holds() {
+        // A core renders whatever the height gates allowed.
+        assert_eq!(aspect_capped_floors(80, 4.0, 8.0, ASPECT_LIMIT_NONE), 80);
+        assert!(!aspect_limit("Downtown").is_finite());
+        // Outside, the chimney death stands: 8 m wide, 4 m floors, 20 floors.
+        assert_eq!(aspect_capped_floors(80, 4.0, 8.0, ASPECT_LIMIT_OUTSIDE), 20);
+        assert_eq!(aspect_limit("Ballard"), ASPECT_LIMIT_OUTSIDE);
     }
 
     #[test]
     fn the_zone_follows_the_footprint_doctrine() {
-        // Downtown is a core (18:1); Ballard is not (10:1); Bellevue CBD is a
-        // core by appeal.
-        assert_eq!(aspect_limit("Downtown"), ASPECT_LIMIT_CORE);
+        // Downtown is a core (unclamped); Ballard is not (10:1); Bellevue CBD
+        // is a core by appeal.
+        assert!(!aspect_limit("Downtown").is_finite());
         assert_eq!(aspect_limit("Ballard"), ASPECT_LIMIT_OUTSIDE);
-        assert_eq!(aspect_limit("Bellevue CBD"), ASPECT_LIMIT_CORE);
+        assert!(!aspect_limit("Bellevue CBD").is_finite());
     }
 
     #[test]
@@ -4490,7 +4505,7 @@ mod aspect_gate {
         // 46 m plan width: 115 floors at 10:1, 207 at 18:1; a 70-floor tower
         // passes in either zone.
         assert_eq!(aspect_capped_floors(70, 4.0, 46.0, 10.0), 70);
-        assert_eq!(aspect_capped_floors(70, 4.0, 46.0, 18.0), 70);
+        assert_eq!(aspect_capped_floors(70, 4.0, 46.0, ASPECT_LIMIT_NONE), 70);
     }
 
     #[test]

@@ -10,6 +10,7 @@ use std::f32::consts::TAU;
 
 use bevy::{
     asset::RenderAssetUsages,
+    camera::visibility::NoFrustumCulling,
     light::NotShadowCaster,
     mesh::{Indices, MeshVertexBufferLayoutRef, PrimitiveTopology},
     pbr::{MaterialPipeline, MaterialPipelineKey},
@@ -847,195 +848,149 @@ pub fn update_weather_visuals(
 }
 
 // ---------------------------------------------------------------------------
-// Sunbeams / moonbeams: hole-anchored billboard shafts (the cheap tier).
-// A post-process god-ray pass would have to fight the transparent city, the
-// clouds and the frame budget at 650 m/s; crossed additive planes anchored to
-// holes read at both cruise and street level for a handful of draws.
+// Sunbeams / moonbeams: screen-space god-rays anchored to the sun's screen
+// position. The billboard-volume tier was wired but never read on screen; the
+// overlay tier is the same proven technique as the speed lines (camera child,
+// depth-always, additive blend), so a ray fan that converges on the sun is
+// guaranteed to reach the frame. Rays are parallel in world space; the fan
+// reads as converging because the eye follows perspective to the sun.
 // ---------------------------------------------------------------------------
 
-const SHAFT_COUNT: usize = 5;
-const SHAFT_HEIGHT: f32 = 900.0;
-const SHAFT_WIDTH: f32 = 55.0;
+const SHAFT_LOW_SUN_MIN: f32 = 2.0;
+const SHAFT_LOW_SUN_MAX: f32 = 30.0;
+
+#[derive(Asset, AsBindGroup, Debug, Clone, TypePath)]
+pub struct SunShaftMaterial {
+    /// x = time, y = strength, z/w = light position in screen space.
+    #[uniform(0)]
+    pub data: Vec4,
+    /// rgb = tint, a = opacity.
+    #[uniform(1)]
+    pub tint: Vec4,
+}
+
+impl Material for SunShaftMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/sun_shafts.wesl".into()
+    }
+
+    fn alpha_mode(&self) -> AlphaMode {
+        AlphaMode::Add
+    }
+
+    fn enable_prepass() -> bool {
+        false
+    }
+
+    fn specialize(
+        _pipeline: &MaterialPipeline,
+        descriptor: &mut RenderPipelineDescriptor,
+        _layout: &MeshVertexBufferLayoutRef,
+        _key: MaterialPipelineKey<Self>,
+    ) -> Result<(), SpecializedMeshPipelineError> {
+        descriptor.primitive.cull_mode = None;
+        if let Some(depth) = descriptor.depth_stencil.as_mut() {
+            depth.depth_compare = Some(CompareFunction::Always);
+            depth.depth_write_enabled = Some(false);
+        }
+        Ok(())
+    }
+}
 
 #[derive(Component)]
-pub struct LightShaft {
-    index: usize,
+pub struct SunShafts {
+    material: Handle<SunShaftMaterial>,
 }
 
-#[derive(Resource, Default)]
-pub struct ShaftState {
-    /// Seeded per day: azimuth (radians) and radius (m) of each hole.
-    holes: Vec<(f32, f32)>,
-    seeded_day: u32,
-}
-
-fn shaft_mesh() -> Mesh {
-    let mut positions: Vec<[f32; 3]> = Vec::new();
-    let mut normals: Vec<[f32; 3]> = Vec::new();
-    let mut uvs: Vec<[f32; 2]> = Vec::new();
-    let mut indices: Vec<u32> = Vec::new();
-    for plane in 0..2 {
-        let angle = plane as f32 * std::f32::consts::FRAC_PI_2;
-        let (sin, cos) = angle.sin_cos();
-        let half = SHAFT_WIDTH * 0.5;
-        let base = positions.len() as u32;
-        for (x, v) in [(-half, 0.0_f32), (half, 0.0), (half, 1.0), (-half, 1.0)] {
-            positions.push([cos * x, v * SHAFT_HEIGHT, sin * x]);
-            normals.push([0.0, 1.0, 0.0]);
-            uvs.push([if x < 0.0 { 0.0 } else { 1.0 }, v]);
-        }
-        indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
-    }
-    let mut mesh = Mesh::new(
-        PrimitiveTopology::TriangleList,
-        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-    );
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-    mesh.insert_indices(Indices::U32(indices));
-    mesh
-}
-
-fn shaft_texture() -> Image {
-    let size = 64usize;
-    let mut data = vec![0u8; size * size * 4];
-    for y in 0..size {
-        for x in 0..size {
-            let v = (y as f32 + 0.5) / size as f32;
-            let u = (x as f32 + 0.5) / size as f32 * 2.0 - 1.0;
-            // Soft at both ends, a little brighter down the middle.
-            let along = (v * std::f32::consts::PI).sin().powf(0.6);
-            let across = (1.0 - u.abs()).max(0.0).powf(1.2);
-            let index = (y * size + x) * 4;
-            data[index] = 255;
-            data[index + 1] = 255;
-            data[index + 2] = 255;
-            data[index + 3] = (along * across * 255.0) as u8;
-        }
-    }
-    let mut image = Image::new(
-        bevy::render::render_resource::Extent3d {
-            width: size as u32,
-            height: size as u32,
-            depth_or_array_layers: 1,
-        },
-        bevy::render::render_resource::TextureDimension::D2,
-        data,
-        bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
-        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-    );
-    image.sampler = bevy::image::ImageSampler::linear();
-    image
-}
-
-pub fn setup_shafts(
+pub fn setup_sun_shafts(
     mut commands: Commands,
+    camera: Single<Entity, With<FlyCamera>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut images: ResMut<Assets<Image>>,
+    mut materials: ResMut<Assets<SunShaftMaterial>>,
 ) {
-    let texture = images.add(shaft_texture());
-    let material = materials.add(StandardMaterial {
-        base_color: Color::srgba(1.0, 0.93, 0.78, 0.0),
-        base_color_texture: Some(texture),
-        unlit: true,
-        alpha_mode: AlphaMode::Add,
-        cull_mode: None,
-        ..default()
+    let material = materials.add(SunShaftMaterial {
+        data: Vec4::ZERO,
+        tint: Vec4::new(1.0, 0.92, 0.76, 0.0),
     });
-    let mesh = meshes.add(shaft_mesh());
-    for index in 0..SHAFT_COUNT {
-        commands.spawn((
-            LightShaft { index },
-            Name::new(format!("light shaft {index}")),
-            Mesh3d(mesh.clone()),
-            MeshMaterial3d(material.clone()),
-            Transform::IDENTITY,
+    commands.entity(*camera).with_children(|parent| {
+        parent.spawn((
+            SunShafts {
+                material: material.clone(),
+            },
+            Name::new("SunShafts"),
+            NoFrustumCulling,
+            Mesh3d(meshes.add(Rectangle::new(8.0, 8.0))),
+            MeshMaterial3d(material),
+            Transform::from_xyz(0.0, 0.0, -2.0),
             Visibility::Hidden,
         ));
-    }
+    });
 }
 
-#[allow(clippy::too_many_arguments)]
-pub fn update_shafts(
+/// Screen-space position of a world direction, in -1..1 (y up). `None` when
+/// the light is behind the camera.
+fn screen_position(camera: &Transform, direction: Vec3) -> Option<Vec2> {
+    let local = camera.rotation.inverse() * direction;
+    if local.z > -0.05 {
+        return None;
+    }
+    let tan_half = (70.0_f32.to_radians() * 0.5).tan();
+    let aspect = 1.6_f32;
+    Some(Vec2::new(
+        (local.x / -local.z) / (tan_half * aspect),
+        (local.y / -local.z) / tan_half,
+    ))
+}
+
+pub fn update_sun_shafts(
     time: Res<Time>,
-    clock: Res<SimClock>,
     env: Res<Environment>,
     weather: Res<Weather>,
     camera: Single<&Transform, With<FlyCamera>>,
-    mut state: ResMut<ShaftState>,
-    mut shafts: Query<(&LightShaft, &mut Transform, &mut Visibility), Without<FlyCamera>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut mesh_materials: Query<&MeshMaterial3d<StandardMaterial>, With<LightShaft>>,
+    mut shafts: Query<(&SunShafts, &mut Visibility)>,
+    mut materials: ResMut<Assets<SunShaftMaterial>>,
 ) {
-    // Seed the holes per day: a given date always tears the deck in the same
-    // places, and the wind carries them slowly.
-    if state.seeded_day != clock.date.day_of_year() || state.holes.is_empty() {
-        state.seeded_day = clock.date.day_of_year();
-        let mut seed = 0x9E37_79B9u32 ^ state.seeded_day.wrapping_mul(2_654_435_761);
-        let mut rand = || {
-            seed ^= seed << 13;
-            seed ^= seed >> 17;
-            seed ^= seed << 5;
-            (seed >> 8) as f32 / 16_777_216.0
-        };
-        state.holes = (0..SHAFT_COUNT)
-            .map(|_| (rand() * std::f32::consts::TAU, 260.0 + rand() * 520.0))
-            .collect();
-    }
-    let night = env.night || env.daylight < 0.35;
-    let moon_lit = env.moon_illumination >= 0.55 && env.moon.altitude_deg > 4.0;
-    let strength = if night { 0.0 } else { weather.holes };
-    let moon_strength = if night && moon_lit {
-        0.55 * env.moon_illumination
+    let sun_alt = env.sun.altitude_deg;
+    let moon_alt = env.moon.altitude_deg;
+    let low_sun = (SHAFT_LOW_SUN_MIN..=SHAFT_LOW_SUN_MAX).contains(&sun_alt);
+    let moon_lit = env.moon_illumination >= 0.55;
+    let low_moon = moon_lit && (SHAFT_LOW_SUN_MIN..=SHAFT_LOW_SUN_MAX).contains(&moon_alt);
+    let day = env.daylight > 0.35;
+
+    // Which light, and how strongly. Holes gate the day; the moon owns night.
+    let (direction, strength, tint) = if day && low_sun {
+        (env.sun_dir, weather.holes, Vec3::new(1.0, 0.93, 0.78))
+    } else if !day && low_moon {
+        (
+            env.moon_dir,
+            (env.moon_illumination - 0.5).clamp(0.0, 1.0) * 2.0,
+            Vec3::new(0.62, 0.72, 1.0),
+        )
     } else {
-        0.0
+        (Vec3::ZERO, 0.0, Vec3::ZERO)
     };
-    let visible = strength > 0.12 || moon_strength > 0.1;
-    let cam = camera.translation;
-    let drift = time.elapsed_secs() * 0.004 + weather.wind.x * 0.05;
-    // Warm sunlight by day; silver-blue moonlight by night.
-    let tint = if night {
-        Color::srgba(0.62, 0.72, 1.0, 0.55 * moon_strength)
+
+    let position = if strength > 0.05 {
+        screen_position(&camera, direction)
     } else {
-        Color::srgba(1.0, 0.94, 0.80, (0.95 * strength).clamp(0.0, 0.9))
+        None
     };
-    for material in mesh_materials.iter_mut() {
-        if let Some(mut material) = materials.get_mut(&material.0) {
-            material.base_color = tint;
-        }
-    }
-    if std::env::var_os("BEAM_TRACE").is_some() {
-        info!(
-            "BEAM holes={:.2} strength={:.2} moon={:.2} visible={} cam={:?}",
-            weather.holes, strength, moon_strength, visible, cam
-        );
-    }
-    for (shaft, mut transform, mut visibility) in &mut shafts {
-        if !visible {
+    let Some(position) = position else {
+        for (_, mut visibility) in &mut shafts {
             *visibility = Visibility::Hidden;
-            continue;
         }
-        let (azimuth, radius) = state.holes[shaft.index % state.holes.len()];
-        // Holes live in the forward half-space: a shaft behind the player is
-        // weather nobody sees. Seeded spread mapped into ±60° of the heading.
-        let forward = camera.rotation * Vec3::NEG_Z;
-        let heading = f32::atan2(forward.x, forward.z);
-        let spread = (azimuth / std::f32::consts::TAU - 0.5) * 2.1;
-        let angle = heading + spread + drift;
-        let base = Vec3::new(
-            cam.x + angle.cos() * radius,
-            (cam.y - 260.0).max(4.0),
-            cam.z + angle.sin() * radius,
-        );
-        transform.translation = base;
-        // Face the camera around Y so the two crossed planes always show, and
-        // lean the shaft along the sun's azimuth.
-        let to_camera = Vec3::new(cam.x - base.x, 0.0, cam.z - base.z);
-        let yaw = f32::atan2(to_camera.x, to_camera.z);
-        let lean = (env.sun.altitude_deg * 0.012).clamp(-0.35, 0.2);
-        transform.rotation = Quat::from_rotation_y(yaw) * Quat::from_rotation_x(lean);
+        return;
+    };
+    for (shaft, mut visibility) in &mut shafts {
+        if let Some(mut material) = materials.get_mut(&shaft.material) {
+            material.data = Vec4::new(
+                time.elapsed_secs(),
+                strength.min(1.0),
+                position.x,
+                position.y,
+            );
+            material.tint = Vec4::new(tint.x, tint.y, tint.z, 0.55);
+        }
         *visibility = Visibility::Inherited;
     }
 }
@@ -1049,9 +1004,10 @@ impl Plugin for WeatherPlugin {
             MaterialPlugin::<PrecipMaterial>::default(),
         ))
         .init_resource::<Weather>()
-        .init_resource::<ShaftState>()
-        .add_systems(Startup, (setup_weather, setup_shafts))
-        .add_systems(Update, update_shafts);
+        .add_plugins(MaterialPlugin::<SunShaftMaterial>::default())
+        .add_systems(Startup, setup_weather)
+        .add_systems(PostStartup, setup_sun_shafts)
+        .add_systems(Update, update_sun_shafts);
     }
 }
 
