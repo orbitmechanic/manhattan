@@ -111,9 +111,14 @@ fn sonic_trace(
     }
     *last = now;
     let chunks = geology.map(|g| g.building_chunks.len()).unwrap_or(0);
+    let speed_lines = motion.intensity > 0.01 || motion.mach >= 1.0;
     info!(
-        "SONIC TRACE speed={:.1} mach={:.2} max_real_dt={:.3} chunks={chunks}",
-        motion.speed, motion.mach, *max_dt
+        "SONIC TRACE speed={:.1} mach={:.2} max_real_dt={:.3} chunks={chunks} speed_lines={} threshold={:.0}",
+        motion.speed,
+        motion.mach,
+        *max_dt,
+        if speed_lines { "ACTIVE" } else { "INACTIVE" },
+        crate::motion::ACCESSORY_RESUME_SPEED
     );
     *max_dt = 0.0;
 }
@@ -177,6 +182,22 @@ fn rep_audit(world: &mut World) {
     }
     let gables = crate::geology::SHIPPED_GABLES.load(std::sync::atomic::Ordering::Relaxed);
     let flats = crate::geology::SHIPPED_FLATS.load(std::sync::atomic::Ordering::Relaxed);
+    let bands = ["1", "2", "3-5", "6-10", ">10"];
+    let table = (0..5)
+        .map(|index| {
+            let g = crate::geology::BAND_GABLES[index].load(std::sync::atomic::Ordering::Relaxed);
+            let f = crate::geology::BAND_FLATS[index].load(std::sync::atomic::Ordering::Relaxed);
+            let total = g + f;
+            let rate = if total > 0 {
+                100.0 * g as f32 / total as f32
+            } else {
+                0.0
+            };
+            format!("{}:{:.0}%({total})", bands[index], rate)
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+    info!("GABLE SHIPPED by storeys {table}");
     let distinct = map_all.len().saturating_sub(map_shell.len());
     info!(
         "REP chunks={} entities={entity_count} shells={shells} proxy_roots={proxy_roots} proxy_boxes={proxies} tint_values={distinct} shipped_gables={gables} shipped_flats={flats}",

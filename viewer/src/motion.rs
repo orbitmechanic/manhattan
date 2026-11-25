@@ -290,3 +290,59 @@ impl Plugin for MotionPlugin {
             );
     }
 }
+
+/// Boom state machine: armed after 1 s subsonic, fires after 0.25 s sustained
+/// supersonic, then re-arms (2 s cooldown). Extracted so the re-arm path is
+/// testable: one-then-never and spam are both defects.
+pub fn boom_step(
+    subsonic: &mut f32,
+    sustained: &mut f32,
+    cooldown: &mut f32,
+    mach: f32,
+    dt: f32,
+) -> bool {
+    *cooldown = (*cooldown - dt).max(0.0);
+    if mach < 0.95 {
+        *subsonic += dt;
+        *sustained = 0.0;
+    } else if mach >= 1.0 {
+        *sustained += dt;
+    }
+    if *cooldown <= 0.0 && *subsonic >= 1.0 && *sustained >= 0.25 {
+        *cooldown = 2.0;
+        *subsonic = 0.0;
+        *sustained = 0.0;
+        true
+    } else {
+        false
+    }
+}
+
+#[cfg(test)]
+mod boom_tests {
+    use super::boom_step;
+
+    #[test]
+    fn three_genuine_crossings_boom_three_times() {
+        let mut subsonic = 0.0;
+        let mut sustained = 0.0;
+        let mut cooldown = 0.0;
+        let mut booms = 0;
+        let dt = 0.05f32;
+        for _cycle in 0..3 {
+            // 1.5 s subsonic
+            for _ in 0..30 {
+                if boom_step(&mut subsonic, &mut sustained, &mut cooldown, 0.5, dt) {
+                    booms += 1;
+                }
+            }
+            // 1.0 s supersonic
+            for _ in 0..20 {
+                if boom_step(&mut subsonic, &mut sustained, &mut cooldown, 1.4, dt) {
+                    booms += 1;
+                }
+            }
+        }
+        assert_eq!(booms, 3, "re-arm path broken: {booms} booms");
+    }
+}

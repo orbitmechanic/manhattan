@@ -745,6 +745,42 @@ fn mesh(
 /// is dropped, so far proxies cost 20 vertices each instead of 24.
 /// Per-building grade for the merged proxy boxes: the aerial neighbourhood is
 /// these, so the tint seed must be the building id, not the chunk or family.
+fn governance_core(district: &str) -> bool {
+    static TABLE: std::sync::OnceLock<std::collections::HashMap<String, bool>> =
+        std::sync::OnceLock::new();
+    let table = TABLE.get_or_init(|| {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("assets/styles/seattle_governance.json");
+        let Ok(text) = std::fs::read_to_string(path) else {
+            return std::collections::HashMap::new();
+        };
+        let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) else {
+            return std::collections::HashMap::new();
+        };
+        value
+            .as_object()
+            .map(|map| {
+                map.iter()
+                    .filter_map(|(district, entry)| {
+                        entry
+                            .get("core")
+                            .and_then(|core| core.as_bool())
+                            .map(|core| (district.clone(), core))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    });
+    table
+        .get(district)
+        .copied()
+        // Conservative fallback if the table is missing: the old hand list.
+        .unwrap_or(matches!(
+            district,
+            "Downtown" | "First Hill" | "SODO" | "Bellevue CBD"
+        ))
+}
+
 fn hash01(mut value: u32) -> f32 {
     value ^= value >> 16;
     value = value.wrapping_mul(0x7FEB_352D);
@@ -790,6 +826,21 @@ fn proxy_tint(id: u32, family: destructibles_core::family::MaterialFamily) -> [f
 /// merged and near-proxy meshes, not the parameter draw.
 pub static SHIPPED_GABLES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 pub static SHIPPED_FLATS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+/// Shipped gable/flat counts per storey band: 1, 2, 3-5, 6-10, >10.
+pub static BAND_GABLES: [std::sync::atomic::AtomicU64; 5] = [
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+];
+pub static BAND_FLATS: [std::sync::atomic::AtomicU64; 5] = [
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+];
 
 fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
     let mut positions = Vec::new();
@@ -885,10 +936,23 @@ fn proxy_boxes_mesh(boxes: &[(Vec3, Vec3, u8, [f32; 4], u32)]) -> Mesh {
             1.0 - 0.95 * (floors - 1.0) / 9.0
         };
         let pitched = *warm > 0 && hash01(id ^ 0x51ED_2701) < gable_p;
+        let band = if floors <= 1.0 {
+            0
+        } else if floors <= 2.0 {
+            1
+        } else if floors <= 5.0 {
+            2
+        } else if floors <= 10.0 {
+            3
+        } else {
+            4
+        };
         if pitched {
             SHIPPED_GABLES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            BAND_GABLES[band].fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         } else {
             SHIPPED_FLATS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            BAND_FLATS[band].fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         }
         if pitched {
             let pitch = (15.0 + 30.0 * hash01(id.wrapping_mul(0x9E37_79B9))).to_radians();
@@ -3322,12 +3386,9 @@ fn building_spec(
     };
     let weak_source = matches!(source, "area_heuristic" | "msml_estimate");
     let plausible = building.height_m <= 4.0 + 3.2 * area.sqrt().max(1.0);
-    // CORE BOUNDARY: settlements where surveyed heights are credible. Cores
-    // keep their real heights; caps govern everywhere else.
-    let core = matches!(
-        district,
-        "Downtown" | "First Hill" | "SODO" | "Bellevue CBD"
-    );
+    // FOOTPRINT DOCTRINE: a district's average footprint decides governance.
+    // Average >= 465 m2 (5,000 sq ft) = core, no caps; below = caps apply.
+    let core = governance_core(district);
     let demoted = residential && (weak_source || (!core && !plausible));
     let mut floor_count = if demoted {
         1

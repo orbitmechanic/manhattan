@@ -1,0 +1,82 @@
+{
+ "Ballard": {
+  "avg_footprint_m2": 165.1,
+  "buildings": 25010,
+  "core": false
+ },
+ "Bellevue CBD": {
+  "avg_footprint_m2": 353.0,
+  "buildings": 15786,
+  "core": false
+ },
+ "Capitol Hill": {
+  "avg_footprint_m2": 186.2,
+  "buildings": 13910,
+  "core": false
+ },
+ "Downtown": {
+  "avg_footprint_m2": 660.9,
+  "buildings": 988,
+  "core": true
+ },
+ "Eastside": {
+  "avg_footprint_m2": 241.9,
+  "buildings": 41070,
+  "core": false
+ },
+ "First Hill": {
+  "avg_footprint_m2": 916.4,
+  "buildings": 964,
+  "core": true
+ },
+ "Fremont": {
+  "avg_footprint_m2": 182.1,
+  "buildings": 9198,
+  "core": false
+ },
+ "Georgetown": {
+  "avg_footprint_m2": 380.6,
+  "buildings": 2113,
+  "core": false
+ },
+ "Pike Place": {
+  "avg_footprint_m2": 2792.1,
+  "buildings": 171,
+  "core": true
+ },
+ "Pioneer Square": {
+  "avg_footprint_m2": 2948.9,
+  "buildings": 185,
+  "core": true
+ },
+ "Queen Anne": {
+  "avg_footprint_m2": 266.0,
+  "buildings": 9476,
+  "core": false
+ },
+ "SODO": {
+  "avg_footprint_m2": 717.5,
+  "buildings": 2591,
+  "core": true
+ },
+ "Seattle general": {
+  "avg_footprint_m2": 183.3,
+  "buildings": 100123,
+  "core": false
+ },
+ "Tacoma": {
+  "avg_footprint_m2": 245.0,
+  "buildings": 86421,
+  "core": false
+ },
+ "Wallingford": {
+  "avg_footprint_m2": 158.8,
+  "buildings": 1934,
+  "core": false
+ },
+ "West Seattle": {
+  "avg_footprint_m2": 156.4,
+  "buildings": 20390,
+  "core": false
+ }
+}

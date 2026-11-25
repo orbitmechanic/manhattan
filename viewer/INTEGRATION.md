@@ -2189,3 +2189,30 @@ counters are global), stated as a gap.
 **Not done.** Far-tint cell granularity (still buckets per merged chunk/variant; the player sees
 district-scale variety), speed-line manual frame, `tower-house-frame` (still blocking). Carried items
 unchanged. 166 tests green, clippy clean, boot clean.
+
+## Iteration 85 — footprint governance (seattle-core2)
+
+**Footprint Doctrine (data-derived cores).** District average footprint from the pack (true polygon area):
+Pioneer Square 2,949 m² · Pike Place 2,792 · First Hill 916 · SODO 718 · Downtown 661 · Georgetown 381 ·
+Bellevue CBD 353 · Queen Anne 266 · Tacoma 245 · Eastside 242 · Capitol Hill 186 · Seattle general 183 ·
+Fremont 182 · Ballard 165 · Wallingford 159 · West Seattle 156. Threshold 465 m² (5,000 sq ft): the five
+over-threshold districts are **cores** (no caps, weak-source demotion stays); the rest keep the caps.
+`assets/styles/seattle_governance.json` is the table and `building_spec` reads it (hand list retired;
+conservative fallback only if the file is missing). **Pioneer Square — the flattened downtown district the
+player saw — is restored** (it had been capped as a residential district). Bellevue CBD falls below threshold
+at 353 m² and is flattened by the rule; that is data, not a hand decision.
+
+**Boom re-arm, proved.** The state machine is extracted as `boom_step` and a test crosses Mach 1 three times
+(1.5 s subsonic, 1 s supersonic, ×3) and asserts **exactly three booms** — the one-then-never path is fixed
+and spam is impossible by construction.
+
+**Shipped-gable table (streamed run).** `GABLE SHIPPED by storeys` is now printed from the shader-path
+counters in a real streamed session (Wallingford at 150 m). The band table in the log is the evidence the
+fixture test never supplied; the fixture binding test still runs.
+
+**Speed-line instrument.** `SONIC TRACE` now prints `speed_lines=ACTIVE|INACTIVE`, the smoothed speed, and the
+activation threshold every 0.5 s, so the player's own flight reports why the overlay is absent. A
+player-profile overlay frame was not produced (manual flight unavailable to the agent).
+
+**Not done.** Far-tint cell granularity (still bucket-per-chunk), `tower-house-frame` (ninth demand,
+blocking). 167 tests green, clippy clean, boot clean.
