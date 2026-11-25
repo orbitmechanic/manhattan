@@ -1091,7 +1091,7 @@ fn spawn_landmarks(world: &mut World) {
     // boot keeps the procedural massing; the CAD is opt-in until that gate
     // passes. Shipping an unverified pivot is what produced three bad Needles.
     let procedural_needle =
-        std::env::var_os("NEEDLE_PROCEDURAL").is_some() || std::env::var_os("NEEDLE_CAD").is_none();
+        std::env::var_os("NEEDLE_CAD").is_none() || std::env::var_os("NEEDLE_PROCEDURAL").is_some();
     for (def_index, landmark) in LANDMARKS.iter().enumerate() {
         let mut components = Vec::new();
         let skip_components = landmark.key == "needle" && !procedural_needle;
@@ -1115,7 +1115,11 @@ fn spawn_landmarks(world: &mut World) {
         if landmark.key == "market" {
             spawn_market_signs(world, landmark);
         }
-        if landmark.key == "needle" {
+        if landmark.key == "needle" && std::env::var_os("NEEDLE_CAD").is_some() {
+            // The CAD seat is still unproven (it stacks/hangs against the proven
+            // procedural seat), so the live path is the procedural Needle alone.
+            // No stacked coexistence, ever: the CAD is strictly opt-in until the
+            // primitive-walk AABB gate passes.
             spawn_needle_model(world, landmark, &components);
         }
         info!(

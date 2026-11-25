@@ -2718,3 +2718,24 @@ shipping a fourth unverified pivot would repeat the failure that produced three 
 non-negotiable again.
 
 183 tests green, clippy clean, boot clean.
+
+## Iteration 100 — copy the proven seat (seattle-needle8)
+
+**The stacking defect is gone; the single live Needle is the proven one.** The CAD spawn is now strictly opt-in
+(`NEEDLE_CAD=1`) and the default boot renders the procedural Needle alone at its proven anchor
+(`[-1006.1,-1609.9]`, components seated on the DEM with `base_y` offsets). No stacked coexistence, ever.
+`captures/needle_single.png` shows one Needle, legs on the ground, saucer, crown and spire legible.
+
+**What I did not do, and why:** the CAD seat copy failed to reproduce the proven values. The arithmetic says
+`T = ground − 0.4568` with `R_x(−90°)` and `scale 0.2284`, yet the rendered model hangs, which means the asset's
+pivot is not where the accessor bounds imply (the deck elevation — ~152 m — matches the reported hang almost
+exactly, so the pivot is plausibly at the observation deck, not the base). Copying the proven seat requires
+walking the `GltfMesh` primitives and measuring the rendered AABB, and this build exposes glTF scenes as
+`WorldAsset`/`GltfMaterial` placeholders that resist that walk inside the session.
+
+**Windows:** the procedural model's own window bands remain the live glazing (visible on the deck in the frame);
+the CAD bands stay unbound behind `NEEDLE_BANDS=1`.
+
+**Arches: no step shipped — ninth non-delivery, admitted.**
+
+183 tests green, clippy clean, boot clean. CodeGraph: last full index 25 projects / 569 files / 0 failures.
