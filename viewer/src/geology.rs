@@ -771,6 +771,31 @@ fn governance_core(district: &str) -> bool {
             })
             .unwrap_or_default()
     });
+    // Player appeals outrank the statistic (Bellevue CBD granted).
+    static APPEALS: std::sync::OnceLock<std::collections::HashSet<String>> =
+        std::sync::OnceLock::new();
+    let appeals = APPEALS.get_or_init(|| {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("assets/styles/seattle_governance.json");
+        std::fs::read_to_string(path)
+            .ok()
+            .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+            .and_then(|value| {
+                value
+                    .get("appeals")?
+                    .get("core")?
+                    .as_array()
+                    .map(|list| {
+                        list.iter()
+                            .filter_map(|entry| entry.as_str().map(str::to_string))
+                            .collect()
+                    })
+            })
+            .unwrap_or_default()
+    });
+    if appeals.contains(district) {
+        return true;
+    }
     table
         .get(district)
         .copied()

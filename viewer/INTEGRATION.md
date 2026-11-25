@@ -2216,3 +2216,35 @@ player-profile overlay frame was not produced (manual flight unavailable to the 
 
 **Not done.** Far-tint cell granularity (still bucket-per-chunk), `tower-house-frame` (ninth demand,
 blocking). 167 tests green, clippy clean, boot clean.
+
+## Iteration 86 — true surfaces (seattle-textures1)
+
+**Photographic import (three classes, CC0).** ambientCG 1K JPG diffuse tiles: **Bricks075A** (masonry walls),
+**WoodSiding008** (timber/adobe walls), **RoofingTiles006** (roofs). License CC0 1.0, source URLs, `up: v+`
+declarations and the compression note are committed in `assets/textures/photographic/manifest.json`. The
+generated atlases remain the default; `TEXTURES_PHOTO=1` swaps in the photographs for the A/B sheet and keeps
+the generated path as regression insurance. Wall UVs are unchanged (Up-Vector Doctrine: photographic tiles
+declare up and are sampled with Repeat; a misaligned tile would show tilted night stripes and fail the gate).
+
+**Receipts.** Three 1024² JPGs, **~1.8 MiB** on disk total; decoded RGBA8 in VRAM ≈ **12 MiB** (4 MiB each)
+plus mips. **BC7 compression was not possible**: no BC7 encoder (basisu/toktx/compressonator) is installed on
+this machine, so the honest receipt is JPG→RGBA8 with `bc7-compression` filed. Load delta is inside the boot's
+existing async asset path (one line each). **Gauntlet honesty:** the 650 m/s pass measured **157 ms avg /
+202 ms p99** on this tree (two runs, 186 and 157) — outside the 28–77 band. The import is env-gated and was
+**not active** in those runs, so the regression predates it: the core restoration (≈2,000 towers ≥6 storeys)
+and the six-bucket far merge are the cost. Filed as `core-restore-perf`; scaling the import is not the fix.
+
+**A/B contact sheet.** `captures/ab_generated.png` and `captures/ab_photographic.png` — identical camera at
+the Pike Place brick wall, bare invocation plus camera/capture instrumentation. Brick courses read as brick
+at human distance in the photographic frame; the generated frame stays flat by comparison. The player
+adjudicates adoption; no default was changed.
+
+**Governance appeals (player veto).** `seattle_governance.json` gains an `appeals.core` list; **Bellevue CBD**
+is granted core status by appeal (footprint 353 m²) and restores its **439** ≥6-storey buildings. The
+Footprint Doctrine governs everywhere else; the appeals list is the player's veto, distinct from the retired
+global hand list.
+
+**Not done.** Day/night aerial pairs with photographs, a human-scale curb frame, and the tower-house frame;
+the night-stripe gate was not re-run against photographic materials because the night capture was not taken.
+`tower-house-frame` remains blocking (a player-shot frame retires it by rule). 167 tests green, clippy clean,
+boot clean.

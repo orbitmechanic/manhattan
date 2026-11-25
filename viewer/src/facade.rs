@@ -348,8 +348,9 @@ fn build_skin(
     images: &mut Assets<Image>,
     materials: &mut Assets<StandardMaterial>,
     palette: Palette,
+    photo_wall: Option<Handle<Image>>,
 ) -> (FamilySkin, usize) {
-    let wall = images.add(wall_texture(palette));
+    let wall = photo_wall.unwrap_or_else(|| images.add(wall_texture(palette)));
     let sash = images.add(sash_texture(palette, false));
     let shop_sash = images.add(sash_texture(palette, true));
     let lit = images.add(lit_texture(palette, false));
@@ -409,11 +410,44 @@ fn build_skin(
     )
 }
 
+fn repeat_load(asset_server: &AssetServer, path: &'static str) -> Handle<Image> {
+    asset_server
+        .load_builder()
+        .with_settings(|settings: &mut bevy::image::ImageLoaderSettings| {
+            settings.sampler = ImageSampler::Descriptor(bevy::image::ImageSamplerDescriptor {
+                address_mode_u: bevy::image::ImageAddressMode::Repeat,
+                address_mode_v: bevy::image::ImageAddressMode::Repeat,
+                address_mode_w: bevy::image::ImageAddressMode::Repeat,
+                mag_filter: bevy::image::ImageFilterMode::Linear,
+                min_filter: bevy::image::ImageFilterMode::Linear,
+                mipmap_filter: bevy::image::ImageFilterMode::Linear,
+                ..default()
+            });
+        })
+        .load(path)
+}
+
 fn setup_facades(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
+    // Photographic wall materials (CC0 ambientCG) behind TEXTURES_PHOTO=1;
+    // the generated atlases remain the default/fallback for the A/B sheet.
+    let photo = std::env::var_os("TEXTURES_PHOTO").is_some();
+    let photo_brick = photo.then(|| {
+        repeat_load(
+            &asset_server,
+            "textures/photographic/Bricks075A_1K-JPG_Color.jpg",
+        )
+    });
+    let photo_siding = photo.then(|| {
+        repeat_load(
+            &asset_server,
+            "textures/photographic/WoodSiding008_1K-JPG_Color.jpg",
+        )
+    });
     let mut skins = FacadeSkins::default();
     let mut bytes = 0;
     for family in [
@@ -422,7 +456,13 @@ fn setup_facades(
         MaterialFamily::MasonryStone,
         MaterialFamily::EarthAdobe,
     ] {
-        let (skin, family_bytes) = build_skin(&mut images, &mut materials, palette(family));
+        let photo_wall = match family {
+            MaterialFamily::MasonryStone => photo_brick.clone(),
+            MaterialFamily::Timber | MaterialFamily::EarthAdobe => photo_siding.clone(),
+            MaterialFamily::SteelFrame => None,
+        };
+        let (skin, family_bytes) =
+            build_skin(&mut images, &mut materials, palette(family), photo_wall);
         bytes += family_bytes;
         match family {
             MaterialFamily::SteelFrame => skins.steel = Some(skin),
@@ -821,6 +861,26 @@ fn proxy_windows_texture(warm: bool) -> Image {
     image
 }
 
+fn install_photo_roof(
+    asset_server: Res<AssetServer>,
+    assets: Option<Res<destructibles_bevy::assets::WorldAssets>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    if std::env::var_os("TEXTURES_PHOTO").is_none() {
+        return;
+    }
+    let Some(assets) = assets else {
+        return;
+    };
+    let texture = repeat_load(
+        &asset_server,
+        "textures/photographic/RoofingTiles006_1K-JPG_Color.jpg",
+    );
+    if let Some(mut material) = materials.get_mut(&assets.roof) {
+        material.base_color_texture = Some(texture);
+    }
+}
+
 fn proxy_material(
     images: &mut Assets<Image>,
     materials: &mut Assets<StandardMaterial>,
@@ -1175,7 +1235,7 @@ impl Plugin for FacadePlugin {
             .init_resource::<NightProfile>()
             .init_resource::<SkinAudit>()
             .add_systems(Startup, setup_facades)
-            .add_systems(PostStartup, install_proxy_windows)
+            .add_systems(PostStartup, (install_proxy_windows, install_photo_roof))
             .add_systems(
                 Update,
                 (

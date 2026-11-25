@@ -78,5 +78,11 @@
   "avg_footprint_m2": 156.4,
   "buildings": 20390,
   "core": false
+ },
+ "appeals": {
+  "core": [
+   "Bellevue CBD"
+  ],
+  "note": "player-arbitrated overrides where ground knowledge beats the footprint statistic"
  }
 }

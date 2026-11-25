@@ -1,0 +1,29 @@
+{
+ "license": "CC0 1.0 Universal (public domain dedication)",
+ "source": "ambientCG (https://ambientcg.com)",
+ "textures": [
+  {
+   "class": "brick",
+   "file": "Bricks075A_1K-JPG_Color.jpg",
+   "asset": "Bricks075A",
+   "up": "v+",
+   "sha256": null
+  },
+  {
+   "class": "timber_siding",
+   "file": "WoodSiding008_1K-JPG_Color.jpg",
+   "asset": "WoodSiding008",
+   "up": "v+",
+   "sha256": null
+  },
+  {
+   "class": "roof_tiles",
+   "file": "RoofingTiles006_1K-JPG_Color.jpg",
+   "asset": "RoofingTiles006",
+   "up": "v+",
+   "sha256": null
+  }
+ ],
+ "compression": "source JPG (BC7 compressor unavailable on this machine; filed)",
+ "up_assertion": "every tile declares up=v+; the Up-Vector Doctrine requires texture up parallel to building up"
+}
