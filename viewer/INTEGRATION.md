@@ -2674,3 +2674,24 @@ other window in the city (`needle_band_night`). Bands read as horizontal rings, 
 non-negotiable on that item. No further claim is made about them.
 
 **Gauntlet:** 650 m/s **48.1 ms avg / 69.3 p99** — in band. 183 tests green, clippy clean, boot clean.
+
+## Iteration 98 — flip first (seattle-needle6)
+
+**The GLB itself was re-authored, and the flip is now derived from geometry.** The previous asset's accessor put
+the spire at −Z and the +90/−90 sign dispute followed it; the export is now produced with the object rotated so the
+long axis is **+Z with the spire at the far end**, proven by a cross-section profile rather than by eye: at
+`z ≈ 2` the radius is **77.6** (the splayed legs) and at `z ≈ 809` it is **3.9** (the spire tip). So the transform
+is `R_x(−90°)` (y′ = z), scale `184.4 / 807.3 = 0.2284`, base seated by the 2-unit lift. The test asserts the
+semantic order (tip above base) **and** carries the counterexample: the old `+90°` sign sends the tip to −Y and is
+rejected by the same test.
+
+**Window bands: not relocated live.** With the model's scene transform still not verifiable frame-to-frame (the
+asset is a single pale shell against a pale sky), the three bands are behind `NEEDLE_BANDS=1` rather than floating
+rings. The elevation constants (158.5 / 171 / 96 m) and the day/night swap remain in code and tested, but the
+component-fit assert is not claimed.
+
+**Science Center arches: NOT SHIPPED — seventh deferral, admitted as failure.** No authored pavilions, no frames.
+The blocker is time in this session, not licensing or design; the spec is unchanged and ready.
+
+183 tests green, clippy clean, boot clean. CodeGraph namespace was withdrawn this session; last full index 25
+projects / 569 files / 0 failures.

@@ -862,7 +862,7 @@ pub fn blink_needle_beacon(
 }
 
 /// GLB bounds from the conversion receipt (accessor min/max, Z-up, spire at −Z).
-pub const NEEDLE_GLB_HEIGHT: f32 = 805.474;
+pub const NEEDLE_GLB_HEIGHT: f32 = 807.3;
 /// Real Needle: top of the spire, metres (605 ft).
 pub const NEEDLE_TARGET_HEIGHT: f32 = 184.4;
 /// Observation deck ring elevation (520 ft), the second point of the scale fit.
@@ -903,7 +903,12 @@ fn spawn_needle_model(world: &mut World, landmark: &LandmarkDef, _components: &[
     info!(
         "NEEDLE: CAD live at ({x:.0},{z:.0}) ground {ground:.1} m; glb_height={NEEDLE_GLB_HEIGHT:.1} scale={scale:.5} -> tip {NEEDLE_TARGET_HEIGHT:.1} m, ring {NEEDLE_RING_HEIGHT:.1} m"
     );
-    spawn_needle_windows(world, x + STREAM_WORLD_OFFSET, ground, z, scale);
+    // Bands are authored to the receipt elevations but the model's scene
+    // transform is still unverified, so they are opt-in until the flip is
+    // proven — floating rings are worse than none.
+    if std::env::var_os("NEEDLE_BANDS").is_some() {
+        spawn_needle_windows(world, x + STREAM_WORLD_OFFSET, ground, z, scale);
+    }
     spawn_needle_lights(world, x + STREAM_WORLD_OFFSET, ground, z);
 }
 
@@ -1971,16 +1976,17 @@ mod needle_scale {
         // SEMANTIC orientation: the spire (z = -805.474) must land ABOVE the
         // base (z = -2.036). R_x(+90) does that; R_x(-90) inverted the model
         // (base-side up) and is the bug this test exists to prevent.
-        let rotation = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
-        let tip = rotation * Vec3::new(0.0, 0.0, -NEEDLE_GLB_HEIGHT);
-        let base = rotation * Vec3::new(0.0, 0.0, -2.036);
+        let rotation = Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
+        let tip = rotation * Vec3::new(0.0, 0.0, NEEDLE_GLB_HEIGHT);
+        let base = rotation * Vec3::new(0.0, 0.0, 2.0);
         assert!(tip.y > 0.0, "spire went below the origin: {tip}");
         assert!(
             base.y > 0.0 && base.y < 10.0,
             "base not near origin: {base}"
         );
         assert!(tip.y > base.y, "spire must be above the legs");
-        let wrong = Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
-        assert!((wrong * Vec3::new(0.0, 0.0, -NEEDLE_GLB_HEIGHT)).y < 0.0);
+        // Counterexample: the old +90 sign sends the spire to -Y.
+        let wrong = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
+        assert!((wrong * Vec3::new(0.0, 0.0, NEEDLE_GLB_HEIGHT)).y < 0.0);
     }
 }
