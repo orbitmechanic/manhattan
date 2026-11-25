@@ -22,7 +22,7 @@ target = float(args[2]) if len(args) > 2 else 184.0
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.wm.stl_import(filepath=stl_path)
 obj = bpy.context.selected_objects[0]
-obj.rotation_euler = (-3.141592653589793 / 2.0, 0.0, 0.0)
+obj.rotation_euler = (3.141592653589793 / 2.0, 0.0, 0.0)
 bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
 
 # Scale to the real total height, origin at the base.
@@ -30,6 +30,16 @@ height = obj.dimensions.z
 scale = target / height if height > 0 else 1.0
 obj.scale = (scale, scale, scale)
 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+# Seat the base at the origin and centre the plan: the pivot is the leg feet,
+# so no downstream transform can hang the model in the air.
+bpy.context.view_layer.update()
+bbox = [obj.matrix_world @ v.co for v in obj.data.vertices]
+min_v = mathutils.Vector((min(v.x for v in bbox), min(v.y for v in bbox), min(v.z for v in bbox)))
+max_v = mathutils.Vector((max(v.x for v in bbox), max(v.y for v in bbox), max(v.z for v in bbox)))
+centre = (min_v + max_v) * 0.5
+obj.location = (-centre.x, -centre.y, -min_v.z)
+bpy.ops.object.transform_apply(location=True, rotation=False, scale=False)
 
 triangles = sum(len(p.vertices) - 2 for p in obj.data.polygons)
 print(f"RECEIPT stl_tris={triangles} height_before={height:.2f} scale={scale:.4f}", flush=True)
@@ -40,7 +50,17 @@ if triangles > budget:
     mod = obj.modifiers.new("decimate", "DECIMATE")
     mod.ratio = ratio
     bpy.ops.object.modifier_apply(modifier=mod.name)
-    triangles = sum(len(p.vertices) - 2 for p in obj.data.polygons)
+    # Seat the base at the origin and centre the plan: the pivot is the leg feet,
+# so no downstream transform can hang the model in the air.
+bpy.context.view_layer.update()
+bbox = [obj.matrix_world @ v.co for v in obj.data.vertices]
+min_v = mathutils.Vector((min(v.x for v in bbox), min(v.y for v in bbox), min(v.z for v in bbox)))
+max_v = mathutils.Vector((max(v.x for v in bbox), max(v.y for v in bbox), max(v.z for v in bbox)))
+centre = (min_v + max_v) * 0.5
+obj.location = (-centre.x, -centre.y, -min_v.z)
+bpy.ops.object.transform_apply(location=True, rotation=False, scale=False)
+
+triangles = sum(len(p.vertices) - 2 for p in obj.data.polygons)
     print(f"RECEIPT decimated_to={triangles}", flush=True)
 
 material = bpy.data.materials.new("needle_shell")
