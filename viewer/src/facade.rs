@@ -474,6 +474,14 @@ fn setup_facades(
         }
     }
     skins.texture_bytes = bytes;
+    let mode = if std::env::var_os("TEXTURES_GENERATED").is_some() {
+        "generated"
+    } else {
+        "photographic"
+    };
+    info!(
+        "LAYER AUDIT mode={mode} shell_wall[masonry]=brick shell_wall[timber]=siding shell_wall[steel]=generated shell_roof=photo_roof_tiles near_proxy_cool=brick near_proxy_warm=siding far_merged=brick/siding landmark_override=stock_destructibles"
+    );
     info!(
         "FACADE skins: {} families, {} shared materials, {:.1} MB CPU textures (mipmaps extra)",
         skins.family_count(),
@@ -886,10 +894,28 @@ fn install_photo_roof(
 fn proxy_material(
     images: &mut Assets<Image>,
     materials: &mut Assets<StandardMaterial>,
+    asset_server: &AssetServer,
     warm: bool,
     tint: [f32; 3],
 ) -> Handle<StandardMaterial> {
-    let day = images.add(proxy_day_texture(warm));
+    // FLIGHT-VISIBLE LAYER: the near proxies and the far merged buckets share
+    // these materials. Photographic by default, exactly like the shells.
+    let photo = std::env::var_os("TEXTURES_GENERATED").is_none();
+    let day = if photo {
+        if warm {
+            repeat_load(
+                asset_server,
+                "textures/photographic/WoodSiding008_1K-JPG_Color.jpg",
+            )
+        } else {
+            repeat_load(
+                asset_server,
+                "textures/photographic/Bricks075A_1K-JPG_Color.jpg",
+            )
+        }
+    } else {
+        images.add(proxy_day_texture(warm))
+    };
     let night = images.add(proxy_windows_texture(warm));
     materials.add(StandardMaterial {
         base_color: Color::srgb(tint[0], tint[1], tint[2]),
@@ -909,6 +935,7 @@ fn proxy_material(
 fn install_proxy_windows(
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
     geology: Option<ResMut<crate::geology::Geology>>,
 ) {
     let Some(mut geology) = geology else {
@@ -920,8 +947,9 @@ fn install_proxy_windows(
     let mut cool = [Handle::default(), Handle::default(), Handle::default()];
     let mut warm = [Handle::default(), Handle::default(), Handle::default()];
     for (index, tint) in palettes.iter().enumerate() {
-        cool[index] = proxy_material(&mut images, &mut materials, false, *tint);
-        warm[index] = proxy_material(&mut images, &mut materials, true, *tint);
+        cool[index] =
+            proxy_material(&mut images, &mut materials, &asset_server, false, *tint);
+        warm[index] = proxy_material(&mut images, &mut materials, &asset_server, true, *tint);
     }
     geology.box_material = cool[1].clone();
     geology.box_material_warm = warm[1].clone();
