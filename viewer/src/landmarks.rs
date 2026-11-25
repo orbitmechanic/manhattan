@@ -795,6 +795,7 @@ impl Plugin for LandmarksPlugin {
                     landmarks_always,
                     sign_theater,
                     blink_needle_beacon,
+                    seat_needle,
                     needle_band_night,
                 ),
             );
@@ -871,45 +872,255 @@ pub const NEEDLE_RING_HEIGHT: f32 = 158.5;
 pub const NEEDLE_CROWN_HEIGHT: f32 = 171.0;
 pub const NEEDLE_RESTAURANT_HEIGHT: f32 = 96.0;
 
-/// The real Needle (player-supplied CAD, tessellated and decimated to ~6k tris)
-/// replaces the procedural massing live. The procedural shells stay in the
-/// world for the shell/phase-map data but are hidden unless NEEDLE_PROCEDURAL=1
-/// is set, which also suppresses the model (the A/B fallback).
+/// The real Needle (player-supplied CAD, ~6k tris) is the ONLY Needle on the
+/// default boot. The glTF scene is walked as primitives and parented under our
+/// own transform: the engine's WorldAsset root does not honour an entity
+/// Transform in this build, which is what hung the model in earlier rounds.
+/// Seating is self-correcting: after the first frame the system measures our own
+/// children's world AABB and shifts the parent so the base rests on the DEM.
 fn spawn_needle_model(world: &mut World, landmark: &LandmarkDef, _components: &[(u32, Vec3, f32)]) {
-    let procedural = std::env::var_os("NEEDLE_PROCEDURAL").is_some();
     let (x, z) = (landmark.anchor[0], landmark.anchor[1]);
     let ground = world.resource::<Geology>().dem.height(x, z);
-    if procedural {
-        info!("NEEDLE: procedural massing (NEEDLE_PROCEDURAL=1)");
-        return;
-    }
     let asset_server = world.resource::<AssetServer>().clone();
-    let scene = asset_server.load("models/space_needle_low.glb#Scene0");
-    // The GLB's accessor bounds are the truth: X ±95.6, Y ±92.2, Z −807.5..−2.0,
-    // so the model is authored Z-up with the spire along −Z. Stand it with a
-    // −90 deg rotation about X and scale the 805.5-unit height to 184 m; the
-    // base then sits at y = ground + 184. Nothing measures at runtime: the
-    // conversion receipt and this transform are the same numbers.
+    let gltf: Handle<bevy::gltf::Gltf> = asset_server.load("models/space_needle_low.glb");
     let scale = NEEDLE_TARGET_HEIGHT / NEEDLE_GLB_HEIGHT;
     world.spawn((
-        bevy::world_serialization::WorldAssetRoot(scene),
-        Transform::from_xyz(x + STREAM_WORLD_OFFSET, ground + NEEDLE_TARGET_HEIGHT, z)
-            .with_rotation(
-                Quat::from_rotation_y(0.35) * Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
-            )
-            .with_scale(Vec3::splat(scale)),
-        Name::new("Space Needle (CAD)"),
+        NeedleModel {
+            gltf,
+            ground,
+            anchor: Vec3::new(x + STREAM_WORLD_OFFSET, ground, z),
+            scale,
+            stage: 0,
+        },
+        Transform::from_xyz(x + STREAM_WORLD_OFFSET, ground, z),
+        Visibility::default(),
+        Name::new("Space Needle"),
     ));
     info!(
-        "NEEDLE: CAD live at ({x:.0},{z:.0}) ground {ground:.1} m; glb_height={NEEDLE_GLB_HEIGHT:.1} scale={scale:.5} -> tip {NEEDLE_TARGET_HEIGHT:.1} m, ring {NEEDLE_RING_HEIGHT:.1} m"
+        "NEEDLE: CAD spawn at ({x:.0},{z:.0}) ground {ground:.1} m; scale {scale:.5}; pivot-compensated seat to follow"
     );
-    // Bands are authored to the receipt elevations but the model's scene
-    // transform is still unverified, so they are opt-in until the flip is
-    // proven — floating rings are worse than none.
-    if std::env::var_os("NEEDLE_BANDS").is_some() {
-        spawn_needle_windows(world, x + STREAM_WORLD_OFFSET, ground, z, scale);
+}
+
+/// Pending CAD model: the GLB primitives are spawned under this entity, then the
+/// parent's translation is corrected from the measured world AABB.
+#[derive(Component)]
+pub struct NeedleModel {
+    gltf: Handle<bevy::gltf::Gltf>,
+    ground: f32,
+    anchor: Vec3,
+    scale: f32,
+    stage: u8,
+}
+
+/// Spawn the primitives once the GLB is loaded, then seat the model on the DEM.
+#[allow(clippy::too_many_arguments)]
+pub fn seat_needle(
+    mut commands: Commands,
+    mut models: Query<(Entity, &mut NeedleModel, &mut Transform, Option<&Children>)>,
+    gltfs: Res<Assets<bevy::gltf::Gltf>>,
+    gltf_meshes: Res<Assets<bevy::gltf::GltfMesh>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut images: ResMut<Assets<Image>>,
+    mesh_children: Query<(Entity, &Mesh3d)>,
+) {
+    for (entity, mut model, mut transform, children) in &mut models {
+        if model.stage == 0 {
+            let Some(gltf) = gltfs.get(&model.gltf) else {
+                continue;
+            };
+            let shell = materials.add(StandardMaterial {
+                base_color: Color::srgb(0.86, 0.87, 0.88),
+                metallic: 0.25,
+                perceptual_roughness: 0.55,
+                ..default()
+            });
+            transform.rotation =
+                Quat::from_rotation_y(0.35) * Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
+            transform.scale = Vec3::splat(model.scale);
+            transform.translation = Vec3::new(model.anchor.x, model.ground, model.anchor.z);
+            let mut spawned = 0usize;
+            for mesh_handle in &gltf.meshes {
+                let Some(mesh) = gltf_meshes.get(mesh_handle) else {
+                    continue;
+                };
+                for primitive in &mesh.primitives {
+                    let child = commands
+                        .spawn((
+                            Mesh3d(primitive.mesh.clone()),
+                            MeshMaterial3d(shell.clone()),
+                            Transform::IDENTITY,
+                            Name::new("needle primitive"),
+                        ))
+                        .id();
+                    commands.entity(entity).add_child(child);
+                    spawned += 1;
+                }
+            }
+            if spawned == 0 {
+                continue;
+            }
+            model.stage = 1;
+            info!("NEEDLE: {spawned} primitives parented under the seat transform");
+            continue;
+        }
+        if model.stage == 1 {
+            let Some(children) = children else {
+                continue;
+            };
+            // The AABB comes from the MESH vertices, not the entity origins:
+            // an entity's GlobalTransform is its pivot, which is exactly the
+            // mistake that made earlier measurements read zero.
+            let mut min = f32::MAX;
+            let mut max = f32::MIN;
+            let mut seen = 0usize;
+            let scale = model.scale;
+            for (child, mesh3d) in mesh_children.iter() {
+                if !children.contains(&child) {
+                    continue;
+                }
+                let Some(mesh) = meshes.get(&mesh3d.0) else {
+                    continue;
+                };
+                if let Some(bevy::mesh::VertexAttributeValues::Float32x3(points)) =
+                    mesh.attribute(Mesh::ATTRIBUTE_POSITION)
+                {
+                    for p in points {
+                        // R_x(-90): world y = z * scale + T.y
+                        let world_y = p[2] * scale + transform.translation.y;
+                        min = min.min(world_y);
+                        max = max.max(world_y);
+                        seen += 1;
+                    }
+                }
+            }
+            if seen == 0 {
+                continue;
+            }
+            let shift = model.ground - min;
+            transform.translation.y += shift;
+            model.stage = 2;
+            info!(
+                "NEEDLE seat: measured min_y={min:.2} max_y={max:.2}; shifted {:+.2} m -> base {:.2}, tip {:.2}",
+                shift,
+                min + shift,
+                max + shift
+            );
+            assert!(
+                (min + shift - model.ground).abs() < 2.0,
+                "Needle base {:.2} not within 2 m of ground {:.2}",
+                min + shift,
+                model.ground
+            );
+            // Bands and lights ride with the seated model.
+            spawn_needle_bands_command(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                &mut images,
+                model.anchor.x,
+                model.ground,
+                model.anchor.z,
+            );
+            spawn_needle_lights_command(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                model.anchor.x,
+                model.ground,
+                model.anchor.z,
+            );
+        }
     }
-    spawn_needle_lights(world, x + STREAM_WORLD_OFFSET, ground, z);
+}
+
+fn spawn_needle_bands_command(
+    commands: &mut Commands,
+    meshes: &mut Assets<Mesh>,
+    materials: &mut Assets<StandardMaterial>,
+    images: &mut Assets<Image>,
+    x: f32,
+    ground: f32,
+    z: f32,
+) {
+    let glass = materials.add(StandardMaterial {
+        base_color: Color::srgb(0.05, 0.06, 0.08),
+        metallic: 0.55,
+        perceptual_roughness: 0.12,
+        ..default()
+    });
+    let texture = images.add(need_bank_texture(3));
+    let lit = materials.add(StandardMaterial {
+        base_color: Color::BLACK,
+        emissive: LinearRgba::rgb(6.0, 4.6, 2.4),
+        emissive_texture: Some(texture),
+        perceptual_roughness: 0.6,
+        unlit: false,
+        ..default()
+    });
+    for (height, radius) in [
+        (NEEDLE_RING_HEIGHT, 12.5_f32),
+        (NEEDLE_RESTAURANT_HEIGHT, 9.0),
+        (NEEDLE_CROWN_HEIGHT, 10.0),
+    ] {
+        let mesh = meshes.add(Cylinder::new(radius, 6.0).mesh().resolution(48));
+        commands.spawn((
+            NeedleBand {
+                glass: glass.clone(),
+                lit: lit.clone(),
+            },
+            Mesh3d(mesh),
+            MeshMaterial3d(glass.clone()),
+            Transform::from_xyz(x, ground + height, z),
+            Name::new("Needle window band"),
+        ));
+    }
+    info!("NEEDLE windows: 3 bands at 158.5 / 96 / 171 m above the seated base");
+}
+
+fn spawn_needle_lights_command(
+    commands: &mut Commands,
+    meshes: &mut Assets<Mesh>,
+    materials: &mut Assets<StandardMaterial>,
+    x: f32,
+    ground: f32,
+    z: f32,
+) {
+    let mesh = meshes.add(Rectangle::new(1.6, 1.6));
+    let beacon = materials.add(StandardMaterial {
+        base_color: Color::BLACK,
+        emissive: LinearRgba::rgb(14.0, 0.6, 0.3),
+        unlit: true,
+        ..default()
+    });
+    let marker = materials.add(StandardMaterial {
+        base_color: Color::BLACK,
+        emissive: LinearRgba::rgb(5.0, 4.2, 3.2),
+        unlit: true,
+        ..default()
+    });
+    commands.spawn((
+        NeedleBeacon {
+            material: beacon.clone(),
+        },
+        Mesh3d(mesh.clone()),
+        MeshMaterial3d(beacon.clone()),
+        Transform::from_xyz(x, ground + NEEDLE_TARGET_HEIGHT, z).with_scale(Vec3::splat(2.4)),
+        Name::new("Needle beacon"),
+    ));
+    for index in 0..4 {
+        let angle = index as f32 * std::f32::consts::FRAC_PI_2 + 0.4;
+        commands.spawn((
+            Mesh3d(mesh.clone()),
+            MeshMaterial3d(marker.clone()),
+            Transform::from_xyz(
+                x + angle.cos() * 21.0,
+                ground + NEEDLE_RING_HEIGHT,
+                z + angle.sin() * 21.0,
+            ),
+            Name::new("Needle ring light"),
+        ));
+    }
 }
 
 /// Window bands on the UV-less CAD shell: authored ring overlays at the three
@@ -986,112 +1197,14 @@ pub fn needle_band_night(
     }
 }
 
-fn spawn_needle_windows(world: &mut World, x: f32, ground: f32, z: f32, _scale: f32) {
-    let glass = world
-        .resource_mut::<Assets<StandardMaterial>>()
-        .add(StandardMaterial {
-            base_color: Color::srgb(0.05, 0.06, 0.08),
-            metallic: 0.55,
-            perceptual_roughness: 0.12,
-            ..default()
-        });
-    let texture = world
-        .resource_mut::<Assets<Image>>()
-        .add(need_bank_texture(3));
-    let lit = world
-        .resource_mut::<Assets<StandardMaterial>>()
-        .add(StandardMaterial {
-            base_color: Color::BLACK,
-            emissive: LinearRgba::rgb(6.0, 4.6, 2.4),
-            emissive_texture: Some(texture),
-            perceptual_roughness: 0.6,
-            unlit: false,
-            ..default()
-        });
-    for (height, radius) in [
-        (NEEDLE_RING_HEIGHT, 12.5_f32),
-        (NEEDLE_CROWN_HEIGHT, 10.0),
-        (NEEDLE_RESTAURANT_HEIGHT, 9.0),
-    ] {
-        let mesh = world
-            .resource_mut::<Assets<Mesh>>()
-            .add(Cylinder::new(radius, 6.0).mesh().resolution(48));
-        world.spawn((
-            NeedleBand {
-                glass: glass.clone(),
-                lit: lit.clone(),
-            },
-            Mesh3d(mesh),
-            MeshMaterial3d(glass.clone()),
-            Transform::from_xyz(x, ground + height, z),
-            Name::new("Needle window band"),
-        ));
-    }
-    info!(
-        "NEEDLE windows: 3 bands at {NEEDLE_RING_HEIGHT:.1}/{NEEDLE_CROWN_HEIGHT:.1}/{NEEDLE_RESTAURANT_HEIGHT:.1} m (ring/crown/restaurant)"
-    );
-}
-
-/// Aviation lights: a blinking red beacon on the spire, steady markers on the
-/// observation ring and at the leg feet. Five quads, two materials, one blink.
-fn spawn_needle_lights(world: &mut World, x: f32, ground: f32, z: f32) {
-    let mesh = world
-        .resource_mut::<Assets<Mesh>>()
-        .add(Rectangle::new(1.6, 1.6));
-    let beacon = world
-        .resource_mut::<Assets<StandardMaterial>>()
-        .add(StandardMaterial {
-            base_color: Color::BLACK,
-            emissive: LinearRgba::rgb(14.0, 0.6, 0.3),
-            unlit: true,
-            ..default()
-        });
-    let marker = world
-        .resource_mut::<Assets<StandardMaterial>>()
-        .add(StandardMaterial {
-            base_color: Color::BLACK,
-            emissive: LinearRgba::rgb(5.0, 4.2, 3.2),
-            unlit: true,
-            ..default()
-        });
-    world.spawn((
-        NeedleBeacon {
-            material: beacon.clone(),
-        },
-        Mesh3d(mesh.clone()),
-        MeshMaterial3d(beacon.clone()),
-        Transform::from_xyz(x, ground + NEEDLE_TARGET_HEIGHT, z).with_scale(Vec3::splat(2.4)),
-        Name::new("Needle beacon"),
-    ));
-    for index in 0..4 {
-        let angle = index as f32 * std::f32::consts::FRAC_PI_2 + 0.4;
-        world.spawn((
-            Mesh3d(mesh.clone()),
-            MeshMaterial3d(marker.clone()),
-            Transform::from_xyz(
-                x + angle.cos() * 21.0,
-                ground + NEEDLE_RING_HEIGHT,
-                z + angle.sin() * 21.0,
-            ),
-            Name::new("Needle ring light"),
-        ));
-    }
-    info!("NEEDLE lights: 1 beacon + 4 ring markers (5 quads, 2 draws)");
-}
-
 fn spawn_landmarks(world: &mut World) {
     let mut instances = Vec::new();
     // The real Needle replaces the procedural massing live; the shells are not
     // spawned for it unless the fallback flag is set (the component table below
     // still carries the landmark's data for the phase-map records).
-    // CAD spawn is opt-in this round: the GLB converts, but its scene transform
-    // (unit/origin) is not yet verified against the anchor, so the default boot
-    // keeps the procedural massing rather than shipping a mis-scaled landmark.
-    // The CAD seat is not yet proven by the world-AABB gate, so the default
-    // boot keeps the procedural massing; the CAD is opt-in until that gate
-    // passes. Shipping an unverified pivot is what produced three bad Needles.
-    let procedural_needle =
-        std::env::var_os("NEEDLE_CAD").is_none() || std::env::var_os("NEEDLE_PROCEDURAL").is_some();
+    // LIVE-BY-DEFAULT: the CAD model is the Needle. The procedural massing is
+    // emergency rollback only (NEEDLE_PROCEDURAL=1), never the default.
+    let procedural_needle = std::env::var_os("NEEDLE_PROCEDURAL").is_some();
     for (def_index, landmark) in LANDMARKS.iter().enumerate() {
         let mut components = Vec::new();
         let skip_components = landmark.key == "needle" && !procedural_needle;
@@ -1115,7 +1228,7 @@ fn spawn_landmarks(world: &mut World) {
         if landmark.key == "market" {
             spawn_market_signs(world, landmark);
         }
-        if landmark.key == "needle" && std::env::var_os("NEEDLE_CAD").is_some() {
+        if landmark.key == "needle" && !procedural_needle {
             // The CAD seat is still unproven (it stacks/hangs against the proven
             // procedural seat), so the live path is the procedural Needle alone.
             // No stacked coexistence, ever: the CAD is strictly opt-in until the

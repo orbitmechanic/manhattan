@@ -2739,3 +2739,27 @@ the CAD bands stay unbound behind `NEEDLE_BANDS=1`.
 **Arches: no step shipped — ninth non-delivery, admitted.**
 
 183 tests green, clippy clean, boot clean. CodeGraph: last full index 25 projects / 569 files / 0 failures.
+
+## Iteration 101 — one needle, the real one (seattle-needle9)
+
+**The CAD Needle is the live Needle, seated, and the AABB gate finally runs on real geometry.** The model is now
+loaded as a glTF asset and its **primitives** are parented under our own transform (the engine's `WorldAssetRoot`
+never honoured an entity transform — that was the hang). The seat is measured from **mesh vertices**, not entity
+origins (the mistake that made earlier probes read zero):
+
+```
+NEEDLE: CAD spawn at (-1006,-1610) ground 41.7 m; scale 0.22842
+NEEDLE: 1 primitives parented under the seat transform
+NEEDLE seat: measured min_y=42.16 max_y=226.54; shifted -0.47 m
+             -> base 41.69, tip 226.08   (ground 41.7, tip = ground + 184.4)
+```
+
+The assert (`|min + shift − ground| < 2 m`) passes. The procedural massing is **removed from the live path** —
+`NEEDLE_PROCEDURAL=1` is rollback only, never the default.
+
+**Bands and lights ride with the seated model:** ring 158.5 m, restaurant 96 m, crown 171 m above the seated base,
+plus the blinking beacon and four ring markers. Windows swap to emissive at dusk via `needle_band_night`; the night
+frame shows the deck ring lit with the restaurant band below and the beacon above.
+
+**Arches: untouched this round** (one-thing ruling), ninth non-delivery stands.
+183 tests green, clippy clean, boot clean.
