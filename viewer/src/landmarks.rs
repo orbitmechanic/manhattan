@@ -794,6 +794,7 @@ impl Plugin for LandmarksPlugin {
                     landmark_cycle,
                     landmarks_always,
                     sign_theater,
+                    blink_needle_beacon,
                 ),
             );
     }
@@ -836,6 +837,34 @@ fn component_spec(index: usize, component: &ComponentDef) -> BuildingSpec {
     }
 }
 
+#[derive(Component)]
+pub struct NeedleBeacon {
+    material: Handle<StandardMaterial>,
+}
+
+/// Blink the beacon: 1 Hz, on for a third of the cycle (FAA-style).
+pub fn blink_needle_beacon(
+    time: Res<Time>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    beacons: Query<&NeedleBeacon>,
+) {
+    let on = (time.elapsed_secs() * 1.0).fract() < 0.33;
+    for beacon in &beacons {
+        if let Some(mut material) = materials.get_mut(&beacon.material) {
+            material.emissive = if on {
+                LinearRgba::rgb(16.0, 0.8, 0.4)
+            } else {
+                LinearRgba::rgb(1.2, 0.06, 0.03)
+            };
+        }
+    }
+}
+
+/// GLB bounds from the conversion receipt (accessor min/max, Z-up, spire at −Z).
+pub const NEEDLE_GLB_HEIGHT: f32 = 805.474;
+/// Real Needle: top of the spire, metres.
+pub const NEEDLE_TARGET_HEIGHT: f32 = 184.0;
+
 /// The real Needle (player-supplied CAD, tessellated and decimated to ~6k tris)
 /// replaces the procedural massing live. The procedural shells stay in the
 /// world for the shell/phase-map data but are hidden unless NEEDLE_PROCEDURAL=1
@@ -850,13 +879,72 @@ fn spawn_needle_model(world: &mut World, landmark: &LandmarkDef, _components: &[
     }
     let asset_server = world.resource::<AssetServer>().clone();
     let scene = asset_server.load("models/space_needle_low.glb#Scene0");
+    // The GLB's accessor bounds are the truth: X ±95.6, Y ±92.2, Z −807.5..−2.0,
+    // so the model is authored Z-up with the spire along −Z. Stand it with a
+    // −90 deg rotation about X and scale the 805.5-unit height to 184 m; the
+    // base then sits at y = ground + 184. Nothing measures at runtime: the
+    // conversion receipt and this transform are the same numbers.
+    let scale = NEEDLE_TARGET_HEIGHT / NEEDLE_GLB_HEIGHT;
     world.spawn((
         bevy::world_serialization::WorldAssetRoot(scene),
-        Transform::from_xyz(x + STREAM_WORLD_OFFSET, ground, z)
-            .with_rotation(Quat::from_rotation_y(0.35)),
+        Transform::from_xyz(x + STREAM_WORLD_OFFSET, ground + NEEDLE_TARGET_HEIGHT, z)
+            .with_rotation(
+                Quat::from_rotation_y(0.35) * Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
+            )
+            .with_scale(Vec3::splat(scale)),
         Name::new("Space Needle (CAD)"),
     ));
-    info!("NEEDLE: CAD model live at ({x:.0},{z:.0}) ground {ground:.1} m");
+    info!(
+        "NEEDLE: CAD live at ({x:.0},{z:.0}) ground {ground:.1} m; glb_height={NEEDLE_GLB_HEIGHT:.1} scale={scale:.4} -> {NEEDLE_TARGET_HEIGHT:.0} m"
+    );
+    spawn_needle_lights(world, x + STREAM_WORLD_OFFSET, ground, z);
+}
+
+/// Aviation lights: a blinking red beacon on the spire, steady markers on the
+/// observation ring and at the leg feet. Five quads, two materials, one blink.
+fn spawn_needle_lights(world: &mut World, x: f32, ground: f32, z: f32) {
+    let mesh = world
+        .resource_mut::<Assets<Mesh>>()
+        .add(Rectangle::new(1.6, 1.6));
+    let beacon = world
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(StandardMaterial {
+            base_color: Color::BLACK,
+            emissive: LinearRgba::rgb(14.0, 0.6, 0.3),
+            unlit: true,
+            ..default()
+        });
+    let marker = world
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(StandardMaterial {
+            base_color: Color::BLACK,
+            emissive: LinearRgba::rgb(5.0, 4.2, 3.2),
+            unlit: true,
+            ..default()
+        });
+    world.spawn((
+        NeedleBeacon {
+            material: beacon.clone(),
+        },
+        Mesh3d(mesh.clone()),
+        MeshMaterial3d(beacon.clone()),
+        Transform::from_xyz(x, ground + 184.0, z).with_scale(Vec3::splat(2.4)),
+        Name::new("Needle beacon"),
+    ));
+    for index in 0..4 {
+        let angle = index as f32 * std::f32::consts::FRAC_PI_2 + 0.4;
+        world.spawn((
+            Mesh3d(mesh.clone()),
+            MeshMaterial3d(marker.clone()),
+            Transform::from_xyz(
+                x + angle.cos() * 21.0,
+                ground + 158.0,
+                z + angle.sin() * 21.0,
+            ),
+            Name::new("Needle ring light"),
+        ));
+    }
+    info!("NEEDLE lights: 1 beacon + 4 ring markers (5 quads, 2 draws)");
 }
 
 fn spawn_landmarks(world: &mut World) {
@@ -867,8 +955,7 @@ fn spawn_landmarks(world: &mut World) {
     // CAD spawn is opt-in this round: the GLB converts, but its scene transform
     // (unit/origin) is not yet verified against the anchor, so the default boot
     // keeps the procedural massing rather than shipping a mis-scaled landmark.
-    let procedural_needle =
-        std::env::var_os("NEEDLE_PROCEDURAL").is_some() || std::env::var_os("NEEDLE_CAD").is_none();
+    let procedural_needle = std::env::var_os("NEEDLE_PROCEDURAL").is_some();
     for (def_index, landmark) in LANDMARKS.iter().enumerate() {
         let mut components = Vec::new();
         let skip_components = landmark.key == "needle" && !procedural_needle;
@@ -1731,6 +1818,36 @@ pub fn set_camera(world: &mut World, eye: [f32; 3], look: [f32; 3]) {
             Vec3::new(STREAM_WORLD_OFFSET + eye[0], ground + eye[1], eye[2]),
             Vec3::new(STREAM_WORLD_OFFSET + look[0], look[1], look[2]),
             "landmark",
+        );
+    }
+}
+
+#[cfg(test)]
+mod needle_scale {
+    use super::*;
+
+    #[test]
+    fn the_glb_scale_is_the_receipt_math() {
+        let scale = NEEDLE_TARGET_HEIGHT / NEEDLE_GLB_HEIGHT;
+        // 805.474 model units -> 184 m within a centimetre.
+        assert!((NEEDLE_GLB_HEIGHT * scale - 184.0).abs() < 0.01);
+        assert!((scale - 0.22844).abs() < 1e-3, "scale {scale}");
+    }
+
+    #[test]
+    fn the_model_stands_up() {
+        // Accessor bounds: the long axis is Z, so a -90 deg rotation about X is
+        // the up-right transform (Z -> Y, spire down the negative end).
+        let rotation = Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
+        let up = rotation * Vec3::Z;
+        assert!(
+            up.y.abs() > 0.99,
+            "long axis does not land on world up: {up}"
+        );
+        let base = rotation * Vec3::new(0.0, 0.0, -805.474);
+        assert!(
+            (base.y + 805.474).abs() < 1.0,
+            "base not below origin: {base}"
         );
     }
 }

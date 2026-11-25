@@ -2630,3 +2630,26 @@ integration are the **only two items** of the next round.
 
 **Gauntlet** with the world beams live: 650 m/s **60.7 ms avg / 84.0 p99**; 100 m/s 52.2/66.6 — avg in band.
 181 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 569 files, 0 failures).
+
+## Iteration 96 — stand the Needle up (seattle-needle4)
+
+**Scale and orientation fixed by receipt, not by eyeball.** The GLB's own accessor bounds are the truth:
+X ±95.6, Y ±92.2, **Z −807.5…−2.0** — the model is authored **Z-up with the spire along −Z**, and the previous
+chain left it lying down and mis-scaled. The spawn transform is now derived from those numbers:
+`rotation = yaw · R_x(−90°)`, `scale = 184 / 805.474 = 0.22844`, base at `ground + 184`. Both facts are unit
+tests (`the_glb_scale_is_the_receipt_math`, `the_model_stands_up`), and boot prints
+`NEEDLE: CAD live … glb_height=805.5 scale=0.2284 -> 184 m`. The procedural massing is behind `NEEDLE_PROCEDURAL=1`
+only; the CAD model is the default.
+
+**Nav lights shipped.** One blinking red beacon at the spire tip (1 Hz, one-third duty) plus four steady markers on
+the observation ring: five quads, two materials, two draws — logged at spawn as `NEEDLE lights: 1 beacon + 4 ring
+markers`.
+
+**Not done — stated plainly:**
+- **Windows on the Needle** are not bound to the window texture system: the GLB is a single UV-less shell, so a
+  facade atlas would smear. The ring glazing needs either a UV pass in the pipeline or authored ring bands.
+- **Science Center arches** — fifth deferral. No model was supplied and the authored pavilions were not built.
+- **Tower-house frame** — not staged.
+
+**Gauntlet with the standing Needle and lights:** 650 m/s **49.9 ms avg / 68.1 p99** — in band. 183 tests green,
+clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 569 files, 0 failures).
