@@ -798,15 +798,7 @@ fn tree_capture(world: &mut World) {
             pose.name,
         );
     }
-    {
-        let mut weather = world.resource_mut::<crate::weather::Weather>();
-        weather.auto = false;
-        weather.target = crate::weather::WeatherKind::Clear;
-        weather.cloud_cover = 0.18;
-        weather.precipitation = 0.0;
-        weather.storm = 0.0;
-        weather.snow = 0.0;
-    }
+    {}
     world.resource_mut::<crate::clock::SimClock>().minute_of_day = pose.minute as f64;
     if !entered {
         let mut state = world.resource_mut::<TreeCaptureState>();

@@ -576,13 +576,6 @@ fn storefront_capture(world: &mut World) {
         let mut clock = world.resource_mut::<crate::clock::SimClock>();
         clock.minute_of_day = 12.0 * 60.0;
         clock.playing = false;
-        let mut weather = world.resource_mut::<crate::weather::Weather>();
-        weather.auto = false;
-        weather.target = crate::weather::WeatherKind::Clear;
-        weather.cloud_cover = 0.18;
-        weather.precipitation = 0.0;
-        weather.storm = 0.0;
-        weather.snow = 0.0;
     }
     let (kind, instance, name) = CAPTURE_KINDS[index];
     if !entered {
@@ -658,13 +651,6 @@ fn storefront_capture(world: &mut World) {
         {
             let mut clock = world.resource_mut::<crate::clock::SimClock>();
             clock.minute_of_day = 12.0 * 60.0;
-            let mut weather = world.resource_mut::<crate::weather::Weather>();
-            weather.auto = false;
-            weather.target = crate::weather::WeatherKind::Clear;
-            weather.cloud_cover = 0.18;
-            weather.precipitation = 0.0;
-            weather.storm = 0.0;
-            weather.snow = 0.0;
         }
         let mut state = world.resource_mut::<StorefrontCaptureState>();
         state.chosen = vec![placement];

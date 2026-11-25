@@ -124,7 +124,7 @@ impl Plugin for GeologyPlugin {
                     murk_capture,
                 ),
             )
-            .add_systems(PostUpdate, (clamp_camera, murk_update, hide_precip));
+            .add_systems(PostUpdate, (clamp_camera, murk_update));
     }
 }
 
@@ -187,38 +187,6 @@ fn murk_update(
         } else {
             Color::NONE
         };
-    }
-}
-
-fn hide_precip(
-    mut commands: Commands,
-    mut weather: ResMut<Weather>,
-    mut motion: Option<ResMut<crate::motion::MotionState>>,
-    precip: Query<Entity, With<crate::weather::PrecipVolume>>,
-    fog_banks: Query<Entity, With<crate::environment::FogBank>>,
-    speed_lines: Query<Entity, With<crate::motion::SpeedLines>>,
-) {
-    if !s2_enabled() {
-        return;
-    }
-    weather.auto = false;
-    weather.precipitation = 0.0;
-    weather.snow = 0.0;
-    weather.storm = 0.0;
-    if let Some(motion) = motion.as_mut() {
-        motion.intensity = 0.0;
-        motion.mach = 0.0;
-        motion.velocity = Vec3::ZERO;
-        motion.speed = 0.0;
-    }
-    for entity in &precip {
-        commands.entity(entity).despawn();
-    }
-    for entity in &fog_banks {
-        commands.entity(entity).despawn();
-    }
-    for entity in &speed_lines {
-        commands.entity(entity).despawn();
     }
 }
 
@@ -1161,23 +1129,11 @@ fn geology_stream(
     real_time: Res<Time<bevy::time::Real>>,
     camera: Query<&Transform, With<FlyCamera>>,
     mut text: Query<&mut Text, With<S2Text>>,
-    mut precip: Query<&mut Visibility, With<crate::weather::PrecipVolume>>,
-    mut motion: Option<ResMut<crate::motion::MotionState>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut ticks: Local<u32>,
     trees: Option<Res<crate::trees::Trees>>,
     staged: Option<Res<crate::camera_authority::StagedPose>>,
 ) {
-    if let Some(motion) = motion.as_mut() {
-        motion.velocity = Vec3::ZERO;
-        motion.speed = 0.0;
-        motion.mach = 0.0;
-        motion.intensity = 0.0;
-        motion.boom_age = 10.0;
-    }
-    for mut visibility in &mut precip {
-        *visibility = Visibility::Hidden;
-    }
     let Some(state) = state.as_mut() else {
         return;
     };
@@ -2532,13 +2488,6 @@ fn district_capture(world: &mut World) {
     {
         let mut clock = world.resource_mut::<SimClock>();
         clock.minute_of_day = 12.0 * 60.0;
-        let mut weather = world.resource_mut::<Weather>();
-        weather.auto = false;
-        weather.target = WeatherKind::Clear;
-        weather.cloud_cover = 0.18;
-        weather.precipitation = 0.0;
-        weather.storm = 0.0;
-        weather.snow = 0.0;
     }
     let (name, eye, look) = POSES[index];
     let (ground, look_ground) = {
@@ -3118,7 +3067,6 @@ fn seattle_boot_camera(
     mut camera: Query<(&mut Transform, &mut FlyCamera)>,
     geology: Option<Res<Geology>>,
     mut clock: ResMut<SimClock>,
-    mut weather: ResMut<Weather>,
 ) {
     let boot = std::env::var_os("SEATTLE_BOOT").is_some();
     let traffic_hour = std::env::var("TRAFFIC_HOUR")
@@ -3140,12 +3088,8 @@ fn seattle_boot_camera(
             .and_then(|value| value.parse::<f64>().ok())
             .map(|hour| hour * 60.0)
             .unwrap_or(12.0 * 60.0);
-        weather.auto = false;
-        weather.target = WeatherKind::Clear;
-        weather.cloud_cover = 0.18;
-        weather.precipitation = 0.0;
-        weather.storm = 0.0;
-        weather.snow = 0.0;
+        // Nominal weather only: the capture-sun override is gone. A sunbreak
+        // capture is allowed and labelled; a forced clear sky is not.
         if let Ok((mut transform, mut fly)) = camera.single_mut() {
             // Audit override: SEATTLE_BOOT_AT / SEATTLE_BOOT_LOOK take
             // pack-local x,y,z so a far partition can be booted without a
@@ -3195,7 +3139,7 @@ fn seattle_boot_camera(
             fly.pitch = d.y.asin();
             transform.rotation = Quat::from_rotation_y(fly.yaw) * Quat::from_rotation_x(fly.pitch);
         }
-        info!("SEATTLE BOOT: camera at Westlake seam, daytime clear");
+        info!("SEATTLE BOOT: camera at Westlake seam, nominal weather");
         *done = 1;
         return;
     }

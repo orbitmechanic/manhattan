@@ -231,8 +231,13 @@ pub fn moon_tint(burning_buildings: usize) -> Vec3 {
 }
 
 /// Direct sun attenuation under cloud: overcast flattens and dims sunlight.
+/// Direct sun under a cloud lid. Overcast is the nominal Seattle state, so the
+/// curve is steep: at 0.82 cover the sun is ~5 % (the deck, not a dimmer), while
+/// a sunbreak at 0.26 keeps ~58 % and a clear sky ~86 %. Shadows therefore
+/// exist only when the sky actually opens.
 pub fn overcast_direct_factor(cover: f32, storm: f32) -> f32 {
-    (1.0 - 0.80 * cover.clamp(0.0, 1.0) - 0.14 * storm.clamp(0.0, 1.0)).clamp(0.04, 1.0)
+    let lid = (1.0 - 0.96 * cover.clamp(0.0, 1.0)).max(0.0);
+    (lid.powf(1.9) - 0.10 * storm.clamp(0.0, 1.0)).clamp(0.02, 1.0)
 }
 
 /// Deck altitude for a given overcast amount: low enough to swallow the top

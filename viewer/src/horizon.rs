@@ -328,15 +328,23 @@ fn horizon_capture(
     if state.entered == 0.0 {
         state.entered = elapsed;
         clock.minute_of_day = pose.minute as f64;
+        // Every horizon pose renders in a real weather state. The open-sky
+        // poses take a SUNBREAK (labelled), never a forced clear noon.
         weather.auto = false;
         if pose.overcast {
-            weather.target = WeatherKind::Overcast;
-            weather.cloud_cover = 0.88;
-            weather.precipitation = 0.0;
+            weather.force(WeatherKind::Overcast);
         } else {
-            weather.target = WeatherKind::Fair;
-            weather.cloud_cover = 0.30;
+            weather.force(WeatherKind::Sunbreak);
         }
+        info!(
+            "HORIZON pose={} weather={} (labelled)",
+            pose.name,
+            if pose.overcast {
+                "overcast"
+            } else {
+                "sunbreak"
+            }
+        );
         if let Ok((mut transform, mut projection)) = camera.single_mut() {
             let base = Vec3::new(HORIZON_WORLD_OFFSET + pose.x, pose.y, pose.z);
             transform.translation = base;

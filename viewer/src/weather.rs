@@ -28,19 +28,17 @@ pub enum WeatherKind {
     Clear,
     Fair,
     Overcast,
+    Drizzle,
     Rain,
     Storm,
     Snow,
+    Sunbreak,
 }
 
 impl WeatherKind {
-    pub const CYCLE: [Self; 5] = [
-        Self::Clear,
-        Self::Fair,
-        Self::Overcast,
-        Self::Rain,
-        Self::Storm,
-    ];
+    /// The manual order (V key) walks the Seattle year: the lid, then the
+    /// damp, then the wet, then the one window of sun, then back under.
+    pub const CYCLE: [Self; 4] = [Self::Overcast, Self::Drizzle, Self::Rain, Self::Sunbreak];
     pub const WINTER_CYCLE: [Self; 5] = [
         Self::Clear,
         Self::Fair,
@@ -54,9 +52,11 @@ impl WeatherKind {
             Self::Clear => "clear",
             Self::Fair => "fair",
             Self::Overcast => "overcast",
+            Self::Drizzle => "drizzle",
             Self::Rain => "rain",
             Self::Storm => "thunderstorm",
             Self::Snow => "snow",
+            Self::Sunbreak => "sunbreak",
         }
     }
 
@@ -65,7 +65,9 @@ impl WeatherKind {
             "clear" => Some(Self::Clear),
             "fair" => Some(Self::Fair),
             "overcast" | "cloudy" => Some(Self::Overcast),
+            "drizzle" | "damp" => Some(Self::Drizzle),
             "rain" | "rainy" => Some(Self::Rain),
+            "sunbreak" | "sun" => Some(Self::Sunbreak),
             "storm" | "thunder" | "thunderstorm" => Some(Self::Storm),
             "snow" | "snowy" => Some(Self::Snow),
             _ => None,
@@ -74,18 +76,22 @@ impl WeatherKind {
 
     fn cloud_target(self) -> f32 {
         match self {
-            Self::Clear => 0.05,
-            Self::Fair => 0.30,
-            Self::Overcast => 0.72,
-            Self::Rain => 0.86,
-            Self::Storm => 0.96,
+            Self::Clear => 0.04,
+            Self::Fair => 0.26,
+            Self::Overcast => 0.82,
+            Self::Drizzle => 0.86,
+            Self::Rain => 0.90,
+            Self::Storm => 0.97,
             Self::Snow => 0.90,
+            // The lid opens: enough blue for the sun to throw a real shadow.
+            Self::Sunbreak => 0.26,
         }
     }
 
     fn precip_target(self) -> f32 {
         match self {
-            Self::Clear | Self::Fair | Self::Overcast => 0.0,
+            Self::Clear | Self::Fair | Self::Overcast | Self::Sunbreak => 0.0,
+            Self::Drizzle => 0.30,
             Self::Rain => 0.65,
             Self::Storm => 1.0,
             Self::Snow => 0.78,
@@ -104,8 +110,10 @@ impl WeatherKind {
     fn wind_target(self) -> f32 {
         match self {
             Self::Clear => 8.0,
-            Self::Fair => 14.0,
-            Self::Overcast => 20.0,
+            Self::Fair => 12.0,
+            Self::Sunbreak => 10.0,
+            Self::Overcast => 18.0,
+            Self::Drizzle => 20.0,
             Self::Rain => 27.0,
             Self::Storm => 55.0,
             Self::Snow => 21.0,
@@ -129,6 +137,12 @@ pub struct Weather {
     /// Seconds until the next automatic front, when `auto` is set.
     pub change_timer: f32,
     pub auto: bool,
+    /// Day-of-year the RNG was seeded from; the schedule is deterministic per
+    /// day cycle, so two runs on the same date see the same fronts.
+    seed_day: u32,
+    /// 0..1 rain-soaked ground state (smoothed precipitation); the fire round
+    /// will read it for suppression, the wetness pass will read it for albedo.
+    pub wetness: f32,
     /// Set when a preset asks for a fixed temperature (for example snow in
     /// July); the normal seasonal curve is then left alone.
     manual_temperature: bool,
@@ -141,8 +155,8 @@ pub struct Weather {
 impl Default for Weather {
     fn default() -> Self {
         Self {
-            target: WeatherKind::Fair,
-            cloud_cover: 0.30,
+            target: WeatherKind::Overcast,
+            cloud_cover: 0.82,
             precipitation: 0.0,
             storm: 0.0,
             snow: 0.0,
@@ -150,8 +164,10 @@ impl Default for Weather {
             wind_kmh: 14.0,
             temperature_c: seasonal_temperature(Date::new(2026, 6, 21), 12.0 * 60.0),
             flash: 0.0,
-            change_timer: 150.0,
+            change_timer: 240.0,
             auto: true,
+            seed_day: 0,
+            wetness: 0.0,
             manual_temperature: false,
             elapsed: 0.0,
             wind_angle: 28.0_f32.to_radians(),
@@ -166,8 +182,10 @@ impl Weather {
     pub fn from_preset(preset: Option<&str>, clock: &SimClock) -> Self {
         let mut weather = Self {
             temperature_c: seasonal_temperature(clock.date, clock.minute_of_day),
+            rng: 0x51A7_5EED,
             ..Default::default()
         };
+        weather.seed_for(clock.date);
         if let Some(kind) = preset.and_then(WeatherKind::from_name) {
             weather.auto = false;
             weather.force(kind);
@@ -203,7 +221,7 @@ impl Weather {
             .position(|kind| *kind == self.target)
             .unwrap_or(0);
         self.target = order[(index + 1) % order.len()];
-        self.change_timer = 210.0;
+        self.change_timer = self.duration_for(self.target);
     }
 
     pub fn summary(&self) -> String {
@@ -217,6 +235,14 @@ impl Weather {
         )
     }
 
+    /// Seed the front schedule from a date, so the day's weather is a property
+    /// of the day, not of the session.
+    pub fn seed_for(&mut self, date: Date) {
+        let day = date.day_of_year();
+        self.seed_day = day;
+        self.rng = 0x51A7_5EED ^ (day.wrapping_mul(0x9E37_79B9)).rotate_left(7);
+    }
+
     fn next_rand(&mut self) -> f32 {
         let mut x = self.rng;
         x ^= x << 13;
@@ -226,30 +252,105 @@ impl Weather {
         (x >> 8) as f32 / 16_777_216.0
     }
 
+    /// Seattle-credible transitions: the lid dominates, the damp follows it,
+    /// rain is common, and a real sunbreak is a short, rare window. Snow only
+    /// exists below freezing.
     fn pick_next(&mut self) -> WeatherKind {
         let r = self.next_rand();
-        if self.temperature_c < 2.0 {
-            if r < 0.22 {
-                WeatherKind::Clear
-            } else if r < 0.52 {
-                WeatherKind::Fair
-            } else if r < 0.70 {
+        let cold = self.temperature_c < 2.0;
+        if cold {
+            return if r < 0.42 {
                 WeatherKind::Overcast
-            } else if r < 0.88 {
+            } else if r < 0.58 {
                 WeatherKind::Snow
+            } else if r < 0.70 {
+                WeatherKind::Drizzle
+            } else if r < 0.86 {
+                WeatherKind::Sunbreak
+            } else if r < 0.94 {
+                WeatherKind::Rain
             } else {
                 WeatherKind::Storm
+            };
+        }
+        match self.target {
+            // The lid stays shut most of the time; the damp slides in, and
+            // every so often the cloud deck tears open for a few minutes.
+            WeatherKind::Overcast | WeatherKind::Drizzle => {
+                if r < 0.46 {
+                    WeatherKind::Overcast
+                } else if r < 0.68 {
+                    WeatherKind::Drizzle
+                } else if r < 0.86 {
+                    WeatherKind::Rain
+                } else if r < 0.97 {
+                    WeatherKind::Sunbreak
+                } else {
+                    WeatherKind::Storm
+                }
             }
-        } else if r < 0.26 {
-            WeatherKind::Clear
-        } else if r < 0.58 {
-            WeatherKind::Fair
-        } else if r < 0.74 {
-            WeatherKind::Overcast
-        } else if r < 0.90 {
-            WeatherKind::Rain
-        } else {
-            WeatherKind::Storm
+            WeatherKind::Rain | WeatherKind::Storm => {
+                if r < 0.34 {
+                    WeatherKind::Overcast
+                } else if r < 0.62 {
+                    WeatherKind::Drizzle
+                } else if r < 0.82 {
+                    WeatherKind::Rain
+                } else if r < 0.90 {
+                    WeatherKind::Sunbreak
+                } else {
+                    WeatherKind::Storm
+                }
+            }
+            // The window closes: back under the lid.
+            WeatherKind::Sunbreak => {
+                if r < 0.84 {
+                    WeatherKind::Overcast
+                } else {
+                    WeatherKind::Clear
+                }
+            }
+            WeatherKind::Clear => {
+                if r < 0.52 {
+                    WeatherKind::Overcast
+                } else if r < 0.74 {
+                    WeatherKind::Sunbreak
+                } else {
+                    WeatherKind::Drizzle
+                }
+            }
+            WeatherKind::Fair => {
+                if r < 0.50 {
+                    WeatherKind::Overcast
+                } else if r < 0.78 {
+                    WeatherKind::Sunbreak
+                } else {
+                    WeatherKind::Drizzle
+                }
+            }
+            WeatherKind::Snow => {
+                if r < 0.55 {
+                    WeatherKind::Overcast
+                } else {
+                    WeatherKind::Snow
+                }
+            }
+        }
+    }
+
+    /// Minutes-scale duration of a front. Overcast runs long; a sunbreak is a
+    /// window, not a season.
+    fn duration_for(&mut self, kind: WeatherKind) -> f32 {
+        let jitter = 0.75 + 0.5 * self.next_rand();
+        match kind {
+            WeatherKind::Overcast => 180.0 * jitter,
+            WeatherKind::Drizzle => 150.0 * jitter,
+            WeatherKind::Rain => 140.0 * jitter,
+            WeatherKind::Storm => 90.0 * jitter,
+            WeatherKind::Snow => 150.0 * jitter,
+            WeatherKind::Sunbreak => 55.0 * (0.8 + 0.4 * self.next_rand()),
+            WeatherKind::Clear => 120.0 * jitter,
+            WeatherKind::Fair => 150.0 * jitter,
         }
     }
 }
@@ -274,8 +375,10 @@ pub fn update_weather(time: Res<Time>, clock: Res<SimClock>, mut weather: ResMut
         let base = seasonal_temperature(clock.date, clock.minute_of_day);
         let cool = match weather.target {
             WeatherKind::Clear => 0.0,
+            WeatherKind::Sunbreak => 0.5,
             WeatherKind::Fair => -0.5,
             WeatherKind::Overcast => -1.5,
+            WeatherKind::Drizzle => -2.0,
             WeatherKind::Rain => -3.0,
             WeatherKind::Storm => -5.0,
             WeatherKind::Snow => -4.0,
@@ -283,11 +386,17 @@ pub fn update_weather(time: Res<Time>, clock: Res<SimClock>, mut weather: ResMut
         weather.temperature_c = approach(weather.temperature_c, base + cool, dt, 24.0);
     }
 
+    // The schedule belongs to the DAY: cross midnight and the front lottery is
+    // re-seeded, so a saved date always opens under the same sky.
+    if clock.date.day_of_year() != weather.seed_day {
+        weather.seed_for(clock.date);
+    }
     if weather.auto {
         weather.change_timer -= dt;
         if weather.change_timer <= 0.0 {
-            weather.target = weather.pick_next();
-            weather.change_timer = 150.0 + weather.next_rand() * 170.0;
+            let next = weather.pick_next();
+            weather.target = next;
+            weather.change_timer = weather.duration_for(next);
         }
     }
 
@@ -308,6 +417,9 @@ pub fn update_weather(time: Res<Time>, clock: Res<SimClock>, mut weather: ResMut
     weather.precipitation = approach(weather.precipitation, precip_target, dt, 11.0);
     weather.storm = approach(weather.storm, target.storm_target(), dt, 22.0);
     weather.snow = approach(weather.snow, snow_target, dt, 14.0);
+    // Ground soak lags the rain and dries slowly; exposed as a field so the
+    // fire round can suppress and the wetness pass can darken.
+    weather.wetness = approach(weather.wetness, weather.precipitation, dt, 25.0);
 
     // Wind slowly veers and gusts; the same value slants the precipitation
     // and drifts the cloud shader.
@@ -748,10 +860,65 @@ mod tests {
     }
 
     #[test]
-    fn cycling_moves_to_the_next_front() {
+    fn cycling_walks_the_seattle_year() {
         let mut weather = Weather::default();
-        weather.force(WeatherKind::Clear);
+        weather.force(WeatherKind::Overcast);
         weather.cycle();
-        assert_eq!(weather.target, WeatherKind::Fair);
+        assert_eq!(weather.target, WeatherKind::Drizzle);
+        weather.cycle();
+        assert_eq!(weather.target, WeatherKind::Rain);
+        weather.cycle();
+        assert_eq!(weather.target, WeatherKind::Sunbreak);
+        weather.cycle();
+        assert_eq!(weather.target, WeatherKind::Overcast);
+    }
+
+    #[test]
+    fn overcast_is_the_nominal_state() {
+        let weather = Weather::default();
+        assert_eq!(weather.target, WeatherKind::Overcast);
+        assert!(
+            weather.cloud_cover > 0.75,
+            "nominal lid was open: {}",
+            weather.cloud_cover
+        );
+        assert_eq!(weather.precipitation, 0.0);
+    }
+
+    #[test]
+    fn the_front_schedule_is_seeded_by_the_day() {
+        let mut a = Weather::default();
+        let mut b = Weather::default();
+        a.seed_for(Date::new(2026, 3, 14));
+        b.seed_for(Date::new(2026, 3, 14));
+        a.force(WeatherKind::Overcast);
+        b.force(WeatherKind::Overcast);
+        for _ in 0..24 {
+            let next_a = a.pick_next();
+            let next_b = b.pick_next();
+            assert_eq!(next_a, next_b, "same day must draw the same fronts");
+            a.target = next_a;
+            b.target = next_b;
+        }
+        let mut c = Weather::default();
+        c.seed_for(Date::new(2026, 3, 15));
+        c.force(WeatherKind::Overcast);
+        c.pick_next();
+        // A different day may coincidentally agree on one draw; over a run it
+        // must diverge somewhere.
+        let mut d = Weather::default();
+        d.seed_for(Date::new(2026, 3, 14));
+        d.force(WeatherKind::Overcast);
+        let mut divergent = false;
+        for _ in 0..24 {
+            if c.pick_next() != d.pick_next() {
+                divergent = true;
+                break;
+            }
+        }
+        assert!(
+            divergent,
+            "two different days shared a whole front schedule"
+        );
     }
 }

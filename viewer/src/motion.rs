@@ -129,10 +129,19 @@ pub struct SpeedLines {
 
 pub fn update_motion_state(
     time: Res<Time>,
-    camera: Single<&Transform, With<FlyCamera>>,
+    camera: Query<&Transform, With<FlyCamera>>,
     mut motion: ResMut<MotionState>,
     mut previous: Local<Option<Vec3>>,
 ) {
+    let Ok(camera) = camera.single() else {
+        if std::env::var_os("SONIC_TRACE").is_some() {
+            info!(
+                "MOTION: camera query not single (n={})",
+                camera.iter().count()
+            );
+        }
+        return;
+    };
     let position = camera.translation;
     let Some(last) = *previous else {
         *previous = Some(position);
@@ -140,6 +149,7 @@ pub fn update_motion_state(
     };
     *previous = Some(position);
     let dt = time.delta_secs().max(1e-4);
+
     let velocity = (position - last) / dt;
     let acceleration = (velocity - motion.velocity) / dt;
     motion.velocity = velocity;
@@ -273,6 +283,25 @@ pub fn update_speed_lines(
     }
 }
 
+/// `SEATTLE_DRIVE_SPEED=<m/s>`: hold the stick forward at a fixed speed. The
+/// harness cannot press keys, so this is the only way to measure what the
+/// player's hand does to the speed-line overlay (MotionState reads real frame
+/// displacement, so a teleport would read zero).
+fn drive_instrument(time: Res<Time>, mut camera: Query<&mut Transform, With<FlyCamera>>) {
+    let Some(speed) = std::env::var("SEATTLE_DRIVE_SPEED")
+        .ok()
+        .and_then(|value| value.parse::<f32>().ok())
+    else {
+        return;
+    };
+    let Ok(mut transform) = camera.single_mut() else {
+        return;
+    };
+    let forward = transform.rotation * Vec3::NEG_Z;
+    let heading = Vec3::new(forward.x, 0.0, forward.z).normalize_or_zero();
+    transform.translation += heading * speed * time.delta_secs();
+}
+
 pub struct MotionPlugin;
 
 impl Plugin for MotionPlugin {
@@ -283,7 +312,8 @@ impl Plugin for MotionPlugin {
             .add_systems(
                 Update,
                 (
-                    update_motion_state.after(fly_camera_system),
+                    drive_instrument.after(fly_camera_system),
+                    update_motion_state.after(drive_instrument),
                     apply_accessory_visibility.after(update_motion_state),
                     update_speed_lines.after(update_motion_state),
                 ),

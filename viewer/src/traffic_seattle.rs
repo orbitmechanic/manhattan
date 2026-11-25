@@ -663,13 +663,8 @@ fn traffic_capture(world: &mut World) {
         } else {
             Vec3::new(-0.45, -0.75, -0.35).normalize()
         };
-        let rotation = Quat::from_rotation_arc(Vec3::NEG_Z, direction);
-        let mut lights = world.query::<(&mut DirectionalLight, &mut Transform)>();
-        for (mut light, mut transform) in lights.iter_mut(world) {
-            light.illuminance = 26_000.0;
-            light.color = Color::srgb(1.0, 0.97, 0.92);
-            transform.rotation = rotation;
-        }
+        // No capture key light: nominal weather owns the lighting now.
+        let _ = direction;
     }
     let (name, hour, eye, look) = POSES[index];
     if !entered || hour_state != hour {
@@ -704,13 +699,6 @@ fn traffic_capture(world: &mut World) {
             let mut clock = world.resource_mut::<SimClock>();
             clock.minute_of_day = hour as f64 * 60.0;
             clock.playing = false;
-            let mut weather = world.resource_mut::<crate::weather::Weather>();
-            weather.auto = false;
-            weather.target = crate::weather::WeatherKind::Clear;
-            weather.cloud_cover = 0.18;
-            weather.precipitation = 0.0;
-            weather.storm = 0.0;
-            weather.snow = 0.0;
         }
         if index == 3 && state_has_am(world) {
             // Graveyard reuses the AM eye exactly: same street, vacant.

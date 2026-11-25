@@ -2381,3 +2381,65 @@ facades (the window band and mip chain mask the brick period), so the seeded per
 
 **CodeGraph:** refreshed at session start — 25 projects, 566 files, 0 failures; verdict fresh at start, edits
 since this refresh are in this commit. 171 tests green, clippy clean, boot clean (no asset errors).
+
+## Iteration 90 — Seattle sky (seattle-sky1)
+
+**The lighting model is inverted: overcast is the nominal state.** `Weather::default()` opens under the lid
+(cover 0.82), the front schedule is seeded per day-of-year (`seed_for`), and the states are Seattle-credible:
+overcast and drizzle dominate, rain is common, a **sunbreak** is a short window (40–90 s) picked at the back of
+the deck, and a clear sky is rare. Manual order (V): overcast → drizzle → rain → sunbreak → overcast. The HUD
+already discloses weather, cloud %, precip %, wind and the clock; `WETNESS` ships as a smoothed field
+(`Weather.wetness`, max(0,1)) for the fire-suppression round and a future albedo pass.
+
+**Lighting model.** Direct sun is `(1 - 0.96·cover)^1.9` — ~5 % under the nominal lid, ~58 % in a sunbreak,
+~86 % clear — so shadows exist only when the sky actually opens. The diffuse dome carries the scene: ambient
+brightness rises to ~2 700 under full cover (bright, flat, cool-neutral, directionless), the sky deck is a pale
+grey, and visibility stays long until rain takes it. Exposure compensation is the point: marine overcast is
+bright, not dark.
+
+| A/B, same camera, Pike Place | mean RGB | differing pixels |
+|---|---|---:|
+| overcast (nominal) | 76.8 / 84.6 / 90.8 | — |
+| sunbreak (`--weather sunbreak`) | 109.5 / 107.0 / 96.5 | **76.3 %** |
+
+`captures/sky_overcast.png` vs `captures/sky_sunbreak.png`; street-level cast shadow in
+`captures/sunbreak_shadows.png`. The A/B is committed as the lighting pair — the sun is the special effect.
+
+**Rain restored and umbrellas shipped.** The precipitation volume, fog banks and the speed-line overlay were
+being **despawned every frame** by the legacy `hide_precip` system (Seattle S2 profile), and the S2 readout
+zeroed `MotionState` every frame — that is why rain never appeared in town and why the player saw no speed lines
+at 650. Both are deleted. Rain now falls in the camera bubble, slanted by the existing per-neighbourhood wind,
+intensity from the state; `UMBRELLAS open count=…` is logged on every flip, and walkers carry a seeded muted
+canopy (navy/forest/oxblood/charcoal) that stows when the rain stops. Evidence: `captures/rain_umbrellas.png`
+(walker + umbrella + streaks over masonry, nominal weather), `captures/rain_cruise.png`, `captures/night_rain.png`
+(emissives still cut through the wet gloom).
+
+**Rain sound.** The existing loop is tied to intensity: rain ≤ 0.12 linear, ambient 0.16, wind rush 0.02 +
+0.32·sonic, thunder 0.60 peak. No new bus; boom/speed cues unchanged.
+
+**Capture-sun-override DELETED (grep-proof).** Removed: the boot's forced clear sky, the pedestrian and traffic
+capture's 26 000 lx key light, the storefront capture's forced clear sky (both sites), the trees and district
+capture overrides. Horizon poses now force a *labelled* real state (`HORIZON pose=… weather=sunbreak|overcast`).
+The only remaining clear-sky writer is the `MANHATTAN_PERF_OVERCAST` perf probe, which is a measurement harness,
+not a capture.
+
+**Speed lines — verdict by instrument.** `SONIC TRACE speed=650.0 mach=1.90 … speed_lines=ACTIVE threshold=300`
+under a held-stick drive (`SEATTLE_DRIVE_SPEED=650`), and the overlay renders: `captures/speed_lines_650.png`.
+The bug was never the shader: the entity was despawned and the motion state zeroed each frame. Debt closed by
+fix; the player's next 650 flight is still the confirmation.
+
+**p99 watch.** Rain and dry runs, same tree:
+
+| regime | rain avg / p99 | dry avg / p99 |
+|---|---:|---:|
+| 30 m/s | 56.7 / 82.6 | 57.6 / 82.9 |
+| 100 m/s | 60.1 / 85.1 | 55.4 / 80.1 |
+| 650 m/s | **65.9 / 77.5** | **64.8 / 79.3** |
+
+Rain costs nothing measurable on this budget (one cylinder, shader streaks). The p99 tail is chunk streaming and
+the sector-grid rebuild (≤1.8 ms, only on collider changes); the 15 m/s regime's 700–800 ms p99 is first-chunk
+startup, not flight. Structural deferred: streaming spike smoothing (`stream-p99-smoothing`).
+
+**Not shipped this round:** wet-ground darkening (the `/wetness` field ships, the albedo pass does not), snow
+(filed), marine fog layer (optional stretch). 173 tests green, clippy clean, boot clean; CodeGraph refreshed at
+session start (25 projects, 567 files, 0 failures).

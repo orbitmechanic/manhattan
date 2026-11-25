@@ -382,7 +382,13 @@ pub fn expected_walkers(
 pub struct PedAssets {
     mesh: Handle<Mesh>,
     tinted: Vec<Handle<StandardMaterial>>,
+    umbrella: Handle<Mesh>,
+    umbrella_tinted: Vec<Handle<StandardMaterial>>,
 }
+
+/// Marker on the umbrella child of a walker; toggled by weather.
+#[derive(Component)]
+pub struct Umbrella;
 
 #[derive(Resource, Default)]
 pub struct Pedestrians {
@@ -409,7 +415,17 @@ impl Plugin for PedestriansPlugin {
             .init_resource::<ParkField>()
             .add_systems(PostStartup, build_parks)
             .add_systems(Startup, setup_pedestrians)
-            .add_systems(Update, (ped_stream, walk_pedestrians, ped_capture));
+            .add_systems(
+                Update,
+                (
+                    ped_stream,
+                    walk_pedestrians,
+                    update_umbrellas,
+                    walker_dump,
+                    rain_capture,
+                    ped_capture,
+                ),
+            );
     }
 }
 
@@ -446,6 +462,65 @@ fn build_parks(
             gas.map(|site| (site.x, site.z, site.strength))
         );
     }
+}
+
+/// One umbrella: a shallow canopy over a thin stem, held to the walker's
+/// right. Built once and shared; the walker parent supplies the transform, so
+/// the umbrella follows the walk and is hidden by the accessory cut at speed.
+fn umbrella_mesh() -> Mesh {
+    let mut positions: Vec<[f32; 3]> = Vec::new();
+    let mut normals: Vec<[f32; 3]> = Vec::new();
+    let mut indices: Vec<u32> = Vec::new();
+    let rim = 0.55_f32;
+    let rim_y = 1.02_f32;
+    let apex_y = 1.26_f32;
+    let segments = 12;
+    // Canopy: apex at the centre, rim points around it, faces wound downward.
+    positions.push([0.0, apex_y, 0.0]);
+    normals.push([0.0, 1.0, 0.0]);
+    for index in 0..=segments {
+        let angle = index as f32 / segments as f32 * std::f32::consts::TAU;
+        let (sin, cos) = angle.sin_cos();
+        positions.push([cos * rim, rim_y, sin * rim]);
+        normals.push([cos * 0.55, 0.83, sin * 0.55]);
+    }
+    for index in 0..segments as u32 {
+        indices.extend([0, 1 + index, 2 + index]);
+    }
+    // Stem: a thin square from the hand to the canopy underside.
+    let stem = [
+        (-0.016_f32, 0.55_f32, -0.016_f32),
+        (0.016, 0.55, -0.016),
+        (0.016, 0.55, 0.016),
+        (-0.016, 0.55, 0.016),
+        (-0.016, 1.02, -0.016),
+        (0.016, 1.02, -0.016),
+        (0.016, 1.02, 0.016),
+        (-0.016, 1.02, 0.016),
+    ];
+    let base = positions.len() as u32;
+    for corner in stem {
+        positions.push([corner.0, corner.1, corner.2]);
+        normals.push([corner.0.signum(), 0.0, corner.2.signum()]);
+    }
+    for face in [
+        [0u32, 1, 2, 0, 2, 3],
+        [4, 6, 5, 4, 7, 6],
+        [0, 4, 5, 0, 5, 1],
+        [3, 2, 6, 3, 6, 7],
+        [0, 3, 7, 0, 7, 4],
+        [1, 5, 6, 1, 6, 2],
+    ] {
+        indices.extend(face.iter().map(|index| base + index));
+    }
+    let mut mesh = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+    );
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    mesh.insert_indices(Indices::U32(indices));
+    mesh
 }
 
 fn setup_pedestrians(
@@ -498,10 +573,58 @@ fn setup_pedestrians(
     let tinted = (0..3)
         .map(|tint| tint_material(&mut materials, tint))
         .collect();
-    commands.insert_resource(PedAssets { mesh, tinted });
+    // Muted umbrella palette: navy, forest, oxblood, charcoal. One fabric each,
+    // seeded per walker.
+    let umbrella_tinted = [
+        [0.42_f32, 0.47, 0.58],
+        [0.38, 0.50, 0.42],
+        [0.58, 0.32, 0.31],
+        [0.40, 0.40, 0.43],
+    ]
+    .into_iter()
+    .map(|rgb| {
+        materials.add(StandardMaterial {
+            base_color: Color::srgb(rgb[0], rgb[1], rgb[2]),
+            perceptual_roughness: 0.62,
+            metallic: 0.0,
+            double_sided: true,
+            ..default()
+        })
+    })
+    .collect();
+    commands.insert_resource(PedAssets {
+        mesh,
+        tinted,
+        umbrella: meshes.add(umbrella_mesh()),
+        umbrella_tinted,
+    });
     commands.insert_resource(Pedestrians {
         enabled: std::env::var_os("PEDESTRIANS_OFF").is_none(),
         ..default()
+    });
+}
+
+/// Attach a stowed umbrella to a walker. Seeded per walker, so the same street
+/// always shows the same colours when the rain arrives.
+fn attach_umbrella(world: &mut World, walker: Entity, seed: u32) {
+    let (mesh, material) = {
+        let assets = world.resource::<PedAssets>();
+        let pick = (seed >> 3) as usize % assets.umbrella_tinted.len();
+        (
+            assets.umbrella.clone(),
+            assets.umbrella_tinted[pick].clone(),
+        )
+    };
+    world.entity_mut(walker).with_children(|parent| {
+        parent.spawn((
+            Umbrella,
+            Mesh3d(mesh),
+            MeshMaterial3d(material),
+            // Held to the right, canopy above the head.
+            Transform::from_xyz(0.17, 0.0, 0.02),
+            Visibility::Hidden,
+            Name::new("umbrella"),
+        ));
     });
 }
 
@@ -693,6 +816,7 @@ fn spawn_walkers(world: &mut World, node_index: usize) {
                 .resource_mut::<Pedestrians>()
                 .states
                 .insert(entity, state);
+            attach_umbrella(world, entity, seed);
             entities.push(entity);
         }
     }
@@ -729,6 +853,7 @@ fn spawn_walkers(world: &mut World, node_index: usize) {
                     .resource_mut::<Pedestrians>()
                     .states
                     .insert(entity, state);
+                attach_umbrella(world, entity, seed);
                 entities.push(entity);
             }
         }
@@ -738,6 +863,128 @@ fn spawn_walkers(world: &mut World, node_index: usize) {
         entry.extend(entities);
     }
     peds.active = peds.loaded.values().map(Vec::len).sum();
+}
+
+/// Umbrellas open when the rain is actually falling and stow when it stops.
+/// The query only runs on a state change: hidden umbrellas cost no draw calls,
+/// and this is the whole per-frame budget when the sky is dry.
+fn update_umbrellas(
+    weather: Res<crate::weather::Weather>,
+    mut umbrellas: Query<&mut Visibility, With<Umbrella>>,
+    mut last: Local<Option<(bool, usize)>>,
+) {
+    let open = weather.precipitation > 0.06;
+    let count = umbrellas.iter().count();
+    // Re-apply when the rain flips OR when new walkers streamed in with their
+    // umbrellas stowed: a walker spawned mid-storm must open on its first frame.
+    if *last == Some((open, count)) {
+        return;
+    }
+    *last = Some((open, count));
+    for mut visibility in &mut umbrellas {
+        *visibility = if open {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+    }
+    info!(
+        "UMBRELLAS {} count={}",
+        if open { "open" } else { "stowed" },
+        count
+    );
+}
+
+/// `WALKER_DUMP=1`: print a few live walker poses so a capture can be aimed at
+/// real feet instead of guessed coordinates.
+fn walker_dump(
+    time: Res<Time>,
+    dem: Option<Res<crate::geology::Geology>>,
+    peds: Option<Res<Pedestrians>>,
+    mut done: Local<bool>,
+) {
+    if *done || std::env::var_os("WALKER_DUMP").is_none() || time.elapsed_secs() < 9.0 {
+        return;
+    }
+    let (Some(dem), Some(peds)) = (dem, peds) else {
+        return;
+    };
+    *done = true;
+    for (entity, state) in peds.states.iter().take(6) {
+        let (position, _) = walker_pose(state, &dem.dem);
+        info!(
+            "WALKER {entity:?} at ({:.1},{:.1},{:.1}) park={} speed={:.2}",
+            position.x - STREAM_WORLD_OFFSET,
+            position.y,
+            position.z,
+            state.offset_m == 0.0,
+            state.speed
+        );
+    }
+    info!("WALKER total={}", peds.states.len());
+}
+
+/// `RAIN_CAPTURE=1`: stage the camera 6 m from the nearest live walker so the
+/// umbrella evidence is aimed at real feet, not guessed coordinates. Camera
+/// instrumentation only; weather stays nominal.
+fn rain_capture(
+    time: Res<Time>,
+    dem: Option<Res<crate::geology::Geology>>,
+    peds: Option<Res<Pedestrians>>,
+    mut camera: Query<(&mut Transform, &mut FlyCamera)>,
+    mut target: Local<Option<Entity>>,
+) {
+    if std::env::var_os("RAIN_CAPTURE").is_none() || time.elapsed_secs() < 10.0 {
+        return;
+    }
+    let (Some(dem), Some(peds)) = (dem, peds) else {
+        return;
+    };
+    let Ok((mut transform, mut fly)) = camera.single_mut() else {
+        return;
+    };
+    // Lock onto one walker once, then follow the feet: a static stage loses
+    // them at 1.25 m/s before the shutter.
+    let here = transform.translation;
+    // Re-pick whenever the locked walker unloads with its chunk; a stale entity
+    // would freeze the camera on an empty street.
+    let chosen = target
+        .filter(|entity| peds.states.contains_key(entity))
+        .or_else(|| {
+            peds.states
+                .iter()
+                .map(|(entity, state)| (entity, walker_pose(state, &dem.dem).0))
+                .min_by(|a, b| {
+                    a.1.distance(here)
+                        .partial_cmp(&b.1.distance(here))
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                })
+                .map(|(entity, _)| *entity)
+        });
+    let Some(entity) = chosen else {
+        return;
+    };
+    *target = Some(entity);
+    let Some(state) = peds.states.get(&entity) else {
+        return;
+    };
+    let target = walker_pose(state, &dem.dem).0;
+    let offset = Vec3::new(2.4, 1.7, 2.4);
+    transform.translation = target + offset;
+    let look = target + Vec3::Y * 1.0;
+    let d = (look - transform.translation).normalize_or_zero();
+    fly.yaw = (-d.x).atan2(-d.z);
+    fly.pitch = d.y.asin();
+    transform.rotation = Quat::from_rotation_y(fly.yaw) * Quat::from_rotation_x(fly.pitch);
+    info!(
+        "RAIN CAPTURE staged at ({:.1},{:.1},{:.1}) looking at walker ({:.1},{:.1},{:.1})",
+        transform.translation.x - STREAM_WORLD_OFFSET,
+        transform.translation.y,
+        transform.translation.z,
+        target.x - STREAM_WORLD_OFFSET,
+        target.y,
+        target.z
+    );
 }
 
 fn walk_pedestrians(
@@ -938,13 +1185,8 @@ fn ped_capture(world: &mut World) {
         } else {
             Vec3::new(-0.45, -0.75, -0.35).normalize()
         };
-        let rotation = Quat::from_rotation_arc(Vec3::NEG_Z, direction);
-        let mut lights = world.query::<(&mut DirectionalLight, &mut Transform)>();
-        for (mut light, mut transform) in lights.iter_mut(world) {
-            light.illuminance = 26_000.0;
-            light.color = Color::srgb(1.0, 0.97, 0.92);
-            transform.rotation = rotation;
-        }
+        // No capture key light: nominal weather owns the lighting now.
+        let _ = direction;
     }
     if !entered || hour_state != hour {
         if hour_state != hour {
@@ -966,13 +1208,6 @@ fn ped_capture(world: &mut World) {
             let mut clock = world.resource_mut::<SimClock>();
             clock.minute_of_day = hour as f64 * 60.0;
             clock.playing = false;
-            let mut weather = world.resource_mut::<crate::weather::Weather>();
-            weather.auto = false;
-            weather.target = crate::weather::WeatherKind::Clear;
-            weather.cloud_cover = 0.18;
-            weather.precipitation = 0.0;
-            weather.storm = 0.0;
-            weather.snow = 0.0;
         }
         if index == 1 && state_has_am(world) {
             let (eye, look) = state_am(world);
