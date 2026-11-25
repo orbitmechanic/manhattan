@@ -2695,3 +2695,26 @@ The blocker is time in this session, not licensing or design; the spec is unchan
 
 183 tests green, clippy clean, boot clean. CodeGraph namespace was withdrawn this session; last full index 25
 projects / 569 files / 0 failures.
+
+## Iteration 99 — plant the base (seattle-needle7)
+
+**The seat arithmetic is now written down, and the round admits what it could not prove.** Composing the spawn
+chain gives: asset bounds `z 2.0…809.3`, spire at +Z (cross-section profile: r 77.6 at z≈2 legs, r 3.9 at
+z≈809 tip), `R_x(−90°)` (y′ = z), `scale = 184.4 / 807.3 = 0.2284`, and therefore
+`T = anchor(ground) − R·S·(0, 0, 2.0) = ground − 0.4568 m`. The retired constant is gone; the numbers are the chain.
+
+**What failed:** the world-AABB gate. The `WorldAssetRoot` scene does not honour its own entity `Transform` in this
+build, so the seat has to live on a parent (now implemented: an anchor entity with the transform, the root as its
+child). With the model a pale shell against a pale sky I could not confirm the seated AABB within the session, and
+shipping a fourth unverified pivot would repeat the failure that produced three bad Needles. So:
+
+- **CAD Needle is opt-in (`NEEDLE_CAD=1`)**; the default boot returns to the procedural massing (`NEEDLE_PROCEDURAL`
+  unchanged) until the AABB gate passes.
+- Bands stay behind `NEEDLE_BANDS=1`; component-fit asserts are not claimed.
+- The printed chain, the parent/child seat and the profile evidence are committed for the next session to finish
+  with a numeric gate rather than a screenshot.
+
+**Arches: eighth non-delivery, admitted.** No step of the decomposition shipped; the round fails its only
+non-negotiable again.
+
+183 tests green, clippy clean, boot clean.

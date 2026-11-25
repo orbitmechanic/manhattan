@@ -1087,7 +1087,11 @@ fn spawn_landmarks(world: &mut World) {
     // CAD spawn is opt-in this round: the GLB converts, but its scene transform
     // (unit/origin) is not yet verified against the anchor, so the default boot
     // keeps the procedural massing rather than shipping a mis-scaled landmark.
-    let procedural_needle = std::env::var_os("NEEDLE_PROCEDURAL").is_some();
+    // The CAD seat is not yet proven by the world-AABB gate, so the default
+    // boot keeps the procedural massing; the CAD is opt-in until that gate
+    // passes. Shipping an unverified pivot is what produced three bad Needles.
+    let procedural_needle =
+        std::env::var_os("NEEDLE_PROCEDURAL").is_some() || std::env::var_os("NEEDLE_CAD").is_none();
     for (def_index, landmark) in LANDMARKS.iter().enumerate() {
         let mut components = Vec::new();
         let skip_components = landmark.key == "needle" && !procedural_needle;
