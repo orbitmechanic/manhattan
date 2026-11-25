@@ -2653,3 +2653,24 @@ markers`.
 
 **Gauntlet with the standing Needle and lights:** 650 m/s **49.9 ms avg / 68.1 p99** — in band. 183 tests green,
 clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 569 files, 0 failures).
+
+## Iteration 97 — saucer up (seattle-needle5)
+
+**The Needle stands the right way up.** The axis was right and the sign was wrong: with the spire at the model's
+−Z end, `R_x(−90°)` sent it *down* (base-side up). The transform is now `R_x(+90°)` and the base is seated by
+subtracting its 0.47 m lift. The test is semantic, not merely vertical: `the_model_stands_the_right_way_up` asserts
+the spire lands **above** the base and that the wrong sign would not.
+
+**Two-point scale.** Tip **184.4 m** (605 ft) from the accessor height (805.474 units → scale 0.22893), ring
+**158.5 m** (520 ft) as the second point, crown **171 m**, leg restaurant **96 m**; the asserts check both the tip
+height and the ring fraction (0.8596), and boot prints the ladder.
+
+**Needle windows: three authored bands.** The shell is UV-less, so the glazing is bound by **geometry region**, not
+UV projection: ring (158.5 m), crown (171 m) and leg restaurant (96 m) are cylinder bands with a generated
+window-bank texture — dark reflective glass by day, emissive rows at night, swapped on the dusk flag like every
+other window in the city (`needle_band_night`). Bands read as horizontal rings, per the night-stripe law.
+
+**Arches: NOT shipped (sixth deferral).** I did not build them this round either; the round fails its own
+non-negotiable on that item. No further claim is made about them.
+
+**Gauntlet:** 650 m/s **48.1 ms avg / 69.3 p99** — in band. 183 tests green, clippy clean, boot clean.

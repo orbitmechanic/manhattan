@@ -795,6 +795,7 @@ impl Plugin for LandmarksPlugin {
                     landmarks_always,
                     sign_theater,
                     blink_needle_beacon,
+                    needle_band_night,
                 ),
             );
     }
@@ -862,8 +863,13 @@ pub fn blink_needle_beacon(
 
 /// GLB bounds from the conversion receipt (accessor min/max, Z-up, spire at −Z).
 pub const NEEDLE_GLB_HEIGHT: f32 = 805.474;
-/// Real Needle: top of the spire, metres.
-pub const NEEDLE_TARGET_HEIGHT: f32 = 184.0;
+/// Real Needle: top of the spire, metres (605 ft).
+pub const NEEDLE_TARGET_HEIGHT: f32 = 184.4;
+/// Observation deck ring elevation (520 ft), the second point of the scale fit.
+pub const NEEDLE_RING_HEIGHT: f32 = 158.5;
+/// Crown glazing top and the leg restaurant band.
+pub const NEEDLE_CROWN_HEIGHT: f32 = 171.0;
+pub const NEEDLE_RESTAURANT_HEIGHT: f32 = 96.0;
 
 /// The real Needle (player-supplied CAD, tessellated and decimated to ~6k tris)
 /// replaces the procedural massing live. The procedural shells stay in the
@@ -895,9 +901,130 @@ fn spawn_needle_model(world: &mut World, landmark: &LandmarkDef, _components: &[
         Name::new("Space Needle (CAD)"),
     ));
     info!(
-        "NEEDLE: CAD live at ({x:.0},{z:.0}) ground {ground:.1} m; glb_height={NEEDLE_GLB_HEIGHT:.1} scale={scale:.4} -> {NEEDLE_TARGET_HEIGHT:.0} m"
+        "NEEDLE: CAD live at ({x:.0},{z:.0}) ground {ground:.1} m; glb_height={NEEDLE_GLB_HEIGHT:.1} scale={scale:.5} -> tip {NEEDLE_TARGET_HEIGHT:.1} m, ring {NEEDLE_RING_HEIGHT:.1} m"
     );
+    spawn_needle_windows(world, x + STREAM_WORLD_OFFSET, ground, z, scale);
     spawn_needle_lights(world, x + STREAM_WORLD_OFFSET, ground, z);
+}
+
+/// Window bands on the UV-less CAD shell: authored ring overlays at the three
+/// real glazing elevations (observation deck, crown, leg restaurant). Geometry
+/// region, not UV projection: a facade atlas smeared over the whole shell would
+/// be wrong everywhere except the bands, and the bands are what read at cruise.
+fn need_bank_texture(rows: u32) -> Image {
+    let width = 128u32;
+    let height = 32u32;
+    let mut data = vec![0u8; (width * height * 4) as usize];
+    for y in 0..height {
+        for x in 0..width {
+            let index = ((y * width + x) * 4) as usize;
+            let cell = (x * 8 / width) + (y * rows / height) * 8;
+            let lit = !cell.is_multiple_of(3);
+            let warm = !cell.is_multiple_of(5);
+            data[index] = if lit { if warm { 255 } else { 190 } } else { 8 };
+            data[index + 1] = if lit {
+                if warm { 205 } else { 215 }
+            } else {
+                10
+            };
+            data[index + 2] = if lit {
+                if warm { 140 } else { 235 }
+            } else {
+                12
+            };
+            data[index + 3] = 255;
+        }
+    }
+    let mut image = Image::new(
+        bevy::render::render_resource::Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
+        bevy::render::render_resource::TextureDimension::D2,
+        data,
+        bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
+        bevy::asset::RenderAssetUsages::RENDER_WORLD | bevy::asset::RenderAssetUsages::MAIN_WORLD,
+    );
+    image.sampler = bevy::image::ImageSampler::linear();
+    image
+}
+
+#[derive(Component)]
+pub struct NeedleBand {
+    pub glass: Handle<StandardMaterial>,
+    pub lit: Handle<StandardMaterial>,
+}
+
+/// Swap the band materials at dusk: dark reflective glass by day, emissive rows
+/// by night, exactly like every other window in the city.
+pub fn needle_band_night(
+    env: Res<crate::environment::Environment>,
+    bands: Query<(Entity, &NeedleBand, &MeshMaterial3d<StandardMaterial>)>,
+    mut commands: Commands,
+    mut last: Local<Option<bool>>,
+) {
+    let night = env.night || env.daylight < 0.35;
+    if *last == Some(night) {
+        return;
+    }
+    *last = Some(night);
+    for (entity, band, material) in &bands {
+        let wanted = if night {
+            band.lit.clone()
+        } else {
+            band.glass.clone()
+        };
+        if material.0 != wanted {
+            commands.entity(entity).insert(MeshMaterial3d(wanted));
+        }
+    }
+}
+
+fn spawn_needle_windows(world: &mut World, x: f32, ground: f32, z: f32, _scale: f32) {
+    let glass = world
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(StandardMaterial {
+            base_color: Color::srgb(0.05, 0.06, 0.08),
+            metallic: 0.55,
+            perceptual_roughness: 0.12,
+            ..default()
+        });
+    let texture = world
+        .resource_mut::<Assets<Image>>()
+        .add(need_bank_texture(3));
+    let lit = world
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(StandardMaterial {
+            base_color: Color::BLACK,
+            emissive: LinearRgba::rgb(6.0, 4.6, 2.4),
+            emissive_texture: Some(texture),
+            perceptual_roughness: 0.6,
+            unlit: false,
+            ..default()
+        });
+    for (height, radius) in [
+        (NEEDLE_RING_HEIGHT, 12.5_f32),
+        (NEEDLE_CROWN_HEIGHT, 10.0),
+        (NEEDLE_RESTAURANT_HEIGHT, 9.0),
+    ] {
+        let mesh = world
+            .resource_mut::<Assets<Mesh>>()
+            .add(Cylinder::new(radius, 6.0).mesh().resolution(48));
+        world.spawn((
+            NeedleBand {
+                glass: glass.clone(),
+                lit: lit.clone(),
+            },
+            Mesh3d(mesh),
+            MeshMaterial3d(glass.clone()),
+            Transform::from_xyz(x, ground + height, z),
+            Name::new("Needle window band"),
+        ));
+    }
+    info!(
+        "NEEDLE windows: 3 bands at {NEEDLE_RING_HEIGHT:.1}/{NEEDLE_CROWN_HEIGHT:.1}/{NEEDLE_RESTAURANT_HEIGHT:.1} m (ring/crown/restaurant)"
+    );
 }
 
 /// Aviation lights: a blinking red beacon on the spire, steady markers on the
@@ -928,7 +1055,7 @@ fn spawn_needle_lights(world: &mut World, x: f32, ground: f32, z: f32) {
         },
         Mesh3d(mesh.clone()),
         MeshMaterial3d(beacon.clone()),
-        Transform::from_xyz(x, ground + 184.0, z).with_scale(Vec3::splat(2.4)),
+        Transform::from_xyz(x, ground + NEEDLE_TARGET_HEIGHT, z).with_scale(Vec3::splat(2.4)),
         Name::new("Needle beacon"),
     ));
     for index in 0..4 {
@@ -938,7 +1065,7 @@ fn spawn_needle_lights(world: &mut World, x: f32, ground: f32, z: f32) {
             MeshMaterial3d(marker.clone()),
             Transform::from_xyz(
                 x + angle.cos() * 21.0,
-                ground + 158.0,
+                ground + NEEDLE_RING_HEIGHT,
                 z + angle.sin() * 21.0,
             ),
             Name::new("Needle ring light"),
@@ -1827,27 +1954,33 @@ mod needle_scale {
     use super::*;
 
     #[test]
-    fn the_glb_scale_is_the_receipt_math() {
+    fn the_glb_scale_is_the_two_point_fit() {
         let scale = NEEDLE_TARGET_HEIGHT / NEEDLE_GLB_HEIGHT;
-        // 805.474 model units -> 184 m within a centimetre.
-        assert!((NEEDLE_GLB_HEIGHT * scale - 184.0).abs() < 0.01);
-        assert!((scale - 0.22844).abs() < 1e-3, "scale {scale}");
+        // Spire tip at 184.4 m (605 ft) within a centimetre.
+        assert!((NEEDLE_GLB_HEIGHT * scale - 184.4).abs() < 0.01);
+        // Second point: the observation ring sits at 158.5 m (520 ft), which is
+        // 86 % of the tip height; the band overlay is authored at that height.
+        assert!((NEEDLE_RING_HEIGHT / NEEDLE_TARGET_HEIGHT - 0.8596).abs() < 0.001);
+        // Const-evaluated: the crown sits above the ring, the restaurant below.
+        const { assert!(NEEDLE_CROWN_HEIGHT > NEEDLE_RING_HEIGHT) };
+        const { assert!(NEEDLE_RESTAURANT_HEIGHT < NEEDLE_RING_HEIGHT) };
     }
 
     #[test]
-    fn the_model_stands_up() {
-        // Accessor bounds: the long axis is Z, so a -90 deg rotation about X is
-        // the up-right transform (Z -> Y, spire down the negative end).
-        let rotation = Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
-        let up = rotation * Vec3::Z;
+    fn the_model_stands_the_right_way_up() {
+        // SEMANTIC orientation: the spire (z = -805.474) must land ABOVE the
+        // base (z = -2.036). R_x(+90) does that; R_x(-90) inverted the model
+        // (base-side up) and is the bug this test exists to prevent.
+        let rotation = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
+        let tip = rotation * Vec3::new(0.0, 0.0, -NEEDLE_GLB_HEIGHT);
+        let base = rotation * Vec3::new(0.0, 0.0, -2.036);
+        assert!(tip.y > 0.0, "spire went below the origin: {tip}");
         assert!(
-            up.y.abs() > 0.99,
-            "long axis does not land on world up: {up}"
+            base.y > 0.0 && base.y < 10.0,
+            "base not near origin: {base}"
         );
-        let base = rotation * Vec3::new(0.0, 0.0, -805.474);
-        assert!(
-            (base.y + 805.474).abs() < 1.0,
-            "base not below origin: {base}"
-        );
+        assert!(tip.y > base.y, "spire must be above the legs");
+        let wrong = Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2);
+        assert!((wrong * Vec3::new(0.0, 0.0, -NEEDLE_GLB_HEIGHT)).y < 0.0);
     }
 }
