@@ -22,7 +22,7 @@ target = float(args[2]) if len(args) > 2 else 184.0
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.wm.stl_import(filepath=stl_path)
 obj = bpy.context.selected_objects[0]
-obj.rotation_euler = (3.141592653589793 / 2.0, 0.0, 0.0)
+obj.rotation_euler = (-3.141592653589793 / 2.0, 0.0, 0.0)
 bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
 
 # Scale to the real total height, origin at the base.
