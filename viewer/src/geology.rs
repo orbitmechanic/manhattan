@@ -3322,13 +3322,19 @@ fn building_spec(
     };
     let weak_source = matches!(source, "area_heuristic" | "msml_estimate");
     let plausible = building.height_m <= 4.0 + 3.2 * area.sqrt().max(1.0);
-    let demoted = residential && (weak_source || !plausible);
+    // CORE BOUNDARY: settlements where surveyed heights are credible. Cores
+    // keep their real heights; caps govern everywhere else.
+    let core = matches!(
+        district,
+        "Downtown" | "First Hill" | "SODO" | "Bellevue CBD"
+    );
+    let demoted = residential && (weak_source || (!core && !plausible));
     let mut floor_count = if demoted {
         1
     } else {
         (building.height_m / floor_height).round().max(1.0) as u32
     };
-    if residential && !demoted {
+    if residential && !demoted && !core {
         // The carpet gate: Seattle houses are a 1-2 storey carpet. The old
         // three-storey cap still produced flat-topped blocks; two storeys lets
         // every credible house carry a pitched roof.
@@ -3370,7 +3376,7 @@ fn building_spec(
     // storey per 12 m2, and a residential district hosts no building above
     // four storeys. Downtown commercial keeps its slenderness because it has
     // real window rows and is not in a residential district.
-    if residential_district {
+    if residential_district && !core {
         floor_count = floor_count.min((area / 12.0).floor().max(1.0) as u32);
         floor_count = floor_count.min(4);
     }
@@ -3832,8 +3838,7 @@ fn s3_buildings(world: &mut World) {
             // provable, so the merged mesh must not rely on it.
             // Six buckets: three palette variants x two families, so the
             // material's own texture matches every box in the mesh.
-            let mut buckets: [Vec<(Vec3, Vec3, u8, [f32; 4], u32)>; 6] =
-                Default::default();
+            let mut buckets: [Vec<(Vec3, Vec3, u8, [f32; 4], u32)>; 6] = Default::default();
             for entry in far_boxes.drain(..) {
                 let index = (entry.4 % 3) as usize + 3 * entry.2 as usize;
                 buckets[index].push(entry);
@@ -4225,5 +4230,27 @@ mod up_vector {
             }
         }
         assert!(side_faces >= 16, "only {side_faces} side faces checked");
+    }
+}
+
+#[cfg(test)]
+mod gable_binding {
+    use super::*;
+
+    #[test]
+    fn gated_one_storey_box_keeps_its_gable() {
+        // 1 storey = 3 m; the doctrine demands ~100 % gables here.
+        let mesh = proxy_boxes_mesh(&[(
+            Vec3::ZERO,
+            Vec3::new(12.0, 3.0, 10.0),
+            1,
+            [1.0, 1.0, 1.0, 1.0],
+            31,
+        )]);
+        let triangles = mesh.indices().map(|indices| indices.len()).unwrap_or(0) as u32 / 3;
+        assert!(
+            triangles >= 16,
+            "one-storey box lost its gable cap: {triangles} triangles"
+        );
     }
 }

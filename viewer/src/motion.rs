@@ -44,6 +44,11 @@ pub struct MotionState {
     pub accel_g: f32,
     /// Current speed divided by sea-level Mach 1.
     pub mach: f32,
+    /// Held subsonic time, sustained supersonic time and boom cooldown: booms
+    /// are events with hysteresis, never a per-frame state check.
+    pub subsonic_secs: f32,
+    pub sustained_supersonic: f32,
+    pub boom_cooldown: f32,
     /// Seconds since the last upward Mach 1 crossing (10 when idle).
     pub boom_age: f32,
     /// Increments on each upward Mach 1 crossing for one-shot audio.
@@ -61,6 +66,9 @@ impl Default for MotionState {
             acceleration: 0.0,
             accel_g: 0.0,
             mach: 0.0,
+            subsonic_secs: 0.0,
+            sustained_supersonic: 0.0,
+            boom_cooldown: 0.0,
             boom_age: 10.0,
             boom_serial: 0,
             intensity: 0.0,
@@ -148,9 +156,23 @@ pub fn update_motion_state(
     motion.accel_g = (motion.acceleration / 9.80665).min(50.0);
 
     let mach = motion.speed / MACH_1_MPS;
-    if motion.mach < 1.0 && mach >= 1.0 {
+    // Boom discipline: one event per genuine transition. Require 1 s below
+    // Mach 0.95, then 0.25 s sustained above Mach 1, and a 2 s cooldown.
+    motion.boom_cooldown = (motion.boom_cooldown - dt).max(0.0);
+    if mach < 0.95 {
+        motion.subsonic_secs += dt;
+        motion.sustained_supersonic = 0.0;
+    } else if mach >= 1.0 {
+        motion.sustained_supersonic += dt;
+    }
+    if motion.boom_cooldown <= 0.0
+        && motion.subsonic_secs >= 1.0
+        && motion.sustained_supersonic >= 0.25
+    {
         motion.boom_age = 0.0;
         motion.boom_serial = motion.boom_serial.wrapping_add(1);
+        motion.boom_cooldown = 2.0;
+        motion.subsonic_secs = 0.0;
     } else {
         motion.boom_age = (motion.boom_age + dt).min(10.0);
     }

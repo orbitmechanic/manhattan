@@ -149,7 +149,12 @@ RESIDENTIAL_DISTRICTS = {
     "First Hill",
     "Pioneer Square",
     "Pike Place",
+    "Seattle general",
+    "Eastside",
 }
+
+
+CORE_DISTRICTS = {"Downtown", "First Hill", "SODO", "Bellevue CBD"}
 
 
 def governor(record: dict, rule: dict) -> dict:
@@ -157,14 +162,15 @@ def governor(record: dict, rule: dict) -> dict:
     floor_height = 3.0 if residential else 4.0
     floor_count = max(1, round(record["height"] / floor_height))
     demoted = False
+    core = rule.get("_district") in CORE_DISTRICTS
     if residential and not LEGACY:
         area = max(record.get("area", 1.0), 1.0)
         weak = record["source"] in ("area_heuristic", "msml_estimate")
         plausible = record["height"] <= 4.0 + 3.2 * area**0.5
-        if weak or not plausible:
+        if weak or (not core and not plausible):
             floor_count = 1
             demoted = True
-    if residential:
+    if residential and not core:
         floor_count = min(floor_count, 2)
     if not LEGACY and rule.get("_district") in RESIDENTIAL_DISTRICTS:
         area = max(record.get("area", 1.0), 1.0)

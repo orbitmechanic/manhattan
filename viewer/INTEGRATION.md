@@ -2163,3 +2163,29 @@ is closed by construction rather than by test.
 **Standing items.** Speed lines: still no manual-flight frame. `tower-house-frame`: still blocking. Carried:
 sway frames, proxy-night-temperature, tree-sway-shader, roof-pack-bake, up-vector-pack-migration,
 proxy-material-budget. 165 tests green, clippy clean, boot clean.
+
+## Iteration 84 — downtown stands tall (seattle-core1)
+
+**Input continuity audit.** Movement in `fly_camera_system` was already held-state (`keys.pressed` for
+WASD/QE, analog sticks via axis), so the "0.1 s then stop" was not edge-triggered movement. The repeated
+shock-wave cue was the real defect: the boom fired on a bare `mach < 1 → mach >= 1` crossing, and with speed
+jitter around Mach 1 that re-fired several times a second. **Boom discipline codified**: 1 s subsonic
+hysteresis, 0.25 s sustained supersonic, 2 s cooldown — spam is impossible by construction. The speed-line
+overlay reads the same smoothed state, so it no longer strobes.
+
+**Core boundary (Unremarkability gets its edge).** `Downtown`, `First Hill`, `SODO` and `Bellevue CBD` are
+cores: surveyed heights are credible, so the residential cap, the slenderness cap and the
+residential-district commercial caps do not apply (weak-source demotion still does). Restored ≥6-storey
+buildings: **Downtown 381, SODO 1,152, Bellevue CBD 439** (First Hill has none that tall in the pack).
+Every non-core district still caps at **≤4 floors** — veil1's suburban win holds. `captures/skyline_core.png`
+is the Sound-facing cruise profile with the skyline mass restored; `captures/suburban_aerial.png` (Northgate)
+is unchanged.
+
+**Gables binding test.** A standing test constructs a gated one-storey (3 m) residential box and asserts the
+gable cap is present (≥16 triangles), so a future rebuild cannot shave the roof silently. The facades2
+panel-closure test still applies. A per-storey-band shipped-gable table was not produced (the shipped
+counters are global), stated as a gap.
+
+**Not done.** Far-tint cell granularity (still buckets per merged chunk/variant; the player sees
+district-scale variety), speed-line manual frame, `tower-house-frame` (still blocking). Carried items
+unchanged. 166 tests green, clippy clean, boot clean.
