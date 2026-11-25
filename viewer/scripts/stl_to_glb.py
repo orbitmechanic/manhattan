@@ -10,6 +10,8 @@ exceeds the game budget.
 
 import sys
 
+import os
+
 import bpy
 import mathutils
 
@@ -32,7 +34,7 @@ bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 triangles = sum(len(p.vertices) - 2 for p in obj.data.polygons)
 print(f"RECEIPT stl_tris={triangles} height_before={height:.2f} scale={scale:.4f}", flush=True)
 
-budget = 100_000
+budget = int(os.environ.get("TARGET_TRIS", "6000"))
 if triangles > budget:
     ratio = budget / triangles
     mod = obj.modifiers.new("decimate", "DECIMATE")

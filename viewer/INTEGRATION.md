@@ -2604,3 +2604,29 @@ below any plausible plan).
 
 **Not shipped:** Science Center arches (third deferral), tower-house frame, the Needle's in-game integration.
 181 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files, 0 failures).
+
+## Iteration 95 — horizon bound (seattle-beams2)
+
+**Beams v2: world-anchored, camera never owns weather.** The camera-child fan is **deleted**; `SunShaftMaterial`
+and its overlay are gone. Beams are now world volumes: crossed-quad shafts (1 400 m long, 130–320 m wide, seeded
+per day) standing at hole positions, rotated onto the **actual sun/moon vector**, so they rake to the horizon and
+converge by true geometry. They drift with the deck (`drift` term), the probe flag (`SHAFT_PROBE=1`) pins one
+shaft in front for the visibility test, and `BEAMS eligible|idle …` narrates opportunity.
+
+Visibility probe first, then the spread (`captures/shaft_probe.png`, `captures/beams_spread.png` at 17:30, sun
+alt 20.1°); the material is a custom additive with `LessEqual` depth (towers cut the beam) and no depth write.
+
+Camera Ownership Law corollary recorded: **camera-attached overlays are speed lines only; weather is
+world-anchored.** Speed lines still read `MotionState` only.
+
+**Needle: tri ladder done, integration not live.** `scripts/stl_to_glb.py` now takes `TARGET_TRIS`:
+**33 548 → 6 000 tris** (`assets/models/space_needle_low.glb`, 436 KB), height scaled 1.0185 → 184 m. A CAD spawn
+path exists (`WorldAssetRoot` under `NEEDLE_CAD=1`) but the GLB's scene transform/unit is not yet verified against
+the anchor — the probe frame showed it over-scaled — so the default boot keeps the procedural massing and the CAD
+path is opt-in. That is a deliberate gate, not a shipped landmark.
+
+**Science Center arches: not shipped (fourth deferral).** Per the escalation clause, arches and the Needle
+integration are the **only two items** of the next round.
+
+**Gauntlet** with the world beams live: 650 m/s **60.7 ms avg / 84.0 p99**; 100 m/s 52.2/66.6 — avg in band.
+181 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 569 files, 0 failures).

@@ -10,7 +10,6 @@ use std::f32::consts::TAU;
 
 use bevy::{
     asset::RenderAssetUsages,
-    camera::visibility::NoFrustumCulling,
     light::NotShadowCaster,
     mesh::{Indices, MeshVertexBufferLayoutRef, PrimitiveTopology},
     pbr::{MaterialPipeline, MaterialPipelineKey},
@@ -848,30 +847,31 @@ pub fn update_weather_visuals(
 }
 
 // ---------------------------------------------------------------------------
-// Sunbeams / moonbeams: screen-space god-rays anchored to the sun's screen
-// position. The billboard-volume tier was wired but never read on screen; the
-// overlay tier is the same proven technique as the speed lines (camera child,
-// depth-always, additive blend), so a ray fan that converges on the sun is
-// guaranteed to reach the frame. Rays are parallel in world space; the fan
-// reads as converging because the eye follows perspective to the sun.
+// Sunbeams / moonbeams v2: WORLD-ANCHORED shafts. The camera-child fan is
+// deleted (Camera Ownership Law corollary: camera-attached overlays are for
+// speed lines only). Each shaft is a long additive volume standing in the world
+// at a hole in the deck, rotated onto the actual sun/moon vector, so the beam
+// rakes across the terrain toward the horizon and converges by true geometry.
 // ---------------------------------------------------------------------------
 
+const SHAFT_COUNT: usize = 7;
 const SHAFT_LOW_SUN_MIN: f32 = 2.0;
 const SHAFT_LOW_SUN_MAX: f32 = 40.0;
+const SHAFT_LENGTH: f32 = 1_400.0;
 
 #[derive(Asset, AsBindGroup, Debug, Clone, TypePath)]
-pub struct SunShaftMaterial {
-    /// x = time, y = strength, z/w = light position in screen space.
+pub struct BeamMaterial {
+    /// x = time, y = strength 0..1, z = width scale, w unused
     #[uniform(0)]
     pub data: Vec4,
-    /// rgb = tint, a = opacity.
+    /// rgb = tint, a = opacity
     #[uniform(1)]
     pub tint: Vec4,
 }
 
-impl Material for SunShaftMaterial {
+impl Material for BeamMaterial {
     fn fragment_shader() -> ShaderRef {
-        "shaders/sun_shafts.wesl".into()
+        "shaders/beams.wesl".into()
     }
 
     fn alpha_mode(&self) -> AlphaMode {
@@ -890,7 +890,9 @@ impl Material for SunShaftMaterial {
     ) -> Result<(), SpecializedMeshPipelineError> {
         descriptor.primitive.cull_mode = None;
         if let Some(depth) = descriptor.depth_stencil.as_mut() {
-            depth.depth_compare = Some(CompareFunction::Always);
+            // World volumes test against the city (so towers cut the beam) but
+            // never write depth.
+            depth.depth_compare = Some(CompareFunction::LessEqual);
             depth.depth_write_enabled = Some(false);
         }
         Ok(())
@@ -898,113 +900,191 @@ impl Material for SunShaftMaterial {
 }
 
 #[derive(Component)]
-pub struct SunShafts {
-    material: Handle<SunShaftMaterial>,
+pub struct LightShaft {
+    index: usize,
+    material: Handle<BeamMaterial>,
 }
 
-pub fn setup_sun_shafts(
+#[derive(Resource, Default)]
+pub struct ShaftField {
+    seeded_day: u32,
+    /// Seeded per day: azimuth spread, radius, width and brightness of each hole.
+    holes: Vec<Hole>,
+}
+
+#[derive(Clone, Copy, Default)]
+struct Hole {
+    azimuth: f32,
+    radius: f32,
+    width: f32,
+    brightness: f32,
+}
+
+/// Unit-height crossed quads with a soft vertical gradient: the world volume.
+fn beam_mesh() -> Mesh {
+    let mut positions: Vec<[f32; 3]> = Vec::new();
+    let mut normals: Vec<[f32; 3]> = Vec::new();
+    let mut uvs: Vec<[f32; 2]> = Vec::new();
+    let mut indices: Vec<u32> = Vec::new();
+    for plane in 0..2 {
+        let angle = plane as f32 * std::f32::consts::FRAC_PI_2;
+        let (sin, cos) = angle.sin_cos();
+        let base = positions.len() as u32;
+        for (x, v) in [(-0.5_f32, 0.0_f32), (0.5, 0.0), (0.5, 1.0), (-0.5, 1.0)] {
+            positions.push([cos * x, v, sin * x]);
+            normals.push([0.0, 1.0, 0.0]);
+            uvs.push([if x < 0.0 { 0.0 } else { 1.0 }, v]);
+        }
+        indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    let mut mesh = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+    );
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.insert_indices(Indices::U32(indices));
+    mesh
+}
+
+pub fn setup_light_shafts(
     mut commands: Commands,
-    camera: Single<Entity, With<FlyCamera>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<SunShaftMaterial>>,
+    mut materials: ResMut<Assets<BeamMaterial>>,
 ) {
-    let material = materials.add(SunShaftMaterial {
-        data: Vec4::ZERO,
-        tint: Vec4::new(1.0, 0.92, 0.76, 0.0),
-    });
-    commands.entity(*camera).with_children(|parent| {
-        parent.spawn((
-            SunShafts {
+    let mesh = meshes.add(beam_mesh());
+    for index in 0..SHAFT_COUNT {
+        let material = materials.add(BeamMaterial {
+            data: Vec4::new(0.0, 0.0, 1.0, 0.0),
+            tint: Vec4::new(1.0, 0.92, 0.78, 0.0),
+        });
+        commands.spawn((
+            LightShaft {
+                index,
                 material: material.clone(),
             },
-            Name::new("SunShafts"),
-            NoFrustumCulling,
-            Mesh3d(meshes.add(Rectangle::new(8.0, 8.0))),
+            Name::new(format!("light shaft {index}")),
+            Mesh3d(mesh.clone()),
             MeshMaterial3d(material),
-            Transform::from_xyz(0.0, 0.0, -2.0),
+            Transform::IDENTITY,
             Visibility::Hidden,
         ));
-    });
-}
-
-/// Screen-space position of a world direction, in -1..1 (y up). `None` when
-/// the light is behind the camera.
-fn screen_position(camera: &Transform, direction: Vec3) -> Option<Vec2> {
-    let local = camera.rotation.inverse() * direction;
-    if local.z > -0.05 {
-        return None;
     }
-    let tan_half = (70.0_f32.to_radians() * 0.5).tan();
-    let aspect = 1.6_f32;
-    Some(Vec2::new(
-        (local.x / -local.z) / (tan_half * aspect),
-        (local.y / -local.z) / tan_half,
-    ))
 }
 
-pub fn update_sun_shafts(
+#[allow(clippy::too_many_arguments)]
+pub fn update_light_shafts(
     time: Res<Time>,
+    clock: Res<SimClock>,
     env: Res<Environment>,
     weather: Res<Weather>,
     camera: Single<&Transform, With<FlyCamera>>,
-    mut shafts: Query<(&SunShafts, &mut Visibility)>,
-    mut materials: ResMut<Assets<SunShaftMaterial>>,
+    mut field: ResMut<ShaftField>,
+    mut shafts: Query<(&LightShaft, &mut Transform, &mut Visibility), Without<FlyCamera>>,
+    mut materials: ResMut<Assets<BeamMaterial>>,
+    geology: Option<Res<crate::geology::Geology>>,
 ) {
+    if field.seeded_day != clock.date.day_of_year() || field.holes.is_empty() {
+        field.seeded_day = clock.date.day_of_year();
+        let mut seed = 0x51A7_5EEDu32 ^ field.seeded_day.wrapping_mul(2_654_435_761);
+        let mut rand = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
+            (seed >> 8) as f32 / 16_777_216.0
+        };
+        field.holes = (0..SHAFT_COUNT)
+            .map(|_| Hole {
+                azimuth: rand() * std::f32::consts::TAU,
+                radius: 220.0 + rand() * 620.0,
+                width: 130.0 + rand() * 190.0,
+                brightness: 0.5 + rand() * 0.5,
+            })
+            .collect();
+    }
+
     let sun_alt = env.sun.altitude_deg;
     let moon_alt = env.moon.altitude_deg;
-    let low_sun = (SHAFT_LOW_SUN_MIN..=SHAFT_LOW_SUN_MAX).contains(&sun_alt);
-    let moon_lit = env.moon_illumination >= 0.55;
-    let low_moon = moon_lit && (SHAFT_LOW_SUN_MIN..=SHAFT_LOW_SUN_MAX).contains(&moon_alt);
     let day = env.daylight > 0.35;
+    let low_sun = (SHAFT_LOW_SUN_MIN..=SHAFT_LOW_SUN_MAX).contains(&sun_alt);
+    let low_moon = env.moon_illumination >= 0.55
+        && (SHAFT_LOW_SUN_MIN..=SHAFT_LOW_SUN_MAX).contains(&moon_alt);
 
-    // Which light, and how strongly. Holes gate the day; the moon owns night.
-    let (direction, strength, tint) = if day && low_sun {
-        (env.sun_dir, weather.holes, Vec3::new(1.0, 0.93, 0.78))
+    let (light_dir, strength, tint, probe) = if day && low_sun {
+        (
+            env.sun_dir,
+            weather.holes,
+            Vec3::new(1.0, 0.93, 0.78),
+            std::env::var_os("SHAFT_PROBE").is_some(),
+        )
     } else if !day && low_moon {
         (
             env.moon_dir,
             (env.moon_illumination - 0.5).clamp(0.0, 1.0) * 2.0,
-            Vec3::new(0.62, 0.72, 1.0),
+            Vec3::new(0.64, 0.74, 1.0),
+            false,
         )
     } else {
-        (Vec3::ZERO, 0.0, Vec3::ZERO)
+        (Vec3::ZERO, 0.0, Vec3::ZERO, false)
     };
 
-    // Discoverability: narrate the opportunity so a console can say whether a
-    // flight ever crossed an eligible window.
     if std::env::var_os("BEAM_TRACE").is_some() {
         info!(
-            "BEAMS {} sun_alt={:.1} moon_alt={:.1} illum={:.2} holes={:.2} night={}",
+            "BEAMS {} sun_alt={:.1} moon_alt={:.1} illum={:.2} holes={:.2} shafts={}",
             if strength > 0.05 { "eligible" } else { "idle" },
-            env.sun.altitude_deg,
-            env.moon.altitude_deg,
+            sun_alt,
+            moon_alt,
             env.moon_illumination,
             weather.holes,
-            !day
+            field.holes.len()
         );
     }
-    let position = if strength > 0.05 {
-        screen_position(&camera, direction)
-    } else {
-        None
-    };
-    let Some(position) = position else {
-        for (_, mut visibility) in &mut shafts {
+
+    let active = strength > 0.05;
+    let cam = camera.translation;
+    for (shaft, mut transform, mut visibility) in &mut shafts {
+        let hole = field.holes[shaft.index % field.holes.len()];
+        if !active {
             *visibility = Visibility::Hidden;
+            continue;
         }
-        return;
-    };
-    for (shaft, mut visibility) in &mut shafts {
-        if let Some(mut material) = materials.get_mut(&shaft.material) {
-            material.data = Vec4::new(
-                time.elapsed_secs(),
-                strength.min(1.0),
-                position.x,
-                position.y,
-            );
-            material.tint = Vec4::new(tint.x, tint.y, tint.z, 0.55);
-        }
+        // Drift with the deck: the hole's azimuth creeps on the wind, so a
+        // moving cloud drags its beam across the city.
+        let drift = time.elapsed_secs() * 0.01 + weather.wind.x * 0.6;
+        let radius = if probe { 500.0 } else { hole.radius };
+        // Holes live ahead of the player: a beam behind the eye is weather
+        // nobody sees. The seeded azimuth is mapped into ±55 deg of heading.
+        let forward = camera.rotation * Vec3::NEG_Z;
+        let heading = f32::atan2(forward.x, forward.z);
+        let spread = (hole.azimuth / std::f32::consts::TAU - 0.5) * 1.9 + drift * 0.04;
+        let bearing = if probe { heading } else { heading + spread };
+        let base_x = cam.x + bearing.sin() * radius;
+        let base_z = cam.z + bearing.cos() * radius;
+        let ground = geology
+            .as_ref()
+            .map(|state| {
+                state
+                    .dem
+                    .height(base_x - crate::citypack::STREAM_WORLD_OFFSET, base_z)
+            })
+            .unwrap_or(0.0);
+        transform.translation = Vec3::new(base_x, ground, base_z);
+        // World-space orientation: local +Y onto the light vector, so the beam
+        // leaves the ground toward the sun and rakes to the horizon.
+        transform.rotation = Quat::from_rotation_arc(Vec3::Y, light_dir.normalize_or_zero());
+        let width = if probe { 90.0 } else { hole.width };
+        transform.scale = Vec3::new(width, SHAFT_LENGTH, width);
         *visibility = Visibility::Inherited;
+        if let Some(mut material) = materials.get_mut(&shaft.material) {
+            let level = if probe {
+                1.0
+            } else {
+                strength * hole.brightness
+            };
+            material.data = Vec4::new(time.elapsed_secs(), level.clamp(0.0, 1.0), 1.0, 0.0);
+            material.tint = Vec4::new(tint.x, tint.y, tint.z, 0.9);
+        }
     }
 }
 
@@ -1017,10 +1097,10 @@ impl Plugin for WeatherPlugin {
             MaterialPlugin::<PrecipMaterial>::default(),
         ))
         .init_resource::<Weather>()
-        .add_plugins(MaterialPlugin::<SunShaftMaterial>::default())
-        .add_systems(Startup, setup_weather)
-        .add_systems(PostStartup, setup_sun_shafts)
-        .add_systems(Update, update_sun_shafts);
+        .add_plugins(MaterialPlugin::<BeamMaterial>::default())
+        .init_resource::<ShaftField>()
+        .add_systems(Startup, (setup_weather, setup_light_shafts))
+        .add_systems(Update, update_light_shafts);
     }
 }
 

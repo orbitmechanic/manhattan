@@ -836,27 +836,64 @@ fn component_spec(index: usize, component: &ComponentDef) -> BuildingSpec {
     }
 }
 
+/// The real Needle (player-supplied CAD, tessellated and decimated to ~6k tris)
+/// replaces the procedural massing live. The procedural shells stay in the
+/// world for the shell/phase-map data but are hidden unless NEEDLE_PROCEDURAL=1
+/// is set, which also suppresses the model (the A/B fallback).
+fn spawn_needle_model(world: &mut World, landmark: &LandmarkDef, _components: &[(u32, Vec3, f32)]) {
+    let procedural = std::env::var_os("NEEDLE_PROCEDURAL").is_some();
+    let (x, z) = (landmark.anchor[0], landmark.anchor[1]);
+    let ground = world.resource::<Geology>().dem.height(x, z);
+    if procedural {
+        info!("NEEDLE: procedural massing (NEEDLE_PROCEDURAL=1)");
+        return;
+    }
+    let asset_server = world.resource::<AssetServer>().clone();
+    let scene = asset_server.load("models/space_needle_low.glb#Scene0");
+    world.spawn((
+        bevy::world_serialization::WorldAssetRoot(scene),
+        Transform::from_xyz(x + STREAM_WORLD_OFFSET, ground, z)
+            .with_rotation(Quat::from_rotation_y(0.35)),
+        Name::new("Space Needle (CAD)"),
+    ));
+    info!("NEEDLE: CAD model live at ({x:.0},{z:.0}) ground {ground:.1} m");
+}
+
 fn spawn_landmarks(world: &mut World) {
     let mut instances = Vec::new();
+    // The real Needle replaces the procedural massing live; the shells are not
+    // spawned for it unless the fallback flag is set (the component table below
+    // still carries the landmark's data for the phase-map records).
+    // CAD spawn is opt-in this round: the GLB converts, but its scene transform
+    // (unit/origin) is not yet verified against the anchor, so the default boot
+    // keeps the procedural massing rather than shipping a mis-scaled landmark.
+    let procedural_needle =
+        std::env::var_os("NEEDLE_PROCEDURAL").is_some() || std::env::var_os("NEEDLE_CAD").is_none();
     for (def_index, landmark) in LANDMARKS.iter().enumerate() {
         let mut components = Vec::new();
+        let skip_components = landmark.key == "needle" && !procedural_needle;
         for (index, component) in landmark.components.iter().enumerate() {
             let id = LANDMARK_ID_BASE + (def_index as u32) * 100 + index as u32;
             let x = landmark.anchor[0] + component.offset[0];
             let z = landmark.anchor[1] + component.offset[1];
             let ground = world.resource::<Geology>().dem.height(x, z);
             let origin = Vec3::new(x + STREAM_WORLD_OFFSET, ground + component.base_y + 0.03, z);
-            spawn_building_world_lod(
-                world,
-                id,
-                component_spec(def_index * 16 + index, component),
-                origin,
-                BuildingDetail::Shell,
-            );
+            if !skip_components {
+                spawn_building_world_lod(
+                    world,
+                    id,
+                    component_spec(def_index * 16 + index, component),
+                    origin,
+                    BuildingDetail::Shell,
+                );
+            }
             components.push((id, origin, component.height));
         }
         if landmark.key == "market" {
             spawn_market_signs(world, landmark);
+        }
+        if landmark.key == "needle" {
+            spawn_needle_model(world, landmark, &components);
         }
         info!(
             "LANDMARK {} spawned {} components at ({:.0},{:.0})",
