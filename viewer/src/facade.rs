@@ -435,7 +435,9 @@ fn setup_facades(
 ) {
     // Photographic wall materials (CC0 ambientCG) behind TEXTURES_PHOTO=1;
     // the generated atlases remain the default/fallback for the A/B sheet.
-    let photo = std::env::var_os("TEXTURES_PHOTO").is_some();
+    // LIVE-BY-DEFAULT: photographic materials are the shipped skin. The
+    // generated atlases remain as an opt-out for A/B and regression insurance.
+    let photo = std::env::var_os("TEXTURES_GENERATED").is_none();
     let photo_brick = photo.then(|| {
         repeat_load(
             &asset_server,
@@ -866,7 +868,7 @@ fn install_photo_roof(
     assets: Option<Res<destructibles_bevy::assets::WorldAssets>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    if std::env::var_os("TEXTURES_PHOTO").is_none() {
+    if std::env::var_os("TEXTURES_GENERATED").is_some() {
         return;
     }
     let Some(assets) = assets else {

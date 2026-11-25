@@ -781,15 +781,11 @@ fn governance_core(district: &str) -> bool {
             .ok()
             .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
             .and_then(|value| {
-                value
-                    .get("appeals")?
-                    .get("core")?
-                    .as_array()
-                    .map(|list| {
-                        list.iter()
-                            .filter_map(|entry| entry.as_str().map(str::to_string))
-                            .collect()
-                    })
+                value.get("appeals")?.get("core")?.as_array().map(|list| {
+                    list.iter()
+                        .filter_map(|entry| entry.as_str().map(str::to_string))
+                        .collect()
+                })
             })
             .unwrap_or_default()
     });
@@ -3775,7 +3771,20 @@ fn s3_buildings(world: &mut World) {
                 (origin[0] - center[0]).hypot(origin[2] - center[1]) <= S3_SHELL_NEAR_M
             })
             .count();
-        let shell_count = near.clamp(S3_SHELL_FLOOR, S3_SHELL_CAP).min(specs.len());
+        // Distant chunks carry boxes only: shells (panes, trim, interiors) are
+        // a near-field instrument. At cruise the skyline is the merged far
+        // mesh, so this removes the core towers' shell cost without touching
+        // their restored height.
+        let chunk_distance = {
+            let state = world.resource::<Geology>();
+            let node = &state.pack.nodes[index_chunk];
+            (node.center[0] - center[0]).hypot(node.center[1] - center[1])
+        };
+        let shell_count = if chunk_distance > 450.0 {
+            0
+        } else {
+            near.clamp(S3_SHELL_FLOOR, S3_SHELL_CAP).min(specs.len())
+        };
         let shell_set = order[..shell_count].iter().copied().collect::<HashSet<_>>();
         let mut entities = Vec::with_capacity(specs.len());
         let mut shells = 0usize;

@@ -2248,3 +2248,29 @@ global hand list.
 the night-stripe gate was not re-run against photographic materials because the night capture was not taken.
 `tower-house-frame` remains blocking (a player-shot frame retires it by rule). 167 tests green, clippy clean,
 boot clean.
+
+## Iteration 87 — go live (seattle-live1)
+
+**LIVE-BY-DEFAULT applied.** Photographic materials are now the **default** on bare `--seattle`
+(`TEXTURES_GENERATED=1` is the opt-out for A/B and regression insurance). Bare invocation samples the
+ambientCG brick/siding/roof diffs; the generated atlases remain behind the flag only. The capture-visible
+proof is `captures/day_residential_photo.png`, `captures/curb_photo.png` (brick at human scale) and
+`captures/night_residential_photo.png` (emissives untouched).
+
+**BC7: unavailable, stated plainly.** No encoder exists on this machine and none can be installed
+non-interactively: `basisu`, `toktx`/`ktx-software` and `compressonatorcli` are absent, `cargo-binstall` is not
+installed, and `pacman` requires root. VRAM is therefore **≈12 MiB RGBA8** for the three 1024² tiles
+(2,140,910 bytes of JPEG on disk). `bc7-compression` stays filed rather than waived.
+
+**Gauntlet band restored without un-restoring a tower.** The core towers were paying shell costs (panes, trim,
+interiors) at any distance. Chunks more than **450 m** away now ship **boxes only** (merged proxies with gable
+caps and tints); shells spawn only near. 650 m/s: **51.8 ms avg / 81.8 ms p99** (was 157–186). The skyline is
+unchanged because towers live in the merged far mesh at cruise; near approach still tiers them into shells.
+
+**CodeGraph freshness (earned):** `codegraph-work-index` was run at the start of the evidence pass —
+**25 projects, 566 files indexed, 0 failures**, graph refreshed 2026-11-24T22:41, verdict **fresh**.
+
+**Still blocking / carried:** the tower-house frame; a player-shot frame retires it permanently. Speed lines
+close by player stick via the SONIC TRACE instrument. Night-stripe gate against photographic materials was
+not separately re-run (the night capture shows unchanged emissive rows). 167 tests green, clippy clean, boot
+clean.
