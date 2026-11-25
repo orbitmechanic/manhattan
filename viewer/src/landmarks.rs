@@ -1013,15 +1013,28 @@ pub fn seat_needle(
                 model.ground
             );
             // Bands and lights ride with the seated model.
-            spawn_needle_bands_command(
-                &mut commands,
-                &mut meshes,
-                &mut materials,
-                &mut images,
-                model.anchor.x,
-                model.ground,
-                model.anchor.z,
-            );
+            if let Some(mesh) = mesh_children
+                .iter()
+                .find_map(|(child, mesh3d)| {
+                    children
+                        .contains(&child)
+                        .then(|| meshes.get(&mesh3d.0).cloned())
+                        .flatten()
+                })
+                .as_ref()
+                .and_then(|mesh| detect_needle_anatomy(mesh, scale, model.ground))
+            {
+                spawn_needle_bands_command(
+                    &mut commands,
+                    &mut meshes,
+                    &mut materials,
+                    &mut images,
+                    model.anchor.x,
+                    model.ground,
+                    model.anchor.z,
+                    mesh,
+                );
+            }
             spawn_needle_lights_command(
                 &mut commands,
                 &mut meshes,
@@ -1034,6 +1047,108 @@ pub fn seat_needle(
     }
 }
 
+/// Detected anatomy of the seated model, in metres above the seated base.
+#[derive(Clone, Copy, Debug)]
+pub struct NeedleAnatomy {
+    pub drum_low: f32,
+    pub drum_high: f32,
+    pub drum_radius: f32,
+    pub fin: f32,
+    pub restaurant_low: f32,
+    pub restaurant_high: f32,
+    pub restaurant_radius: f32,
+}
+
+/// Walk the seated mesh and derive the components: the drum (widest steady
+/// radius band), the fin (local radius maximum at the drum's top edge) and the
+/// restaurant (widest band midway down that is not the drum). Radii are in
+/// metres; heights are metres above the seated base. Prints its evidence.
+pub fn detect_needle_anatomy(mesh: &Mesh, scale: f32, base_y: f32) -> Option<NeedleAnatomy> {
+    let Some(bevy::mesh::VertexAttributeValues::Float32x3(points)) =
+        mesh.attribute(Mesh::ATTRIBUTE_POSITION)
+    else {
+        return None;
+    };
+    // Asset space: z is height, radius in x/y.
+    const BINS: usize = 120;
+    let mut max_z = f32::MIN;
+    let mut min_z = f32::MAX;
+    for p in points {
+        max_z = max_z.max(p[2]);
+        min_z = min_z.min(p[2]);
+    }
+    let span = (max_z - min_z).max(1.0);
+    let mut radius = vec![0.0_f32; BINS];
+    for p in points {
+        let bin = (((p[2] - min_z) / span) * (BINS - 1) as f32).round() as usize;
+        let r = (p[0] * p[0] + p[1] * p[1]).sqrt();
+        radius[bin.min(BINS - 1)] = radius[bin.min(BINS - 1)].max(r);
+    }
+    let elev = |bin: usize| base_y + (min_z + span * bin as f32 / (BINS - 1) as f32) * scale;
+    // Drum: the widest steady radius in the upper half, away from the spire.
+    let upper = BINS * 6 / 10..BINS * 95 / 100;
+    let mut drum_bin = upper.start;
+    for bin in upper.clone() {
+        if radius[bin] > radius[drum_bin] {
+            drum_bin = bin;
+        }
+    }
+    let drum_radius = radius[drum_bin] * scale;
+    if drum_radius < 2.0 {
+        return None;
+    }
+    // Extend the drum over neighbouring bins within 85 % of its radius.
+    let mut low = drum_bin;
+    while low > 0 && radius[low - 1] > radius[drum_bin] * 0.85 {
+        low -= 1;
+    }
+    let mut high = drum_bin;
+    while high + 1 < BINS && radius[high + 1] > radius[drum_bin] * 0.85 {
+        high += 1;
+    }
+    // Fin: the local maximum at the drum's top edge (roof overhang).
+    let fin_bin = (high + 1).min(BINS - 1);
+    // Restaurant: the widest band between 25 % and 60 % of height, not the drum.
+    let mid = BINS * 25 / 100..BINS * 60 / 100;
+    let mut rest_bin = mid.start;
+    for bin in mid.clone() {
+        if radius[bin] > radius[rest_bin] && !(low..=high).contains(&bin) {
+            rest_bin = bin;
+        }
+    }
+    let mut r_low = rest_bin;
+    while r_low > 0 && radius[r_low - 1] > radius[rest_bin] * 0.7 {
+        r_low -= 1;
+    }
+    let mut r_high = rest_bin;
+    while r_high + 1 < BINS && radius[r_high + 1] > radius[rest_bin] * 0.7 {
+        r_high += 1;
+    }
+    let anatomy = NeedleAnatomy {
+        drum_low: elev(low),
+        drum_high: elev(high),
+        drum_radius,
+        fin: elev(fin_bin),
+        restaurant_low: elev(r_low),
+        restaurant_high: elev(r_high),
+        restaurant_radius: radius[rest_bin] * scale,
+    };
+    info!(
+        "NEEDLE anatomy: drum {:.1}-{:.1} m r={:.1}; fin {:.1} m; restaurant {:.1}-{:.1} m r={:.1}",
+        anatomy.drum_low,
+        anatomy.drum_high,
+        anatomy.drum_radius,
+        anatomy.fin,
+        anatomy.restaurant_low,
+        anatomy.restaurant_high,
+        anatomy.restaurant_radius
+    );
+    Some(anatomy)
+}
+
+/// Two glazing rows on the drum (split by the fin) plus a three-plane restaurant
+/// band. Built from the detected anatomy, never from the procedural constants.
+#[allow(clippy::too_many_arguments)]
 fn spawn_needle_bands_command(
     commands: &mut Commands,
     meshes: &mut Assets<Mesh>,
@@ -1042,6 +1157,7 @@ fn spawn_needle_bands_command(
     x: f32,
     ground: f32,
     z: f32,
+    anatomy: NeedleAnatomy,
 ) {
     let glass = materials.add(StandardMaterial {
         base_color: Color::srgb(0.05, 0.06, 0.08),
@@ -1052,18 +1168,23 @@ fn spawn_needle_bands_command(
     let texture = images.add(need_bank_texture(3));
     let lit = materials.add(StandardMaterial {
         base_color: Color::BLACK,
-        emissive: LinearRgba::rgb(6.0, 4.6, 2.4),
+        emissive: LinearRgba::rgb(16.0, 12.0, 6.5),
         emissive_texture: Some(texture),
         perceptual_roughness: 0.6,
         unlit: false,
         ..default()
     });
-    for (height, radius) in [
-        (NEEDLE_RING_HEIGHT, 12.5_f32),
-        (NEEDLE_RESTAURANT_HEIGHT, 9.0),
-        (NEEDLE_CROWN_HEIGHT, 10.0),
-    ] {
-        let mesh = meshes.add(Cylinder::new(radius, 6.0).mesh().resolution(48));
+    let rows = [
+        (anatomy.drum_low + 0.8, anatomy.fin - 0.8),
+        (anatomy.fin + 0.8, anatomy.drum_high - 0.4),
+    ];
+    for (low, high) in rows {
+        let height = (high - low).max(0.8);
+        let mesh = meshes.add(
+            Cylinder::new(anatomy.drum_radius * 1.005, height)
+                .mesh()
+                .resolution(64),
+        );
         commands.spawn((
             NeedleBand {
                 glass: glass.clone(),
@@ -1071,11 +1192,37 @@ fn spawn_needle_bands_command(
             },
             Mesh3d(mesh),
             MeshMaterial3d(glass.clone()),
-            Transform::from_xyz(x, ground + height, z),
-            Name::new("Needle window band"),
+            Transform::from_xyz(x, ground + (low + high) * 0.5, z),
+            Name::new("Needle drum glazing"),
         ));
     }
-    info!("NEEDLE windows: 3 bands at 158.5 / 96 / 171 m above the seated base");
+    // Restaurant: three planar faces around the triangular section.
+    let height = (anatomy.restaurant_high - anatomy.restaurant_low).max(0.8);
+    let panel = meshes.add(Rectangle::new(anatomy.restaurant_radius * 1.6, height));
+    for index in 0..3 {
+        let angle = index as f32 * std::f32::consts::TAU / 3.0 + 0.35;
+        let radius = anatomy.restaurant_radius * 1.02;
+        commands.spawn((
+            NeedleBand {
+                glass: glass.clone(),
+                lit: lit.clone(),
+            },
+            Mesh3d(panel.clone()),
+            MeshMaterial3d(glass.clone()),
+            Transform::from_xyz(
+                x + angle.cos() * radius,
+                ground + (anatomy.restaurant_low + anatomy.restaurant_high) * 0.5,
+                z + angle.sin() * radius,
+            )
+            .with_rotation(Quat::from_rotation_y(-angle + std::f32::consts::FRAC_PI_2)),
+            Name::new("Needle restaurant glazing"),
+        ));
+    }
+    info!(
+        "NEEDLE bands: 2 drum rows split by the fin at {:.1} m + 3 restaurant planes at {:.1} m",
+        anatomy.fin,
+        (anatomy.restaurant_low + anatomy.restaurant_high) * 0.5
+    );
 }
 
 fn spawn_needle_lights_command(
@@ -1178,13 +1325,14 @@ pub fn needle_band_night(
     env: Res<crate::environment::Environment>,
     bands: Query<(Entity, &NeedleBand, &MeshMaterial3d<StandardMaterial>)>,
     mut commands: Commands,
-    mut last: Local<Option<bool>>,
+    mut last: Local<Option<(bool, usize)>>,
 ) {
     let night = env.night || env.daylight < 0.35;
-    if *last == Some(night) {
+    let count = bands.iter().count();
+    if *last == Some((night, count)) {
         return;
     }
-    *last = Some(night);
+    *last = Some((night, count));
     for (entity, band, material) in &bands {
         let wanted = if night {
             band.lit.clone()

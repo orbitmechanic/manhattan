@@ -2763,3 +2763,28 @@ frame shows the deck ring lit with the restaurant band below and the beacon abov
 
 **Arches: untouched this round** (one-thing ruling), ninth non-delivery stands.
 183 tests green, clippy clean, boot clean.
+
+## Iteration 102 — windows in the right skin (seattle-needle10)
+
+**Anatomy detected from the seated mesh, not inherited constants.** The primitive walk gives vertex access, so the
+bands now derive from a radius-by-height profile of the real model:
+
+```
+NEEDLE seat:  min_y=42.16 max_y=226.54; shifted -0.47 -> base 41.69, tip 226.08 (ground 41.7)
+NEEDLE anatomy: drum 198.7-200.2 m r=21.1; fin 201.8 m; restaurant 87.1-90.2 m r=11.9
+NEEDLE bands: 2 drum rows split by the fin at 201.8 m + 3 restaurant planes at 88.6 m
+```
+
+Drum ≈157 m above the seated base with a 21 m radius; fin at the drum's top edge; restaurant a 3 m-tall band midway
+(≈47 m above base) with a 12 m radius. The two drum rows sit **below and above the fin** — never above the deck,
+never spanning it — and the restaurant glazing is **three planar quads**, one per triangle face, not a cylinder.
+
+**Glow raised to parity.** The band emissive went 6.0/4.6/2.4 → **16/12/6.5** (matching the building window scale),
+and the dusk swap now re-applies when bands appear (its key is `(night, band_count)`, the same bug class as the
+umbrella latch). Night close-up: the drum ring and the restaurant band glow brightly over the amber dome.
+
+**Gauntlet, re-run at 650 m/s with the CAD Needle and bands live:** 15 m/s 77.5/348 (boot stall), 30 m/s 39.1/58.6,
+100 m/s 42.0/65.0, **650 m/s 46.3 ms avg / 60.4 p99** — in band. The earlier 5–9 fps close-ups were the capture
+pose against the model's near-field shading, not a flight-profile cost.
+
+183 tests green, clippy clean, boot clean. CodeGraph refreshed: 25 projects, 569 files, 0 failures.
