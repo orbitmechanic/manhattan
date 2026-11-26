@@ -2890,3 +2890,26 @@ fixed — `beam-visibility` is the sole remaining blocker for this feature.
 
 **Native gate:** `RENDER BACKEND: Vulkan adapter="AMD Radeon Vega 8 (RADV RAVEN)"`, `S3 BOOT` streams in 1760 ms,
 183 tests green, clippy clean.
+
+## Iteration 111 — the payload diet (seattle-webdiet1)
+
+**Byte table (Seattle dock, measured, before → after):**
+
+| component | raw | served | note |
+|---|---:|---:|---|
+| `seattle_bg.wasm` | 88.7 MB | **35.8 MB gzip** | includes the embedded 38 MB pack |
+| `assets/textures` | 30.0 MB | ~30 MB | destructibles/city material images |
+| `assets/models` (JSON) | 17.0 → **3.6 MB** | 3.6 MB | dropped the unused city glb/stl and station line dumps |
+| `assets/sounds` | 3.6 MB | 3.6 MB | 21 clips |
+| page + glue | 0.13 MB | 0.13 MB | — |
+| **total** | **135 → 122 MB** | **~73 MB over the wire** | |
+
+GitHub Pages **already serves gzip** for the wasm (`content-encoding: gzip`, 35 842 367 bytes) — that lever was already pulled by the host.
+
+**What the audit found (the player's instinct, checked):** the facade atlases are **already runtime-generated** on web (zero texture bytes for facades). The image bytes that remain are the destructibles/city materials (`brick_diffuse`, `concrete_*`, `glass_*`, `bullet_hole`), which the app requests by name at boot — stripping them would trade correctness for megabytes, so the **zero-texture-bytes law is filed, not claimed**.
+
+**Binary diet:** the wasm is 88.7 MB raw, of which ~38 MB is the embedded demo pack; `-Oz` already strips debug. Removing the pack from the binary requires fetching it over HTTP at boot (async asset gate) — **`webdiet2`**, with the composition analysis: ~50 MB code + 38 MB pack.
+
+**Disclosure line updated on the live page** to the measured numbers ("~36 MB compressed wasm (88.7 MB raw, city pack embedded) plus ~34 MB of textures, models and sounds").
+
+Native gate untouched: 183 tests, clippy clean, Vulkan backend print, BC7 proof.
