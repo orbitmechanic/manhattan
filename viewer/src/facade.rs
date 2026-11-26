@@ -931,16 +931,23 @@ fn install_proxy_windows(
     // BC7 window tiles: baked offline by scripts/bake_photo_tiles.py, shipped
     // as UASTC/zstd KTX2 (transcoded to BC7 at load: ~1.3 MiB each instead of
     // the 4 MiB an RGBA8 1024^2 tile costs).
+    // KTX2/UASTC is native-only: the browser has no basis-universal decoder, so
+    // the web build binds the PNG bakes of the same composite tiles.
+    let (cool_tile, warm_tile) = if cfg!(feature = "photo-textures") {
+        (
+            "textures/photographic/brick_windows.ktx2",
+            "textures/photographic/siding_windows.ktx2",
+        )
+    } else {
+        (
+            "textures/photographic/brick_windows.png",
+            "textures/photographic/siding_windows.png",
+        )
+    };
     let (photo_cool, photo_warm) = if std::env::var_os("TEXTURES_GENERATED").is_none() {
         (
-            Some(repeat_load(
-                &asset_server,
-                "textures/photographic/brick_windows.ktx2",
-            )),
-            Some(repeat_load(
-                &asset_server,
-                "textures/photographic/siding_windows.ktx2",
-            )),
+            Some(repeat_load(&asset_server, cool_tile)),
+            Some(repeat_load(&asset_server, warm_tile)),
         )
     } else {
         (None, None)

@@ -2957,3 +2957,27 @@ it, and a rejected `init()` chain reports "the city did not start". No more cons
 **Evidence (live):** `page 200`, `pack 200`, delta table all 200, card error narration present in the served HTML.
 
 Native gate unchanged (Vulkan backend, BC7 proof, 183 tests, clippy clean).
+
+## Iteration 114 — the second door (seattle-webcensus1)
+
+**Census of the unaudited Bevy AssetServer channel, and the four classes closed by category:**
+
+| request (AssetServer) | class | verdict |
+|---|---|---|
+| `models/manhattan_ground.glb`, `models/manhattan_city.glb` (97 MB), `roadway_chunks/*.glb` (~40) | native-only city assets | **WEB-GATE** — the spawn list is empty on wasm; Seattle renders from its own pack |
+| `models/space_needle_low.glb` (436 KB), `landmarks/public_market_*.png` | small, real | **PROVISION** — committed, live 200 |
+| `textures/photographic/brick_windows.ktx2`, `siding_windows.ktx2` (UASTC) | no basis decoder on wasm | **GENERATE** — web binds the committed PNG bakes of the same composite tiles |
+| trees dataset | `std::fs` open in `setup_trees` | **routed through `webassets`** (`TreeDataset::open_asset`), so the fetched BIN is used |
+| Hanabi particles | compute shaders impossible in WebGL2 | **not yet gated** — disclosed as owed |
+
+**Live host, after the push (`5ee61e5`):** pack 200, both window PNGs 200, landmarks 200, `space_needle_low.glb` 200,
+wasm 200. The retry storm's sources are gone by construction (no request is issued for the gated assets).
+
+**Time panic:** the deployed wasm is rebuilt from the current tree, which routes all 22 `Instant::now()` call sites
+through `clock_compat` (web_time on wasm); the offset was not symbolized this round — the freshness check is the
+rebuilt binary, and the class-2 evidence predates this build.
+
+**Not delivered (named):** Hanabi wasm gating, favicon, full four-column census instrumentation (the table above is
+assembled from the code paths and the console classes, not from a captured request log), trees-on-web visual proof.
+
+Native gate: Vulkan backend print, BC7 proof, 183 tests, clippy clean.

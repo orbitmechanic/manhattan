@@ -210,6 +210,7 @@ impl Plugin for TreesPlugin {
     }
 }
 
+#[allow(dead_code)]
 fn asset(relative: &str) -> std::path::PathBuf {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(relative)
 }
@@ -222,7 +223,7 @@ fn setup_trees(
     if !s2_enabled() {
         return;
     }
-    let dataset = match TreeDataset::open(&asset(TREES_PATH)) {
+    let dataset = match TreeDataset::open_asset(TREES_PATH) {
         Ok(dataset) => dataset,
         Err(error) => {
             warn!("TREES: dataset unavailable: {error}");

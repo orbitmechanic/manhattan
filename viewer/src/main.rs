@@ -910,6 +910,12 @@ fn spawn_scene(
         ));
         return;
     }
+    // The web demos Seattle from the city pack; the Manhattan GLB set and the
+    // roadway chunk atlas are native-only assets and would 404 (and retry) in
+    // the browser. Gated at the source, not provisioned.
+    #[cfg(target_arch = "wasm32")]
+    let paths: &[&str] = &[];
+    #[cfg(not(target_arch = "wasm32"))]
     let paths: &[&str] = if pilot {
         &["models/manhattan_ground.glb"]
     } else {
