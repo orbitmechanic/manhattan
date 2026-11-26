@@ -1374,3 +1374,194 @@ pub fn update_vehicle_lights(
         };
     }
 }
+
+// ---------------------------------------------------------------------------
+// Night beams: pooled ground cones under the nearest headlights and tails.
+// The car mesh already carries the emissive lamp quads; what was missing was
+// the light landing on the road ahead of the car.
+// ---------------------------------------------------------------------------
+
+const BEAM_COUNT: usize = 56;
+const BEAM_RADIUS: f32 = 320.0;
+const BEAM_LENGTH: f32 = 16.0;
+const BEAM_HALF_WIDTH: f32 = 2.6;
+const TAIL_LENGTH: f32 = 6.0;
+const TAIL_HALF_WIDTH: f32 = 1.2;
+
+#[derive(Component)]
+pub struct HeadlightBeam;
+
+#[derive(Component)]
+pub struct TailGlow;
+
+/// Ground quad laid along +Z with a soft alpha gradient toward the far end.
+fn beam_mesh(length: f32, half_width: f32, z0: f32) -> Mesh {
+    let positions = vec![
+        [-half_width, 0.0, z0],
+        [half_width, 0.0, z0],
+        [half_width, 0.0, z0 + length],
+        [-half_width, 0.0, z0 + length],
+    ];
+    let normals = vec![[0.0, 1.0, 0.0]; 4];
+    let uvs = vec![[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]];
+    let indices = vec![0u32, 1, 2, 0, 2, 3];
+    let mut mesh = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+    );
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.insert_indices(Indices::U32(indices));
+    mesh
+}
+
+fn beam_texture() -> Image {
+    let size = 64usize;
+    let mut data = vec![0u8; size * size * 4];
+    for y in 0..size {
+        for x in 0..size {
+            let v = (y as f32 + 0.5) / size as f32;
+            let u = (x as f32 + 0.5) / size as f32 * 2.0 - 1.0;
+            let across = (1.0 - u.abs()).max(0.0).powf(1.4);
+            let along = (1.0 - v).max(0.0).powf(1.8);
+            let index = (y * size + x) * 4;
+            data[index] = 255;
+            data[index + 1] = 255;
+            data[index + 2] = 255;
+            data[index + 3] = (across * along * 255.0) as u8;
+        }
+    }
+    let mut image = Image::new(
+        bevy::render::render_resource::Extent3d {
+            width: size as u32,
+            height: size as u32,
+            depth_or_array_layers: 1,
+        },
+        bevy::render::render_resource::TextureDimension::D2,
+        data,
+        bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+    );
+    image.sampler = bevy::image::ImageSampler::linear();
+    image
+}
+
+pub fn setup_vehicle_beams(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut images: ResMut<Assets<Image>>,
+) {
+    let texture = images.add(beam_texture());
+    let beam_material = materials.add(StandardMaterial {
+        base_color: Color::srgba(1.0, 0.88, 0.66, 0.55),
+        base_color_texture: Some(texture.clone()),
+        unlit: true,
+        alpha_mode: AlphaMode::Blend,
+        cull_mode: None,
+        ..default()
+    });
+    let tail_material = materials.add(StandardMaterial {
+        base_color: Color::srgba(1.0, 0.16, 0.10, 0.45),
+        base_color_texture: Some(texture),
+        unlit: true,
+        alpha_mode: AlphaMode::Blend,
+        cull_mode: None,
+        ..default()
+    });
+    let beam = meshes.add(beam_mesh(BEAM_LENGTH, BEAM_HALF_WIDTH, 1.0));
+    let tail = meshes.add(beam_mesh(TAIL_LENGTH, TAIL_HALF_WIDTH, -TAIL_LENGTH - 0.6));
+    for index in 0..BEAM_COUNT {
+        commands.spawn((
+            HeadlightBeam,
+            Name::new(format!("headlight beam {index}")),
+            Mesh3d(beam.clone()),
+            MeshMaterial3d(beam_material.clone()),
+            Transform::from_xyz(0.0, -80.0, 0.0),
+            Visibility::Hidden,
+        ));
+        commands.spawn((
+            TailGlow,
+            Name::new(format!("tail glow {index}")),
+            Mesh3d(tail.clone()),
+            MeshMaterial3d(tail_material.clone()),
+            Transform::from_xyz(0.0, -80.0, 0.0),
+            Visibility::Hidden,
+        ));
+    }
+}
+
+pub fn update_vehicle_beams(
+    time: Res<Time>,
+    env: Res<Environment>,
+    camera: Single<&Transform, With<FlyCamera>>,
+    vehicles: Query<&GlobalTransform, With<Vehicle>>,
+    mut pools: ParamSet<(
+        Query<
+            (&mut Transform, &mut Visibility),
+            (
+                With<HeadlightBeam>,
+                Without<TailGlow>,
+                Without<Vehicle>,
+                Without<FlyCamera>,
+            ),
+        >,
+        Query<
+            (&mut Transform, &mut Visibility),
+            (With<TailGlow>, Without<Vehicle>, Without<FlyCamera>),
+        >,
+    )>,
+    mut last: Local<f32>,
+) {
+    let now = time.elapsed_secs();
+    if now - *last < 0.1 {
+        return;
+    }
+    *last = now;
+    let night = env.night || env.daylight < 0.35;
+    if !night {
+        for (_, mut visibility) in &mut pools.p0() {
+            *visibility = Visibility::Hidden;
+        }
+        for (_, mut visibility) in &mut pools.p1() {
+            *visibility = Visibility::Hidden;
+        }
+        return;
+    }
+    let cam = camera.translation;
+    let mut nearest: Vec<(f32, Vec3, Quat)> = vehicles
+        .iter()
+        .map(|transform| {
+            let position = transform.translation();
+            (
+                position.distance_squared(cam),
+                position,
+                transform.rotation(),
+            )
+        })
+        .filter(|(distance, _, _)| *distance <= BEAM_RADIUS * BEAM_RADIUS)
+        .collect();
+    nearest.sort_by(|a, b| a.0.total_cmp(&b.0));
+    nearest.truncate(BEAM_COUNT);
+    for (index, (mut transform, mut visibility)) in pools.p0().iter_mut().enumerate() {
+        let Some((_, position, rotation)) = nearest.get(index) else {
+            *visibility = Visibility::Hidden;
+            continue;
+        };
+        transform.translation = *position + Vec3::Y * 0.08;
+        transform.rotation = *rotation;
+        transform.scale = Vec3::ONE;
+        *visibility = Visibility::Inherited;
+    }
+    for (index, (mut transform, mut visibility)) in pools.p1().iter_mut().enumerate() {
+        let Some((_, position, rotation)) = nearest.get(index) else {
+            *visibility = Visibility::Hidden;
+            continue;
+        };
+        transform.translation = *position + Vec3::Y * 0.08;
+        transform.rotation = *rotation;
+        transform.scale = Vec3::ONE;
+        *visibility = Visibility::Inherited;
+    }
+}

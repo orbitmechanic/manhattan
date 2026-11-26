@@ -224,7 +224,11 @@ fn update_audio_levels(
 ) {
     let dt = time.delta_secs().clamp(0.0, 0.1);
     let target_ambient = 0.16;
-    let target_wind = 0.02 + (motion.speed / 900.0).clamp(0.0, 1.0) * 0.30;
+    // Wind rush: the same loop at a rising playback rate doubles as the speed
+    // cue (Manhattan's sonic camera, reinstalled in the Seattle viewer).
+    let sonic = crate::motion::sonic_gain(motion.speed);
+    let target_wind = 0.02 + sonic * 0.32;
+    let wind_rate = 0.85 + 1.35 * sonic;
     // Rain sits at 20% of thunder's 0.60 peak amplitude.
     let target_rain =
         weather.precipitation.clamp(0.0, 1.0) * 0.12 * (1.0 - 0.55 * weather.snow.clamp(0.0, 1.0));
@@ -236,6 +240,7 @@ fn update_audio_levels(
     }
     for mut sink in &mut wind {
         sink.set_volume(Volume::Linear(levels.1));
+        sink.set_speed(wind_rate);
     }
     for mut sink in &mut rain {
         sink.set_volume(Volume::Linear(levels.2));

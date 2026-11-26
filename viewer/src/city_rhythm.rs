@@ -65,6 +65,113 @@ pub fn is_glassy(id: usize, block: usize, x: f32, z: f32, year: u32) -> bool {
     glass_roll(id, block) < glass_probability(x, z, year)
 }
 
+/// Dataset-parameterized fields. Manhattan keeps its Times Square epicentre;
+/// Seattle uses the Westlake/Pike Pine seam from `seattle_fields.json`.
+#[derive(Clone, Copy, Debug)]
+pub struct CityFields {
+    pub epicenter: Vec2,
+    pub am: f32,
+    pub pm: f32,
+    pub width_am: f32,
+    pub width_pm: f32,
+    pub toward: f32,
+    pub away: f32,
+    pub base: f32,
+}
+
+impl CityFields {
+    pub fn manhattan() -> Self {
+        Self {
+            epicenter: TIMES_SQUARE,
+            am: 8.5,
+            pm: 17.0,
+            width_am: 1.25,
+            width_pm: 1.45,
+            toward: 0.90,
+            away: 0.40,
+            base: 0.05,
+        }
+    }
+
+    pub fn seattle() -> Self {
+        Self {
+            epicenter: SEATTLE_EPICENTER,
+            am: 8.5,
+            pm: 17.0,
+            width_am: 1.25,
+            width_pm: 1.45,
+            toward: 0.90,
+            away: 0.40,
+            base: 0.05,
+        }
+    }
+
+    pub fn from_json(text: &str) -> Option<Self> {
+        let value: serde_json::Value = serde_json::from_str(text).ok()?;
+        let world = value["epicenter"]["world"].as_array()?;
+        Some(Self {
+            epicenter: Vec2::new(world[0].as_f64()? as f32, world[1].as_f64()? as f32),
+            am: value["peaks"]["am"].as_f64()? as f32,
+            pm: value["peaks"]["pm"].as_f64()? as f32,
+            width_am: value["peaks"]["width_am"].as_f64()? as f32,
+            width_pm: value["peaks"]["width_pm"].as_f64()? as f32,
+            toward: value["occupancy"]["toward_peak"].as_f64()? as f32,
+            away: value["occupancy"]["away_peak"].as_f64()? as f32,
+            base: value["occupancy"]["base"].as_f64()? as f32,
+        })
+    }
+
+    pub fn pace(&self, hour: f32) -> f32 {
+        let hour = hour.rem_euclid(24.0);
+        let am = gauss(hour, self.am, self.width_am);
+        let pm = gauss(hour, self.pm, self.width_pm);
+        let midday = gauss(hour, 13.0, 3.0) * 0.55;
+        self.base + 0.90 * am.max(pm).max(midday).clamp(0.0, 1.0)
+    }
+
+    pub fn occupancy(&self, hour: f32, toward_epicenter: bool) -> f32 {
+        let hour = hour.rem_euclid(24.0);
+        let pace = self.pace(hour);
+        let am = gauss(hour, self.am, self.width_am);
+        let pm = gauss(hour, self.pm, self.width_pm);
+        let factor = if am >= pm {
+            if toward_epicenter {
+                self.toward
+            } else {
+                self.away
+            }
+        } else if toward_epicenter {
+            self.away
+        } else {
+            self.toward
+        };
+        self.base + (pace - self.base) * factor
+    }
+
+    pub fn ad_density(&self, x: f32, z: f32) -> f32 {
+        let d = Vec2::new(x, z).distance(self.epicenter);
+        if d <= 250.0 {
+            return 1.0;
+        }
+        ((2_500.0 - d) / 2_250.0).clamp(0.0, 1.0).powf(1.35)
+    }
+
+    pub fn pedestrian_density(&self, x: f32, z: f32, hour: f32) -> f32 {
+        self.ad_density(x, z) * self.pace(hour)
+    }
+
+    /// Commute direction for a heading at a position: true when the heading
+    /// points toward the epicentre.
+    pub fn heading_toward(&self, x: f32, z: f32, heading: Vec2) -> bool {
+        let to = self.epicenter - Vec2::new(x, z);
+        heading.dot(to) > 0.0
+    }
+}
+
+/// Seattle field epicentre: Westlake / Pike Pine seam (see
+/// `datasets/seattle/seattle_fields.json` for provenance and rationale).
+pub const SEATTLE_EPICENTER: Vec2 = Vec2::new(-138.4, -614.3);
+
 fn gauss(hour: f32, centre: f32, width: f32) -> f32 {
     (-((hour - centre) / width).powi(2)).exp()
 }
@@ -124,8 +231,13 @@ pub fn moon_tint(burning_buildings: usize) -> Vec3 {
 }
 
 /// Direct sun attenuation under cloud: overcast flattens and dims sunlight.
+/// Direct sun under a cloud lid. Overcast is the nominal Seattle state, so the
+/// curve is steep: at 0.82 cover the sun is ~5 % (the deck, not a dimmer), while
+/// a sunbreak at 0.26 keeps ~58 % and a clear sky ~86 %. Shadows therefore
+/// exist only when the sky actually opens.
 pub fn overcast_direct_factor(cover: f32, storm: f32) -> f32 {
-    (1.0 - 0.80 * cover.clamp(0.0, 1.0) - 0.14 * storm.clamp(0.0, 1.0)).clamp(0.04, 1.0)
+    let lid = (1.0 - 0.96 * cover.clamp(0.0, 1.0)).max(0.0);
+    (lid.powf(1.9) - 0.10 * storm.clamp(0.0, 1.0)).clamp(0.02, 1.0)
 }
 
 /// Deck altitude for a given overcast amount: low enough to swallow the top

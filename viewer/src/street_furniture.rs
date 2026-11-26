@@ -14,7 +14,10 @@ use bevy::{
 };
 use serde::Deserialize;
 
-use crate::{camera::FlyCamera, environment::Environment, storefront::StorefrontData};
+use crate::{
+    camera::FlyCamera, citypack::STREAM_WORLD_OFFSET, environment::Environment,
+    storefront::StorefrontData,
+};
 
 const INTERSECTIONS: &str = include_str!("../assets/models/intersections.json");
 
@@ -25,10 +28,22 @@ const FURNITURE_RADIUS: f32 = 330.0;
 
 const LAMP_SPACING: f32 = 24.0;
 const LAMP_OFFSET: f32 = 2.8;
+/// Ground-pool budget: one quad per nearby lamp, instanced.
+const POOL_COUNT: usize = 110;
+const POOL_RADIUS: f32 = 260.0;
+const POOL_SIZE: f32 = 19.0;
 
 /// Marks a streamed lamp or traffic-signal root for high-speed LOD.
 #[derive(Component)]
 pub struct StreetFurnitureRoot;
+
+/// A streamed streetlamp: its position feeds the ground-pool pool.
+#[derive(Component)]
+pub struct StreetLamp;
+
+/// One pooled ground pool under a lamp.
+#[derive(Component)]
+pub struct LampPool;
 
 #[derive(Deserialize, Clone, Copy)]
 struct IntersectionRecord {
@@ -219,6 +234,23 @@ pub fn setup_street_furniture(
         v
     }));
 
+    // Ground pools as pooled point lights: 24 warm lamps around the camera.
+    // A transparent quad per lamp was the plan, but a light is cheaper to get
+    // right: it lands on the road, the kerb and the wall without sorting.
+    for index in 0..POOL_COUNT {
+        commands.spawn((
+            LampPool,
+            Name::new(format!("lamp pool {index}")),
+            PointLight {
+                color: Color::srgb(1.0, 0.72, 0.38),
+                intensity: 0.0,
+                range: POOL_SIZE,
+                shadow_maps_enabled: false,
+                ..default()
+            },
+            Transform::from_xyz(0.0, -80.0, 0.0),
+        ));
+    }
     commands.insert_resource(StreetAssets {
         lamp_pole,
         lamp_light,
@@ -254,15 +286,20 @@ fn spawn_lamp(
     assets: &StreetAssets,
     point: [f32; 2],
     outward: [f32; 2],
+    ground_y: f32,
 ) -> Entity {
     let yaw = outward[0].atan2(outward[1]);
     let root = commands
         .spawn((
             Name::new("StreetLamp"),
             StreetFurnitureRoot,
+            StreetLamp,
             Mesh3d(assets.lamp_pole.clone()),
             MeshMaterial3d(assets.pole_material.clone()),
-            Transform::from_xyz(point[0], 0.06, point[1]).with_rotation(Quat::from_rotation_y(yaw)),
+            // Seat the pole on the DEM: the old y = 0.06 buried every lamp on
+            // any hill above sea level, which is most of Seattle.
+            Transform::from_xyz(point[0] + STREAM_WORLD_OFFSET, ground_y, point[1])
+                .with_rotation(Quat::from_rotation_y(yaw)),
             Visibility::Inherited,
         ))
         .id();
@@ -281,6 +318,7 @@ fn spawn_signal(
     assets: &StreetAssets,
     point: [f32; 2],
     yaw: f32,
+    ground_y: f32,
 ) -> Entity {
     let root = commands
         .spawn((
@@ -288,7 +326,8 @@ fn spawn_signal(
             StreetFurnitureRoot,
             Mesh3d(assets.signal_pole.clone()),
             MeshMaterial3d(assets.pole_material.clone()),
-            Transform::from_xyz(point[0], 0.06, point[1]).with_rotation(Quat::from_rotation_y(yaw)),
+            Transform::from_xyz(point[0] + STREAM_WORLD_OFFSET, ground_y, point[1])
+                .with_rotation(Quat::from_rotation_y(yaw)),
             Visibility::Inherited,
         ))
         .id();
@@ -311,6 +350,7 @@ fn spawn_signal(
     root
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn stream_street_furniture(
     mut commands: Commands,
     time: Res<Time>,
@@ -318,6 +358,7 @@ pub fn stream_street_furniture(
     data: Res<StorefrontData>,
     intersections: Res<Intersections>,
     assets: Res<StreetAssets>,
+    geology: Option<Res<crate::geology::Geology>>,
     mut furniture: ResMut<StreetFurniture>,
 ) {
     let now = time.elapsed_secs();
@@ -325,12 +366,17 @@ pub fn stream_street_furniture(
         return;
     }
     furniture.last_check = now;
-    let cam = camera.translation;
+    // Furniture data is pack-local; the camera is world-space. The old mix
+    // meant no lamp ever spawned (the 60 km offset put every building "far").
+    let cam = Vec2::new(
+        camera.translation.x - STREAM_WORLD_OFFSET,
+        camera.translation.z,
+    );
 
     let mut near_buildings = Vec::new();
     for (id, building) in data.buildings().iter().enumerate() {
         let dx = building.centroid[0] - cam.x;
-        let dz = building.centroid[1] - cam.z;
+        let dz = building.centroid[1] - cam.y;
         if (dx * dx + dz * dz).sqrt() <= FURNITURE_RADIUS {
             near_buildings.push(id);
         }
@@ -377,7 +423,17 @@ pub fn stream_street_furniture(
                 point[0] + outward[0] * LAMP_OFFSET,
                 point[1] + outward[1] * LAMP_OFFSET,
             ];
-            entities.push(spawn_lamp(&mut commands, &assets, position, outward));
+            let ground = geology
+                .as_ref()
+                .map(|state| state.dem.height(position[0], position[1]))
+                .unwrap_or(0.0);
+            entities.push(spawn_lamp(
+                &mut commands,
+                &assets,
+                position,
+                outward,
+                ground,
+            ));
             distance += LAMP_SPACING;
         }
         if !entities.is_empty() {
@@ -389,7 +445,7 @@ pub fn stream_street_furniture(
     let mut near_signals = Vec::new();
     for (index, signal) in intersections.items.iter().enumerate() {
         let dx = signal.x - cam.x;
-        let dz = signal.z - cam.z;
+        let dz = signal.z - cam.y;
         if (dx * dx + dz * dz).sqrt() <= FURNITURE_RADIUS {
             near_signals.push(index);
         }
@@ -425,6 +481,10 @@ pub fn stream_street_furniture(
                 signal.x + perp[0] * offset * sign,
                 signal.z + perp[1] * offset * sign,
             ];
+            let ground = geology
+                .as_ref()
+                .map(|state| state.dem.height(point[0], point[1]))
+                .unwrap_or(0.0);
             entities.push(spawn_signal(
                 &mut commands,
                 &assets,
@@ -434,10 +494,62 @@ pub fn stream_street_furniture(
                 } else {
                     0.0
                 },
+                ground,
             ));
         }
         furniture.signals.insert(index, entities);
         new_signals += 1;
+    }
+}
+
+/// Pooled ground light under the nearest lamps. Night only; zero by day.
+pub fn update_lamp_pools(
+    time: Res<Time>,
+    env: Res<Environment>,
+    camera: Single<&Transform, With<FlyCamera>>,
+    lamps: Query<&Transform, (With<StreetLamp>, Without<LampPool>, Without<FlyCamera>)>,
+    mut pools: Query<
+        (&mut PointLight, &mut Transform),
+        (With<LampPool>, Without<StreetLamp>, Without<FlyCamera>),
+    >,
+    mut last: Local<f32>,
+) {
+    let now = time.elapsed_secs();
+    if now - *last < 0.25 {
+        return;
+    }
+    *last = now;
+    let night = env.night || env.daylight < 0.35;
+    if !night {
+        for (mut light, _) in &mut pools {
+            light.intensity = 0.0;
+        }
+        return;
+    }
+    let cam = camera.translation;
+    let mut nearest: Vec<(f32, Vec3)> = lamps
+        .iter()
+        .map(|lamp| (lamp.translation.distance_squared(cam), lamp.translation))
+        .filter(|(distance, _)| *distance <= POOL_RADIUS * POOL_RADIUS)
+        .collect();
+    nearest.sort_by(|a, b| a.0.total_cmp(&b.0));
+    nearest.truncate(POOL_COUNT);
+    if std::env::var_os("POOL_TRACE").is_some() {
+        info!(
+            "LAMP POOLS lamps={} near={} cam={:?} first={:?}",
+            lamps.iter().count(),
+            nearest.len(),
+            cam,
+            nearest.first()
+        );
+    }
+    for (index, (mut light, mut transform)) in pools.iter_mut().enumerate() {
+        let Some((_, point)) = nearest.get(index) else {
+            light.intensity = 0.0;
+            continue;
+        };
+        transform.translation = *point + Vec3::Y * 5.6;
+        light.intensity = 26_000.0;
     }
 }
 

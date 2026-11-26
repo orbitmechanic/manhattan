@@ -66,11 +66,11 @@ use manhattan_viewer::{
     storefront::{StorefrontData, StorefrontState, spawn_storefronts},
     street_furniture::{
         Intersections, StreetFurniture, setup_street_furniture, stream_street_furniture,
-        update_street_lights,
+        update_lamp_pools, update_street_lights,
     },
     traffic::{
-        Traffic, TrafficLanes, setup_vehicle_catalog, stream_traffic, update_traffic,
-        update_vehicle_light_lod, update_vehicle_lights,
+        Traffic, TrafficLanes, setup_vehicle_beams, setup_vehicle_catalog, stream_traffic,
+        update_traffic, update_vehicle_beams, update_vehicle_light_lod, update_vehicle_lights,
     },
     ui::{
         handle_calendar_keys, spawn_ui, update_controls_text, update_station_text, update_status,
@@ -185,6 +185,171 @@ fn parse_args() -> Args {
             }
             "--selftest" => args.selftest = true,
             "--pilot" => args.pilot = true,
+            "--seattle-horizon" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_HORIZON", "1");
+                    std::env::set_var("HORIZON_CAPTURE", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle-s2-gauntlet" => {
+                // Canonical build: S3 on, same as bare --seattle. The old flag
+                // enabled S2 only, so its own chunk assert could never pass.
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("LANDMARKS_ALWAYS", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("S2_GAUNTLET", "1");
+                }
+            }
+            "--seattle-s2-orbit" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("S2_ORBIT", "1");
+                }
+            }
+            "--seattle-s2-hover" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("S2_HOVER", "1");
+                }
+            }
+            "--seattle-s3-restore" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("S3_DAMAGE", "1");
+                    std::env::set_var("S3_RESTORE", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle-s3-damage" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("S3_DAMAGE", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle" => unsafe {
+                std::env::set_var("SEATTLE_S2", "1");
+                std::env::set_var("SEATTLE_S3", "1");
+                std::env::set_var("SEATTLE_BOOT", "1");
+                std::env::set_var("LANDMARKS_ALWAYS", "1");
+                std::env::set_var("PILOT_HORIZON", "1");
+            },
+            "--pedestrians" => unsafe {
+                std::env::set_var("SEATTLE_S2", "1");
+                std::env::set_var("SEATTLE_S3", "1");
+                std::env::set_var("SEATTLE_BOOT", "1");
+                std::env::set_var("LANDMARKS_ALWAYS", "1");
+                std::env::set_var("PEDESTRIAN_CAPTURE", "1");
+            },
+            "--traffic" => unsafe {
+                std::env::set_var("SEATTLE_S2", "1");
+                std::env::set_var("SEATTLE_S3", "1");
+                std::env::set_var("SEATTLE_BOOT", "1");
+                std::env::set_var("LANDMARKS_ALWAYS", "1");
+                std::env::set_var("TRAFFIC_CAPTURE", "1");
+            },
+            "--evidence" => unsafe {
+                std::env::set_var("SEATTLE_S2", "1");
+                std::env::set_var("SEATTLE_S3", "1");
+                std::env::set_var("PILOT_CLEAN", "1");
+                std::env::set_var("EVIDENCE_CAPTURE", "1");
+            },
+            "--districts" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("STOREFRONT_CAPTURE", "1");
+                    std::env::set_var("TREES_OFF", "1");
+                }
+            }
+            "--landmarks" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("LANDMARK_GATE", "1");
+                    std::env::set_var("TREES_OFF", "1");
+                }
+            }
+            "--seattle-trees" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                    std::env::set_var("TREES_CAPTURE", "1");
+                }
+            }
+            "--seattle-s3" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("SEATTLE_S3", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle-s2" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_S2", "1");
+                    std::env::set_var("PILOT_HORIZON", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle-south" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_STREAM", "1");
+                    std::env::set_var("SOUTH_CAPTURE", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--seattle-map" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_STREAM", "1");
+                    std::env::set_var("MINIMAP_CAPTURE", "1");
+                    std::env::set_var("MINIMAP_ZOOM", "0");
+                }
+            }
+            "--seattle-stream" => {
+                args.pilot = true;
+                unsafe {
+                    std::env::set_var("SEATTLE_STREAM", "1");
+                    std::env::set_var("PILOT_CLEAN", "1");
+                }
+            }
+            "--pilot-damage" => unsafe {
+                std::env::set_var("PILOT_DAMAGE", "1");
+            },
+            "--perf" => unsafe {
+                std::env::set_var("PILOT_PERF", "1");
+            },
             "--lines" => args.show_lines = true,
             "--ticks" => args.show_ticks = true,
             "--set" => {
@@ -227,7 +392,24 @@ fn parse_args() -> Args {
     args
 }
 
+/// Print the active render backend and adapter at boot on every target, so a
+/// backend question is answered by the console rather than by inference.
+fn log_render_backend(info: Option<Res<bevy::render::renderer::RenderAdapterInfo>>) {
+    match info {
+        Some(info) => info!(
+            "RENDER BACKEND: {:?} adapter=\"{}\"",
+            info.backend, info.name
+        ),
+        None => warn!("RENDER BACKEND: adapter info unavailable"),
+    }
+}
+
 fn main() {
+    #[cfg(target_arch = "wasm32")]
+    console_error_panic_hook::set_once();
+    // The browser has no argv and no environment (and std::env::set_var panics
+    // there): the Seattle profile is expressed in the mode gates themselves as
+    // `cfg!(target_arch = "wasm32")`, so the same binary boots the demo.
     #[allow(unused_mut)]
     let mut args = parse_args();
     if args.pilot {
@@ -271,153 +453,223 @@ fn main() {
     #[cfg(target_arch = "wasm32")]
     let asset_path = "assets".to_string();
 
-    App::new()
-        .add_plugins(
-            DefaultPlugins
-                .set(AssetPlugin {
-                    file_path: asset_path,
-                    meta_check: AssetMetaCheck::Never,
+    let mut app = App::new();
+    let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "warn".to_string());
+    // Backend pinning is a WEB-ONLY concern: a browser can only offer WebGL2,
+    // while native must keep wgpu's default (Vulkan) selection. Pinning GL
+    // unconditionally made the native binary fail with "Unable to find a GPU".
+    #[allow(unused_mut)]
+    let mut plugins = DefaultPlugins.build();
+    #[cfg(target_arch = "wasm32")]
+    {
+        plugins = plugins.set(bevy::render::RenderPlugin {
+            render_creation: bevy::render::settings::RenderCreation::Automatic(Box::new(
+                bevy::render::settings::WgpuSettings {
+                    backends: Some(bevy::render::settings::Backends::GL),
                     ..default()
-                })
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "Manhattan — day/night fly-through".to_string(),
-                        resolution: (1440u32, 900u32).into(),
-                        canvas: Some("#manhattan-canvas".into()),
-                        fit_canvas_to_parent: false,
-                        prevent_default_event_handling: true,
-                        ..default()
-                    }),
+                },
+            )),
+            ..default()
+        });
+    }
+    app.add_plugins(
+        plugins
+            .set(bevy::log::LogPlugin {
+                filter: log_filter,
+                ..default()
+            })
+            .set(AssetPlugin {
+                file_path: asset_path,
+                meta_check: AssetMetaCheck::Never,
+                ..default()
+            })
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "Manhattan — day/night fly-through".to_string(),
+                    resolution: (1440u32, 900u32).into(),
+                    canvas: Some(
+                        if cfg!(target_arch = "wasm32") {
+                            "#seattle-canvas"
+                        } else {
+                            "#manhattan-canvas"
+                        }
+                        .into(),
+                    ),
+                    fit_canvas_to_parent: cfg!(target_arch = "wasm32"),
+                    prevent_default_event_handling: true,
                     ..default()
                 }),
+                ..default()
+            }),
+    )
+    .add_plugins(destructibles_bevy::destructibles_plugin_for_manhattan())
+    .add_plugins(MaterialPlugin::<CityMaterial>::default())
+    .add_plugins(InstrumentPlugin)
+    .add_systems(Startup, (setup_tuning, log_render_backend))
+    .add_systems(Update, tuning_keys)
+    .add_plugins(NightAmbientPlugin)
+    .add_systems(Startup, manhattan_viewer::pilot::spawn_pilot)
+    .add_systems(
+        Update,
+        (
+            manhattan_viewer::pilot::pilot_camera,
+            manhattan_viewer::pilot::pilot_perf,
+            manhattan_viewer::pilot::pilot_damage,
+            manhattan_viewer::pilot::hide_ui_nodes,
+        ),
+    )
+    .add_plugins(NeighborhoodPlugin)
+    .add_plugins(CityRestorationPlugin)
+    .add_plugins(WeatherPlugin)
+    .add_plugins(MotionPlugin)
+    .add_plugins(LightningPlugin)
+    .add_plugins(MinimapPlugin)
+    .add_plugins(manhattan_viewer::citypack::CityPackPlugin)
+    .add_plugins(manhattan_viewer::horizon::HorizonPlugin)
+    .add_plugins(manhattan_viewer::geology::GeologyPlugin)
+    .add_plugins(manhattan_viewer::camera_authority::CameraAuthorityPlugin)
+    .add_plugins(manhattan_viewer::trees::TreesPlugin)
+    .add_plugins(manhattan_viewer::traffic_seattle::TrafficPlugin)
+    .add_plugins(manhattan_viewer::facade::FacadePlugin)
+    .add_plugins(manhattan_viewer::interior::InteriorPlugin)
+    .add_plugins(manhattan_viewer::roofs::RoofPlugin)
+    .add_plugins(manhattan_viewer::parity::ParityPlugin)
+    .add_plugins(manhattan_viewer::pedestrians::PedestriansPlugin)
+    .add_plugins(manhattan_viewer::storefronts::StorefrontsPlugin)
+    .add_plugins(manhattan_viewer::landmarks::LandmarksPlugin)
+    .add_plugins(CityAudioPlugin)
+    .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
+    .insert_resource(clock)
+    .insert_resource(capture)
+    .insert_resource(FrameCounter::default())
+    .init_resource::<manhattan_viewer::pilot::PilotDamageState>()
+    .init_resource::<manhattan_viewer::geology::S3DamageState>()
+    .init_resource::<manhattan_viewer::geology::SeattleFootprints>()
+    .insert_resource(selftest)
+    .insert_resource(Environment::default())
+    .insert_resource(weather)
+    .insert_resource(BlockLights::default())
+    .insert_resource(CityMaterialSetup::default())
+    .insert_resource(CollisionGrid::default())
+    .insert_resource(Stationing::default())
+    .insert_resource(StationingConfig {
+        show_lines: args.show_lines,
+        show_ticks: args.show_ticks,
+        show_coords: true,
+        set: args.line_set,
+    })
+    .insert_resource(StationingState::default())
+    .insert_resource(StorefrontData::default())
+    .insert_resource(StorefrontState::default())
+    .init_resource::<TreeData>()
+    .init_resource::<SignMaterials>()
+    .init_resource::<RoofFurniture>()
+    .init_resource::<Crowd>()
+    .init_resource::<TrafficLanes>()
+    .init_resource::<Traffic>()
+    .init_resource::<Intersections>()
+    .init_resource::<StreetFurniture>()
+    .init_resource::<RoadMaterials>()
+    .init_resource::<ProcessingClock>()
+    .init_resource::<ControlLayout>()
+    .init_resource::<SpeedMode>()
+    .insert_resource(args)
+    .add_systems(
+        Startup,
+        (
+            setup_lighting,
+            spawn_camera,
+            spawn_scene,
+            spawn_fog_banks,
+            spawn_ui,
+            configure_station_gizmos,
+        ),
+    )
+    .add_systems(Startup, spawn_storefronts)
+    .add_systems(Startup, (spawn_trees, spawn_antennas, spawn_signs))
+    .add_systems(Startup, setup_people_catalog)
+    .add_systems(Startup, (setup_vehicle_catalog, setup_vehicle_beams))
+    .add_systems(Startup, setup_street_furniture)
+    .add_systems(Update, tick_processing_clock)
+    .add_systems(
+        Update,
+        (
+            tick_clock,
+            handle_calendar_keys,
+            handle_station_keys,
+            fly_camera_system.run_if(free_camera_mode),
+            update_fog_banks,
+            update_environment,
+            update_fog_bank_materials,
+            update_dof,
+            update_fog_culling,
+            setup_city_materials,
+            cull_web_buildings,
+            update_civil_coordinates,
+            draw_stationing,
+            update_station_text,
+            hide_web_loading,
+            update_blocks,
+            update_city_materials,
+            update_status,
+            run_selftest,
+            capture_system,
         )
-        .add_plugins(destructibles_bevy::destructibles_plugin_for_manhattan())
-        .add_plugins(MaterialPlugin::<CityMaterial>::default())
-        .add_plugins(InstrumentPlugin)
-        .add_systems(Startup, setup_tuning)
-        .add_systems(Update, tuning_keys)
-        .add_plugins(NightAmbientPlugin)
-        .add_systems(Startup, manhattan_viewer::pilot::spawn_pilot)
-        .add_systems(Update, manhattan_viewer::pilot::pilot_camera)
-        .add_plugins(NeighborhoodPlugin)
-        .add_plugins(CityRestorationPlugin)
-        .add_plugins(WeatherPlugin)
-        .add_plugins(MotionPlugin)
-        .add_plugins(LightningPlugin)
-        .add_plugins(MinimapPlugin)
-        .add_plugins(CityAudioPlugin)
-        .insert_resource(ClearColor(Color::srgb(0.30, 0.50, 0.82)))
-        .insert_resource(clock)
-        .insert_resource(capture)
-        .insert_resource(FrameCounter::default())
-        .insert_resource(selftest)
-        .insert_resource(Environment::default())
-        .insert_resource(weather)
-        .insert_resource(BlockLights::default())
-        .insert_resource(CityMaterialSetup::default())
-        .insert_resource(CollisionGrid::default())
-        .insert_resource(Stationing::default())
-        .insert_resource(StationingConfig {
-            show_lines: args.show_lines,
-            show_ticks: args.show_ticks,
-            show_coords: true,
-            set: args.line_set,
-        })
-        .insert_resource(StationingState::default())
-        .insert_resource(StorefrontData::default())
-        .insert_resource(StorefrontState::default())
-        .init_resource::<TreeData>()
-        .init_resource::<SignMaterials>()
-        .init_resource::<RoofFurniture>()
-        .init_resource::<Crowd>()
-        .init_resource::<TrafficLanes>()
-        .init_resource::<Traffic>()
-        .init_resource::<Intersections>()
-        .init_resource::<StreetFurniture>()
-        .init_resource::<RoadMaterials>()
-        .init_resource::<ProcessingClock>()
-        .init_resource::<ControlLayout>()
-        .init_resource::<SpeedMode>()
-        .insert_resource(args)
-        .add_systems(
-            Startup,
-            (
-                setup_lighting,
-                spawn_camera,
-                spawn_scene,
-                spawn_fog_banks,
-                spawn_ui,
-                configure_station_gizmos,
-            ),
+            .chain(),
+    )
+    .add_systems(Update, update_controls_text.after(fly_camera_system))
+    .add_systems(Update, (setup_road_materials, update_road_colors))
+    .add_systems(
+        Update,
+        (handle_weather_keys, update_weather)
+            .chain()
+            .before(update_environment),
+    )
+    .add_systems(Update, update_weather_visuals.after(update_environment))
+    .add_systems(Update, update_detail_culling)
+    .add_systems(Update, update_sign_blink)
+    .add_systems(
+        Update,
+        (stream_people, update_pedestrians, update_limbs)
+            .chain()
+            .run_if(accessories_active),
+    )
+    .add_systems(
+        Update,
+        (
+            stream_traffic,
+            update_traffic,
+            update_vehicle_lights,
+            update_vehicle_light_lod,
+            update_vehicle_beams,
         )
-        .add_systems(Startup, spawn_storefronts)
-        .add_systems(Startup, (spawn_trees, spawn_antennas, spawn_signs))
-        .add_systems(Startup, setup_people_catalog)
-        .add_systems(Startup, setup_vehicle_catalog)
-        .add_systems(Startup, setup_street_furniture)
-        .add_systems(Update, tick_processing_clock)
-        .add_systems(
-            Update,
-            (
-                tick_clock,
-                handle_calendar_keys,
-                handle_station_keys,
-                fly_camera_system,
-                update_fog_banks,
-                update_environment,
-                update_fog_bank_materials,
-                update_dof,
-                update_fog_culling,
-                setup_city_materials,
-                cull_web_buildings,
-                update_civil_coordinates,
-                draw_stationing,
-                update_station_text,
-                hide_web_loading,
-                update_blocks,
-                update_city_materials,
-                update_status,
-                run_selftest,
-                capture_system,
-            )
-                .chain(),
+            .chain()
+            .run_if(accessories_active),
+    )
+    .add_systems(
+        Update,
+        (
+            stream_street_furniture,
+            update_street_lights,
+            update_lamp_pools,
         )
-        .add_systems(Update, update_controls_text.after(fly_camera_system))
-        .add_systems(Update, (setup_road_materials, update_road_colors))
-        .add_systems(
-            Update,
-            (handle_weather_keys, update_weather)
-                .chain()
-                .before(update_environment),
-        )
-        .add_systems(Update, update_weather_visuals.after(update_environment))
-        .add_systems(Update, update_detail_culling)
-        .add_systems(Update, update_sign_blink)
-        .add_systems(
-            Update,
-            (stream_people, update_pedestrians, update_limbs)
-                .chain()
-                .run_if(accessories_active),
-        )
-        .add_systems(
-            Update,
-            (
-                stream_traffic,
-                update_traffic,
-                update_vehicle_lights,
-                update_vehicle_light_lod,
-            )
-                .chain()
-                .run_if(accessories_active),
-        )
-        .add_systems(
-            Update,
-            (stream_street_furniture, update_street_lights)
-                .chain()
-                .run_if(accessories_active),
-        )
-        .run();
+            .chain()
+            .run_if(accessories_active),
+    );
+
+    add_dev_brp(&mut app);
+    app.run();
 }
+
+#[cfg(feature = "dev-brp")]
+fn add_dev_brp(app: &mut App) {
+    app.add_plugins(bevy_brp_extras::BrpExtrasPlugin::with_http_plugin(
+        bevy::remote::http::RemoteHttpPlugin::default().with_address([127, 0, 0, 1]),
+    ));
+}
+
+#[cfg(not(feature = "dev-brp"))]
+fn add_dev_brp(_app: &mut App) {}
 
 fn tick_clock(time: Res<Time>, mut clock: ResMut<SimClock>) {
     clock.tick(time.delta_secs() as f64);
@@ -472,6 +724,12 @@ fn apply_web_args(args: &mut Args) {
             _ => {}
         }
     }
+}
+
+fn free_camera_mode() -> bool {
+    std::env::var_os("MANHATTAN_PILOT").is_none()
+        && std::env::var_os("SEATTLE_STREAM").is_none()
+        && std::env::var_os("SEATTLE_HORIZON").is_none()
 }
 
 fn spawn_camera(mut commands: Commands, args: Res<Args>) {
@@ -541,18 +799,35 @@ fn spawn_camera(mut commands: Commands, args: Res<Args>) {
         .id();
 
     // The web build omits the DOF pass: it is a full-screen post-process and
-    // the browser is the most fill-rate-sensitive target.
+    // the browser is the most fill-rate-sensitive target. Capture modes omit it
+    // too: a 180 m focal distance blurs every reviewer frame taken at street
+    // range, which made the storefront/scale evidence unreadable.
+    let capture_mode = [
+        "SEATTLE_BOOT_CAPTURE",
+        "SCALE_ORACLE",
+        "EVIDENCE_CAPTURE",
+        "MINIMAP_CAPTURE",
+        "STOREFRONT_CAPTURE",
+        "PEDESTRIAN_CAPTURE",
+        "TRAFFIC_CAPTURE",
+        "MURK_CAPTURE",
+        "GHOST_AERIAL",
+    ]
+    .iter()
+    .any(|name| std::env::var_os(name).is_some());
     #[cfg(not(target_arch = "wasm32"))]
-    commands
-        .entity(camera)
-        .insert(bevy::post_process::dof::DepthOfField {
-            mode: bevy::post_process::dof::DepthOfFieldMode::Gaussian,
-            focal_distance: 180.0,
-            sensor_height: 2.5,
-            aperture_f_stops: 1.0,
-            max_circle_of_confusion_diameter: 18.0,
-            max_depth: 7_000.0,
-        });
+    if !capture_mode {
+        commands
+            .entity(camera)
+            .insert(bevy::post_process::dof::DepthOfField {
+                mode: bevy::post_process::dof::DepthOfFieldMode::Gaussian,
+                focal_distance: 180.0,
+                sensor_height: 2.5,
+                aperture_f_stops: 1.0,
+                max_circle_of_confusion_diameter: 18.0,
+                max_depth: 7_000.0,
+            });
+    }
 }
 
 #[derive(serde::Deserialize)]
@@ -569,8 +844,78 @@ struct RoadwayChunk {
 
 const ROADWAY_MANIFEST: &str = include_str!("../assets/models/roadway_manifest.json");
 
-fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_scene(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     let pilot = std::env::var_os("MANHATTAN_PILOT").is_some();
+    if std::env::var_os("SEATTLE_S2").is_some() {
+        return;
+    }
+    if std::env::var_os("SEATTLE_HORIZON").is_some() {
+        let material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.055, 0.085, 0.11),
+            perceptual_roughness: 0.35,
+            metallic: 0.0,
+            ..default()
+        });
+        commands.spawn((
+            Name::new("Seattle horizon water"),
+            Mesh3d(meshes.add(Cuboid::new(90_000.0, 0.4, 90_000.0))),
+            MeshMaterial3d(material),
+            Transform::from_xyz(
+                manhattan_viewer::horizon::HORIZON_WORLD_OFFSET - 5_500.0,
+                -0.2,
+                0.0,
+            ),
+        ));
+        return;
+    }
+    if std::env::var_os("SEATTLE_STREAM").is_some() {
+        let material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.18, 0.19, 0.18),
+            perceptual_roughness: 0.98,
+            ..default()
+        });
+        commands.spawn((
+            Name::new("Seattle stream ground"),
+            Mesh3d(meshes.add(Cuboid::new(140_000.0, 0.6, 140_000.0))),
+            MeshMaterial3d(material),
+            Transform::from_xyz(
+                manhattan_viewer::citypack::STREAM_WORLD_OFFSET + 5_000.0,
+                -0.3,
+                20_000.0,
+            ),
+        ));
+        return;
+    }
+    // Seattle S1 preview: no Manhattan ground/roads, a flat placeholder ground
+    // at the belt's minimum surveyed base elevation (stepped plinths are spawned
+    // per building by the pilot runtime). S2 owns real terrain/water/roads.
+    if pilot && manhattan_viewer::pilot::bundle_city().as_deref() == Some("seattle") {
+        let ground = manhattan_viewer::pilot::bundle_ground();
+        let center = manhattan_viewer::pilot::bundle_center();
+        let material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.20, 0.21, 0.20),
+            perceptual_roughness: 0.98,
+            ..default()
+        });
+        commands.spawn((
+            Name::new("Seattle pilot flat ground"),
+            Mesh3d(meshes.add(Cuboid::new(6000.0, 0.6, 6000.0))),
+            MeshMaterial3d(material),
+            Transform::from_xyz(center[0], ground - 0.3, center[1]),
+        ));
+        return;
+    }
+    // The web demos Seattle from the city pack; the Manhattan GLB set and the
+    // roadway chunk atlas are native-only assets and would 404 (and retry) in
+    // the browser. Gated at the source, not provisioned.
+    #[cfg(target_arch = "wasm32")]
+    let paths: &[&str] = &[];
+    #[cfg(not(target_arch = "wasm32"))]
     let paths: &[&str] = if pilot {
         &["models/manhattan_ground.glb"]
     } else {

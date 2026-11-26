@@ -1,0 +1,98 @@
+[
+  {
+    "avg_ms": 55.90999984741211,
+    "p99_ms": 64.4000015258789,
+    "pose": "s2_capitol_climb.png",
+    "samples": 18
+  },
+  {
+    "avg_ms": 36.88999938964844,
+    "p99_ms": 45.15999984741211,
+    "pose": "s2_elliott_rainier.png",
+    "samples": 27
+  },
+  {
+    "avg_ms": 73.83000183105469,
+    "p99_ms": 80.68000030517578,
+    "pose": "s2_queen_anne.png",
+    "samples": 13
+  },
+  {
+    "avg_ms": 34.150001525878906,
+    "p99_ms": 43.349998474121094,
+    "pose": "s2_lake_bellevue.png",
+    "samples": 29
+  },
+  {
+    "avg_ms": 62.4900016784668,
+    "p99_ms": 79.9000015258789,
+    "pose": "s2_sodo_flats.png",
+    "samples": 15
+  },
+  {
+    "avg_ms": 47.65999984741211,
+    "p99_ms": 51.900001525878906,
+    "pose": "s2_steep_overcast.png",
+    "samples": 21
+  },
+  {
+    "avg_ms": 38.83000183105469,
+    "p99_ms": 46.31999969482422,
+    "pose": "s2_montlake_cut.png",
+    "samples": 26
+  },
+  {
+    "avg_ms": 43.93000030517578,
+    "p99_ms": 50.58000183105469,
+    "pose": "s2_waterfront_duwamish.png",
+    "samples": 23
+  },
+  {
+    "avg_ms": 36.79999923706055,
+    "p99_ms": 44.130001068115234,
+    "pose": "s2_elliott_dawn.png",
+    "samples": 27
+  },
+  {
+    "avg_ms": 37.11000061035156,
+    "p99_ms": 46.630001068115234,
+    "pose": "s2_elliott_dusk.png",
+    "samples": 27
+  },
+  {
+    "avg_ms": 43.0099983215332,
+    "p99_ms": 250.0,
+    "pose": "gauntlet_15ms",
+    "samples": 177
+  },
+  {
+    "avg_ms": 51.34000015258789,
+    "p99_ms": 64.44999694824219,
+    "pose": "gauntlet_30ms",
+    "samples": 59
+  },
+  {
+    "avg_ms": 53.97999954223633,
+    "p99_ms": 87.38999938964844,
+    "pose": "gauntlet_100ms",
+    "samples": 55
+  },
+  {
+    "avg_ms": 65.73999786376953,
+    "p99_ms": 107.68000030517578,
+    "pose": "gauntlet_650ms",
+    "samples": 46
+  },
+  {
+    "avg_ms": 48.20000076293945,
+    "p99_ms": 244.72000122070312,
+    "pose": "low_orbit",
+    "samples": 291
+  },
+  {
+    "avg_ms": 57.029998779296875,
+    "p99_ms": 68.70999908447266,
+    "pose": "chunk_hover",
+    "samples": 34
+  }
+]

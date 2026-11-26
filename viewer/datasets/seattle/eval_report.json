@@ -1,0 +1,133 @@
+{
+  "flat": 1096,
+  "flat_10x": 10960,
+  "pack": "assets/datasets/seattle.citypack",
+  "poses": [
+    {
+      "center": [
+        0.0,
+        0.0
+      ],
+      "flat": 1096,
+      "flat_10x": 10960,
+      "hierarchical": {
+        "cities": 2,
+        "counties": 2,
+        "neighborhoods": 626,
+        "total": 630
+      },
+      "hierarchical_10x": {
+        "cities": 2,
+        "counties": 20,
+        "neighborhoods": 626,
+        "total": 648
+      },
+      "loaded_neighborhoods": 42,
+      "loaded_neighborhoods_10x": 42,
+      "pose": "downtown",
+      "ratio": 1.7396825551986694,
+      "ratio_10x": 16.9135799407959
+    },
+    {
+      "center": [
+        5000.0,
+        -200.0
+      ],
+      "flat": 1096,
+      "flat_10x": 10960,
+      "hierarchical": {
+        "cities": 2,
+        "counties": 2,
+        "neighborhoods": 807,
+        "total": 811
+      },
+      "hierarchical_10x": {
+        "cities": 2,
+        "counties": 20,
+        "neighborhoods": 807,
+        "total": 829
+      },
+      "loaded_neighborhoods": 37,
+      "loaded_neighborhoods_10x": 37,
+      "pose": "mid-lake",
+      "ratio": 1.3514180183410645,
+      "ratio_10x": 13.220747947692871
+    },
+    {
+      "center": [
+        10081.0,
+        -245.0
+      ],
+      "flat": 1096,
+      "flat_10x": 10960,
+      "hierarchical": {
+        "cities": 2,
+        "counties": 2,
+        "neighborhoods": 807,
+        "total": 811
+      },
+      "hierarchical_10x": {
+        "cities": 2,
+        "counties": 20,
+        "neighborhoods": 807,
+        "total": 829
+      },
+      "loaded_neighborhoods": 34,
+      "loaded_neighborhoods_10x": 34,
+      "pose": "bellevue",
+      "ratio": 1.3514180183410645,
+      "ratio_10x": 13.220747947692871
+    },
+    {
+      "center": [
+        0.0,
+        34000.0
+      ],
+      "flat": 1096,
+      "flat_10x": 10960,
+      "hierarchical": {
+        "cities": 1,
+        "counties": 2,
+        "neighborhoods": 289,
+        "total": 292
+      },
+      "hierarchical_10x": {
+        "cities": 1,
+        "counties": 20,
+        "neighborhoods": 289,
+        "total": 310
+      },
+      "loaded_neighborhoods": 2,
+      "loaded_neighborhoods_10x": 2,
+      "pose": "tacoma-corridor",
+      "ratio": 3.753424644470215,
+      "ratio_10x": 35.35483932495117
+    },
+    {
+      "center": [
+        0.0,
+        56000.0
+      ],
+      "flat": 1096,
+      "flat_10x": 10960,
+      "hierarchical": {
+        "cities": 0,
+        "counties": 2,
+        "neighborhoods": 0,
+        "total": 2
+      },
+      "hierarchical_10x": {
+        "cities": 0,
+        "counties": 20,
+        "neighborhoods": 0,
+        "total": 20
+      },
+      "loaded_neighborhoods": 0,
+      "loaded_neighborhoods_10x": 0,
+      "pose": "far-south",
+      "ratio": 548.0,
+      "ratio_10x": 548.0
+    }
+  ],
+  "radius_m": 2600.0
+}

@@ -370,3 +370,29 @@ src/blocks.rs       block metadata, twilight wave, mixed flicker/fade (tests)
 src/city_material.rs custom PBR extension + fog culling + per-floor uniforms
 src/ui.rs           status panel, buttons, key handler (unit tests)
 ```
+
+## Running cities
+
+One binary, one boot profile per session. The default boots Manhattan; `--seattle` boots the full Seattle stack with no environment variables.
+
+| Entry point | What it boots | Verified |
+|---|---|---|
+| `cargo run --release` | Default Manhattan scene | previous rounds |
+| `cargo run --release -- --seattle` | Full Seattle: CityPack shells+proxies, terrain/water/roads, trees, storefronts, landmarks resident, reconciled district materials, minimap (3 zooms, white/health fill), HUD, free-fly, damage arsenal. Spawns at the Westlake/Pike Pine seam at street level facing the market and the Sound, daytime clear. | this round |
+| `--seattle-s2` | Terrain, water, far mesh, roads (no buildings) | previous rounds |
+| `--seattle-s3` | Above + streamed shells and proxies, then the 10-pose capture walker | this round (table) |
+| `--seattle-s3-damage` | Staged damage smoke on one printed id (`S3_ID`, `S3_CAPTURE`) | previous rounds |
+| `--seattle-s3-restore` | Damage → restore → evict cycle (`S3_CYCLE=1`, `S3_ID`) | previous rounds |
+| `--seattle-trees` | Eight tree capture poses | previous rounds |
+| `--landmarks` | Landmark gate/cycle (`LANDMARK=<key>`, `LANDMARK_CYCLE=1`) | previous rounds |
+| `--districts` | Storefront capture poses (derived cameras) | this round |
+| `--seattle-s2-gauntlet` / `-orbit` / `-hover` | Terrain/building perf regimes; add `SEATTLE_S3=1` for buildings | previous rounds |
+| `--pilot` | Pilot bundle fly-through (bundle path via `PILOT_DATASET`) | unchanged |
+| `scripts/seattle_persistence.sh [id|needle|market|...]` | Persistence gate (streamed record or landmark) | this round |
+| `scripts/seattle_s3_table.sh <label>` | 16-row perf table snapshot (`SKIP_GAUNTLET=1` optional) | this round |
+
+**Environment knobs.** `S3_LIST_TARGETS=1` dumps five ids per MaterialFamily with district. `S3_ID`, `S3_NODE`, `S3_CAPTURE`, `S3_CYCLE` stage the damage harness. `LANDMARK`, `LANDMARK_CYCLE` select landmark targets. `LANDMARKS_ALWAYS=1` keeps landmark assemblies resident outside gate mode. `TREES_OFF=1`, `STOREFRONTS_OFF=1` disable those layers (A/B perf). `PILOT_CLEAN=1` hides cosmetic UI but keeps instruments; capture modes imply it. `SEATTLE_BOOT_CAPTURE=1` with `--seattle` writes `captures/seattle_boot.png` at ~7 s.
+
+**Keybinds.** WASD + mouse: free flight. `1`–`4`: arm strike tier. `G` / left click: fire. `B`: restoration wave (city restoration panel). `F3`: instrument cluster (FPS/frame cost). `O`: minimap zoom cycle. `T`: stationing toggle.
+
+**Mode ownership.** Boot profiles and capture modes are exclusive: each sets its own environment and camera owner (the Camera Authority); do not combine `--seattle` with a capture flag. Capture modes override the directional light for reviewer frames and set noon clear; the capture-mode sun path itself is a filed debt — the override, not the sun, is the shipped answer there. Staged frames are stamped `POSE <mode> x,z` in the HUD; a competing camera writer is dropped and logged.

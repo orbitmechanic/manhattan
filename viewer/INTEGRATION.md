@@ -1079,3 +1079,1905 @@ and advertising placement are not part of the bundle, façades are per-building
 draws rather than batched per style, and the generated exterior still uses
 tiled destructible materials rather than the city atlas. Per the standing rule,
 Milestone A halts here: no B/C work.
+
+## Iteration 29a2a — pilot gate evidence
+
+| Pose | avg FPS | p50 ms | p99 ms | source |
+|---|---:|---:|---:|---|
+| street day | 21 | 46.8 | 55.0 | HUD in `pilot_a2a_street_day.png` |
+| aerial day | 17 | 60.0 | 68.9 | HUD in `pilot_a2a_aerial_day.png` |
+| street night | ~19 | 53.1 | 57.2 | HUD in `pilot_a2a_street_night.png` |
+| aerial night | ~14 | 71.1 | 74.8 | HUD in `pilot_a2a_aerial_night.png` |
+
+`--perf` walker remains non-emitting (scheduling bug); the table is produced by
+the screenshot/HUD instrumentation the reviewer accepted as fallback.
+Pilot load: 140 Shell buildings in 0.73 s; structures/interiors are deferred
+until damage. `--pilot-damage`: b7228 tiered to Structural in 27 ms, bullet
+admitted 0.3 ms, car bomb journal 5.63; captures `pilot_damage_bullet.png`,
+`pilot_damage_carbomb.png`. Other 139 buildings remain shell-tier.
+
+## CityPack v2 — hierarchical index
+
+**Level contract.** `county -> city -> neighborhood -> leaf records`:
+
+| Level | Count | Membership |
+|---|---:|---|
+| 0 county | 2 | King (Seattle + Bellevue = 243,909), Pierce (Tacoma = 86,421) |
+| 1 city | 3 | Seattle 187,053, Bellevue 56,856, Tacoma 86,421 (source-agency provenance) |
+| 2 neighborhood | 1,096 | Existing S1.5 quadtree partitions, re-parented |
+| leaves | 330,330 buildings + 29,833 street segments | Assigned to their neighborhood |
+
+Every node stores centre, AABB, roll-up count and style hints, parent index and
+child range. Child AABBs are strictly inside parent AABBs (max overflow 0.0 m).
+Names preserve the overlay with full ancestry (`King -> Seattle -> Capitol
+Hill 04`). County boundaries are Census TIGER/Line 2024; cities are the three
+source agencies, verified point-in-polygon against TIGER places (302,443
+centroids inside the agency polygon, 27,887 provenance_outside_polygon retained
+by source rather than re-bucketed; there are no unincorporated records in this
+extent). Snohomish has no records in the region polygon and is omitted.
+
+**Format.** CityPack v2 adds a node table (level, parent, first_child,
+child_count, roll-up counts, centre/AABB, hints, name, chunk offset/size) and
+street leaves in each neighborhood chunk. Per-chunk interning is unchanged.
+Binary 25.26 MB vs 146.6 MB JSON (5.8x); growth from v1 is +1.42 MB (6.0%),
+mostly the node table, street records and hierarchy indices.
+
+**Runtime descent and evaluation counts.** Streaming and point lookup start at
+county level; an out-of-range county terminates its subtree. Measured distance
+evaluations at 2.6 km radius (flat = 1,096 neighborhood tests):
+
+| Pose | flat | county/city/nb | total | ratio | 10× flat | 10× hier | 10× ratio |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| downtown | 1,096 | 2/2/626 | 630 | 1.74× | 10,960 | 648 | **16.9×** |
+| mid-lake | 1,096 | 2/2/807 | 811 | 1.35× | 10,960 | 829 | **13.2×** |
+| Bellevue | 1,096 | 2/2/807 | 811 | 1.35× | 10,960 | 829 | **13.2×** |
+| Tacoma corridor | 1,096 | 2/1/289 | 292 | 3.75× | 10,960 | 310 | **35.4×** |
+| far-south | 1,096 | 2/0/0 | 2 | 548× | 10,960 | 20 | **548×** |
+
+The 10× column builds ten spatial copies of the hierarchy and repeats the same
+descent; it is the megaregion extrapolation, not an adjective. At far-south no
+city or neighborhood is enumerated — the Tacoma gate proves subtree termination.
+The runtime HUD now shows `county/city/neighborhood` evaluations per frame and
+the loaded partition's full ancestry.
+
+**Minimap zooms.** `MapZoom` adds neighborhood (650 m) → city (15 km) → county
+(80 km); `O` cycles and `MINIMAP_ZOOM`/`MINIMAP_CAPTURE` drive evidence runs.
+Neighborhood AABBs aggregate to city outlines and county outlines, so the
+instrument renders the hierarchy as geography. Captures:
+`captures/minimap_neighborhood.png`, `minimap_city.png`, `minimap_county.png`.
+
+**Provenance alignment.** Counties and cities mirror the three source agencies
+(Seattle, Bellevue, Tacoma) that produced the footprints, so the hierarchy is
+also the correct scoping unit for future city-level LOD and style packs: a
+package can be authored/validated against one city without scanning the
+megaregion. Skyline-billboard far-LOD remains a future consumer, not built.
+
+## Seattle S2 — geology round (terrain / water / draped roads, no buildings)
+
+**Terrain.** 30 m DEM (2322×1207, int16 decimetres) is the S2 near-field source.
+The runtime builds a 60 m regional mesh over the whole dataset and 30 m near
+patches around the S2 poses (64 patches, overlapping the regional mesh at
++0.15 m as the seam treatment; no explicit vertical skirts). Water cells are
+removed from every terrain triangle, giving the hard shoreline edge.
+Resolution tiers: 30 m near / 60 m regional; triangle counts ~0.9 M regional
+plus ~0.4 M near patches. Horizon ring remains at 30 km beyond the dataset
+extent, so it is not occluded or z-fought by the near mesh; fog bridges the
+seam where terrain ends.
+
+**Water.** 153 polygons triangulated offline (earcut) at dataset
+NAVD88-approximate surfaces: Puget Sound/Elliott Bay at 0.0 (negative source
+values clamped), Lake Union and Lake Washington 4.98 m, Ship Canal cuts 4.98 m,
+Duwamish 1.63/5.32 m. 15,250 triangles. 472,509 DEM cells are masked water; no
+terrain triangle is emitted inside the mask. Flat shaded surface with fog; no
+cloud/water z artifacts after removing the speed-line/precip overlays from this
+mode. Piers/harbor detail are out of scope.
+
+**Roads.** All 29,833 SND segments are draped: each segment samples the DEM at
+its endpoints and becomes a ribbon at DEM height +0.35 m. Widths from SND
+segment type (15/11/8/7 m; documented default 7 m). 482,348 vertices in the
+global road mesh. Drape audit over 85,981 sampled segment points: 0.0 m error
+against the DEM grid. Sidewalk bands were not added (streets only).
+
+**No-buildings gate.** `--seattle-s2` loads terrain, water and roads only; no
+CityPack building meshes are spawned.
+
+**Boot and streaming.** Geology setup (DEM, water, 60 m regional mesh, 64 near
+patches, global roads) completes in **177–181 ms**; first rendered frame follows
+immediately. Road-neighborhood descent still runs per frame: downtown
+**2 county / 2 city / 626 neighborhood** evaluations, Bellevue **2/2/807**,
+far south **2/0/0**. HUD reports `road nbhds` and level evaluations. Dynamic
+near-tile/road chunk spawn is not exercised this round: the 30 m near terrain
+is prebuilt for the S2 pose set and roads are a global draped mesh; the
+hierarchy still gates the road-neighborhood evaluation count. This is the
+remaining S2.x streaming item.
+
+**Captures.** `s2_capitol_climb.png`, `s2_elliott_rainier.png` (Rainier over
+the water), `s2_queen_anne.png`, `s2_lake_bellevue.png`, `s2_sodo_flats.png`,
+`s2_steep_overcast.png`, `s2_montlake_cut.png`, `s2_waterfront_duwamish.png`,
+`s2_elliott_dawn.png`, `s2_elliott_dusk.png`.
+
+**Audits.** Street drape error 0.0 m; LOD seam height delta 0.0 m at shared DEM
+cells; water-mask/terrain exclusion checked in the offline build; Rainier
+silhouette remains from S1c. Frame cost per pose was not separately instrumented
+(boot only); no claim is made beyond the setup number.
+
+**Honest gap.** Dynamic terrain/road chunk streaming, explicit skirt geometry,
+sidewalk bands and pier detail are not delivered; terrain is smooth-shaded and
+road ribbons are unfaceted placeholders. These are S2.x/S3 items, not passed off
+as complete.
+
+## S2.1 — dynamic geology streaming, skirts, frame-cost baseline
+
+**Terrain streaming.** 30 m DEM is tiled into **960 m chunks** (32×32 cells),
+loaded/unloaded from the camera through the hierarchy's leaf budget:
+load radius 2,800 m, unload 3,400 m (hysteresis), 2 chunks/frame and a 6 ms
+budget. Boot spawns the 3×3 downtown chunks; everything else streams. Far
+terrain is the 60 m regional mesh; the 30 km horizon ring owns the far field.
+Every chunk carries **vertical skirts** (8 m, four edges) at the LOD/chunk
+boundary. HUD: terrain loaded (+loads/−unloads), roads, evals and per-frame
+build ms.
+
+**Road streaming.** All 29,833 SND segments stream per loaded neighborhood:
+load radius 3,200 m, unload 3,800 m, 1 chunk/frame, 6 ms budget; only candidate
+neighborhoods are read from CityPack. HUD reports road chunks (+/−) and the
+county/city/neighborhood descent evaluations.
+
+**Gauntlet.** Four regimes 15/30/100/650 m/s, 3 s each, cumulative path with
+end-point captures (`gauntlet_15ms.png` … `gauntlet_650ms.png`) showing intact
+terrain and counters. Chunk-boundary hover capture `s2_chunk_hover.png`
+(terrain 32 / roads 66, 2/2/626). Hero-speed seam behavior is in the 650 m/s
+capture.
+
+**Per-pose frame cost (S3 baseline).** Measured via the HUD/instrument fallback
+(the `--perf` walker remains non-emitting). Steady samples after 3 s settle;
+average/p99 in ms on this Vega 8 machine:
+
+| Pose | avg ms | p99 ms |
+|---|---:|---:|
+| Capitol climb | 39.97 | 50.53 |
+| Elliott/Rainier | 39.00 | 47.71 |
+| Queen Anne | 36.12 | 42.58 |
+| Lake Washington | 41.36 | 46.89 |
+| SODO | 35.54 | 40.59 |
+| Steep overcast | 41.11 | 47.61 |
+| Montlake | 42.33 | 52.11 |
+| Duwamish waterfront | 37.55 | 56.12 |
+| Elliott dawn | 42.04 | 52.52 |
+| Elliott dusk | 36.10 | 40.84 |
+| Gauntlet 15 m/s | 37.82 | 244.30 |
+| Gauntlet 30 m/s | 38.13 | 47.64 |
+| Gauntlet 100 m/s | 37.91 | 50.59 |
+| Gauntlet 650 m/s | 38.18 | 54.92 |
+| Low orbit | 40.20 | 130.15 |
+| Chunk hover | 39.45 | 47.05 |
+
+This is the baseline S3’s buildings will be judged against. The 15 m/s p99
+includes the first-chunk/startup spike (244 ms), while steady regimes stay
+40–56 ms; low orbit’s 130 ms is the current p99 stress result. No chunk swap exceeded the 6 ms build budget in the HUD (`tile 0.0–0.4
+ms`), but the first regime shows the expected startup outlier.
+
+**Tests.** Terrain chunk budgeting/hysteresis constants, skirt vertex presence,
+road-neighborhood chunk round-trip and removal (unloaded absence), DEM spot
+elevations, water-mask/terrain exclusion, road drape, plus the S2/S1c suites.
+Honest gap: the Capitol perf row and a truly steady 15 m/s p99 remain open; the
+walker is still broken and the fallback numbers are the committed baseline.
+
+## Seattle S3 — buildings round (current status)
+
+**Style pack.** `assets/styles/seattle_pack.json` defines district grammar driven
+by CityPack ancestry + height: Downtown/Bellevue CBD (steel/glass, 82% glass),
+Pioneer Square (masonry/stone low-rise), Ballard/Fremont/Georgetown (timber
+low-rise), Capitol Hill/Queen Anne/residential belts (mixed masonry/timber),
+SODO/South King (concrete grid), Tacoma (masonry/concrete), Eastside (mixed).
+Epicenter is Downtown/Columbia Center at world (0,0). Completeness audit: 1096 /
+1096 neighborhoods mapped (default rule for unmatched Tacoma South King names),
+report in `datasets/seattle/style_pack_report.json`.
+
+**Streaming generation.** Buildings ride the CityPack neighborhood stream:
+radius 650 m load / 950 m unload, one neighborhood per frame. Shells (up to 6
+per chunk within 120 m) use `spawn_building_world_lod(..., Shell)` with
+footprint-local specs and the pack’s family/facade; farther buildings in the
+chunk become one merged LOD box mesh. Placement y = terrain DEM at the centroid
++ 0.03 m. HUD reports building count alongside terrain/roads/evals.
+
+**S3 frame cost (same poses, buildings streaming).** `datasets/seattle/s3_perf.json`:
+
+| Pose | avg ms | p99 ms | vs S2 baseline |
+|---|---:|---:|---:|
+| Elliott/Rainier | 73.27 | 87.40 | +1.9× |
+| Lake Washington | 101.19 | 110.45 | +2.4× |
+| Montlake | 177.97 | 181.38 | +4.2× |
+| Duwamish | 175.14 | 196.90 | +4.7× |
+| Elliott dawn | 130.58 | 133.99 | +3.1× |
+| Elliott dusk | 133.40 | 144.74 | +3.7× |
+| Queen Anne | 250.00 | 250.00 | 6 fps clamp |
+| SODO | 250.00 | 250.00 | 6 fps clamp |
+| Steep overcast | 250.00 | 250.00 | 6 fps clamp |
+| Capitol | 250.00 | 250.00 | 6 fps clamp |
+
+The near-field cost roughly doubles to quadruples, and four poses hit the
+6-fps clamp; the 650 m/s gauntlet with buildings was not completed. Levers:
+tighten the 650 m load radius, cut shells per chunk below 6, and replace the
+per-neighborhood box merge with a distance-decayed far shell. Boot with geology
+plus buildings: ~90–135 ms geology setup, first frame dominated by shell
+creation.
+
+**Damage smoke.** `--seattle-s3-damage` tiers a loaded shell and fires 20
+bullets: `b75134`, 20 shots in 0.4 ms, journal head 0.00; capture
+`captures/s3_damage_tower.png`. The wound did not register in this run, so the
+damage trio, MaterialFamily gut checks, full persistence cycle, and repeat-fire
+pass/fail gate are **not delivered**.
+
+**Captures.** S2 poses re-shot with buildings (some poses show the merged LOD
+boxes rather than shells), damage smoke. Queen Anne/SODO/steep/Capitol still
+show geometry/culling gaps. Honest verdict: style pack + streamed generation
+scaffolding are in place, but the S3 visual/damage/perf gate is not met; no S3
+tag should be inferred from this section.
+
+## Architecture invariants — the Shell Doctrine (Seattle)
+
+These three clauses are binding for Seattle and all future rounds. They are
+cited by name; any performance lever is evaluated against them before it is
+considered.
+
+1. **Buildings are textured hit-box shells until damaged.** The near-field
+   render is shells (wall/trim/roof meshes + footprint collider) plus
+   elevation-anchored LOD proxies. No interior lattice, slab/column/collider
+   per cell, or guts may exist in the pristine near field.
+2. **No mass spawn-in of destructible skeletons, ever** — at load or streaming
+   time. The zero-structure-graphs-at-load assertion is the enforcement point.
+   Shells are legitimate; skeleton material is not. The current S3
+   “6 shells per chunk” behavior must be audited against this clause: the six
+   are shells, so the cap is allowed **only if** no support graph is built.
+3. **Mass destructible escalation occurs only under mass-damage events**, which
+   run through the admission machinery as a scheduled wave in bullet time —
+   never as a synchronous per-building spawn.
+
+### Audit result (this amendment)
+
+- Clause 1: S3 spawns `BuildingDetail::Shell` and proxy boxes; wall/trim/roof
+  visuals are correct. **However**, the dependency’s
+  `ensure_structure_runtime` builds a `SupportGraph` for every `Added<Building>`
+  regardless of `DetailLevel`. The S3 load assertion in `src/geology.rs`
+  (`Structures::iter().count() == 0`) therefore **fails**: the resting state
+  currently contains skeleton graphs. Clause 1/2 are **NOT honoured**.
+- Clause 3: the S3 damage smoke applies 20 impacts synchronously; it is not a
+  scheduled admission wave. **NOT honoured** as a mass-escalation path.
+- The 6-shell-per-chunk cap is therefore **rejected as a compliant lever**:
+  shells are allowed, but the dependency’s added-building hook turns each into
+  a skeleton graph. Raising the cap, distance-decaying shells, or any lever
+  that increases shell/skeleton count is rejected until
+  `ensure_structure_runtime` skips `DetailTier::Shell` and the load assertion
+  passes. Tighter radii alone would reduce the count but not fix the invariant.
+
+**Enforcement status:** the assertion is committed and currently fails on
+`--seattle-s3`, so the non-compliant path is loudly blocked rather than
+silently accepted. S3 is not a valid baseline for lever work until the
+dependency hook is corrected.
+
+### S3.1 fix — shell skeletons deferred to tier-up
+
+**Dependency fix** (`destructibles` branch `iteration-29a3`, tag `manhattan-s3b`
+@ `520c85e7`):
+- `ensure_structure_runtime` now queries `DetailLevel` and skips
+  `DetailTier::Shell` (`crates/bevy/src/structure.rs`).
+- `record_pristine` no longer calls `ensure_runtime_for`; pristine recording
+  cannot construct a skeleton (`crates/bevy/src/streaming.rs`).
+- `begin_detail_upgrade` calls `ensure_runtime_for` at Shell → Structural
+  promotion (`crates/bevy/src/building.rs`), matching the pilot/standalone
+  damage path.
+- Manhattan pins `manhattan-s3b` and the lockfile records `520c85e7`.
+
+**Enforcement now green.** `src/geology.rs` asserts `Structures::iter().count()
+== 0` after every streamed building chunk and after the full S3 load; the
+`--seattle-s3` run passes. Out-of-range/unloaded partitions contribute zero by
+construction (no chunk read → no building spawn → no graph).
+
+**Skeleton-tax isolation (same poses, fix alone, no levers):**
+
+| Pose | pre-fix avg ms | post-fix avg ms | Δ |
+|---|---:|---:|---:|
+| Elliott/Rainier | 73.27 | 44.40 | −39% |
+| Lake Washington | 101.19 | 45.04 | −55% |
+| Elliott dawn | 130.58 | 42.86 | −67% |
+| Elliott dusk | 133.40 | 42.22 | −68% |
+| Montlake | 177.97 | 72.87 | −59% |
+| Duwamish | 175.14 | 88.92 | −49% |
+| Capitol/Queen Anne/SODO/steep | 250 | 250 | unchanged (load stall) |
+
+The contraband was costing 30–55 % on the poses that were not clamped.
+
+**Still not passing:** the Seattle damage journal remains 0.00 after the
+20-shot smoke despite tier-up; the MaterialFamily trio, persistence cycle,
+repeat-fire gate and buildings-in gauntlet are not delivered. Levers were not
+started because item 2 (damage) is not green. `seattle-s3b` is **not tagged**;
+`seattle-s3` remains the prior (non-compliant) tag.
+
+### S3.2 journal fix — admission timing, not the resolver
+
+Trace result: resolver/addressability/tier-up are sound. `Buildings` contains
+the target, `begin_detail_upgrade` returns true, level promotes to
+`Structural`; the 20-shot + car-bomb batch applies in 0.4 ms. The dead stage was
+**reading the journal and screenshotting in the same frame the admissions were
+enqueued**. The admission queue applies on subsequent frames; the earlier smoke
+reported `journal 0.00` before the car bomb was decomposed.
+
+Fix: the damage mode now applies the batch, sets stage 1, waits 1.5 s for the
+admission machinery, then reads the journal and captures. Trace now reports
+**journal 10.54** on b75134 after admission.
+
+This is a real-input badge-chain result: resolver/registry hit → tier-up →
+admission enqueue → journal apply. Remaining battery (trio per MaterialFamily,
+monotone 20-shot gate, restore→evict, persistence cycle, levers, buildings
+gauntlet) is still not delivered; `seattle-s3b` remains untagged.
+
+## CodeGraph verification culture (standing order)
+
+Session start (2026-11-22) ran `codegraph-work-index`: **25 projects, 540 files,
+0 failures**; Manhattan indexed 88 files and destructibles 105. The Seattle
+files are present in the graph — `codegraph_symbol_search("s3_damage")` resolves
+`viewer/src/geology.rs:1207`, and `S3DamageState` resolves at `geology.rs:1328`,
+so CityPack/geology/horizon did not require a manual re-index.
+
+Seam queries used for the S3.1/S3.2 work and cited in the fix report:
+
+- `symbol_search("ensure_structure_runtime")` → `destructibles/crates/bevy/src/structure.rs:271`.
+  `get_callers` returned none because the function is registered as a system
+  reference, not called directly; `get_callees` returned `Structures::get` /
+  `contains`, confirming the runtime-construction seam.
+- `symbol_search("begin_detail_upgrade")` → `building.rs:1106`;
+  `get_callers` returned `geology::s3_damage`, `pilot::pilot_damage`,
+  `neighborhood::detail_tick`, and the destructibles detail-tier tests. That map
+  identified the tier-up seam where `ensure_runtime_for` belongs.
+- `symbol_search("s3_damage")` located the Seattle smoke and `S3DamageState` for
+  the journal-timing trace; the dead stage was admission timing, not the
+  resolver/registry path.
+
+Non-compliance note: the earlier S3/S3.1 rounds did not run this session index or
+record these queries; that gap is reported rather than hidden. Future
+cross-module work must run the session index and cite the seam queries alongside
+trace evidence.
+
+Seattle archive radius: **650 m**, matching the neighborhood minimap zoom (the default 650 m dial), not the 15 km city or 80 km county zoom views. The neighborhood radius governs freeze/evict because it is the scale at which building detail and damage are legible; the wider minimap zooms are navigation instruments, not residency scopes. Constant: `SEATTLE_ARCHIVE_RADIUS_M = 650.0` in `src/geology.rs`.
+
+## Seattle landmarks (destructible, iteration 56c)
+
+Nine authored assemblies (Needle, Market, Aurora/Fremont/Ballard, Monorail, Climate Pledge, Lumen, T-Mobile) spawn as shell components and tier up on first impact; the assembly is the support topology, and signature components must survive at least half the nine-act sequence (validated at load). Measured tier-up cost, **Space Needle: 176 ms for six components** (48 m saucer, 134 m stem, waist, crown, spire, pedestal) on the Vega 8 machine; the other assemblies are cheaper. The Needle's landmark persistence cycle (freeze 710 m out, thaw, restore) is runnable as `scripts/seattle_persistence.sh needle`; the 16-row table with all landmarks resident moved no city pose by more than ~3.5 ms and the 650 m/s gauntlet by ~7 ms.
+
+Landmark tier-up costs (Vega 8): Space Needle **176 ms** (6 components), Climate Pledge Arena **71 ms** (2), Seattle Center Monorail **44.5 ms** (12 spans), Pike Place Market and the three bridges cheaper; measured at Structural tier-up from the damage-ready baseline. The 16-row landmark table (s3_perf_landmarks.json) was taken with all nine assemblies resident: no city pose regressed beyond ~3.5 ms and the 650 m/s gauntlet by ~7 ms; it predates the final monorail span geometry (spans lengthened to 118 m for a continuous guideway), whose shell count is unchanged.
+
+**The 250 ms clamp, explained.** The harness records frame cost from `time.delta_secs()`, i.e. Bevy's virtual clock. `Time<Virtual>` clamps each frame delta to its `max_delta` (default 0.25 s) so a stalled frame advances game time by at most 250 ms. A frame that really takes 2 s is therefore recorded as **250 ms**, and the perf tables show 250.0 for clamped poses. It is a **measurement artifact of the harness**, not a runtime limiter: real wall time is unaffected. The honest fix is to record `Time<Real>` deltas (or raise `max_delta`), which would show the true 1-3 s chunk-spawn stalls that the S3 levers eliminated; until then the clamp is a known, documented ceiling, and any 250.0 row means "at least 250 ms", never exactly.
+
+## Measurement honesty: real time, no 250 ms sentinel
+
+The perf harness now records `Time<Real>` frame deltas instead of the virtual delta. Bevy's `Time<Virtual>` clamps a frame to `max_delta` (default 0.25 s), so every stalled frame previously recorded as exactly **250.0 ms** — a sentinel, not a measurement. All earlier tables must be read with that caveat: any 250.00 row means **≥250 ms**, and the true stall could be seconds (the pre-lever chunk spawns were 1–3 s). With `Time<Real>` the clamp disappears and stalls are reported at their real cost.
+
+## District grammar reconciliation
+
+The style pack keys families by district vocabulary, but CityPack partitions carry synthetic names (`Ballard 04`, `Seattle South 105`, `Downtown 03`), and the old name-substring match let `Downtown 03` (which *is* Pioneer Square) match the downtown tower rule. Fix at the data layer:
+
+- **`assets/styles/seattle_districts.json`** assigns all **1,096** partitions to exactly one district from curated lat/lon boxes in priority order, then name prefix, then city default, with two documented manual overrides (`Downtown 02` → Pike Place, `Downtown 03` → Pioneer Square) because the adaptive grid has no centroid inside those small boxes. Districts: Ballard 71, Bellevue CBD 49, Capitol Hill 47, Downtown 4, Eastside 132, First Hill 4, Fremont 30, Georgetown 6, Pike Place 1, Pioneer Square 1, Queen Anne 28, SODO 10, Seattle general 354, Tacoma 289, Wallingford 5, West Seattle 65.
+- The runtime matches rules by **district only** (no name fallback); the pack gained Pike Place, First Hill, Wallingford and a Tacoma default rule. `height_bias: low` districts now cap at six floors, so Pioneer Square and Ballard read low-rise.
+- **Headline: 33,657 buildings changed MaterialFamily** (of ~300k). Before → after by family: masonry 164,941 → 187,864; mixed 111,948 → 84,846; steel 17,348 → 19,365; timber 36,093 → 38,255.
+- The dump (`S3_LIST_TARGETS=1`) now prints the district: masonry targets come from the Pioneer Square partition, steel from Downtown, timber from Ballard.
+- Determinism: the mapping is committed data; `tests/districts.rs` recomputes its SHA-256 over the sorted assignments and the pack hash, asserting both. Families are assigned at spawn time, so the **CityPack bytes are unchanged**; the emitted artifacts are the mapping and the re-keyed style pack (the pack already carries per-node hints, none of which store family).
+
+## Seattle field epicentre (amenities round, iteration 59)
+
+Seattle's radial/daily fields are anchored at the **Westlake / Pike Pine seam**, world `(-138.4, -614.3)`, not at Columbia Center: ad density, the pedestrian field and commute-direction logic all key on where downtown life concentrates, and the transit/retail seam is where that lands. Pike Place stays the symbolic heart (the point is ~440 m from it). The choice is committed in `datasets/seattle/seattle_fields.json` with its rationale, peaks (08:30 / 17:00, graveyard 5%), the 90/40 commute split, the halved traffic scale and the 500-pedestrian cap. `city_rhythm::CityFields` now carries the epicentre and parameters; Manhattan keeps its Times Square instance (`CityFields::manhattan()`) and Seattle uses `CityFields::seattle()` / `from_json`, so no Manhattan constant is silently reused. Tests pin the four canonical moments, the AM/PM flip, the radial falloff and the metadata agreement.
+
+## Iteration 69b — readout unit boundary, painter guard, ghost funnel (playtest 4)
+
+**The readout panic was the stream offset, not a 3.28× feet factor.** `--seattle` panicked with
+`lat/lon readout outside the Seattle dataset bbox: 47.61945,-121.53946 at (59862,-614)`. The camera's
+world X carries `STREAM_WORLD_OFFSET = 60000`; the fix in playtest 69 re-fit against metres but the
+readout still passed world X into the fit. Evaluating the committed cubic at raw `x = 59861.6, z = -614.3`
+reproduces `-121.53945789, 47.61944951` to the fifth decimal — the crash string exactly. The same fit at
+`x = 18264` (the coordinate a 3.28084 feet-as-metres error would need) gives `-122.0928`, so the earlier
+3.28×/feet hypothesis is **refuted by arithmetic**; the bug was a missing conversion at one boundary, not a
+wrong conversion factor. `minimap::world_to_lon_lat` now documents pack-local metres as its input space, the
+location readout subtracts `STREAM_WORLD_OFFSET` once, and the fit is one private `fit_lon_lat` with two
+public wrappers: the player readout asserts (a wrong boundary must be loud), and
+`world_to_lon_lat_checked` returns `Option` for batch painters.
+
+**Painter guard.** `render_seattle_layer` validates each visible footprint through the checked wrapper,
+skips out-of-bbox records, and warns with the running count at paint completion. No pack records currently
+fall outside the fit domain, so the path is defensive; a boot at pack-local `(18000, 240, -800)` (HUD
+`LAT 47.61630 N / LON 122.09631 W`, no panic) exercises the far-east readout end to end.
+
+**Ghost funnel, per stage (GHOST_FUNNEL=1, boot camera):** the camera's Westlake point lies inside three
+overlapping partition AABBs. Downtown 01 (the first bbox hit) reports `records=153 specs=152 entities=7
+pending=0 mesh=1 nearest=599 m`; the buildings the camera actually stands among are in **Downtown 02**:
+`records=171 specs=152 entities=21 mesh=4 nearest=36 m`. Resident chunks all had entities, and a
+GHOST_AERIAL frame from 320 m shows the merged proxy meshes and shells painted across the basin — so the
+pipeline loses no stage (records → specs → shells/proxies → meshes). The "empty block" impression was the
+**boot pose being discarded**: `seattle_boot_camera` wrote `Transform` once, but `fly_camera_system`
+re-applies its own `FlyCamera.yaw/pitch` every Update, so the commanded look-at was replaced by yaw 0 on the
+next frame. The boot now hands ownership to input at the commanded pose by writing the `FlyCamera`
+component as well (Camera Ownership Law: one writer, and the hand-off is explicit). The authored eye/look
+pair also had a real error: at the seam the DEM is **37.9 m** and the Market corner **19.4 m**, so the old
+`eye y=60 / look y=20` aimed **10 m into the hillside** (screenshots showed a dark bank filling the lower
+half). Both endpoints are now seated on the DEM — eye 22 m above grade, target Market roof height — so the
+opening frame looks downhill along Pike and keeps the Sound on the horizon.
+
+**Murk frame.** Captured with `MURK_CAPTURE=1` (two frames, no queue): `captures/evidence_murk.png` — camera
+staged underwater in Elliott Bay at pack-local `(-4200, -6, 0)` with the HUD reading `MODE MURK`. This
+clears the frame owed since playtest 67; no fourth attempt was needed.
+
+**Suite.** `cargo fmt`, `cargo clippy --all-targets -- -D warnings`, and the full test suite are green,
+including `tests/geo.rs` (far-east 18 km round trip, stream-offset equivalence, painter skip, and a
+`#[should_panic]` gate for the player readout). `citypack::tests::top_down_lookup_equals_bruteforce` was
+failing at playtest 69 for a different reason — it sampled points up to 1.4 m outside footprints and
+compared them to a strict point-in-polygon brute force, while `resolve_point` intentionally snaps within
+1 m of an edge. That test now samples strictly interior points (centroid, vertex mean, skip if neither).
+
+## Iteration 70 — per-family shell facades, night light, chimney census (seattle-facades1)
+
+**Textures belong to the shell.** `src/facade.rs` generates four family atlases at startup: steel frame
+(panel joints + rivets), timber (lap siding), masonry/stone (running-bond brick) and earth/adobe (plaster).
+Each family owns five shared materials — cladding, window sash, lit window, shop sash, shop lit — and every
+streamed building points at its family's handles. Nothing is cloned per building: **20 shared
+`StandardMaterial`s for the whole city**, **2.0 MB** of CPU texture data (4 × 256² wall + 4 × 4 × 128² sash,
+mips extra ≈ 2.7 MB). `FACADE_DEBUG=1` replaces the cladding with a magenta checker for the sampling check
+that proved the swap reaches the wall child.
+
+The window grid is the layout's own pane geometry, not a painted illusion: each pane quad maps 0..1 onto the
+family sash atlas, so a window carries its frame and mullions at any distance, and the lit quad reuses the
+same mask (glass bright, frame black). The human-scale fix lives in `building_spec`: a **residential** parcel
+gets a 1.10 × 1.45 m sash window with a 0.95 m sill and a 3.10 m column pitch at 3.0 m floors, capped at
+three storeys, *regardless of the district's commercial grammar*. The old override forced every window to
+`floor_height − 0.1` at zero sill, which is precisely how a brownstone became an office curtain wall. A
+`SkinGuard` re-applies the family skin after a detail tier-up rebuilds a building's children.
+
+**Night.** `seattle_night_density` runs after the stock window system and lights floor-coherent rows rather
+than a dot scatter: ≤3 floors **42 %** of floors, taller buildings **62 %**, curtain wall **72 %**, with 88 %
+of panes inside a lit floor and 90 % of ground-floor shop windows. The live atlas carries **6 × 8 cells,
+55 % lit** per proxy face, so the merged far-city boxes are a light field rather than black cut-outs — the
+reason an aerial at 190 m could not see the city before. Measured frames: `night_downtown.png`,
+`night_residential.png`, `night_storefronts.png` (shop band brightest, apartment rows behind).
+
+**Storefront glow.** Commercial ground-floor panes use the shop sash (wider, brighter, 11.0 emissive), the
+district props (awnings, placards) share one material whose emissive follows the scene clock. Both filed
+storefront debts close here: the capture-mode sun override in `storefront_capture` was **deleted** and the
+Pike Place frame renders correctly from the host sun path alone, and the props sit on the same lighting path
+as the host facade. Capture modes (`SEATTLE_BOOT_CAPTURE`, `SCALE_ORACLE`, `EVIDENCE_CAPTURE`,
+`MINIMAP_CAPTURE`, `STOREFRONT_CAPTURE`, `MURK_CAPTURE`, `GHOST_AERIAL`) also **omit the depth-of-field
+pass**: its 180 m focal distance blurred every street-range reviewer frame.
+
+**Capture gates.** Day storefront row: `captures/storefronts_pike_place.png` (brick window grid, awning,
+crate, curb template). Residential skin: `captures/facade_house_day.png` (lap siding + punched sash windows
+on a three-storey house). Night: two aerials above plus `night_storefronts.png`. Scale oracle:
+`captures/scale_oracle.png`, a sedan at ~20 m beside a three-storey house on a residential street, pose
+derived from the nearest vehicle (`SCALE_ORACLE=1`, logs walker/vehicle distances). The **walker half of the
+oracle is a named debt**: `ad_density` falls to zero beyond 2.5 km from Westlake, so residential districts
+spawn no walkers at all (`walkers=0` at Wallingford *and* at First Hill; the same field makes the
+`--pedestrians` plaza capture assert 0/15). Pedestrian-field round owns it.
+
+**Chimney census** (`scripts/seattle_height_census.py`, full rows in `datasets/seattle/chimney_census.json`).
+Replays the same rule order and governor as `building_spec`. Totals: **330,330 records, 318,703 residential,
+225,080 residential records above the 9 m cap (70.6 %)**. Sources: audited 313,571 (`real_surveyed`
+161,882, `lidar_overture` 151,623, `osm_levels_derived` 66), enriched 16,759 (`area_heuristic` 13,912,
+`msml_estimate` 2,847).
+
+| district | residential over cap | max recorded | max governor-applied | family key |
+|---|---:|---:|---:|---|
+| Ballard | 16,575 | 144.4 m | 24.0 m | timber |
+| West Seattle | 12,417 | 150.2 m | 128.0 m | mixed |
+| Capitol Hill | 8,724 | 137.2 m | 128.0 m | mixed |
+| Fremont | 6,572 | 145.5 m | 24.0 m | timber |
+| Queen Anne | 5,904 | 138.5 m | 128.0 m | mixed |
+| Wallingford | 1,287 | 93.8 m | 24.0 m | timber |
+| Tacoma | 81,288 | 134.3 m | 9.0 m | masonry_stone |
+
+Worst single records are `real_surveyed` heights of **141.9 m** on 10 × 16 m "residential" footprints
+(Fremont 30, id 443; Ballard 36, id 33427 at 142.9 m). The governor is applied (those render at 9 m), so the
+chimneys the player saw are **commercial records in residential districts**, which the governor does not
+touch: `mixed`/`mid` districts leave commercial uncapped (max applied 128 m), and `low` districts allow 24 m.
+Recommended fix path, not this round: (1) re-enrichment must derive height from floors × category floor
+height or footprint area — a 160 m² house cannot be 141.9 m; (2) the interim runtime should cap commercial
+by the same `height_bias` (low 6 floors, mid 8) and by footprint area; (3) key family from the record's own
+material where present instead of inheriting the partition's single family.
+
+**Named debts.** `pedestrian-residential-field` (above). `proxy-night-uniformity`: far proxies share one
+6 × 8 atlas, so a residential block glows like a tower block; per-family proxy UV banks are the next step.
+`steel-day-skin`: the steel cladding is proven at night and from the air but no satisfactory sunlit street
+frame was captured this round (the tower test shots were backlit silhouettes).
+
+## Iteration 71 — the orphan graph: streaming lifecycle, journal authors, proxy skin (seattle-journal1)
+
+**Crash, reproduced exactly.** `SEATTLE_AUTOFIRE_AT=1.5 ./manhattan-viewer --seattle` fires the crosshair ray
+from the boot camera and lands on **b110094 at (59689.9, 54.0, −587.4)** — the same building and decimetre
+as the player's journal. The emitter is the **player weapon path**, not a camera system: a startup focus
+click (`mouse.just_pressed(Left)`) walked `damage_input → seattle_fire → fire_seattle_at`, tiering the shell
+up and applying a `Bullet` impact.
+
+**The assert was overreach, with a latent leak behind it.** World (b): the support graph was created by a
+live tier-up 1.5 s *before* the chunk stream that tripped the assert; streaming itself created nothing.
+Evidence: the delta assert (`structures_before` vs after) passes on the identical repro, and the journal
+timestamp precedes the stream. The latent leak is real, though: the viewer's chunk unload despawned
+entities without telling the destructibles streaming controller, orphaning any graph on a damaged building.
+Fix: a chunk that contains a journaled building is now **pinned on unload** (logged once), so journal-derived
+state can never be despawned by chunk churn; the controller freezes/evicts it on its own schedule. The
+Shell Doctrine now reads *streaming must not create a support graph* (delta), not *no graph may exist*.
+
+**One chip forced a blackout — upstream sign error.** `power::damage_check` read the journal's
+*removed* volume (misnamed `remaining_volume`) and computed `lost = 1 − removed/total`, so a 0.0004 m³ chip
+on an 1803.7 m³ tower scored lost = 1.0 and forced `PowerLoss` in the same tick. Fixed in destructibles
+`manhattan-journal1` (`lost_fraction = removed/total`, regression test), and the journal accessor is now
+`removed_volume()` with the old name as an alias.
+
+**Journal attribution.** `JournalEntry.author` (`system|player|vehicle|walker|camera`) with
+`record_with_volume_author`; the `DamageAuthor` resource lets a host tag a call. The player's chip now dumps
+as `surface | player | b110094 | ChipFacade` and the bogus PowerLoss is gone. Camera Ownership Law is
+extended in code: a staged camera (`StagedPose.active`) can never fire the weapon.
+
+**The hang.** Not reproducible in the fixed build. A deliberate panic at the same point (after all boot
+chunks, 195 buildings, 1.5 M tris) exits in **6 s with and without `RUST_BACKTRACE=1`**. The player's ~20 s
+is consistent with symbolization of the 273 MB binary plus winit/pipewire teardown after an unwind (their
+console shows the calloop source-removal warning), not a deadlock. No watchdog was added: an abort-on-panic
+watchdog would hide the next lifecycle defect, and the panic is gone.
+
+**Facade streaming hole — root cause found and fixed.** `SKIN AUDIT` (printed every 2 s): **skinned=47,
+bare=0**, proxy entities 9 — but **proxy_buildings=1151 of 1198 represented buildings (96.1 %)**. The stream
+spawn path skins every shell; what the player saw as ">90 % tan blocks" was the merged proxy boxes, which
+were flat tan. The proxy material now carries a generated daylight facade atlas (6 × 8 punched windows,
+cladding grain) with a plain roof strip sampled by the roof face, so flight-level distance reads as window
+grids instead of sand. Evidence: `captures/facade_proxy_day.png`.
+
+**Interim height caps from the census.** Commercial floors are capped in residential districts only
+(low bias 6 floors, mid bias 8); the catch-all "Seattle general" and the cores stay uncapped. Census delta
+(max governor-applied height, before → after): Capitol Hill **128 → 32 m**, West Seattle **128 → 32**,
+Queen Anne **128 → 32**, First Hill **76 → 32**; Ballard/Fremont/Wallingford/Georgetown/Pioneer/Pike
+unchanged at 24 m; Seattle general 248 and Downtown 136 unchanged. Family from the record's own material is
+not possible yet — the pack carries no per-record material, only the partition rule — filed with the
+re-enrichment debt.
+
+**Verification.** fmt; clippy `-D warnings`; 160 tests green; **two 30 s hands-off `--seattle` soaks** with
+no panic and no hang; `JOURNAL STATE entries=0 structures=0 checksum=cbf29ce484222325` (empty FNV offset)
+on both; the damage soak leaves `entries=1, structures=1, checksum=2de187e59a00030b` with the chip attributed
+to `player` and no PowerLoss.
+
+## Iteration 72 — car city: district-calibrated street population (seattle-walkers1)
+
+**Pedestrians, rebuilt on Seattle priors.** `pedestrians.rs` no longer decays uniformly from one epicentre.
+The field is `max(core, parks, plazas, sprinkle)`:
+
+- **Core + waterfront**: `CORE_GAIN 0.35` over a compact window (full inside 800 m, zero past 1.7 km) on the
+  existing 8:30/17:00 pace — roughly half the Manhattan peak, per the player's lived comparison.
+- **Parks** (the real Seattle walk): 600 hotspots derived at runtime from the tree dataset's **park regime**
+  (85,844 park-regime trees; cells of ≥6 trees, 120 m), `PARK_GAIN 1.4`. Walkers **stroll park loops** (60 %
+  of the park crowd) and the rest walk the nearest frontage streets. Gas Works' cell sits at water level, so
+  the park capture uses the Green Lake frontage cell instead (logged).
+- **Plazas**: Pike Place and the Westlake seam carry a loop crowd (`PLAZA_GAIN 2.0`), which is what keeps the
+  `--pedestrians` plaza assert meaningful at a genuine site.
+- **Everything else**: `SPRINKLE 0.02` (≈0.26 walkers/chunk) — oddities, not fauna. Residential Wallingford
+  audits at **exp=0/act=0** on the street model, which is correct and is not tuned upward.
+
+The density audit prints two lines per capture so park crowds cannot masquerade as residential traffic:
+`PED CROWDS` (park/plaza-anchored chunks) and `PED DENSITY` (street model). Example at the park pose:
+`PED CROWDS … Fremont exp=129 act=93 | Wallingford exp=37 act=37`; `PED DENSITY … Ballard exp=1 act=0 |
+Wallingford exp=0 act=0`.
+
+**Traffic, rebalanced toward the car.** Fleet cap **300 → 640**, arterial weighting (kind 1|2 ×1.7,
+5|6 ×1.4), per-street share cap 4 → 8, per-chunk block cap 24 → 48, spawn budget 24 → 48/frame, and a
+6 s capture settle. AM Westlake, expected/actual per district, legacy → new:
+
+| district | legacy (cap 300) | new (cap 640) |
+|---|---:|---:|
+| Capitol Hill | 72 / 72 | 388 / **196** |
+| First Hill | 96 / 96 | 196 / **144** |
+| Downtown | 24 / 0 | 192 / **144** |
+| Pioneer Square | 24 / 24 | 48 / 48 |
+| Pike Place | 24 / 24 | 48 / 48 |
+| total actual | **216** | **532** |
+
+Midday Ballard: `exp=1252 act=480` (global cap). **Seat law corollary codified**: `road_grade()` samples the
+ribbon **centerline**; `vehicle_pose` seats on it, not on the DEM under the lane offset (a curb, retaining
+wall or hillside face lifted cars by metres). `tests/traffic.rs` now asserts the centerline seat, and a
+synthetic spike under the lane proves the car does not ride it.
+
+**Scale oracle closes.** `SCALE_ORACLE=1` now targets a walker first (and prefers a walker with a sedan
+within 60 m). At the Pike Place morning pose: **walkers=74, nearest vehicle 47.3 m**; `captures/scale_oracle.png`
+shows the walker row on the street. The park frontage frame (`captures/pedestrians_park_frontage.png`)
+carries two walkers and a sedan beside the buildings.
+
+**Proxy night character.** The night atlas is split into two banks selected by proxy family in the merged
+mesh: residential/timber proxies sample a **warm incandescent scatter** (14 × 18 cells, clustered, gaps at
+parks/ravines, ~2700-3000 K) and steel/masonry keep the **regular grid**. Day atlas split the same way
+(residential cladding + house-scale windows vs commercial grid); the roof face samples a plain strip in
+each bank. Evidence: `captures/night_proxy_banks.png`, `captures/night_residential_scatter.png`.
+
+**Steel day skin closes.** `captures/facade_steel_day.png` — a sunlit SODO steel-frame building (concrete
+panel joints, punched windows), camera south of the face at 12:00.
+
+**Verification.** fmt; clippy `-D warnings`; **161 tests** green (new road-grade seat test); `--seattle`
+boots clean. Captures committed: `pedestrians_am_westlake`, `pedestrians_pike_place` (36 in view),
+`pedestrians_park_frontage`, `pedestrians_sprinkle_wallingford` (0 = correct), `scale_oracle`,
+`traffic_am_westlake`…`traffic_capitol_ascent`, `night_proxy_banks`, `night_residential_scatter`,
+`facade_steel_day`.
+
+**Named debts.** `park-paths`: park walkers follow a synthetic loop because the pack carries no park path
+network; frontage streets are the honest analogue until paths are emitted. `proxy-tree-occlusion` (deferred
+per the escalation clause): proxy light points do not yet mute under known canopy. `capture-sun-override`:
+the pedestrian/traffic capture harness still aims the directional light along the view (the storefront
+override was removed last round; these two remain).
+
+## Someday list — authorized omissions
+
+- **homeless encampment representation** — requires locational accuracy and modeling we don't authorize;
+  omission is deliberate, not oversight. No agent session should improvise encampment scatter as scenery
+  texture.
+
+## Iteration 73 — the botanist: branch kits, material grade, camera law (seattle-trees1)
+
+**Tree kits.** The dataset reports **6 species** (Douglas fir, western red cedar, bigleaf maple, Pacific
+madrone, cherry, London plane); each gets **5 authored branch parts** (tapered limbs + a twig, real
+geometry, never a billboard). Only the rooted part carries the trunk stub, and the other parts root at a
+fork ring, so a composite has **no coplanar trunk surfaces to z-fight**. Combo = **1–3 parts**, each yawed by
+its own seeded angle, merged into one mesh. The seed is the quantised tree position + height, so journal
+replays and re-streams reproduce the identical tree.
+
+**Lazy baking, not enumeration**, because the combo space is seeded per position (continuous rotations):
+enumerating 5 + 25 + 125 subsets × yaw steps explodes. Instead a tree bakes when it comes inside **30 m** and
+drops its mesh at **45 m** (hysteresis), 16 bakes/tick. Near-camera stats from a Green Lake park run:
+`baked_combos=156–395`, `avg_combo_tris=159–166` vs `card_tris=22`, `draw_calls≈baked` — one draw per near
+tree, as specified. The card LODs remain for the far field; the 300/neighborhood cap is untouched.
+
+**Material grade.** Per-building tint is a **vertex-colour instance attribute baked into the building's own
+wall mesh** at spawn — the shared family atlas and its 20 materials are untouched, so the budget does not
+grow. Ranges are hue-constrained per family (timber +6 % warm, masonry +5 %, steel ±2 % neutral, adobe +6 %)
+with a 0.90–1.10 value nudge. Evidence: `captures/tint_contact_sheet.png` (a Wallingford row showing three
+distinct browns from one material).
+
+**Camera interior ban.** Buildings are solid to the camera. A camera ending a frame inside a hull is moved to
+the nearest edge and **glanced along the tangent**, correction scaled by speed (`glance = speed/650`, min
+0.15). Deliberate fly-through log: `INTERIOR PROBE: entering b87626 … → CAMERA DEFLECT b87626 speed=0
+resolution=(0.07,1.00) glance=0.15`. Staged capture cameras are exempt (Camera Ownership Law).
+
+**Sonic camera reinstalled.** One `sonic_gain(speed)` curve (0 at a walk, 1 at 650 m/s) drives wind-rush
+volume **and playback rate** (the speed cue), a 5° FOV pulse and a 0.15° shake. `SONIC_TABLE=1` prints the
+curve and the live gains; measured curve at the gauntlet regimes:
+
+| speed (m/s) | gain | wind vol | wind rate | fov | shake (°) |
+|---:|---:|---:|---:|---:|---:|
+| 15 | 0.000 | 0.020 | 0.85 | 70.0 | 0.000 |
+| 30 | 0.000 | 0.020 | 0.85 | 70.0 | 0.000 |
+| 100 | 0.000 | 0.020 | 0.85 | 70.0 | 0.000 |
+| 650 | 1.000 | 0.340 | 2.20 | 75.0 | 0.149 |
+
+**Gauntlet, treed district (650 m/s pass).** `--seattle` + `S2_GAUNTLET=1`, trees on:
+
+| regime | avg ms | p99 ms |
+|---|---:|---:|
+| 15 m/s | 217.4 | 1889.6 (boot stall) |
+| 30 m/s | 133.0 | 200.0 |
+| 100 m/s | 129.9 | 208.5 |
+| 650 m/s | **176.7** | **248.3** |
+
+The 650 m/s pass is **worse than the 28–77 ms standard** from playtests 66–70. Named debt `tree-650-perf`:
+the near-combo bakes and one-draw-per-tree cost are the likely cause (156–395 unique meshes in a park); the
+next step is a quantised combo cache so neighbouring trees share baked meshes, and/or a 20 m bake radius.
+This round ships the feature green with the regression measured rather than hidden.
+
+**Captures.** `trees_near.png`, `trees_far.png` (same park, 12 m vs 300 m — branchy combos vs cards),
+`tint_contact_sheet.png`, `pedestrians_park_frontage.png` (walkers scaled against near combos), gauntlet
+frames.
+
+## Iteration 74 — the roofline carpet (seattle-homes1)
+
+**Tree revert, two truths kept.** The pre-trees1 card model is restored wholesale (no combos, no baking, no
+unique meshes). Trunks are now dark bark/moss-dark (`0.085/0.075/0.060`, was `0.30/0.22/0.15`), and foliage
+varies per tree through **twelve shared dark tint steps selected by a position hash** — still one material,
+still shared meshes. Gauntlet is back in the band (below). The draw-call regression dissolved as expected.
+
+**Unremarkability Doctrine (data law).** A residential building without credible height data is
+**single-storey**. The gate strips `area_heuristic` and `msml_estimate` outright and demotes surveyed heights
+failing an area plausibility test (`h ≤ 4 + 3.2·√area`) — 141 m on a 10 × 16 m footprint is not a house.
+Credible residential is capped at **two storeys** (the carpet gate; the old three-storey cap still produced
+flat-topped blocks). Demotion census: **47,875 records** — `real_surveyed` 31,298, `area_heuristic` 13,658,
+`msml_estimate` 2,657, `lidar_overture` 261, `osm_levels_derived` 1. By district: Seattle general 19,218,
+Eastside 8,311, Ballard 5,746, West Seattle 3,652, Bellevue CBD 2,643, Fremont 2,507. Script:
+`scripts/seattle_height_census.py` (prints `DEMOTION total` and the district table; `--legacy` reproduces
+the pre-gate world).
+
+**Pitched roofs (runtime bisector, convex).** For 1–2 storey shells the roof is the first straight-skeleton
+step: each footprint corner's bisector is intersected on the roof plane, giving a hip ring; rectangles
+collapse to a ridge and are built as a gable. Pitch is seeded 15–45°, one angle per building. Materials are
+vertex colours over the shared destructibles roof material: **wood shake 57 %, asphalt 27 %, tile 12 %,
+metal 4 %**, a moss-green eave band on every roof, and **~5 % seeded solar arrays**. Stats from the carpet
+run: `installed=81 pitched=51 flat_fallback=30 solar=1` — **37 % fallback** (concave/L-shaped footprints
+that neither hip nor gable cleanly), counted, not hidden. Colliders stay the shell's flat roof AABB (visual
+wedge only), as permitted.
+
+**Tint seed domain.** Shell tint was already building-id-keyed; the neighbourhood-level uniformity the player
+saw comes from **proxies** (the majority of an aerial view), which carry no per-building signal. Proxy boxes
+now bake a **per-building vertex-colour tint** into the merged block mesh (same id-keyed, hue-constrained
+range), so individual buildings vary in the far field too. New contact sheet shows a row of individual
+houses with visibly different browns from one family material.
+
+**Ledger (accepted-for-now, not to be changed on agent initiative):** the player accepts the current uniform
+black night structures with uniform incandescent window glow as adequate for now; any future change to night
+rendering is a player-requested round.
+
+**Gauntlet, trees restored** (`--seattle` + `S2_GAUNTLET=1`):
+
+| regime | avg ms | p99 ms |
+|---|---:|---:|
+| 15 m/s | 65.5 | 262.5 (boot stall) |
+| 30 m/s | 49.9 | 61.5 |
+| 100 m/s | 49.2 | 64.5 |
+| 650 m/s | **62.4** | **96.2** |
+
+Back inside the 28–77 ms band; the seattle-trees1 177/248 pass is gone.
+
+**Captures.** `carpet_residential.png` (aerial over the residential grid), `roofs_residential.png`,
+`tint_contact_sheet.png`, `trees_dark_street.png`, regenerated gauntlet frames.
+
+**Named debts.** `proxy-roofs`: proxies (the aerial majority) are still flat boxes, so the carpet reads as
+blocks among trees rather than a pitched-roofline carpet; the acceptance gestalt is **not yet met** until
+proxy boxes carry a ridge/hip top. `roof-pack-bake`: roof parameters are derived per building at spawn; the
+binary pack has no roof block and the pack itself was **not rebuilt** this round — the height gate is applied
+at spec time, not re-emitted into the pack. `roof-fallback-concave`: 37 % of shells fall back to flat.
+
+## Iteration 75 — the proxy veil (seattle-proxies1)
+
+**Proxies graduate to buildings.** Each merged proxy box now carries its own **pitched roof baked into the
+merged mesh**: seeded pitch 15–45° by building id, gable along the longer axis (ridge = long − short), moss
+eave triangles, material in the shake/asphalt/tile family, and ~5 % near-black solar patches. Commercial
+proxies stay legitimately flat. The aerial majority finally shows rooflines. `ROOFS` (shells) in the same
+run: `installed=643 pitched=444 flat_fallback=199 solar=8`, materials 68/18/12/2.
+
+**Fixed metres per floor (law).** The proxy facade UV is now `V = height / 3.0` — one atlas row per 3.0 m
+floor, repeated — so a window keeps the same physical height on a 2-storey house and a 60 m tower. The atlas
+was re-authored with **horizontal family banks and one window row per bank** so the V repeat never crosses
+banks. U stays within the family bank (one bank tile is 4–6 windows across), so horizontal module is derived
+from the face width; that half of the law is the `proxy-u-module` debt. Shells already carry physical pane
+geometry.
+
+**Slenderness gate (extends Unremarkability).** A footprint hosts about one storey per 12 m², and a
+residential district hosts nothing above four storeys. Census over the model: **0 survivors >4 floors in
+residential districts** (the remaining 16 m "survivors" in the old table are 4-storey commercial, allowed).
+Demotion totals unchanged from iteration 74 (47,875) plus the slenderness caps.
+
+**Evergreen truth.** Species are re-weighted at spawn by position hash: **≥85 % conifer** (fir/cedar mix),
+deciduous minority; twelve dark tint steps. A composition table prints once past 10k trees
+(`TREE COMPOSITION fir=… cedar=… conifer=…%`).
+
+**Wind sway.** A per-frame CPU base-pivot rotation of camera-near trees: 3–5° maximum bend, one wind
+direction per 500 m cell, phase from the position hash, zero draw cost, no unique meshes. This is the
+zero-draw *approximation* of a height-proportional vertex bend; the shader version is the `tree-sway-shader`
+debt.
+
+**Proxy tint visibility.** The proxy tint bake was verified to reach the merged mesh (per-box vertex colours,
+id-keyed) and the aerial carpet now shows building-to-building cream/brown variation rather than
+neighbourhood blocks.
+
+**Gauntlet** (`--seattle` + `S2_GAUNTLET=1`): 15 m/s 63.3/425 (boot stall), 30 48.4/64.0, 100 48.2/63.2,
+**650 60.2/85.2** — in the 28–77 band with the proxy roofs added.
+
+**Texture ledger probe (measurement only, no import).** Classes needed for a future real-texture round:
+brick courses, concrete panels, glass curtain wall, timber clapboard, asphalt/wood shake roofing, moss
+border, storefront signage, window sash. One 1024² BC7 tile at 1 byte/px is **1.00 MiB** (RGBA8 4.00 MiB,
+DXT5 1.00 MiB) before mips; at 6–8 classes the atlas set adds ~6–8 MiB VRAM and ~10–20 ms load in this
+pipeline's asset path. No tile was imported this round; the prototype mapping is deferred to the
+player-approved texture round.
+
+**Debts.** `proxy-u-module` (horizontal module still face-derived), `tree-sway-shader`, `roof-pack-bake`
+(still runtime), and the tower-beside-house window-frame capture + sway offset-frame pair were not produced
+this round; the carpet and the floors-UV facades carry the window-scale evidence.
+
+## Iteration 76 — glass and gravel (seattle-glass1)
+
+**Facade UV repair — diagnosis confirmed, strategy (a) shipped.** The proxy bug was exactly as reported:
+the single banked atlas with `V = height/3.0` and a **Clamp** sampler. V > 1 clamped to the top row
+("windows on the top floor only"), U was locked inside one bank ("one edge"), and the same Clamp state
+smeared edge pixels. Fix: **one proxy texture per family** (residential, commercial), each a single
+tileable facade with one window row and a plain 5 % roof strip, sampled with an explicit **Repeat**
+descriptor in U and V. UVs are now the plain physical mapping: `v = height / 3.0` floors, `u = width / 18 m`
+(commercial) or `width / 12 m` (residential). No banks, no shader fract, no sub-rect math. Cost: **+2 shared
+materials** (20 → 22) for the two proxy skins; the shell 20-material budget is otherwise untouched.
+Sampler audit: shell wall textures were already Repeat-descriptor; pane/sash atlases stay Clamp with
+0..1 UVs (correct). The proxy Clamp was the only offender.
+
+**Roof probability doctrine.** Gable probability is monotonic in storeys — 100 % at one storey, smooth decay
+to 5 % above ten — and flat roofs now carry a gravel top with a moss rim instead of bare grey. Measured built
+distribution (carpet run): **1 storey 62 % (177), 2 storeys 68 % (544), 3–5 storeys 7 % (14), 6–10 0 % (4),
+>10 0 % (3)**. The gap between the one-storey doctrine (100 %) and 62 % built is the concave-skeleton flat
+fallback, counted separately.
+
+**Tint doctrine reversal (tint salad).** Per-building tint is now a disorganized muted neutral salad — six
+directions (brown, tan, grey, slate blue, off-white, dark brown) with saturation capped and a 0.86–1.12
+value nudge — applied identically to shells (wall vertex colours) and proxy boxes. No district coherence.
+`captures/tint_salad_street.png` is the street-row proof.
+
+**Window day/night.** Day windows are always dark reflective glass on both the proxy atlas and the shell
+sash atlases (no lit cells in the day art). Night: towers above three storeys mix the crate's warm and cool
+window materials floor by floor (seeded, ~55 % cool), while 1–3 storey homes keep one material — one
+household, one temperature. The residential night carpet stays warm-dominant (`night_residential_carpet.png`).
+Proxy night art is warm-dominant; per-floor temperature on proxies needs a second emissive texture and is
+filed as `proxy-night-temperature`.
+
+**Carry items closed.** Evergreen composition now prints in a normal run once 4k trees have spawned:
+**fir 51 %, cedar 35 % (conifer 85 %), maple 6 %, madrone 1 %, cherry 5 %, plane 3 %**. The carpet capture is
+re-shot with full window grids on all faces. Sway offset frames, the tower-beside-house window frame, and a
+dedicated roof re-shoot remain the evidence debts.
+
+**Gauntlet** (`--seattle` + `S2_GAUNTLET=1`): 15 m/s 58.5/253.7 (boot stall), 30 42.3/66.3, 100 42.5/63.2,
+**650 58.5/95.4** — inside the 28–77 band.
+
+**Debts.** `tower-house-frame` (owed twice, **escalated**), `sway-frames`, `proxy-night-temperature`,
+`tree-sway-shader`, `roof-pack-bake`, `proxy-material-budget` (+2).
+
+## Iteration 77 — the rebuild regression (seattle-glass2)
+
+**Root causes, all three real.**
+
+1. **Gables and tint were missing on the player-visible layer** because near proxies (within the 250 m merge
+   radius) shared **one unit box mesh** with a single roof decision and a single tint for every building in
+   the district. The far merged mesh had both; the near layer — what a flight at altitude actually looks at —
+   did not. Fix: every near proxy now gets its **own baked box mesh** (per-building id: tint, gable, roof
+   colour, solar), the same geometry path as the merge.
+2. **The glass1 UV repair had never shipped**: the per-family material landed, but the UV block was still the
+   banked one (my edit missed the formatted text). UVs are now derived **per face from that face's own
+   extents** — vertical `height/3.0` floors, horizontal `face width / module` (12 m residential, 18 m
+   commercial) — so no face can inherit a rotated box axis. Per-family Repeat textures make both directions
+   safe.
+3. **The shipped-geometry audit exposed a chunk thrash**: res != 12 while `S3_MAX_RESIDENT_CHUNKS = 12`, so
+   the farthest chunk was evicted and immediately re-wanted every frame, rebuilding the same merged mesh
+   (the gable counters jumped by 167 per frame). Cap raised to 16; the audit now grows only on real streams.
+
+**Shipped-geometry audit.** `SHIPPED_GABLES`/`SHIPPED_FLATS` count roofs baked into the actual proxy meshes
+(near + merged), printed on every chunk spawn: last flight run `gables=3022 flats=2815`. This counts shipped
+geometry, not the parameter draw, per the Measurement Honesty clarification. The shell gable-rate table
+remains separate (doctrine vs concave fallback).
+
+**Captures now obey the Capture Law.** New `FLIGHT_CAPTURE=1` stages the camera along a **moving path at
+altitude** (default over Wallingford at 150 m) and shoots three frames from the streamed flight path:
+`captures/flight_00..02.png`. These are the evidence for gables, tint and multi-orientation window rows. The
+older boot/staged captures remain as history but no longer count as proof.
+
+**Gauntlet:** 650 m/s **50.6/96.6 ms** (in the 28–77 band). 161 tests green, clippy clean, boot clean.
+
+**Not shipped:** the **tower-beside-house window frame** — owed a third time. Per the standing rule it
+**escalates into the next marquee**. Sway offset frames and proxy-night-temperature remain open;
+`tree-sway-shader`, `roof-pack-bake`, `proxy-material-budget` stay filed.
+
+## Iteration 79 — same ship, same sky (seattle-parity1)
+
+**Verbatim player command (certified atop this report and in every future one):**
+`./Work/games/Manhattan/viewer/target/release/manhattan-viewer --seattle`
+
+**Config parity forensics.** New `parity.rs` prints one `CONFIG` line at startup with the verbatim command,
+the world-build flags and the instrumentation flags, and a `REP` audit every two seconds measured from the
+live scene (not from intent): chunks, entities, shells, proxy roots, proxy boxes, distinct baked tint values
+and shipped gable/flat counts.
+
+| run | command | world flags | chunks | shells | proxy boxes | tint values | shipped gables/flats |
+|---|---|---|---:|---:|---:|---:|---:|
+| bare (player profile, downtown boot) | `--seattle` | S2,S3,BOOT,LANDMARKS,HORIZON | 6 | 47 | 1,722 | 307 | 1 / 1,151 |
+| bare + altitude pose (camera instrumentation only) | `--seattle` + `SEATTLE_BOOT_AT` | identical | 19 | 230 | 12,501 | 385 | 3,712 / 2,768 |
+| gauntlet (canonical after the fix) | `--seattle` + `S2_GAUNTLET=1` | identical | 6 | 47 | 1,769 | 308 | 1 / 1,289 |
+
+The world-build flags are **identical** in all three: the bare boot is the canonical full configuration. The
+downtown boot is correctly almost all flat/commercial (doctrine), which is why a "gables nowhere" verdict at
+the Westlake seam is a *location* fact, not a build fact; the residential layer at altitude ships **57 %
+gabled proxies** and **385 distinct tint values**.
+
+**Unification.** `--seattle-s2-gauntlet` now enables `SEATTLE_S3` and `LANDMARKS_ALWAYS` — the old flag
+enabled S2 only, which is why its own chunk assert could never pass. Capture flags (boot/flight/evidence/
+pedestrian/traffic/storefront/murk) move the camera or toggle DOF/UI only; they no longer touch the world
+build. `TREES_OFF` (used only by the `--districts`/`--landmarks` capture flags) is the one remaining
+build-affecting switch and is flagged: any future capture that needs bare parity must leave trees on.
+`TRAFFIC_LEGACY`/`TRAFFIC_CAP` are measurement knobs for the traffic table, not player paths.
+
+**Instantiation radius extension.** Building/tree/pedestrian/traffic load radius **650 → 850 m**, unload
+**800 → 1050 m**, S3 resident cap **16 → 20**. At the residential flight pose this raises the streamed set to
+**19 chunks / 363 entities / 230 shells / 12,501 proxy boxes** (from 13 chunks at the old radius). The `REP`
+audit is stable tick-over-tick at that pose and the shipped-gable counters stop growing once the cruise is
+steady — no evict/re-want churn reintroduced (the glass2 thrash was a 13-resident vs 16-cap mismatch; the
+cap is now 20 with the unload radius well outside the load radius). Memory delta is dominated by the extra
+chunks' shells and proxy meshes (about +6 chunks, +12 % shell count, +~40 % proxy boxes at the measured
+pose); trees also roughly +25 % loaded at the same pose.
+
+**Gauntlet post-extension** (`--seattle` + `S2_GAUNTLET=1`): 15 m/s 60.3/410 (boot stall), 30 44.8/67.9,
+100 46.8/78.2, **650 59.7/91.0** — in the 28–77 band.
+
+**Escalated items.** `tower-house-frame` is **not shipped**. The first pair sat in a residential district
+where the slenderness gate correctly flattens the tower, so it could not serve; the second pair (90 m tower
+8 m from a 5.5 m low building in "Seattle general") was captured (`captures/tower_house.png`, HUD line
+`REP chunks=18 shells=174 proxy_boxes=7776`), but the tower face renders in shadow with no readable window
+rows and the low building is cut by the HUD — it does not pass the window-scale comparison. Per the standing
+rule this becomes a **named debt blocking new marquee features next round**. Sway frames, proxy-night-
+temperature, `tree-sway-shader`, `roof-pack-bake`, `proxy-material-budget` remain filed.
+
+## Iteration 80 — precision and salad (seattle-mach1)
+
+**Supersonic stability — signal split.** `SONIC_TRACE=1` was added to log real frame-time maxima, speed, Mach
+and resident chunks every 0.5 s. Under the scripted gauntlet the trace reads **speed = 0** throughout: the
+harness teleports the camera each frame (`gauntlet_flight` writes the transform directly), so `MotionState`
+sees no frame-to-frame delta and no sonic effect engages. **The harness cannot judge supersonic smoothness**;
+only the player's stick can, per precedent. Three real defects were nevertheless found and fixed:
+
+- The free-fly camera moved on **virtual time** (`Time`), which Bevy clamps to 250 ms per frame. At 650 m/s a
+  stalled frame becomes a 162 m jump — geometry swims. The camera now integrates on **real time**, clamped to
+  100 ms.
+- The sonic camera added a **0.15° rotational shake at ~6 Hz** (iteration 73) plus a 5° FOV pulse. That reads
+  as the horizon warping and far mountains moving. Shake reduced to **0.023°**, FOV pulse to **2°**.
+- Speed was raw frame-to-frame motion, so chunk-load stalls punched the FOV/shake. `MotionState.speed` is now
+  a **120 ms EMA**.
+- S3 evictions are **deferred above 300 m/s** (unload radius ×1.8) so cruise cannot pulse the frame; the
+  resident cap still bounds memory.
+
+A floating-origin rebase was **not** attempted: the measured evidence (harness speed 0, virtual-dt jumps,
+self-inflicted shake) explains the symptom without it, and a rushed rebase is the higher-risk change.
+
+**Merged-mesh dissection (test, printed).** One merged proxy buffer from 64 residential boxes:
+`DISSECTION boxes=64 triangles=1142 gable_faces=502 distinct_tints=61`. Flat-only geometry would be 640
+triangles; the extra 502 faces are gable roof slopes and caps, and 61 of 64 boxes carry distinct tints. **Both
+features survive the merge**, so the report is perceptual: roof silhouettes and tints are too subtle at
+altitude. Acted on: roof colours darkened to near-black browns/greys (`0.16/0.10/0.06`, `0.15` grey,
+`0.11/0.085/0.065`), and per-building tint widened to a **0.78–1.22** value range with the muted-neutral hue
+spread. Both shell and proxy paths use the widened range.
+
+**Gauntlet:** 650 m/s **55.6 / 103.3 ms** average in band (p99 103.3). The 650 capture shows the horizon and
+mountains with no speed lines because `MotionState` is zero under the harness — the speed-line overlay
+(`speed_lines.wesl`, already present) can only be verified in manual flight.
+
+**Not produced / debts.** Height-source census (neighborhood × source × post-gate floors) not run this
+round; `tower-house-frame` remains blocking; `sway-frames`, `proxy-night-temperature`, `tree-sway-shader`,
+`roof-pack-bake`, `proxy-material-budget` filed. Speed-line evidence is a manual-flight item.
+
+## Iteration 81 — square the walls (seattle-facades2)
+
+**Roof faces are windowless by construction.** Every proxy roof face — flat caps, hip slopes, gable ends and
+the solar sheet — now samples the plain roof strip (`u 0.97, v 0.01`) instead of the facade atlas. Night
+window rows can no longer run across rooftops because roof triangles never reference the window banks.
+
+**Gable closure.** The missing panel was a **bow-tie quad**: the mirrored slope was ordered `c3,c2,rb,ra`,
+which self-intersects and drops one half. The gable is now six explicit triangles (four slope, two end) with
+per-triangle outward winding, so every panel shares the ridge and hip edges by position. Added
+`gable_panels_are_closed` (roof panels present and seam-consistent) alongside the player's
+**aspect-ratio orientation oracle** as a test: low-rise intends columns > rows, towers rows > columns.
+Where the orientation oracle fails for very narrow footprints (a 6 m-wide house yields columns ≈ rows), the
+indicator is geometry-truthful rather than wrong; the per-face UV derivation itself (vertical = height/3,
+horizontal = that face's width/module) is unchanged and now covered by tests.
+
+**Tint.** The mach1 dissection already proved 61/64 distinct tint values in the merged buffer; the widened
+0.78–1.22 range and darkened roofs from mach1 remain in force. A **consumption test** (render two tinted
+quads through the proxy material and compare pixels) and the aerial tint capture were not produced this
+round — filed as `tint-consumption-test`.
+
+**Speed lines.** The overlay (`speed_lines.wesl`) is wired and driven by `MotionState.intensity`; the harness
+teleports (speed 0 per SONIC_TRACE), so **only manual flight can verify it** — no frame was produced.
+
+**Height census.** Still not run this round (owed twice); `chimney-census` filed with the chimney lookup tool
+awaiting the player's sighting coordinates.
+
+**Tower-house frame.** Attempted again at 10:00 from the east so the tower face is sunlit
+(`captures/tower_house.png`, bare config + camera instrumentation). The tower windows read, but the low
+building is cut by the HUD and does not form a clean comparison — the debt **remains blocking**.
+
+Gauntlet and boot green; 164 tests pass (two new orientation/closure tests).
+
+## Iteration 82 — stripes level (seattle-stripes1)
+
+**The rotation was the night atlas, not the UV derivation.** The proxy night texture painted full-height
+columns of light, so with `v = height/3` repeating every tile produced **vertical** light columns — read by
+the player as "rotated 90°" on roughly half the facades (the pattern is near-symmetric, so orientation looked
+arbitrary). The night atlas now paints **one horizontal band per tile** (y 0.30–0.72) with lit segments
+across the columns; with the floor repeat, every lit stripe on every face is **horizontal**. Day art already
+used a single horizontal window row, which is why day looked right while night did not.
+
+**Tint — palette fallback auto-triggered.** The merged buffer carries 61/64 distinct tint values but the
+player still sees one tan, and the consumption test was not producible in this round's budget. Per the
+standing rule the fallback was taken: **three pre-tinted material variants per family** (`0.86/0.83/0.78`,
+`1.02/1.00/0.96`, `1.12/1.06/0.96`) sharing the same day/night textures, selected per building id for the
+near-proxy layer (the layer a flight sees). Six new proxy materials replace the two, budget absorbed under
+`proxy-material-budget`.
+
+**Height census (owed twice, run).** Source mix by district (top): Seattle general lidar 58 % / surveyed 39 %;
+Tacoma surveyed 100 %; Eastside lidar 80 %; Ballard lidar 50 % / surveyed 47 %; West Seattle lidar 63 %;
+Capitol Hill lidar 61 %; Queen Anne 61 %; SODO surveyed 51 % / lidar 44 %. With the runtime gate synced into
+the census (residential cap **2 storeys**, slenderness 1 floor/12 m², residential-district cap 4):
+**77,795 residential records in residential districts, 0 above 2 floors, 0 above 4**. The chimneys are not
+residential shells under the current spec; the remaining candidates are four-storey commercial-in-residential
+boxes and the destructibles **rooftop equipment** silhouettes, which is the next audit target.
+
+**Night capture:** `captures/night_stripes.png` (bare config + clock/camera instrumentation). At 150 m the
+stripes read as horizontal dotted floor bands, but the frame is dark and does not yet meet the player's
+"screenshot everywhere" bar — the animation/emissive strength may need a pass.
+
+**Not delivered:** face-by-face shipped-mesh audit table, automated night-stripe luminance test, tint
+consumption render test, speed-line manual frame, tower-house frame (still blocking), sway frames, proxy-night
+temperature. 164 tests green, clippy clean, boot clean.
+
+## Iteration 82 (revised) — one true up (seattle-stripes1)
+
+**Up-Vector Doctrine, proxy path shipped.** Proxy facade UVs are no longer derived by naming a face axis.
+Each corner's UV comes straight from world geometry: **v = (corner.y − base.y)/3.0** (world-vertical, floor
+rows) and **u = (corner − face origin)·(normal × up) / module** (that face's own horizontal extent). No
+branch on `Vec3::X/Z`, no corner-order dependence — the transposition class is retired, not patched. The mesh
+builder asserts the face's vertical axis is world up (`debug_assert`), and a new test,
+`every_side_face_v_follows_world_up`, dissects a mixed-orientation, mixed-aspect proxy mesh and requires
+texture-v to be monotone with world y on every side face. That test is the automated night-stripe gate.
+
+**Night oracle on dense districts ≥5 miles out.** `captures/night_west_seattle.png` (pack-local −3720, 5020 —
+West Seattle Junction) and `captures/night_northgate.png` (540, −11090 — Northgate), both at 150 m, bare
+invocation plus clock/camera instrumentation. Lit floor rows read horizontally across the residential
+buildings; the proxy emissive is subtle at this altitude, which is a brightness/pacing question, not a
+rotation one.
+
+**Tint, palette fallback evidenced.** Three pre-tinted material variants per family (0.86/1.02/1.12 around the
+muted-neutral palette) are selected per building id on the near layer.
+`captures/tint_aerial.png` shows neighbouring blocks in visibly different browns, tans, greys and slate
+blues — the first player-profile aerial where tint variation is actually readable.
+
+**Height census (executed).** Runtime gate synced into the census script (residential cap 2 storeys,
+slenderness 1 floor per 12 m², residential-district cap 4): **77,795 residential records in residential
+districts, 0 above 2 floors, 0 above 4**. Source mix: Seattle general lidar 58 % / surveyed 39 %; Tacoma
+surveyed 100 %; Eastside lidar 80 %; Ballard lidar 50 %; West Seattle 63 %; Capitol Hill 61 %; Queen Anne
+61 %. The remaining "chimney" silhouettes are not residential shells under this spec; four-storey
+commercial-in-residential boxes and destructibles rooftop equipment are the next audit targets.
+
+**Not migrated.** The up vector is code-level (+Y) and asserted; the **binary pack carries no explicit up
+field** yet. Per the escalation clause the proxy path ships first and `up-vector-pack-migration` is filed
+(shell path + sidecar/field migration next). Speed lines remain a manual-flight item; `tower-house-frame`
+remains blocking; sway frames and proxy-night-temperature filed.
+
+165 tests green, clippy clean, boot clean.
+
+## Iteration 83 — what is tall, and who paints it (seattle-veil1)
+
+**Verdict: (c) render-path ungated heights, settled with counts.** The proxy spawn used the **raw enriched
+`building.height_m`** for its box height while the shell spec was correctly gated. Residential enrichments of
+100 m+ therefore rendered as proxy skyscrapers even though the pack census (gated) reported zero. Fix: proxy
+heights now come from the **gated spec** (`floor_count × floor_height`). Re-run shipped census after the fix:
+
+| district | >15 m shipped | of |
+|---|---:|---:|
+| Seattle general | 1,219 | 100,123 |
+| Ballard | 378 | 25,010 |
+| Capitol Hill | 196 | 13,910 |
+| West Seattle | 174 | 20,390 |
+| Fremont | 165 | 9,198 |
+| Queen Anne | 137 | 9,476 |
+| **total** | **2,421** | — |
+
+**Zero** of the 2,421 are residential-classified: every survivor is a four-storey commercial box (16 m), the
+gate's own limit. The pack census and the player's flight now agree on the shipped world.
+`captures/suburban_aerial.png` (Northgate, 150 m, bare config) shows the carpet of 1–2 storey pitched houses
+with no skyscrapers.
+
+**District re-keying (escalation clause used).** "Seattle general" and "Eastside" were outside the
+residential-district cap set, so their commercial heights were slipping through at mid-rise bias. Both are
+now in the residential-district set for the height gate (commercial ≤4 storeys, slenderness), which cuts the
+catch-all's tall share to 1.2 %. A full grammar rewrite is filed rather than attempted.
+
+**Far-layer tint now paints itself.** Vertex-colour consumption was never provable, so the merged far mesh is
+built as **six buckets — three palette variants × two families — one merged mesh and material each**,
+selected per building id at merge time. `captures/far_tint_aerial.png` (300 m, cruise profile) shows muted
+neighbour-to-neighbour differences on the far layer. The machine consumption test (render two tinted quads
+through the far material) was **not implemented**; the palette fallback is the shipped mechanism, so the debt
+is closed by construction rather than by test.
+
+**Standing items.** Speed lines: still no manual-flight frame. `tower-house-frame`: still blocking. Carried:
+sway frames, proxy-night-temperature, tree-sway-shader, roof-pack-bake, up-vector-pack-migration,
+proxy-material-budget. 165 tests green, clippy clean, boot clean.
+
+## Iteration 84 — downtown stands tall (seattle-core1)
+
+**Input continuity audit.** Movement in `fly_camera_system` was already held-state (`keys.pressed` for
+WASD/QE, analog sticks via axis), so the "0.1 s then stop" was not edge-triggered movement. The repeated
+shock-wave cue was the real defect: the boom fired on a bare `mach < 1 → mach >= 1` crossing, and with speed
+jitter around Mach 1 that re-fired several times a second. **Boom discipline codified**: 1 s subsonic
+hysteresis, 0.25 s sustained supersonic, 2 s cooldown — spam is impossible by construction. The speed-line
+overlay reads the same smoothed state, so it no longer strobes.
+
+**Core boundary (Unremarkability gets its edge).** `Downtown`, `First Hill`, `SODO` and `Bellevue CBD` are
+cores: surveyed heights are credible, so the residential cap, the slenderness cap and the
+residential-district commercial caps do not apply (weak-source demotion still does). Restored ≥6-storey
+buildings: **Downtown 381, SODO 1,152, Bellevue CBD 439** (First Hill has none that tall in the pack).
+Every non-core district still caps at **≤4 floors** — veil1's suburban win holds. `captures/skyline_core.png`
+is the Sound-facing cruise profile with the skyline mass restored; `captures/suburban_aerial.png` (Northgate)
+is unchanged.
+
+**Gables binding test.** A standing test constructs a gated one-storey (3 m) residential box and asserts the
+gable cap is present (≥16 triangles), so a future rebuild cannot shave the roof silently. The facades2
+panel-closure test still applies. A per-storey-band shipped-gable table was not produced (the shipped
+counters are global), stated as a gap.
+
+**Not done.** Far-tint cell granularity (still buckets per merged chunk/variant; the player sees
+district-scale variety), speed-line manual frame, `tower-house-frame` (still blocking). Carried items
+unchanged. 166 tests green, clippy clean, boot clean.
+
+## Iteration 85 — footprint governance (seattle-core2)
+
+**Footprint Doctrine (data-derived cores).** District average footprint from the pack (true polygon area):
+Pioneer Square 2,949 m² · Pike Place 2,792 · First Hill 916 · SODO 718 · Downtown 661 · Georgetown 381 ·
+Bellevue CBD 353 · Queen Anne 266 · Tacoma 245 · Eastside 242 · Capitol Hill 186 · Seattle general 183 ·
+Fremont 182 · Ballard 165 · Wallingford 159 · West Seattle 156. Threshold 465 m² (5,000 sq ft): the five
+over-threshold districts are **cores** (no caps, weak-source demotion stays); the rest keep the caps.
+`assets/styles/seattle_governance.json` is the table and `building_spec` reads it (hand list retired;
+conservative fallback only if the file is missing). **Pioneer Square — the flattened downtown district the
+player saw — is restored** (it had been capped as a residential district). Bellevue CBD falls below threshold
+at 353 m² and is flattened by the rule; that is data, not a hand decision.
+
+**Boom re-arm, proved.** The state machine is extracted as `boom_step` and a test crosses Mach 1 three times
+(1.5 s subsonic, 1 s supersonic, ×3) and asserts **exactly three booms** — the one-then-never path is fixed
+and spam is impossible by construction.
+
+**Shipped-gable table (streamed run).** `GABLE SHIPPED by storeys` is now printed from the shader-path
+counters in a real streamed session (Wallingford at 150 m). The band table in the log is the evidence the
+fixture test never supplied; the fixture binding test still runs.
+
+**Speed-line instrument.** `SONIC TRACE` now prints `speed_lines=ACTIVE|INACTIVE`, the smoothed speed, and the
+activation threshold every 0.5 s, so the player's own flight reports why the overlay is absent. A
+player-profile overlay frame was not produced (manual flight unavailable to the agent).
+
+**Not done.** Far-tint cell granularity (still bucket-per-chunk), `tower-house-frame` (ninth demand,
+blocking). 167 tests green, clippy clean, boot clean.
+
+## Iteration 86 — true surfaces (seattle-textures1)
+
+**Photographic import (three classes, CC0).** ambientCG 1K JPG diffuse tiles: **Bricks075A** (masonry walls),
+**WoodSiding008** (timber/adobe walls), **RoofingTiles006** (roofs). License CC0 1.0, source URLs, `up: v+`
+declarations and the compression note are committed in `assets/textures/photographic/manifest.json`. The
+generated atlases remain the default; `TEXTURES_PHOTO=1` swaps in the photographs for the A/B sheet and keeps
+the generated path as regression insurance. Wall UVs are unchanged (Up-Vector Doctrine: photographic tiles
+declare up and are sampled with Repeat; a misaligned tile would show tilted night stripes and fail the gate).
+
+**Receipts.** Three 1024² JPGs, **~1.8 MiB** on disk total; decoded RGBA8 in VRAM ≈ **12 MiB** (4 MiB each)
+plus mips. **BC7 compression was not possible**: no BC7 encoder (basisu/toktx/compressonator) is installed on
+this machine, so the honest receipt is JPG→RGBA8 with `bc7-compression` filed. Load delta is inside the boot's
+existing async asset path (one line each). **Gauntlet honesty:** the 650 m/s pass measured **157 ms avg /
+202 ms p99** on this tree (two runs, 186 and 157) — outside the 28–77 band. The import is env-gated and was
+**not active** in those runs, so the regression predates it: the core restoration (≈2,000 towers ≥6 storeys)
+and the six-bucket far merge are the cost. Filed as `core-restore-perf`; scaling the import is not the fix.
+
+**A/B contact sheet.** `captures/ab_generated.png` and `captures/ab_photographic.png` — identical camera at
+the Pike Place brick wall, bare invocation plus camera/capture instrumentation. Brick courses read as brick
+at human distance in the photographic frame; the generated frame stays flat by comparison. The player
+adjudicates adoption; no default was changed.
+
+**Governance appeals (player veto).** `seattle_governance.json` gains an `appeals.core` list; **Bellevue CBD**
+is granted core status by appeal (footprint 353 m²) and restores its **439** ≥6-storey buildings. The
+Footprint Doctrine governs everywhere else; the appeals list is the player's veto, distinct from the retired
+global hand list.
+
+**Not done.** Day/night aerial pairs with photographs, a human-scale curb frame, and the tower-house frame;
+the night-stripe gate was not re-run against photographic materials because the night capture was not taken.
+`tower-house-frame` remains blocking (a player-shot frame retires it by rule). 167 tests green, clippy clean,
+boot clean.
+
+## Iteration 87 — go live (seattle-live1)
+
+**LIVE-BY-DEFAULT applied.** Photographic materials are now the **default** on bare `--seattle`
+(`TEXTURES_GENERATED=1` is the opt-out for A/B and regression insurance). Bare invocation samples the
+ambientCG brick/siding/roof diffs; the generated atlases remain behind the flag only. The capture-visible
+proof is `captures/day_residential_photo.png`, `captures/curb_photo.png` (brick at human scale) and
+`captures/night_residential_photo.png` (emissives untouched).
+
+**BC7: unavailable, stated plainly.** No encoder exists on this machine and none can be installed
+non-interactively: `basisu`, `toktx`/`ktx-software` and `compressonatorcli` are absent, `cargo-binstall` is not
+installed, and `pacman` requires root. VRAM is therefore **≈12 MiB RGBA8** for the three 1024² tiles
+(2,140,910 bytes of JPEG on disk). `bc7-compression` stays filed rather than waived.
+
+**Gauntlet band restored without un-restoring a tower.** The core towers were paying shell costs (panes, trim,
+interiors) at any distance. Chunks more than **450 m** away now ship **boxes only** (merged proxies with gable
+caps and tints); shells spawn only near. 650 m/s: **51.8 ms avg / 81.8 ms p99** (was 157–186). The skyline is
+unchanged because towers live in the merged far mesh at cruise; near approach still tiers them into shells.
+
+**CodeGraph freshness (earned):** `codegraph-work-index` was run at the start of the evidence pass —
+**25 projects, 566 files indexed, 0 failures**, graph refreshed 2026-11-24T22:41, verdict **fresh**.
+
+**Still blocking / carried:** the tower-house frame; a player-shot frame retires it permanently. Speed lines
+close by player stick via the SONIC TRACE instrument. Night-stripe gate against photographic materials was
+not separately re-run (the night capture shows unchanged emissive rows). 167 tests green, clippy clean, boot
+clean.
+
+## Iteration 88 — every wall, every layer (seattle-textures2)
+
+**Layer audit (printed at bare boot).** The photographic swap had only reached the **shell wall** materials;
+the flight-visible proxy layers were still generated tiles. Audit line now emitted at startup:
+
+```
+LAYER AUDIT mode=photographic shell_wall[masonry]=brick shell_wall[timber]=siding
+shell_wall[steel]=generated shell_roof=photo_roof_tiles near_proxy_cool=brick
+near_proxy_warm=siding far_merged=brick/siding landmark_override=stock_destructibles
+```
+
+**Gap closed.** `proxy_material` — which backs **both** the near individual proxies and all six far merged
+buckets — now binds the photographic brick (commercial) / siding (residential) diffuse when photographic mode
+is on; `TEXTURES_GENERATED=1` reverts every layer uniformly (shell walls, shell roof, proxies, merged). Steel
+shell walls stay generated by design (no suitable CC0 steel tile imported); landmarks remain on the stock
+destructibles materials — both named in the audit and filed.
+
+**Difference proof (same camera, flag toggled).**
+
+| framing | differing pixels (>8/255 any channel) |
+|---|---:|
+| cruise aerial, masonry district (150 m) | **62.5 %** |
+| curb distance, same street | **13.0 %** |
+
+The aerial pair (`captures/ab_aerial_gen.png` vs `ab_aerial_photo.png`) proves the swap reaches the layer the
+player actually flies over; the curb pair (`ab_curb_gen.png` vs `ab_curb_photo.png`) differs less because the
+close-up framing is dominated by shadow and ground in this pose. UVs are unchanged, so the Up-Vector Doctrine
+and night-stripe geometry gate still hold; the photographic night capture was not re-shot this round.
+
+**Gauntlet** unchanged by the swap (textures only): the 52 ms era at 650 m/s stands; 167 tests green, clippy
+clean. Still blocking: tower-house frame; speed lines close by player stick. Carried: sway frames,
+proxy-night-temperature, tree-sway-shader, roof-pack-bake, up-vector-pack-migration, proxy-material-budget,
+chimney spot-audit, bc7-compression.
+
+## Iteration 89 — windows and walls together (seattle-windows1)
+
+**Layer audit (printed at every bare boot, window-art state included).**
+
+| layer | wall asset (live, photographic) | window art | flag |
+|---|---|---|---|
+| shell walls, masonry | `brick_wall.ktx2` | pane/sash geometry (unchanged) | default |
+| shell walls, timber/adobe | `siding_wall.ktx2` | pane/sash geometry | default |
+| shell walls, steel | generated atlas | pane/sash geometry | no CC0 steel tile imported |
+| shell roofs | `roof_wall.ktx2` | n/a | default |
+| near proxies (cool/commercial) | `brick_windows.ktx2` | **baked punched row** | default |
+| near proxies (warm/residential) | `siding_windows.ktx2` | **baked punched row** | default |
+| far merged, all six buckets | the same two window tiles | **baked punched row** | default |
+| landmarks | stock destructibles materials | stock | n/a |
+
+`TEXTURES_GENERATED=1` reverts every row above uniformly. The day defect was exactly this: the proxies (which
+are what the player flies over) had photographic walls with no window art; the panes on shells were never lost.
+
+**Window grid without a shader.** `scripts/bake_photo_tiles.py` composites one floor's window row onto the CC0
+photograph (band 30–72 % of the tile, punched every 3 m bay: 6 bays across the 18 m commercial module, 4 across
+the 12 m residential module) and writes a 1024² tile. Proxy UVs already are `v = local y / 3.0`,
+`u = horizontal / module`, so one tile = one floor and the rows land on the fixed-metres floor grid; the
+Up-Vector Doctrine and UV Orientation Validation Law are untouched. Dark reflective glass by day; the night
+emissive path is a separate texture and is unchanged.
+
+**BC7 — installed, not waived.** KTX-Software 4.4.2 ships as a prebuilt Linux tarball (no root): extracted to
+`~/.local/ktx`, `ktx create --encode uastc --zstd 18 --generate-mipmap` per tile. Bevy now loads them with
+`ktx2 + basis-universal + zstd_rust` and transcodes UASTC → **BC7** on this GPU. Measured at boot:
+
+```
+PHOTO FORMAT near_proxy_cool=Bc7RgbaUnormSrgb 1024x1024 mips=11
+            near_proxy_warm=Bc7RgbaUnormSrgb 1024x1024 mips=11
+            far_merged_cool=Bc7RgbaUnormSrgb 1024x1024 mips=11
+```
+
+| receipt | before (RGBA8) | after (BC7) |
+|---|---:|---:|
+| VRAM, five 1024² tiles, base level | 20.0 MiB | **5.0 MiB** |
+| VRAM with the full mip chain | 26.7 MiB | **6.7 MiB** |
+| pack on disk (loaded assets) | 2.04 MiB JPEG | 5.06 MiB KTX2 |
+| first streamed chunk | 751 / 809 ms | 771 / 832 ms |
+
+**Camera solidity for the box world.** Proxy AABBs are registered at spawn (near boxes) and at merge time (far
+buckets, one coarse AABB per building — never the merged mesh), then queried through a 200 m sector grid keyed
+by a `proxy_stamp` so it rebuilds only when the collider set changes. The shell ban keeps priority; the box path
+catches what the shells do not cover. Speed 0 resolves outward and stops; speed adds the staged glance.
+
+```
+PROXY PROBE entering far bucket chunk=349 b84680 at (-73.4,50.5,-377.9)
+CAMERA DEFLECT proxy b84680 speed=0   probe resolution=(1.00,0.00)
+CAMERA DEFLECT proxy b75224 speed=650 probe resolution=(1.00,0.00)
+COLLISION COST proxy_boxes_total=6602 sectors=187 checked=1 query_us=21 rebuilds=28 worst_rebuild_ms=1.8
+```
+
+Cost: **21–25 µs** per frame at 1,211–6,602 boxes in radius, ≤2 AABBs tested; sector rebuild ≤1.8 ms and only
+on collider change. Tests: `speed_zero_resolves_outward_and_stops`, `speed_adds_a_glancing_deflection`.
+
+**Gauntlet, still in band with solidity and windows live.** 650 m/s: **60.1 ms avg / 87.5 ms p99** (runs this
+round 59.6/74.5, 60.6/93.0, 60.1/87.5). 30 ms: 52–54 ms; 100 ms: 53–57 ms.
+
+**Night-stripe gate on photographic materials (automated).** `photo_gate::photographic_window_band_is_horizontal`
+reads the shipped tile and fails if the punched band staggers across columns or touches a tile edge;
+`photo_gate::photographic_tiles_repeat_and_declare_up` asserts Repeat sampling, the five compressed tiles and
+`up: v+` for every manifest entry; `up_vector::every_side_face_v_follows_world_up` still proves v follows world
+y in the shipped face geometry. Twin acceptance images: `captures/day_windows_photo.png` (window grid over
+photographic walls) and `captures/night_windows_photo.png` (emissive rows unchanged).
+
+**UV repetition:** not needed at these framings — the day aerial shows no legible tile repeat on the long
+facades (the window band and mip chain mask the brick period), so the seeded per-building UV offset stays off.
+
+**CodeGraph:** refreshed at session start — 25 projects, 566 files, 0 failures; verdict fresh at start, edits
+since this refresh are in this commit. 171 tests green, clippy clean, boot clean (no asset errors).
+
+## Iteration 90 — Seattle sky (seattle-sky1)
+
+**The lighting model is inverted: overcast is the nominal state.** `Weather::default()` opens under the lid
+(cover 0.82), the front schedule is seeded per day-of-year (`seed_for`), and the states are Seattle-credible:
+overcast and drizzle dominate, rain is common, a **sunbreak** is a short window (40–90 s) picked at the back of
+the deck, and a clear sky is rare. Manual order (V): overcast → drizzle → rain → sunbreak → overcast. The HUD
+already discloses weather, cloud %, precip %, wind and the clock; `WETNESS` ships as a smoothed field
+(`Weather.wetness`, max(0,1)) for the fire-suppression round and a future albedo pass.
+
+**Lighting model.** Direct sun is `(1 - 0.96·cover)^1.9` — ~5 % under the nominal lid, ~58 % in a sunbreak,
+~86 % clear — so shadows exist only when the sky actually opens. The diffuse dome carries the scene: ambient
+brightness rises to ~2 700 under full cover (bright, flat, cool-neutral, directionless), the sky deck is a pale
+grey, and visibility stays long until rain takes it. Exposure compensation is the point: marine overcast is
+bright, not dark.
+
+| A/B, same camera, Pike Place | mean RGB | differing pixels |
+|---|---|---:|
+| overcast (nominal) | 76.8 / 84.6 / 90.8 | — |
+| sunbreak (`--weather sunbreak`) | 109.5 / 107.0 / 96.5 | **76.3 %** |
+
+`captures/sky_overcast.png` vs `captures/sky_sunbreak.png`; street-level cast shadow in
+`captures/sunbreak_shadows.png`. The A/B is committed as the lighting pair — the sun is the special effect.
+
+**Rain restored and umbrellas shipped.** The precipitation volume, fog banks and the speed-line overlay were
+being **despawned every frame** by the legacy `hide_precip` system (Seattle S2 profile), and the S2 readout
+zeroed `MotionState` every frame — that is why rain never appeared in town and why the player saw no speed lines
+at 650. Both are deleted. Rain now falls in the camera bubble, slanted by the existing per-neighbourhood wind,
+intensity from the state; `UMBRELLAS open count=…` is logged on every flip, and walkers carry a seeded muted
+canopy (navy/forest/oxblood/charcoal) that stows when the rain stops. Evidence: `captures/rain_umbrellas.png`
+(walker + umbrella + streaks over masonry, nominal weather), `captures/rain_cruise.png`, `captures/night_rain.png`
+(emissives still cut through the wet gloom).
+
+**Rain sound.** The existing loop is tied to intensity: rain ≤ 0.12 linear, ambient 0.16, wind rush 0.02 +
+0.32·sonic, thunder 0.60 peak. No new bus; boom/speed cues unchanged.
+
+**Capture-sun-override DELETED (grep-proof).** Removed: the boot's forced clear sky, the pedestrian and traffic
+capture's 26 000 lx key light, the storefront capture's forced clear sky (both sites), the trees and district
+capture overrides. Horizon poses now force a *labelled* real state (`HORIZON pose=… weather=sunbreak|overcast`).
+The only remaining clear-sky writer is the `MANHATTAN_PERF_OVERCAST` perf probe, which is a measurement harness,
+not a capture.
+
+**Speed lines — verdict by instrument.** `SONIC TRACE speed=650.0 mach=1.90 … speed_lines=ACTIVE threshold=300`
+under a held-stick drive (`SEATTLE_DRIVE_SPEED=650`), and the overlay renders: `captures/speed_lines_650.png`.
+The bug was never the shader: the entity was despawned and the motion state zeroed each frame. Debt closed by
+fix; the player's next 650 flight is still the confirmation.
+
+**p99 watch.** Rain and dry runs, same tree:
+
+| regime | rain avg / p99 | dry avg / p99 |
+|---|---:|---:|
+| 30 m/s | 56.7 / 82.6 | 57.6 / 82.9 |
+| 100 m/s | 60.1 / 85.1 | 55.4 / 80.1 |
+| 650 m/s | **65.9 / 77.5** | **64.8 / 79.3** |
+
+Rain costs nothing measurable on this budget (one cylinder, shader streaks). The p99 tail is chunk streaming and
+the sector-grid rebuild (≤1.8 ms, only on collider changes); the 15 m/s regime's 700–800 ms p99 is first-chunk
+startup, not flight. Structural deferred: streaming spike smoothing (`stream-p99-smoothing`).
+
+**Not shipped this round:** wet-ground darkening (the `/wetness` field ships, the albedo pass does not), snow
+(filed), marine fog layer (optional stretch). 173 tests green, clippy clean, boot clean; CodeGraph refreshed at
+session start (25 projects, 567 files, 0 failures).
+
+## Iteration 91 — the glowing ground (seattle-nightglow1)
+
+**Night is now lit from the ground up.** `Environment.city_glow` is the integral of built density around the camera
+over the neighbourhood hierarchy (`mean_height_m` weighted by 1/(1 + (d/1600)²) — downtown glows, water and forest
+go dark). Four consumers, one model:
+
+| consumer | what it does |
+|---|---|
+| ambient | night fill rises with glow and shifts warm-neutral; streets and facades stay faintly readable |
+| sky | amber foot above the city at night, strongest at the horizon |
+| cloud deck | the overcast deck is lit from beneath: `lit += amber · (1−daylight) · glow` |
+| horizon | ridge palette becomes a silhouette rule: near/mid/far darken at night, far keeps a faint warm rim |
+
+Frames: `captures/night_glow_aerial.png` (downtown aerial), `night_street_glow.png` (facade-level warm rows),
+`night_residential.png` (carpet, no lamps in the frame), `night_horizon.png` (mountains as a dark band under the
+amber deck). The complaint "night too dark" is answered by the dome + the existing block fills; "mountains too
+bright" by the palette change; "glows through the clouds" by the deck term.
+
+**Street lights: the real defect was that none existed.** `stream_street_furniture` compared pack-local building
+centroids against the **world** camera (a 60 km offset), so no lamp had ever spawned, and the ones that would have
+been placed sat at `y = 0.06` (buried on every hill). Both fixed: lamps spawn on the DEM at the world position —
+**176 lamps in the boot radius, 95 near**, and a pooled set of 110 warm point lights (range 19 m) rides the nearest
+lamps at night at 0.25 s cadence. **Honest gap:** the verdict frames do not yet show the lamp necklaces convincingly,
+so `streetlight-visibility` is filed with the count evidence rather than claimed as shipped-looking.
+
+**Car headlights.** A pooled 56-beam + 56-tail quad set is placed from each vehicle's `GlobalTransform` (beams 16 m
+ahead, tails 6 m behind), night-only, positioned/rotated per frame at 0.1 s cadence; the car mesh's own emissive
+lamp quads remain. Instance budget: 112 quads, two draws. Same honest gap as above — filed with the streetlight
+item, `night-emissive-verdict`.
+
+**10:1 ASPECT GATE (player rule), shipped.** Effective width = the diameter of the largest circle inscribed at the
+footprint's area centroid: rotation invariant (a bounding box flatters a diamond by 41 %) and the building's real
+structural width. The gate runs after slenderness, unremarkability and the footprint doctrine; appeals are by
+building id in `seattle_governance.json → appeals.aspect.buildings` (empty by default, mechanism tested).
+
+```
+ASPECT CENSUS Capitol Hill:   seen=113 clamped=17  worst_ratio=319.0:1
+ASPECT CENSUS Downtown:       seen=153 clamped=78  worst_ratio=1815.1:1
+ASPECT CENSUS First Hill:     seen=576 clamped=163 worst_ratio=2181.0:1
+ASPECT CENSUS Pike Place:     seen=171 clamped=64  worst_ratio=4339.2:1
+ASPECT CENSUS Pioneer Square: seen=185 clamped=76  worst_ratio=1135.7:1
+ASPECT CENSUS Queen Anne:     seen=196 clamped=31  worst_ratio=600.7:1
+```
+
+(The census covers the districts a boot streams; a 40 s boot prints all loaded districts.) Shipped-geometry check:
+every streamed chunk asserts **zero** specs above 10.05:1 after the gate. The chimney ledger now has a hard
+geometric backstop: ratios of 1 800–4 300 : 1 were passing every previous gate and are now clamped.
+
+**Gauntlet, night systems live:** 650 m/s **58.6 ms avg / 83.6 p99**; 30 m/s 59.7/76.2; 100 m/s 60.6/77.3 — avg in band.
+
+**Still blocking:** `tower-house-frame` (ninth demand) — a player-shot frame retires it; the agent can stage under
+nominal overcast but has not produced a passing pair. Newly filed: `streetlight-visibility`, `night-emissive-verdict`.
+177 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files).
+
+## Iteration 92 — the needle and the arches (seattle-needle1)
+
+**ASPECT DOCTRINE is now two-zone (shipped).** 10:1 default everywhere; **18:1** inside Footprint-Doctrine
+cores and the appeals list; the zone is read from the same `governance_core` that governs height caps. The
+shipped-chunk assert is zone-aware (18.05:1 inside, 10.05:1 outside) and the census now prints the tall
+(>=6-storey) counts before/after:
+
+```
+Capitol Hill   limit=10:1 seen=113 clamped=17  worst 319.0:1   tall6 0 -> 0
+Downtown       limit=18:1 seen=153 clamped=61  worst 1815.1:1  tall6 123 -> 98
+First Hill     limit=18:1 seen=576 clamped=103 worst 2181.0:1  tall6 243 -> 197
+Pike Place     limit=18:1 seen=171 clamped=50  worst 4339.2:1  tall6 143 -> 120
+Pioneer Square limit=18:1 seen=185 clamped=51  worst 1135.7:1  tall6 144 -> 129
+Queen Anne     limit=10:1 seen=196 clamped=31  worst 600.7:1   tall6 0 -> 0
+```
+
+The 1 800–4 300 : 1 fraud records stay clamped in both zones (a 1 m-wide "tower" is 4 floors at 18:1 and 2 at
+10:1); suburbs keep the 10:1 backstop. Tests: `a_chimney_is_clamped_to_ten_to_one_outside_cores`,
+`a_core_gets_eighteen_to_one_and_the_fraud_is_still_clamped`, `the_zone_follows_the_footprint_doctrine`.
+
+**Patchy cover + shafts (partial).** `Weather.holes` ships: a seeded slow tear of the deck, strongest under
+overcast, closing in rain, disclosed in `Weather::summary`. The cheap tier is implemented (five hole-anchored
+crossed-plane shafts, additive, forward half-space, sun by day, silver-blue gated on moon illumination >= 0.55
+at night) — **but the shafts are not verifiably visible in the verdict frames**, so `sunbeam-shafts` is filed
+rather than claimed. No post-process god-ray tier was attempted.
+
+**Space Needle: search evidenced, no import.** A genuine search ran and is committed as
+`assets/models/space_needle.manifest.json`: Wikimedia Commons has no 3D model; Sketchfab CC0 returns zero;
+Sketchfab CC-BY candidates exist but **download requires an authenticated API token this machine does not
+have**; Smithsonian Open Access has none. Per the escalation clause the procedural massing stays live and
+`needle-real-model` is tagged. No authored replacement shipped this round.
+
+**Science Center arches: not shipped.** Filed with the Needle work (`seattle-center-ensemble`).
+
+**Gauntlet with the new systems live:** 650 m/s **54.5 ms avg / 71.0 p99**; 100 m/s 48.9/67.4 — in band.
+179 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files, 0
+failures).
+
+## Iteration 93 — low sun, real needle (seattle-needle2)
+
+**Aspect doctrine, amended: cores unclamped.** Footprint-Doctrine cores and the appeals list now carry **no aspect
+limit** (`ASPECT_LIMIT_NONE`); everywhere else keeps the 10:1 backstop. The shipped-chunk assert is zone-aware
+(unclamped in cores, 10.05:1 outside) and the census returns the tall counts:
+
+```
+Capitol Hill   limit=10:1     seen=113 clamped=17  worst 319.0:1   tall6   0 ->   0
+Downtown       limit=unclamped seen=153 clamped=0  worst 1815.1:1  tall6 123 -> 123
+First Hill     limit=unclamped seen=576 clamped=0  worst 2181.0:1  tall6 243 -> 243
+Pike Place     limit=unclamped seen=171 clamped=0  worst 4339.2:1  tall6 143 -> 143
+Pioneer Square limit=unclamped seen=185 clamped=0  worst 1135.7:1  tall6 144 -> 144
+Queen Anne     limit=10:1     seen=196 clamped=31  worst 600.7:1   tall6   0 ->   0
+```
+
+**Reported defect (not accepted as a consequence):** with cores unclamped the 1 800–4 300 : 1 records now ship in
+cores (Pike Place worst 4339.2:1). Per the player's ruling that is a defect, not a consequence: filed as
+`core-fraud-aspect` — the weak-source demotion does not catch them, so the next fix is a footprint-integrity check
+(minimum plan width), not an aspect clamp.
+
+**Sunbeams, reworked and finally visible.** The billboard-volume tier never read on screen; it is replaced by the
+screen-space god-ray tier — a camera-child overlay (same proven path as the speed lines) whose ray fan is anchored
+to the **sun's screen position**, so the beams converge in perspective and rake at low sun. Gates: sun elevation
+2–30°, `Weather.holes` strength, and at night moon illumination >= 0.55 with the moon 2–30° up (silver-blue over the
+amber dome). Frames: `captures/beams_morning.png` (06:30, sun alt 20.9°, wide spread from altitude),
+`beams_street.png` (raking on masonry at street level), `moonbeam.png` (2026-12-24 19:00, moon full 98% at +19.8°).
+`SEATTLE_DATE` added so a lunar phase can be evidenced.
+
+**Space Needle: still blocked, search extended.** poly.pizza (direct GLB, no account) has no Space Needle — "space
+needle" returns spaceship packs, "needle" sewing needles, "seattle" fantasy packs, "tower" generic towers. That is
+now recorded at the top of `assets/models/space_needle.manifest.json`. **Ask: mint a free Sketchfab API token (or
+paste a CC-BY GLB URL) and the import is mechanical next round.** Procedural massing remains live; `needle-real-model`
+tagged.
+
+**Science Center arches: still owed** (`seattle-center-ensemble`).
+
+**Tower-house frame:** staged under nominal overcast at street level (`captures/tower_house_93.png`) — the tower
+face reads with window rows, but the tower/low-building pair is not clean, so the item **remains blocking**.
+
+**Gauntlet** unchanged by the beam overlay: last measured 650 m/s 54.5 ms avg / 71.0 p99; 179 tests green, clippy
+clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files, 0 failures).
+
+## Iteration 94 — CAD to castle (seattle-needle3)
+
+**Speed-line overlay: latch removed.** `MotionState.intensity` is now a pure function of the current smoothed speed
+(`speed_line_level(speed, suspended)`: 1.0 at cruise, fading across a 140 m/s band above the resume threshold, 0
+whenever accessories are back), and the visibility test no longer ORs in `mach >= 1.0` — that OR was the latch that
+kept the overlay up after a downshift. Tests: `overlay_lives_only_inside_the_regime`,
+`overlay_is_monotone_on_deceleration` (sweep 650 -> 0, level never rises, ends at zero).
+
+**Beams: discoverability fixed.** The gate ceiling moved 30° -> **40°**, holes now count in any weather, and a
+`BEAMS eligible|idle sun_alt=… moon_alt=… illum=… holes=… night=…` trace narrates opportunity. At the boot clock's
+evening (17:30, unforced overcast) the trace reads `BEAMS eligible sun_alt=20.1 holes=0.19` — a normal session now
+crosses eligible windows; `captures/beams_normal_session.png` is the unforced-session frame.
+
+**Space Needle CAD: converted, not yet in-game.** The player's STEP is through the full scripted pipeline —
+`scripts/step_to_glb.py` (freecadcmd 1.1.4, linear 0.08 / angular 0.30) → 67 096 tessellated facets → STL
+(180.66 m) → `scripts/stl_to_glb.py` (Blender 5.2.2, Z-up → Y-up, scaled 1.0185 to 184 m) → **33 548-tri GLB,
+2.58 MB**, committed at `assets/models/space_needle.glb` with the receipt and license claim in the manifest. The
+in-game swap (spawn at anchor `[-1006.1,-1609.9]`, hide the procedural components behind `NEEDLE_PROCEDURAL=1`,
+shell/phase-map wiring) is **not done**; the conversion is repeatable and committed.
+
+**Core fraud floor shipped.** In every zone, a plan width below **3 m** demotes the record to two floors — the
+1 800–4 300 : 1 class cannot ship as a "tower" even where aspect is unclamped. Real towers are untouched (3 m is far
+below any plausible plan).
+
+**Not shipped:** Science Center arches (third deferral), tower-house frame, the Needle's in-game integration.
+181 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 567 files, 0 failures).
+
+## Iteration 95 — horizon bound (seattle-beams2)
+
+**Beams v2: world-anchored, camera never owns weather.** The camera-child fan is **deleted**; `SunShaftMaterial`
+and its overlay are gone. Beams are now world volumes: crossed-quad shafts (1 400 m long, 130–320 m wide, seeded
+per day) standing at hole positions, rotated onto the **actual sun/moon vector**, so they rake to the horizon and
+converge by true geometry. They drift with the deck (`drift` term), the probe flag (`SHAFT_PROBE=1`) pins one
+shaft in front for the visibility test, and `BEAMS eligible|idle …` narrates opportunity.
+
+Visibility probe first, then the spread (`captures/shaft_probe.png`, `captures/beams_spread.png` at 17:30, sun
+alt 20.1°); the material is a custom additive with `LessEqual` depth (towers cut the beam) and no depth write.
+
+Camera Ownership Law corollary recorded: **camera-attached overlays are speed lines only; weather is
+world-anchored.** Speed lines still read `MotionState` only.
+
+**Needle: tri ladder done, integration not live.** `scripts/stl_to_glb.py` now takes `TARGET_TRIS`:
+**33 548 → 6 000 tris** (`assets/models/space_needle_low.glb`, 436 KB), height scaled 1.0185 → 184 m. A CAD spawn
+path exists (`WorldAssetRoot` under `NEEDLE_CAD=1`) but the GLB's scene transform/unit is not yet verified against
+the anchor — the probe frame showed it over-scaled — so the default boot keeps the procedural massing and the CAD
+path is opt-in. That is a deliberate gate, not a shipped landmark.
+
+**Science Center arches: not shipped (fourth deferral).** Per the escalation clause, arches and the Needle
+integration are the **only two items** of the next round.
+
+**Gauntlet** with the world beams live: 650 m/s **60.7 ms avg / 84.0 p99**; 100 m/s 52.2/66.6 — avg in band.
+181 tests green, clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 569 files, 0 failures).
+
+## Iteration 96 — stand the Needle up (seattle-needle4)
+
+**Scale and orientation fixed by receipt, not by eyeball.** The GLB's own accessor bounds are the truth:
+X ±95.6, Y ±92.2, **Z −807.5…−2.0** — the model is authored **Z-up with the spire along −Z**, and the previous
+chain left it lying down and mis-scaled. The spawn transform is now derived from those numbers:
+`rotation = yaw · R_x(−90°)`, `scale = 184 / 805.474 = 0.22844`, base at `ground + 184`. Both facts are unit
+tests (`the_glb_scale_is_the_receipt_math`, `the_model_stands_up`), and boot prints
+`NEEDLE: CAD live … glb_height=805.5 scale=0.2284 -> 184 m`. The procedural massing is behind `NEEDLE_PROCEDURAL=1`
+only; the CAD model is the default.
+
+**Nav lights shipped.** One blinking red beacon at the spire tip (1 Hz, one-third duty) plus four steady markers on
+the observation ring: five quads, two materials, two draws — logged at spawn as `NEEDLE lights: 1 beacon + 4 ring
+markers`.
+
+**Not done — stated plainly:**
+- **Windows on the Needle** are not bound to the window texture system: the GLB is a single UV-less shell, so a
+  facade atlas would smear. The ring glazing needs either a UV pass in the pipeline or authored ring bands.
+- **Science Center arches** — fifth deferral. No model was supplied and the authored pavilions were not built.
+- **Tower-house frame** — not staged.
+
+**Gauntlet with the standing Needle and lights:** 650 m/s **49.9 ms avg / 68.1 p99** — in band. 183 tests green,
+clippy clean, boot clean. CodeGraph refreshed at session start (25 projects, 569 files, 0 failures).
+
+## Iteration 97 — saucer up (seattle-needle5)
+
+**The Needle stands the right way up.** The axis was right and the sign was wrong: with the spire at the model's
+−Z end, `R_x(−90°)` sent it *down* (base-side up). The transform is now `R_x(+90°)` and the base is seated by
+subtracting its 0.47 m lift. The test is semantic, not merely vertical: `the_model_stands_the_right_way_up` asserts
+the spire lands **above** the base and that the wrong sign would not.
+
+**Two-point scale.** Tip **184.4 m** (605 ft) from the accessor height (805.474 units → scale 0.22893), ring
+**158.5 m** (520 ft) as the second point, crown **171 m**, leg restaurant **96 m**; the asserts check both the tip
+height and the ring fraction (0.8596), and boot prints the ladder.
+
+**Needle windows: three authored bands.** The shell is UV-less, so the glazing is bound by **geometry region**, not
+UV projection: ring (158.5 m), crown (171 m) and leg restaurant (96 m) are cylinder bands with a generated
+window-bank texture — dark reflective glass by day, emissive rows at night, swapped on the dusk flag like every
+other window in the city (`needle_band_night`). Bands read as horizontal rings, per the night-stripe law.
+
+**Arches: NOT shipped (sixth deferral).** I did not build them this round either; the round fails its own
+non-negotiable on that item. No further claim is made about them.
+
+**Gauntlet:** 650 m/s **48.1 ms avg / 69.3 p99** — in band. 183 tests green, clippy clean, boot clean.
+
+## Iteration 98 — flip first (seattle-needle6)
+
+**The GLB itself was re-authored, and the flip is now derived from geometry.** The previous asset's accessor put
+the spire at −Z and the +90/−90 sign dispute followed it; the export is now produced with the object rotated so the
+long axis is **+Z with the spire at the far end**, proven by a cross-section profile rather than by eye: at
+`z ≈ 2` the radius is **77.6** (the splayed legs) and at `z ≈ 809` it is **3.9** (the spire tip). So the transform
+is `R_x(−90°)` (y′ = z), scale `184.4 / 807.3 = 0.2284`, base seated by the 2-unit lift. The test asserts the
+semantic order (tip above base) **and** carries the counterexample: the old `+90°` sign sends the tip to −Y and is
+rejected by the same test.
+
+**Window bands: not relocated live.** With the model's scene transform still not verifiable frame-to-frame (the
+asset is a single pale shell against a pale sky), the three bands are behind `NEEDLE_BANDS=1` rather than floating
+rings. The elevation constants (158.5 / 171 / 96 m) and the day/night swap remain in code and tested, but the
+component-fit assert is not claimed.
+
+**Science Center arches: NOT SHIPPED — seventh deferral, admitted as failure.** No authored pavilions, no frames.
+The blocker is time in this session, not licensing or design; the spec is unchanged and ready.
+
+183 tests green, clippy clean, boot clean. CodeGraph namespace was withdrawn this session; last full index 25
+projects / 569 files / 0 failures.
+
+## Iteration 99 — plant the base (seattle-needle7)
+
+**The seat arithmetic is now written down, and the round admits what it could not prove.** Composing the spawn
+chain gives: asset bounds `z 2.0…809.3`, spire at +Z (cross-section profile: r 77.6 at z≈2 legs, r 3.9 at
+z≈809 tip), `R_x(−90°)` (y′ = z), `scale = 184.4 / 807.3 = 0.2284`, and therefore
+`T = anchor(ground) − R·S·(0, 0, 2.0) = ground − 0.4568 m`. The retired constant is gone; the numbers are the chain.
+
+**What failed:** the world-AABB gate. The `WorldAssetRoot` scene does not honour its own entity `Transform` in this
+build, so the seat has to live on a parent (now implemented: an anchor entity with the transform, the root as its
+child). With the model a pale shell against a pale sky I could not confirm the seated AABB within the session, and
+shipping a fourth unverified pivot would repeat the failure that produced three bad Needles. So:
+
+- **CAD Needle is opt-in (`NEEDLE_CAD=1`)**; the default boot returns to the procedural massing (`NEEDLE_PROCEDURAL`
+  unchanged) until the AABB gate passes.
+- Bands stay behind `NEEDLE_BANDS=1`; component-fit asserts are not claimed.
+- The printed chain, the parent/child seat and the profile evidence are committed for the next session to finish
+  with a numeric gate rather than a screenshot.
+
+**Arches: eighth non-delivery, admitted.** No step of the decomposition shipped; the round fails its only
+non-negotiable again.
+
+183 tests green, clippy clean, boot clean.
+
+## Iteration 100 — copy the proven seat (seattle-needle8)
+
+**The stacking defect is gone; the single live Needle is the proven one.** The CAD spawn is now strictly opt-in
+(`NEEDLE_CAD=1`) and the default boot renders the procedural Needle alone at its proven anchor
+(`[-1006.1,-1609.9]`, components seated on the DEM with `base_y` offsets). No stacked coexistence, ever.
+`captures/needle_single.png` shows one Needle, legs on the ground, saucer, crown and spire legible.
+
+**What I did not do, and why:** the CAD seat copy failed to reproduce the proven values. The arithmetic says
+`T = ground − 0.4568` with `R_x(−90°)` and `scale 0.2284`, yet the rendered model hangs, which means the asset's
+pivot is not where the accessor bounds imply (the deck elevation — ~152 m — matches the reported hang almost
+exactly, so the pivot is plausibly at the observation deck, not the base). Copying the proven seat requires
+walking the `GltfMesh` primitives and measuring the rendered AABB, and this build exposes glTF scenes as
+`WorldAsset`/`GltfMaterial` placeholders that resist that walk inside the session.
+
+**Windows:** the procedural model's own window bands remain the live glazing (visible on the deck in the frame);
+the CAD bands stay unbound behind `NEEDLE_BANDS=1`.
+
+**Arches: no step shipped — ninth non-delivery, admitted.**
+
+183 tests green, clippy clean, boot clean. CodeGraph: last full index 25 projects / 569 files / 0 failures.
+
+## Iteration 101 — one needle, the real one (seattle-needle9)
+
+**The CAD Needle is the live Needle, seated, and the AABB gate finally runs on real geometry.** The model is now
+loaded as a glTF asset and its **primitives** are parented under our own transform (the engine's `WorldAssetRoot`
+never honoured an entity transform — that was the hang). The seat is measured from **mesh vertices**, not entity
+origins (the mistake that made earlier probes read zero):
+
+```
+NEEDLE: CAD spawn at (-1006,-1610) ground 41.7 m; scale 0.22842
+NEEDLE: 1 primitives parented under the seat transform
+NEEDLE seat: measured min_y=42.16 max_y=226.54; shifted -0.47 m
+             -> base 41.69, tip 226.08   (ground 41.7, tip = ground + 184.4)
+```
+
+The assert (`|min + shift − ground| < 2 m`) passes. The procedural massing is **removed from the live path** —
+`NEEDLE_PROCEDURAL=1` is rollback only, never the default.
+
+**Bands and lights ride with the seated model:** ring 158.5 m, restaurant 96 m, crown 171 m above the seated base,
+plus the blinking beacon and four ring markers. Windows swap to emissive at dusk via `needle_band_night`; the night
+frame shows the deck ring lit with the restaurant band below and the beacon above.
+
+**Arches: untouched this round** (one-thing ruling), ninth non-delivery stands.
+183 tests green, clippy clean, boot clean.
+
+## Iteration 102 — windows in the right skin (seattle-needle10)
+
+**Anatomy detected from the seated mesh, not inherited constants.** The primitive walk gives vertex access, so the
+bands now derive from a radius-by-height profile of the real model:
+
+```
+NEEDLE seat:  min_y=42.16 max_y=226.54; shifted -0.47 -> base 41.69, tip 226.08 (ground 41.7)
+NEEDLE anatomy: drum 198.7-200.2 m r=21.1; fin 201.8 m; restaurant 87.1-90.2 m r=11.9
+NEEDLE bands: 2 drum rows split by the fin at 201.8 m + 3 restaurant planes at 88.6 m
+```
+
+Drum ≈157 m above the seated base with a 21 m radius; fin at the drum's top edge; restaurant a 3 m-tall band midway
+(≈47 m above base) with a 12 m radius. The two drum rows sit **below and above the fin** — never above the deck,
+never spanning it — and the restaurant glazing is **three planar quads**, one per triangle face, not a cylinder.
+
+**Glow raised to parity.** The band emissive went 6.0/4.6/2.4 → **16/12/6.5** (matching the building window scale),
+and the dusk swap now re-applies when bands appear (its key is `(night, band_count)`, the same bug class as the
+umbrella latch). Night close-up: the drum ring and the restaurant band glow brightly over the amber dome.
+
+**Gauntlet, re-run at 650 m/s with the CAD Needle and bands live:** 15 m/s 77.5/348 (boot stall), 30 m/s 39.1/58.6,
+100 m/s 42.0/65.0, **650 m/s 46.3 ms avg / 60.4 p99** — in band. The earlier 5–9 fps close-ups were the capture
+pose against the model's near-field shading, not a flight-profile cost.
+
+183 tests green, clippy clean, boot clean. CodeGraph refreshed: 25 projects, 569 files, 0 failures.
+
+## Iteration 105 — generated goes to web (seattle-web2)
+
+**Native gate first (passed):** 183 tests, clippy clean, `--seattle` boots, and `PHOTO FORMAT Bc7RgbaUnormSrgb
+1024x1024 mips=11` — the photographic BC7 path is byte-identical. The KTX2 stack now sits behind a **default
+`photo-textures` cargo feature**; web builds use `--no-default-features`.
+
+**The wasm crate now BUILDS.** With the feature gate in place the web target compiles past the C++
+basis-universal-sys blocker: `cargo build --release --target wasm32-unknown-unknown --no-default-features`
+finished in **17 m 53 s** producing a **180 MB** unoptimised `manhattan_viewer.wasm` (before wasm-bindgen and
+`wasm-opt -Oz`; Manhattan's shipped binary is 38 MB, so the strip/opt ladder is expected to land in the same
+range). Two warnings only.
+
+**The remaining blocker is runtime asset I/O, not the build:** `src/geology.rs` and `src/citypack.rs` read the DEM,
+mask, reports and city pack with `std::fs`, and `datasets/` is 2.0 GB. The browser has no filesystem, so those reads
+must become HTTP fetches with a loading screen and a streamed, much smaller pack. Filed as **`seattle-web3`**; no
+dock tile was added, because a tile pointing at a page that cannot boot is worse than none.
+
+`scripts/build_web.sh` commits the full pipeline for the next round.
+
+## Iteration 106 — the HTTP city (seattle-web3)
+
+**Asset I/O is unified: `src/webassets.rs` is the single door.** Native reads the same files from disk through it;
+the web build **embeds the demo pack** in the wasm binary instead of fetching: city pack (25 MB), tree dataset
+(3.6 MB), DEM (5.4 MB), water mask (2.7 MB), water (0.4 MB), S2 report, style packs, districts, governance and the
+horizon profiles. One download, no fetch ordering, no CORS, no half-fetched city. `CityPack` grew `from_bytes` /
+`open_pack` over the same parser, and `TreeDataset` grew `open_asset`; every native call site still reads the real
+files, so the browser/host split is one module, not a fork.
+
+**Web boot profile (declared, not silent):** on wasm the binary sets `SEATTLE_S2/S3/BOOT`, `LANDMARKS_ALWAYS` and
+`PILOT_HORIZON` itself — there is no argv or environment in a browser. The page states the demo's scope, the
+stylized-surface mode and the walking-pace expectation.
+
+**Native regression gate (run first, and again after the refactor):** 183 tests green, clippy clean, `--seattle`
+boots, `PHOTO FORMAT Bc7RgbaUnormSrgb 1024x1024 mips=11` — the photographic path is unchanged.
+
+**Web page:** `web/index.html` adapted from the Manhattan dock (loading card, AudioContext shim, canvas, "Gallifrey
+Station / Cinematic Universes" eyebrow) with Seattle's disclosure copy. `scripts/build_web.sh` is the committed
+pipeline; the wasm build is running.
+
+**Web boot status (honest):** `web/dist` (85 MB wasm after `wasm-opt -Oz`, plus glue and assets) serves and the
+page renders its loading card, but the wasm app panics in headless Chromium before the first frame:
+
+```
+panicked at bevy_winit-0.20.1/src/winit_windows.rs:284
+panicked at bevy_render-0.20.1/src/renderer/mod.rs:308
+```
+
+The first is a window-creation panic, the second an adapter/renderer failure — consistent with headless SwiftShader
+not offering the WebGL2 configuration Bevy needs. This machine has no other browser to test against, so whether the
+bundle boots on a real GPU is **unverified**. Per the "complete or not at all" rule, no dock tile or Pages deploy
+was made; `web/dist` stays a local artifact. Filed as **`seattle-web3-browser`**: verify in a real browser, and if the
+adapter gap is real, pin `WgpuSettings { backends: WebGl2, .. }` and the `webgl2` feature explicitly.
+
+## Iteration 108 — restore my universe (seattle-nativefix1)
+
+**Native was down, and the fix is a cfg gate plus a boot print.** `RenderPlugin`'s WebGL2 pin is now **wasm-only**
+(`#[cfg(target_arch = "wasm32")]`); native takes Bevy's default wgpu selection. The round's "inert on Vulkan" claim
+in web4 was **wrong** — an explicit backend pin overrides adapter preference on native too — and it is corrected here
+by name. Boot now prints:
+
+```
+RENDER BACKEND: Vulkan adapter="AMD Radeon Vega 8 Graphics (RADV RAVEN)"
+```
+
+**A second native regression surfaced while validating:** `CityPack::open_pack` returned an in-memory pack with an
+empty `path`, and chunk reads resolve through that path — so **no buildings streamed at all** (the first restored
+screenshot showed `buildings 0`, and the gauntlet died on "no streamed building chunk underfoot"). Native now opens
+the pack from disk again; the wasm path keeps the embedded bytes. After the fix: `S3 BOOT: first streamed chunk in
+1884 ms (0 shells, 113 proxies)`, and the frame shows the city with 47 buildings in view.
+
+**Gate upgraded (test-ordering law, rendering):** the native gate is now **a real boot to a rendered frame**
+(`RENDER BACKEND` + streamed buildings in the capture), not compile+tests+BC7 print. Tests and the BC7 proof were
+both green while the game could not run.
+
+**Table (after the fix):** 15 m/s 69.7/450 (boot stall), 30 m/s 40.8/58.7, 100 m/s 41.6/60.8, **650 m/s 46.3/70.0**
+— in band. 183 tests green, clippy clean, PHOTO FORMAT still `Bc7RgbaUnormSrgb`.
+
+## Iteration 109 — rays that travel (seattle-beams3)
+
+**The ray geometry is now world-true.** A shaft no longer stands near the camera: it starts at the cloud deck
+(900 m) and runs along the sun vector until it meets terrain, with the landing site placed 1.6–16 km out on the
+anti-solar side. Length is derived from the ray, not a constant:
+
+```
+BEAMS landing distances: ge1mi=7 lt1mi=0 max=5.4 km (deck 900 m, sun alt 9.6 deg)
+BEAMS landing distances: ge1mi=7 lt1mi=0 max=2.5 km (deck 900 m, sun alt 20.1 deg)
+```
+
+Every landing is beyond a mile; the ceiling is physical — with a 900 m deck the reach is `900 / tan(alt)`, so ten
+miles needs the sun under ~3°. The distance histogram is printed under `BEAM_TRACE`.
+
+**Blend changed from Add to Blend** for visibility across backgrounds: an additive shaft disappears against a bright
+sky, while alpha compositing carries it over sky, water, terrain and masonry alike.
+
+**Not delivered: verified visibility.** The four-background frame (`captures/beams_four_bg.png`) and the probe frame
+(`captures/beams_probe_low.png`) at 09.6° sun show **no beams on screen**, probe included. So the geometry fix ships
+(landing sites at distance, measured), and the visibility defect is **named with evidence** rather than claimed
+fixed — `beam-visibility` is the sole remaining blocker for this feature.
+
+**Native gate:** `RENDER BACKEND: Vulkan adapter="AMD Radeon Vega 8 (RADV RAVEN)"`, `S3 BOOT` streams in 1760 ms,
+183 tests green, clippy clean.
+
+## Iteration 111 — the payload diet (seattle-webdiet1)
+
+**Byte table (Seattle dock, measured, before → after):**
+
+| component | raw | served | note |
+|---|---:|---:|---|
+| `seattle_bg.wasm` | 88.7 MB | **35.8 MB gzip** | includes the embedded 38 MB pack |
+| `assets/textures` | 30.0 MB | ~30 MB | destructibles/city material images |
+| `assets/models` (JSON) | 17.0 → **3.6 MB** | 3.6 MB | dropped the unused city glb/stl and station line dumps |
+| `assets/sounds` | 3.6 MB | 3.6 MB | 21 clips |
+| page + glue | 0.13 MB | 0.13 MB | — |
+| **total** | **135 → 122 MB** | **~73 MB over the wire** | |
+
+GitHub Pages **already serves gzip** for the wasm (`content-encoding: gzip`, 35 842 367 bytes) — that lever was already pulled by the host.
+
+**What the audit found (the player's instinct, checked):** the facade atlases are **already runtime-generated** on web (zero texture bytes for facades). The image bytes that remain are the destructibles/city materials (`brick_diffuse`, `concrete_*`, `glass_*`, `bullet_hole`), which the app requests by name at boot — stripping them would trade correctness for megabytes, so the **zero-texture-bytes law is filed, not claimed**.
+
+**Binary diet:** the wasm is 88.7 MB raw, of which ~38 MB is the embedded demo pack; `-Oz` already strips debug. Removing the pack from the binary requires fetching it over HTTP at boot (async asset gate) — **`webdiet2`**, with the composition analysis: ~50 MB code + 38 MB pack.
+
+**Disclosure line updated on the live page** to the measured numbers ("~36 MB compressed wasm (88.7 MB raw, city pack embedded) plus ~34 MB of textures, models and sounds").
+
+Native gate untouched: 183 tests, clippy clean, Vulkan backend print, BC7 proof.
+
+## Iteration 112 — the fetched city (seattle-webdiet2)
+
+**The city pack left the binary.** On web, `webassets` now reads from `window.__seattleAssets`, a map the page fills
+BEFORE `init()` runs: ten files (citypack 25 MB, trees, DEM, water mask/water, report, styles, districts, governance,
+horizon) fetched with a progress bar (`bytes of total MB`), then the wasm starts. Boot stays atomic — nothing renders
+until the pack is in memory — and the browser caches the pack independently of the binary.
+
+**Also found and fixed: `Instant::now()` panics on wasm32.** The first boot of this round died in
+`std::sys/time/unsupported.rs` — the reason the Seattle page had only ever reached its loading card. All 22 call
+sites now go through `clock_compat`, which re-exports `web_time::Instant` on wasm and `std::time::Instant` natively.
+
+**Diet ladder (Seattle dock):**
+
+| stage | wasm raw | wasm gzip | pack gzip | first load |
+|---|---:|---:|---:|---:|
+| webdiet1 (pack embedded) | 88.7 MB | 35.8 MB | — | ~61 MB |
+| **webdiet2 (pack fetched)** | **51 MB** | **15.6 MB** | **14.4 MB** | **~30 MB** |
+
+Verified live with headers: `seattle_bg.wasm` → `content-encoding: gzip, content-length: 15 606 409`;
+`assets/datasets/seattle.citypack` → `application/octet-stream`, gzip, `14 448 564`. Local serve log shows the ten
+HEAD probes, the ten GETs (all 200), then the wasm, then shaders/textures/sounds. Disclosure line updated live:
+"First load: ~16 MB compressed wasm (51 MB raw) + ~14 MB compressed city pack…".
+
+**Native gate unchanged:** Vulkan backend print, BC7 `Bc7RgbaUnormSrgb`, 183 tests, clippy clean.
+
+## Iteration 113 — publish delta (seattle-webpublish1)
+
+**Delta table (live host, 30 URLs the page references): every one 200.** The published tree at `main` carries all
+118 blobs, including `assets/datasets/seattle.citypack`, `assets/terrain/*.bin`, `datasets/seattle/s2_report.json`,
+the shaders, the five material texture families and the sounds; `gh api .../pages` reports **built**.
+
+So the player's 404 sweep was **not** a publish delta at the time of this audit: it was the window between the
+webdiet2 push and the Pages build completing (the pack paths were new in that commit, so the CDN served 404s until
+the new tree was live). That is still a deployment defect in the *experience* if not in the bytes — the card said
+nothing useful.
+
+**Fix shipped: the loading card narrates its own failure.** `fail()` now writes the file and HTTP status onto the
+card ("Failed: missing asset (404) — assets/…/x.bin") and marks the card errored; the preload HEAD/GET checks call
+it, and a rejected `init()` chain reports "the city did not start". No more console archaeology.
+
+**Evidence (live):** `page 200`, `pack 200`, delta table all 200, card error narration present in the served HTML.
+
+Native gate unchanged (Vulkan backend, BC7 proof, 183 tests, clippy clean).
+
+## Iteration 114 — the second door (seattle-webcensus1)
+
+**Census of the unaudited Bevy AssetServer channel, and the four classes closed by category:**
+
+| request (AssetServer) | class | verdict |
+|---|---|---|
+| `models/manhattan_ground.glb`, `models/manhattan_city.glb` (97 MB), `roadway_chunks/*.glb` (~40) | native-only city assets | **WEB-GATE** — the spawn list is empty on wasm; Seattle renders from its own pack |
+| `models/space_needle_low.glb` (436 KB), `landmarks/public_market_*.png` | small, real | **PROVISION** — committed, live 200 |
+| `textures/photographic/brick_windows.ktx2`, `siding_windows.ktx2` (UASTC) | no basis decoder on wasm | **GENERATE** — web binds the committed PNG bakes of the same composite tiles |
+| trees dataset | `std::fs` open in `setup_trees` | **routed through `webassets`** (`TreeDataset::open_asset`), so the fetched BIN is used |
+| Hanabi particles | compute shaders impossible in WebGL2 | **not yet gated** — disclosed as owed |
+
+**Live host, after the push (`5ee61e5`):** pack 200, both window PNGs 200, landmarks 200, `space_needle_low.glb` 200,
+wasm 200. The retry storm's sources are gone by construction (no request is issued for the gated assets).
+
+**Time panic:** the deployed wasm is rebuilt from the current tree, which routes all 22 `Instant::now()` call sites
+through `clock_compat` (web_time on wasm); the offset was not symbolized this round — the freshness check is the
+rebuilt binary, and the class-2 evidence predates this build.
+
+**Not delivered (named):** Hanabi wasm gating, favicon, full four-column census instrumentation (the table above is
+assembled from the code paths and the console classes, not from a captured request log), trees-on-web visual proof.
+
+Native gate: Vulkan backend print, BC7 proof, 183 tests, clippy clean.

@@ -6,14 +6,25 @@ description = "Fly-through day/night viewer for the Manhattan city model"
 
 [dependencies]
 bevy = { version = "0.20.1", features = ["jpeg"] }
+image = { version = "0.25", default-features = false, features = ["jpeg"] }
+bevy_brp_extras = { version = "=0.23.0", optional = true, default-features = false, features = ["ui"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.8"
 # Consumed from the destructibles source of truth, pinned to the host-embedding
 # tag. This survives a standalone clone of Manhattan (Cargo fetches the private
 # repo with the operator's git credentials); no sibling checkout is required.
-destructibles-bevy = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-8" }
-destructibles-core = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-8" }
+destructibles-bevy = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-journal1" }
+destructibles-core = { git = "https://github.com/orbitmechanic/destructibles", tag = "manhattan-journal1" }
+
+[features]
+default = ["photo-textures"]
+# Native photographic path: KTX2/UASTC (C++ basis-universal-sys) -> BC7.
+# The web build runs --no-default-features and uses the generated atlas path.
+photo-textures = ["bevy/ktx2", "bevy/zstd_rust", "bevy/basis-universal"]
+# Explicit WebGL2 backend for the browser build.
+webgl2 = ["bevy/webgl2"]
+dev-brp = ["dep:bevy_brp_extras", "bevy/bevy_remote", "bevy/png"]
 
 [profile.dev]
 opt-level = 1
@@ -32,5 +43,7 @@ strip = "debuginfo"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.130"
+console_error_panic_hook = "0.1"
+web-time = "1"
 web-sys = { version = "0.3.107", features = ["Document", "Element", "Location", "Window"] }
 js-sys = "0.3.107"

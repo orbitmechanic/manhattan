@@ -1,0 +1,495 @@
+{
+  "city_id": "seattle",
+  "counts": {
+    "bellevue_buildings": 63574,
+    "msml_buildings": 757953,
+    "overture_buildings": 934201,
+    "seattle_buildings_2015": 254464,
+    "seattle_buildings_2023": 205864,
+    "seattle_parks": 488,
+    "seattle_shoreline": 349,
+    "seattle_snd": 29833,
+    "seattle_zoning": 3465,
+    "tacoma_buildings_2024": 91000,
+    "water_areas": 432,
+    "seattle_trees": 374849
+  },
+  "generated_utc": "2026-11-21T05:13:03Z",
+  "raw": {
+    "USGS_13_n48w122.tif": {
+      "bytes": 473964013,
+      "sha256": "40bccd5f1252cec0e5fd6f2a15e5a62590e42d43455a61cf1b48bc55784b5c85"
+    },
+    "USGS_13_n48w123.tif": {
+      "bytes": 415449258,
+      "sha256": "23ee8ea838076717326bdb3f6c9d349b3d241ca19d9fe8e92ee191ccd1cf3da0"
+    },
+    "bellevue_buildings.geojson": {
+      "bytes": 55666373,
+      "sha256": "ec9ff1fe6a22a3252695a290fa9af154dc2ca94c273f96f74f2358fc175888bc"
+    },
+    "msml_021230021.csv.gz": {
+      "bytes": 23346963,
+      "sha256": "ad605d5c1fc4e17ced34c697539ae4c215fc3327b9f72c4e54ab00de3ba541c2"
+    },
+    "msml_021230023.csv.gz": {
+      "bytes": 36240045,
+      "sha256": "c0ee61dc0d4fcbb61479b2a95b46692d580447d8543facd0f3fd7d8706da5c87"
+    },
+    "msml_021230030.csv.gz": {
+      "bytes": 58820958,
+      "sha256": "fbc0279db595b142ff8fa33f5e87e96d89b4c2a43c57d7c26c79fd2a32c67b40"
+    },
+    "msml_021230032.csv.gz": {
+      "bytes": 40231901,
+      "sha256": "03ffa8a9cb5072f822184a1399d95a0f3f8c9fefab00127f97fce37e0f084124"
+    },
+    "overture_buildings.parquet": {
+      "bytes": 171464296,
+      "sha256": "b9128c9f3969a1c27abd39e9863a271ca0eec4da143ce955842e774e821e5165"
+    },
+    "seattle_buildings_2015.geojson": {
+      "bytes": 94349285,
+      "sha256": "0468212ca5883ee7e65484849adc32b94fcb7562b8f1eebb2b872eb0b6c51bc4"
+    },
+    "seattle_buildings_2023.geojson": {
+      "bytes": 158684121,
+      "sha256": "ed713540d898909db43f6b9324b46a837b7478da0001b90b86902fa783eccefe"
+    },
+    "seattle_parks.geojson": {
+      "bytes": 215879,
+      "sha256": "f124454a43a60688b83f8aae33342288393be5491d8b4aef915a5b9e696d7ba7"
+    },
+    "seattle_shoreline.geojson": {
+      "bytes": 2332225,
+      "sha256": "544bf7e590c2d497af63bbbbb4f6cf5c332805121aad03322d3198ec77549b6b"
+    },
+    "seattle_snd.geojson": {
+      "bytes": 35825675,
+      "sha256": "0ab911e3d02c13ae46e472d61af4cff57d25c8a7c67478c3d1302fc4400b5c28"
+    },
+    "seattle_zoning.geojson": {
+      "bytes": 10278359,
+      "sha256": "300890af1d3bd7ddc5530f4174e0b272b45fe9a9c522a3fcbe54ac26b1007245"
+    },
+    "tacoma_buildings_2024.geojson": {
+      "bytes": 109752280,
+      "sha256": "d10953a09bb88c81b3fd1138d4824621b958674fbc0ed34b3ceea8ee20c6e687"
+    },
+    "tl_2024_53_place.zip": {
+      "bytes": 2856695,
+      "sha256": "7da61ba276bfdd886ffeb36bf9af37a99a42f8c446e47c684ae48087d86657c6"
+    },
+    "tl_2024_us_county.zip": {
+      "bytes": 83913260,
+      "sha256": "04e668d3502757c837c13444730547cd967f28a2c49aeffb873d1792ab2cb97b"
+    },
+    "water_areas.geojson": {
+      "bytes": 1333966,
+      "sha256": "c4cf1e620ce4472f6b69ce6f5bbb0b14e5be3fdf9e63004dda666fc4da695036"
+    }
+  },
+  "region": {
+    "anchor_wgs84": [
+      -122.3355,
+      47.6062
+    ],
+    "charter": "downtown focus; south priority toward Tacoma; east across Lake Washington to Bellevue; Puget Sound western shore; northern suburban fade clipped",
+    "name": "puget-sound-downtown-to-tacoma",
+    "polygon_wgs84": [
+      [
+        -122.4,
+        47.72
+      ],
+      [
+        -122.2,
+        47.7
+      ],
+      [
+        -122.08,
+        47.58
+      ],
+      [
+        -122.1,
+        47.35
+      ],
+      [
+        -122.18,
+        47.1
+      ],
+      [
+        -122.5,
+        47.1
+      ],
+      [
+        -122.55,
+        47.4
+      ],
+      [
+        -122.5,
+        47.6
+      ],
+      [
+        -122.4,
+        47.72
+      ]
+    ]
+  },
+  "sources": [
+    {
+      "attribution": "City of Seattle GeoData - Building Outlines 2023",
+      "crs": "EPSG:2926",
+      "fetched_utc": "2026-11-21T04:54:34Z",
+      "layer": "seattle_buildings_2023",
+      "license": "City of Seattle open data (see data.seattle.gov terms)",
+      "seconds": 495.5,
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Building_Outlines_2023/FeatureServer/0",
+      "where": "1=1"
+    },
+    {
+      "attribution": "City of Seattle GeoData - Building Outline 2015 (BP99 apex elevations)",
+      "crs": "EPSG:2926",
+      "fetched_utc": "2026-11-21T04:59:17Z",
+      "layer": "seattle_buildings_2015",
+      "license": "City of Seattle open data",
+      "seconds": 282.9,
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Building_Outline_2015/FeatureServer/0",
+      "where": "BP99_TYPE='BLD'"
+    },
+    {
+      "attribution": "City of Seattle GeoData - Street Network Database (SND)",
+      "crs": "EPSG:2926",
+      "fetched_utc": "2026-11-21T04:59:49Z",
+      "layer": "seattle_snd",
+      "license": "City of Seattle open data",
+      "seconds": 32.2,
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Street_Network_Database_SND/FeatureServer/0",
+      "where": "1=1"
+    },
+    {
+      "attribution": "City of Seattle GeoData - Current Land Use Zoning (generalized)",
+      "crs": "EPSG:2926",
+      "fetched_utc": "2026-11-21T04:59:54Z",
+      "layer": "seattle_zoning",
+      "license": "City of Seattle open data",
+      "seconds": 4.9,
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Current_Land_Use_Zoning_Generalized_new/FeatureServer/0",
+      "where": "1=1"
+    },
+    {
+      "attribution": "City of Seattle GeoData - Park Boundaries",
+      "crs": "EPSG:2926",
+      "fetched_utc": "2026-11-21T04:59:55Z",
+      "layer": "seattle_parks",
+      "license": "City of Seattle open data",
+      "seconds": 1.1,
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/0",
+      "where": "1=1"
+    },
+    {
+      "attribution": "City of Seattle GeoData - Shoreline",
+      "crs": "EPSG:2926",
+      "fetched_utc": "2026-11-21T04:59:56Z",
+      "layer": "seattle_shoreline",
+      "license": "City of Seattle open data",
+      "seconds": 1.6,
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Shoreline/FeatureServer/0",
+      "where": "1=1"
+    },
+    {
+      "attribution": "City of Bellevue GIS - Buildings",
+      "crs": "EPSG:2926",
+      "fetched_utc": "2026-11-21T05:02:06Z",
+      "layer": "bellevue_buildings",
+      "license": "City of Bellevue open data",
+      "seconds": 129.1,
+      "service": "https://services1.arcgis.com/EYzEZbDhXZjURPbP/arcgis/rest/services/Buildings/FeatureServer/0",
+      "where": "1=1"
+    },
+    {
+      "attribution": "City of Tacoma Open Data - Building Footprints 2024 (lidar average_z)",
+      "crs": "EPSG:2926",
+      "fetched_utc": "2026-11-21T05:11:17Z",
+      "layer": "tacoma_buildings_2024",
+      "license": "City of Tacoma open data",
+      "seconds": 501.1,
+      "service": "https://services3.arcgis.com/SCwJH1pD8WSn5T5y/arcgis/rest/services/Tacoma_2024_BuildingFootprints/FeatureServer/0",
+      "where": "1=1"
+    },
+    {
+      "attribution": "US Census Bureau TIGER/Line 2024 AREAWATER (King, Pierce, Snohomish)",
+      "crs": "EPSG:2926",
+      "fetched_utc": "2026-11-21T05:12:29Z",
+      "layer": "water_areas",
+      "license": "Public domain (US Census Bureau)",
+      "seconds": 0.4,
+      "service": "https://www2.census.gov/geo/tiger/TIGER2024/AREAWATER/tl_2024_53033_areawater.zip; https://www2.census.gov/geo/tiger/TIGER2024/AREAWATER/tl_2024_53053_areawater.zip; https://www2.census.gov/geo/tiger/TIGER2024/AREAWATER/tl_2024_53061_areawater.zip"
+    },
+    {
+      "attribution": "USGS 3D Elevation Program (3DEP) 1/3 arc-second",
+      "crs": "EPSG:4269 + NAVD88 (approx.)",
+      "fetched_utc": "2026-11-21T05:13:03Z",
+      "layer": "dem_3dep",
+      "license": "Public domain (USGS)",
+      "seconds": 33.8,
+      "service": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/current/{tile}/USGS_13_{tile}.tif",
+      "tiles": [
+        "n48w123",
+        "n48w122"
+      ]
+    },
+    {
+      "attribution": "Overture Maps Foundation - Buildings; heights from USGS Lidar and Microsoft ML Buildings, footprints also OpenStreetMap/Esri",
+      "crs": "EPSG:2926 (matched in world metres)",
+      "layer": "overture_buildings",
+      "license": "ODbL-1.0 (Overture Maps Foundation)",
+      "service": "overturemaps download --type=building (Overture release 2026-11-18.0)"
+    },
+    {
+      "attribution": "Microsoft Global ML Building Footprints",
+      "crs": "EPSG:2926",
+      "layer": "msml_buildings",
+      "license": "CDLA-Permissive-2.0",
+      "service": "https://minedbuildings.z5.web.core.windows.net/global-buildings/2026-02-03/ (quadkeys 021230021/23/30/32)"
+    },
+    {
+      "attribution": "US Census Bureau TIGER/Line 2024 counties",
+      "crs": "EPSG:2926 (matched in world metres)",
+      "layer": "admin_counties",
+      "license": "Public domain (US Census Bureau)",
+      "service": "https://www2.census.gov/geo/tiger/TIGER2024/COUNTY/tl_2024_us_county.zip"
+    },
+    {
+      "attribution": "US Census Bureau TIGER/Line 2024 places",
+      "crs": "EPSG:2926 (matched in world metres)",
+      "layer": "admin_places",
+      "license": "Public domain (US Census Bureau)",
+      "service": "https://www2.census.gov/geo/tiger/TIGER2024/PLACE/tl_2024_53_place.zip"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:53:36Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:53:36Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:53:36Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:57:10Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:57:10Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:57:10Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:59:38Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:59:38Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T05:59:38Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:11:21Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:11:21Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:11:21Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:13:50Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:13:50Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:13:50Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:20:59Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:20:59Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:20:59Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:33:56Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:33:56Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:33:56Z"
+    },
+    {
+      "layer": "seattle_trees",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/SDOT_Trees_CDL/FeatureServer/0/query",
+      "attribution": "City of Seattle, SDOT Trees (Seattle GeoData)",
+      "license": "City of Seattle open data (data.seattle.gov terms)",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:42:15Z",
+      "records": 276762,
+      "sha256": "94f71e6c819fdecfabd7cd4f18e05c0e58c7639cc24fc7474b4f12f78870a973"
+    },
+    {
+      "layer": "seattle_parks_polygons",
+      "service": "https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundaries/FeatureServer/1",
+      "attribution": "City of Seattle GeoData - Park Boundaries (outline)",
+      "license": "City of Seattle open data",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:42:15Z",
+      "sha256": "ccb615661cf794d1e878606dec2e5e859093404dcc5ca5dd42172db43cb99809"
+    },
+    {
+      "layer": "worldcover_canopy",
+      "service": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N45W123_Map.tif",
+      "attribution": "ESA WorldCover 2021 v200 (10 m)",
+      "license": "CC BY 4.0",
+      "crs": "EPSG:4326",
+      "fetched_utc": "2026-11-22T06:42:15Z"
+    }
+  ],
+  "derived": {
+    "trees": {
+      "path": "assets/datasets/seattle_trees.bin",
+      "report": "datasets/seattle/trees_report.json",
+      "sha256": "b2a514289e3b53eb4dd505483476251aeca51c2934d2d806b70d9f4316203948",
+      "trees": 374849,
+      "keyed_by": "CityPack node index (neighborhood level)"
+    }
+  }
+}

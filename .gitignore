@@ -12,3 +12,16 @@
 # Python cache
 __pycache__/
 *.pyc
+
+# Seattle S1 bulk fetch/derived data (regenerate: scripts/seattle_data.py + city_dataset.py)
+/viewer/datasets/seattle/raw/
+/viewer/datasets/seattle/seattle_v11.json
+/viewer/datasets/seattle/terrain_30m.tif
+/viewer/datasets/seattle/terrain_belt_10m.tif
+
+# Seattle S1.5 enrich/horizon bulk caches (regenerate with scripts/)
+/viewer/datasets/seattle/seattle_v11_enriched.json
+/viewer/datasets/seattle/raw/overture_buildings.parquet
+/viewer/datasets/seattle/raw/overture_buildings.parquet.state
+/viewer/datasets/seattle/raw/msml_*.csv.gz
+/viewer/datasets/seattle/raw/horizon/

@@ -23,9 +23,19 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
+use destructibles_bevy::damage::DamageJournal;
 use serde::Deserialize;
 
-use crate::{camera::FlyCamera, motion::MotionState, storefront::StorefrontData};
+use crate::{
+    camera::FlyCamera,
+    citypack::{
+        HierarchyMap, LEVEL_CITY, LEVEL_COUNTY, LEVEL_NEIGHBORHOOD, PackNode, STREAM_WORLD_OFFSET,
+        stream_enabled,
+    },
+    geology::{SeattleFootprints, s3_enabled},
+    motion::MotionState,
+    storefront::StorefrontData,
+};
 
 const MAP_TEX: usize = 512;
 /// World-space radius of the circular map, in mercator metres.
@@ -48,12 +58,6 @@ const MAP_UPDATE_SECS: f32 = 0.20;
 const MAP_MOVE_EPS_SQ: f32 = 4.0 * 4.0;
 const OVERLAY_UPDATE_SECS: f32 = 0.10;
 const TEXT_UPDATE_SECS: f32 = 0.12;
-
-/// Web Mercator radius of the Earth.
-const EARTH_RADIUS: f64 = 6_378_137.0;
-/// BlenderGIS scene origin from `manhattan.blend`.
-const GEO_ANCHOR_X: f64 = -8_237_739.824_561_493;
-const GEO_ANCHOR_Y: f64 = 4_970_168.600_037_185;
 
 const STREET_DATA: &str = include_str!("../assets/models/street_network.json");
 
@@ -87,7 +91,29 @@ struct MinimapImages {
 
 /// Rotates with the camera heading (north-up texture shown heading-up).
 #[derive(Component)]
+pub struct MinimapRoot;
+
+#[derive(Component)]
+pub struct LocationText;
+
+#[derive(Component)]
 struct MinimapMapImage;
+
+/// 0 = neighborhood (650 m), 1 = city, 2 = county.
+#[derive(Resource, Clone, Copy)]
+pub struct MapZoom(pub u8);
+
+impl Default for MapZoom {
+    fn default() -> Self {
+        Self(
+            std::env::var("MINIMAP_ZOOM")
+                .ok()
+                .and_then(|value| value.parse::<u8>().ok())
+                .unwrap_or(0)
+                .min(2),
+        )
+    }
+}
 
 #[derive(Component, Clone, Copy)]
 enum MinimapText {
@@ -162,7 +188,13 @@ impl Plugin for MinimapPlugin {
         app.init_resource::<StreetNetwork>()
             .init_resource::<NearestStreet>()
             .init_resource::<LiveFootprints>()
-            .add_systems(PostStartup, setup_minimap)
+            .init_resource::<MapZoom>()
+            .add_systems(
+                PostStartup,
+                (setup_minimap, mark_minimap_tree, spawn_location_text).chain(),
+            )
+            .add_systems(Update, update_location_text)
+            .add_systems(Update, cycle_minimap_zoom)
             .add_systems(
                 Update,
                 (
@@ -276,7 +308,7 @@ fn draw_compass(data: &mut [u8], yaw: f32) {
             data,
             nx.round() as i32 + dx,
             ny.round() as i32 + dy,
-            [235, 248, 255, 250],
+            [255, 105, 180, 255],
         );
     }
 }
@@ -383,12 +415,78 @@ fn world_to_map(world: Vec2, center: Vec2) -> Vec2 {
 
 /// Convert model world `(x, z)` to longitude/latitude.  `x` is east and `z`
 /// is south in the Web Mercator frame described at the top of this file.
-fn world_to_lon_lat(x: f32, z: f32) -> (f64, f64) {
-    let mercator_x = GEO_ANCHOR_X + x as f64;
-    let mercator_y = GEO_ANCHOR_Y - z as f64;
-    let lon = (mercator_x / EARTH_RADIUS).to_degrees();
-    let lat =
-        (2.0 * (mercator_y / EARTH_RADIUS).exp().atan() - std::f64::consts::FRAC_PI_2).to_degrees();
+/// Pack-local world XY (metres, without `STREAM_WORLD_OFFSET`) -> WGS84,
+/// fitted against the dataset's EPSG:2926 US-foot origin with a cubic surface:
+/// nanodegree residuals. Callers must convert at ONE boundary: subtract the
+/// stream offset and pass metres here. A readout outside the dataset bbox is a
+/// bug, not a display.
+pub fn world_to_lon_lat(x: f32, z: f32) -> (f64, f64) {
+    let (lon, lat) = fit_lon_lat(x, z);
+    assert!(
+        inside_dataset_bbox(lon, lat),
+        "lat/lon readout outside the Seattle dataset bbox: {lat:.5},{lon:.5} at ({x:.0},{z:.0})"
+    );
+    (lon, lat)
+}
+
+/// Batch-painter variant: the same fit, but an out-of-bbox record is a skip,
+/// not a crash. The caller logs the running count at paint completion.
+pub fn world_to_lon_lat_checked(x: f32, z: f32) -> Option<(f64, f64)> {
+    let (lon, lat) = fit_lon_lat(x, z);
+    inside_dataset_bbox(lon, lat).then_some((lon, lat))
+}
+
+fn inside_dataset_bbox(lon: f64, lat: f64) -> bool {
+    (-122.65..=-121.95).contains(&lon) && (47.00..=47.85).contains(&lat)
+}
+
+/// The cubic surface itself. Input is pack-local metres: `x` east, `z` south.
+fn fit_lon_lat(x: f32, z: f32) -> (f64, f64) {
+    const S: f64 = 10_000.0;
+    const LON: [f64; 10] = [
+        -1.223355000002e2,
+        1.329708356185e-1,
+        2.595869801715e-3,
+        4.485428267587e-6,
+        -2.296683441745e-4,
+        -4.485267254967e-6,
+        -1.321806961975e-7,
+        -2.324754368749e-8,
+        3.965316346084e-7,
+        7.748832732778e-9,
+    ];
+    const LAT: [f64; 10] = [
+        4.760620000032e1,
+        1.755555679057e-3,
+        -8.992658472889e-2,
+        -7.769059765080e-5,
+        -3.030147633816e-6,
+        -1.129500233508e-7,
+        -2.618162471234e-9,
+        1.340345367404e-7,
+        3.103896011950e-9,
+        3.643340013031e-8,
+    ];
+    let u = x as f64 / S;
+    let v = z as f64 / S;
+    let terms = [
+        1.0,
+        u,
+        v,
+        u * u,
+        u * v,
+        v * v,
+        u * u * u,
+        u * u * v,
+        u * v * v,
+        v * v * v,
+    ];
+    let mut lon = 0.0;
+    let mut lat = 0.0;
+    for (index, term) in terms.iter().enumerate() {
+        lon += LON[index] * term;
+        lat += LAT[index] * term;
+    }
     (lon, lat)
 }
 
@@ -743,6 +841,7 @@ fn setup_minimap(
     commands
         .spawn((
             Name::new("Minimap"),
+            MinimapRoot,
             Node {
                 position_type: PositionType::Absolute,
                 right: px(16),
@@ -891,6 +990,302 @@ fn update_minimap_heading(
     map.rotation = minimap_rotation(camera.yaw);
 }
 
+fn cycle_minimap_zoom(keys: Res<ButtonInput<KeyCode>>, mut zoom: ResMut<MapZoom>) {
+    if keys.just_pressed(KeyCode::KeyO) {
+        zoom.0 = (zoom.0 + 1) % 3;
+        info!("MINIMAP: zoom level {}", zoom.0);
+    }
+}
+
+fn world_to_map_r(world: Vec2, center: Vec2, radius: f32) -> Vec2 {
+    Vec2::new(
+        MAP_CENTER + (world.x - center.x) / radius * MAP_RADIUS,
+        MAP_CENTER + (world.y - center.y) / radius * MAP_RADIUS,
+    )
+}
+
+fn draw_aabb(
+    data: &mut [u8],
+    bounds: &[f32; 4],
+    center: Vec2,
+    radius: f32,
+    color: [u8; 4],
+    thickness: i32,
+) {
+    let corners = [
+        Vec2::new(bounds[0], bounds[1]),
+        Vec2::new(bounds[2], bounds[1]),
+        Vec2::new(bounds[2], bounds[3]),
+        Vec2::new(bounds[0], bounds[3]),
+    ];
+    for index in 0..4 {
+        draw_line(
+            data,
+            world_to_map_r(corners[index], center, radius),
+            world_to_map_r(corners[(index + 1) % 4], center, radius),
+            color,
+            thickness,
+        );
+    }
+}
+
+fn render_hierarchy_layer(data: &mut [u8], center: Vec2, zoom: u8, nodes: &[PackNode]) {
+    for y in 0..MAP_TEX as i32 {
+        for x in 0..MAP_TEX as i32 {
+            put(data, x, y, [18, 24, 30, 255]);
+        }
+    }
+    let radius = match zoom {
+        0 => MAP_RADIUS_WORLD,
+        1 => 15_000.0,
+        _ => 80_000.0,
+    };
+    let mut drawn = 0usize;
+    for node in nodes {
+        let (color, thickness) = match node.level {
+            LEVEL_COUNTY => ([150, 195, 255, 255], 4),
+            LEVEL_CITY => ([150, 235, 185, 255], 3),
+            LEVEL_NEIGHBORHOOD => ([190, 205, 225, 235], 2),
+            _ => continue,
+        };
+        let visible = match zoom {
+            0 => node.level == LEVEL_NEIGHBORHOOD,
+            1 => node.level == LEVEL_CITY || node.level == LEVEL_NEIGHBORHOOD,
+            _ => node.level == LEVEL_COUNTY || node.level == LEVEL_CITY,
+        };
+        if !visible {
+            continue;
+        }
+        if node.bounds[2] < center.x - radius
+            || node.bounds[0] > center.x + radius
+            || node.bounds[3] < center.y - radius
+            || node.bounds[1] > center.y + radius
+        {
+            continue;
+        }
+        draw_aabb(data, &node.bounds, center, radius, color, thickness);
+        drawn += 1;
+    }
+    if zoom == 0 {
+        info!(
+            "MINIMAP: zoom0 drawn {drawn} nodes center {:?} radius {radius}",
+            center
+        );
+    }
+    let _ = drawn;
+    draw_dot(data, Vec2::splat(MAP_CENTER), 4.0, [255, 255, 255, 255]);
+    let label = match zoom {
+        0 => "NEIGHBORHOOD",
+        1 => "CITY",
+        _ => "COUNTY",
+    };
+    let _ = label;
+}
+
+#[allow(clippy::too_many_arguments)]
+fn mark_minimap_tree(
+    mut commands: Commands,
+    roots: Query<Entity, With<MinimapRoot>>,
+    children: Query<&Children>,
+) {
+    fn mark(entity: Entity, commands: &mut Commands, children: &Query<&Children>) {
+        commands.entity(entity).insert(MinimapRoot);
+        if let Ok(list) = children.get(entity) {
+            for child in list.iter() {
+                mark(child, commands, children);
+            }
+        }
+    }
+    for root in &roots {
+        if let Ok(list) = children.get(root) {
+            for child in list.iter() {
+                mark(child, &mut commands, &children);
+            }
+        }
+    }
+}
+
+fn stroke_polygon(data: &mut [u8], polygon: &[Vec2], color: [u8; 4]) {
+    for index in 0..polygon.len() {
+        let start = polygon[index];
+        let end = polygon[(index + 1) % polygon.len()];
+        let delta = end - start;
+        let steps = delta.length().ceil().max(1.0) as i32;
+        for step in 0..=steps {
+            let point = start + delta * (step as f32 / steps as f32);
+            put(data, point.x.round() as i32, point.y.round() as i32, color);
+        }
+    }
+}
+
+fn render_seattle_layer(
+    data: &mut [u8],
+    center: Vec2,
+    buildings: &[crate::geology::SeattleFootprint],
+    journal: Option<&DamageJournal>,
+    target: Option<u32>,
+) {
+    let started = crate::clock_compat::Instant::now();
+    for y in 0..MAP_TEX as i32 {
+        for x in 0..MAP_TEX as i32 {
+            put(data, x, y, [22, 27, 33, 255]);
+        }
+    }
+    let mut drawn = 0usize;
+    let mut damaged = 0usize;
+    let mut out_of_bbox = 0usize;
+    let outline_lod = buildings.len() > 300;
+    for building in buildings {
+        let centroid = Vec2::from_array(building.centroid);
+        if centroid.distance_squared(center) > (MAP_RADIUS_WORLD + 80.0).powi(2) {
+            continue;
+        }
+        if building.perimeter.len() < 3 {
+            continue;
+        }
+        if world_to_lon_lat_checked(building.centroid[0], building.centroid[1]).is_none() {
+            out_of_bbox += 1;
+            continue;
+        }
+        let head = journal
+            .map(|journal| journal.0.head_for(building.id))
+            .unwrap_or(0.0);
+        if head > 0.0 {
+            damaged += 1;
+        }
+        let color = if head <= 0.0 {
+            [255, 255, 255, 230]
+        } else if head < 5.0 {
+            [255, 214, 92, 235]
+        } else if head < 10.0 {
+            [255, 142, 58, 240]
+        } else {
+            [235, 58, 58, 245]
+        };
+        let polygon = building
+            .perimeter
+            .iter()
+            .map(|point| world_to_map_r(Vec2::from_array(*point), center, MAP_RADIUS_WORLD))
+            .collect::<Vec<_>>();
+        let mut min = Vec2::splat(f32::MAX);
+        let mut max = Vec2::splat(f32::MIN);
+        for point in &polygon {
+            min = min.min(*point);
+            max = max.max(*point);
+        }
+        if (max - min).max_element() < 3.0 || (outline_lod && (max - min).max_element() < 8.0) {
+            // Low-rise footprints shrink below a pixel at the 650 m dial;
+            // every building stays readable as a minimum marker.
+            let centroid =
+                polygon.iter().fold(Vec2::ZERO, |sum, point| sum + *point) / polygon.len() as f32;
+            let x = centroid.x.round() as i32;
+            let y = centroid.y.round() as i32;
+            for dy in -1..=1 {
+                for dx in -1..=1 {
+                    put(data, x + dx, y + dy, color);
+                }
+            }
+        } else if outline_lod {
+            stroke_polygon(data, &polygon, color);
+        } else {
+            fill_polygon(data, &polygon, color);
+        }
+        drawn += 1;
+    }
+    if let Some(target) = target
+        && let Some(building) = buildings.iter().find(|building| building.id == target)
+    {
+        let center_px = world_to_map_r(
+            Vec2::from_array(building.centroid),
+            center,
+            MAP_RADIUS_WORLD,
+        );
+        let cx = center_px.x.round() as i32;
+        let cy = center_px.y.round() as i32;
+        let ring = [0, 255, 255, 255];
+        for offset in -7..=7 {
+            put(data, cx + offset, cy - 7, ring);
+            put(data, cx + offset, cy + 7, ring);
+            put(data, cx - 7, cy + offset, ring);
+            put(data, cx + 7, cy + offset, ring);
+        }
+    }
+    let elapsed = started.elapsed().as_secs_f32() * 1000.0;
+    if out_of_bbox > 0 {
+        warn!(
+            "MINIMAP seattle: skipped {out_of_bbox} footprints outside the dataset bbox ({drawn} drawn, {damaged} damaged)"
+        );
+    }
+    if elapsed > 1.0 {
+        info!("MINIMAP seattle: {drawn} buildings ({damaged} damaged) in {elapsed:.2} ms");
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn spawn_location_text(mut commands: Commands) {
+    commands.spawn((
+        LocationText,
+        MinimapRoot,
+        Text::new("…"),
+        TextFont {
+            font_size: FontSize::Px(14.0),
+            ..default()
+        },
+        TextColor(Color::srgb(0.85, 0.92, 1.0)),
+        Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(18.0),
+            bottom: Val::Px(18.0),
+            ..default()
+        },
+        ZIndex(20),
+    ));
+}
+
+fn update_location_text(
+    time: Res<Time>,
+    camera: Single<&Transform, With<FlyCamera>>,
+    geology: Option<Res<crate::geology::Geology>>,
+    mut last: Local<f32>,
+    mut texts: Query<&mut Text, With<LocationText>>,
+) {
+    let now = time.elapsed_secs();
+    if now - *last < 0.25 {
+        return;
+    }
+    *last = now;
+    let Some(geology) = geology else {
+        return;
+    };
+    let x = camera.translation.x - crate::citypack::STREAM_WORLD_OFFSET;
+    let z = camera.translation.z;
+    let mut label = "—".to_string();
+    for index in geology.pack.neighborhoods() {
+        let node = &geology.pack.nodes[index];
+        let b = node.bounds;
+        if x >= b[0] && x <= b[2] && z >= b[1] && z <= b[3] {
+            let city = geology
+                .pack
+                .nodes
+                .get(node.parent as usize)
+                .map(|parent| parent.name.clone())
+                .unwrap_or_default();
+            let county = geology
+                .pack
+                .nodes
+                .get(node.parent as usize)
+                .and_then(|parent| geology.pack.nodes.get(parent.parent as usize))
+                .map(|county| county.name.clone())
+                .unwrap_or_default();
+            label = format!("{county}  >  {city}  >  {}", node.name);
+            break;
+        }
+    }
+    for mut text in &mut texts {
+        text.0 = label.clone();
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn update_minimap_map(
     time: Res<Time>,
@@ -900,8 +1295,12 @@ fn update_minimap_map(
     live: Res<LiveFootprints>,
     nearest: Option<ResMut<NearestStreet>>,
     images: Option<Res<MinimapImages>>,
+    zoom: Option<Res<MapZoom>>,
+    hierarchy: Option<Res<HierarchyMap>>,
+    seattle: Option<Res<SeattleFootprints>>,
+    journal: Option<Res<DamageJournal>>,
     mut assets: ResMut<Assets<Image>>,
-    mut last: Local<Option<(Vec2, f32, u64, u64)>>,
+    mut last: Local<Option<(Vec2, f32, u64, u64, u8, bool)>>,
 ) {
     let Some(images) = images else {
         return;
@@ -914,14 +1313,29 @@ fn update_minimap_map(
     } else {
         MAP_UPDATE_SECS
     };
-    if let Some((last_center, last_time, last_revision, last_wave)) = *last
+    let zoom_key = zoom.as_ref().map(|zoom| zoom.0).unwrap_or(0);
+    let hierarchy_key = hierarchy.is_some();
+    if let Some((last_center, last_time, last_revision, last_wave, last_zoom, last_hierarchy)) =
+        *last
         && live.revision == last_revision
         && wave_revision == last_wave
-        && (now - last_time < interval || center.distance_squared(last_center) < MAP_MOVE_EPS_SQ)
+        && last_zoom == zoom_key
+        && last_hierarchy == hierarchy_key
+        && (now - last_time < interval
+            || (!stream_enabled()
+                && !s3_enabled()
+                && center.distance_squared(last_center) < MAP_MOVE_EPS_SQ))
     {
         return;
     }
-    *last = Some((center, now, live.revision, wave_revision));
+    *last = Some((
+        center,
+        now,
+        live.revision,
+        wave_revision,
+        zoom_key,
+        hierarchy_key,
+    ));
     let Some(mut image) = assets.get_mut(&images.map) else {
         return;
     };
@@ -929,8 +1343,38 @@ fn update_minimap_map(
         return;
     };
     data.fill(0);
-    let nearest_name =
-        render_map_layer(data, center, buildings.buildings(), &streets.streets, &live);
+    if stream_enabled() && hierarchy.is_some() {
+        info!(
+            "MINIMAP: hierarchy render zoom {}",
+            zoom.as_ref().map(|z| z.0).unwrap_or(0)
+        );
+    }
+    let nearest_name = if s3_enabled()
+        && let Some(seattle) = seattle.as_ref()
+    {
+        let local_center = Vec2::new(center.x - STREAM_WORLD_OFFSET, center.y);
+        render_seattle_layer(
+            data,
+            local_center,
+            &seattle.buildings,
+            journal.as_deref(),
+            seattle.target,
+        );
+        None
+    } else if stream_enabled()
+        && let Some(hierarchy) = hierarchy.as_ref()
+    {
+        let local_center = Vec2::new(center.x - crate::citypack::STREAM_WORLD_OFFSET, center.y);
+        render_hierarchy_layer(
+            data,
+            local_center,
+            zoom.as_ref().map(|z| z.0).unwrap_or(0),
+            &hierarchy.nodes,
+        );
+        None
+    } else {
+        render_map_layer(data, center, buildings.buildings(), &streets.streets, &live)
+    };
     if let Some(mut nearest) = nearest {
         nearest.0 = nearest_name.unwrap_or_default();
     }
@@ -965,23 +1409,44 @@ fn update_minimap_overlay(
 }
 
 fn update_minimap_text(
-    time: Res<Time>,
+    time: Res<Time<bevy::time::Real>>,
     camera: Single<&Transform, With<FlyCamera>>,
     motion: Res<MotionState>,
     nearest: Res<NearestStreet>,
     mut last: Local<f32>,
+    mut prev: Local<Option<(Vec3, f32)>>,
     mut texts: Query<(&MinimapText, &mut Text)>,
 ) {
     let now = time.elapsed_secs();
+    let position = camera.translation;
+    let (speed, dt) = match *prev {
+        Some((last_position, last_time)) if now > last_time => (
+            last_position.distance(position) / (now - last_time),
+            now - last_time,
+        ),
+        _ => (0.0, 0.0),
+    };
+    *prev = Some((position, now));
+    let _ = dt;
     if now - *last < TEXT_UPDATE_SECS {
         return;
     }
     *last = now;
-    let position = camera.translation;
-    let mph = motion.speed * 2.236_936;
-    let kph = motion.speed * 3.6;
-    let mach = motion.speed / MACH_1_MPS;
-    let (lon, lat) = world_to_lon_lat(position.x, position.z);
+    // Seattle boot zeroes MotionState.speed, so read speed from the camera's
+    // own motion; Manhattan in-flight values still flow through as a floor.
+    let speed = speed.max(motion.speed);
+    let mph = speed * 2.236_936;
+    let kph = speed * 3.6;
+    let mach = speed / MACH_1_MPS;
+    // Before a Seattle boot stage places the camera (or if the player flies
+    // out of the fitted region) there is no valid readout. The readout is the
+    // one place that asserts inside the fit; the gate here keeps an unplaced
+    // camera from crashing a capture run.
+    let local = (
+        position.x - crate::citypack::STREAM_WORLD_OFFSET,
+        position.z,
+    );
+    let lon_lat = world_to_lon_lat_checked(local.0, local.1);
     for (kind, mut text) in &mut texts {
         text.0 = match kind {
             MinimapText::Telemetry => format!(
@@ -990,7 +1455,10 @@ fn update_minimap_text(
                  A {:.2} G",
                 position.x, position.y, position.z, mph, kph, mach, motion.accel_g,
             ),
-            MinimapText::LatLon => format!("LAT {:.5} N\nLON {:.5} W", lat.abs(), lon.abs()),
+            MinimapText::LatLon => match lon_lat {
+                Some((lon, lat)) => format!("LAT {:.5} N\nLON {:.5} W", lat.abs(), lon.abs()),
+                None => format!("OFF MAP\nX {:.0} Z {:.0}", local.0, local.1),
+            },
             MinimapText::Street => {
                 if nearest.0.is_empty() {
                     "ST  —".to_string()
@@ -1006,13 +1474,6 @@ fn update_minimap_text(
 mod tests {
     use super::*;
     use std::f32::consts::TAU;
-
-    #[test]
-    fn origin_matches_the_blend_scene_anchor() {
-        let (lon, lat) = world_to_lon_lat(0.0, 0.0);
-        assert!((lon - -74.000_875_910_036_54).abs() < 1e-9, "lon {lon}");
-        assert!((lat - 40.713_460_624_392_276).abs() < 1e-9, "lat {lat}");
-    }
 
     #[test]
     fn map_rotation_puts_the_heading_at_the_top() {

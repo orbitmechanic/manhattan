@@ -1,0 +1,67 @@
+{
+ "asset": "Space Needle",
+ "status": "converted \u2014 CAD source tessellated and decimated; in-game integration pending",
+ "gate": "CC0 / CC-BY / CC-BY-Zero only; no license, no import",
+ "searches": [
+  {
+   "source": "poly.pizza (direct GLB, no account)",
+   "query": "space needle / needle / seattle / tower",
+   "result": "no Space Needle model: 'space needle' returns spaceship packs; 'needle' returns sewing needles; 'seattle' returns fantasy packs; 'tower' returns generic towers (radio, bell, guard). Poly Pizza's Sketchfab mirrors are curated low-poly packs, not this landmark.",
+   "date": "2026-11-25"
+  },
+  {
+   "source": "Wikimedia Commons (namespace 6, file search)",
+   "query": "Space Needle 3D model",
+   "result": "no 3D model; only unrelated text media",
+   "date": "2026-11-25"
+  },
+  {
+   "source": "Sketchfab API (license=cc0 filter)",
+   "query": "space needle",
+   "result": "0 CC0 results",
+   "date": "2026-11-25"
+  },
+  {
+   "source": "Sketchfab API (all licenses)",
+   "query": "space needle",
+   "result": "candidates exist under CC Attribution (e.g. 'The Seattle Space Needle', 'Space Needle'), which the gate would accept",
+   "blocker": "Sketchfab downloads require an authenticated API token/OAuth; this machine has none, and scraping the viewer is out of scope for a build asset.",
+   "date": "2026-11-25"
+  },
+  {
+   "source": "Smithsonian Open Access",
+   "query": "space needle",
+   "result": "no 3D model (textile tools only)",
+   "date": "2026-11-25"
+  }
+ ],
+ "fallback": "procedural massing remains live (LANDMARKS_ALWAYS); no authored replacement was shipped this round",
+ "debt": "needle-real-model",
+ "ask": "mint a free Sketchfab API token (or paste a CC-BY GLB URL) and the import becomes mechanical next round",
+ "source": {
+  "origin": "player-supplied CAD snapshot: Work/games/Manhattan/assets/seattle-space-needle-1.snapshot.6",
+  "files": [
+   "Seattle Space Needle.STEP",
+   "Seattle Space Needle_1.STEP",
+   "Seattle Space Needle.JPG",
+   "Seattle Space Needle Render.jpg"
+  ],
+  "license_claim": "source page states the model is open-source and intended for games (player-provided)",
+  "reference_renders": [
+   "Seattle Space Needle.JPG",
+   "Seattle Space Needle Render.jpg"
+  ]
+ },
+ "conversion": {
+  "step": "scripts/step_to_glb.py (freecadcmd 1.1.4, linear 0.08, angular 0.30) -> STL",
+  "blender": "scripts/stl_to_glb.py (Blender 5.2.2, STL -> Y-up GLB, scaled to 184 m)",
+  "receipt": {
+   "tessellated_facets": 67096,
+   "stl_height_m": 180.66,
+   "scale_applied": 1.0185,
+   "glb_tris": 33548,
+   "glb_bytes": 2576516,
+   "up": "CAD Z-up rotated -90 deg about X to engine Y-up; Blender re-rotated +90 for export and the glTF exporter writes Y-up"
+  }
+ }
+}

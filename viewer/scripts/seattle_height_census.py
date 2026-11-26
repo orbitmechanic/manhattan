@@ -1,0 +1,388 @@
+#!/usr/bin/env python3
+"""Chimney census: which pack records exceed the human-scale governor?
+
+Reads the CityPack, the district map and the style pack, replays the same rule
+order and governor as `viewer/src/geology.rs::building_spec`, and reports, per
+neighborhood:
+
+  records            total building records in the partition
+  residential        records whose category string is "residential"
+  over_cap           records whose recorded height exceeds the governor-applied
+                     height by more than 5 cm
+  max_recorded       tallest recorded height
+  max_applied        tallest governor-applied height
+  families           family -> count (from the matched style rule)
+  sources            source string -> count (enriched / audited / ...)
+
+Usage: python3 scripts/seattle_height_census.py [--json out.json]
+"""
+
+from __future__ import annotations
+
+import json
+import struct
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+PACK = ROOT / "assets/datasets/seattle.citypack"
+DISTRICTS = ROOT / "assets/styles/seattle_districts.json"
+STYLE = ROOT / "assets/styles/seattle_pack.json"
+
+CATEGORY_RESIDENTIAL = "residential"
+
+
+def parse_nodes(data: bytes) -> list[dict]:
+    version, _header, node_count, *_ = struct.unpack_from("<HIIIII", data, 4)
+    if version != 2:
+        raise SystemExit(f"unsupported citypack version {version}")
+    nodes = []
+    pos = 26
+    for _ in range(node_count):
+        level = data[pos]
+        parent = struct.unpack_from("<i", data, pos + 1)[0]
+        buildings = struct.unpack_from("<I", data, pos + 11)[0]
+        center = struct.unpack_from("<ff", data, pos + 19)
+        bounds = struct.unpack_from("<ffff", data, pos + 27)
+        pos += 50
+        name_len = data[pos]
+        name = data[pos + 1 : pos + 1 + name_len].decode("utf-8", "replace")
+        pos += 1 + name_len
+        offset, size = struct.unpack_from("<II", data, pos)
+        pos += 8
+        nodes.append(
+            {
+                "level": level,
+                "parent": parent,
+                "buildings": buildings,
+                "center": center,
+                "bounds": bounds,
+                "name": name,
+                "offset": offset,
+                "size": size,
+            }
+        )
+    return nodes
+
+
+def parse_buildings(data: bytes, node: dict) -> list[dict]:
+    blob = data[node["offset"] : node["offset"] + node["size"]]
+    _chunk_bytes, building_count, _street_count = struct.unpack_from("<III", blob, 0)
+    center = struct.unpack_from("<ff", blob, 12)
+    pos = 20 + 16 + 7 + 1
+    string_count = struct.unpack_from("<H", blob, pos)[0]
+    pos += 2
+    strings = []
+    for _ in range(string_count):
+        length = struct.unpack_from("<H", blob, pos)[0]
+        strings.append(blob[pos + 2 : pos + 2 + length].decode("utf-8", "replace"))
+        pos += 2 + length
+    out = []
+    for _ in range(building_count):
+        (
+            building_id,
+            qx,
+            qz,
+            height_cm,
+            _floor_height_cm,
+            _base_cm,
+            _floor_count,
+            _year,
+            _levels,
+            source_idx,
+            category_idx,
+            vertex_count,
+        ) = struct.unpack_from("<IhhHHHHHBBBH", blob, pos)
+        pos += 23
+        cx = center[0] + qx * 0.25
+        cz = center[1] + qz * 0.25
+        # Re-read the perimeter to size the plausibility gate.
+        ring = []
+        for index in range(vertex_count):
+            vx, vz = struct.unpack_from("<hh", blob, pos + index * 4)
+            ring.append((cx + vx * 0.25, cz + vz * 0.25))
+        area = 0.0
+        for index in range(vertex_count):
+            ax, az = ring[index]
+            bx, bz = ring[(index + 1) % vertex_count]
+            area += ax * bz - bx * az
+        pos += 4 * vertex_count
+        out.append(
+            {
+                "id": building_id,
+                "height": height_cm / 100.0,
+                "area": abs(area) * 0.5,
+                "centroid": [cx, cz],
+                "category": strings[category_idx] if category_idx < len(strings) else "unknown",
+                "source": strings[source_idx] if source_idx < len(strings) else "unknown",
+            }
+        )
+    return out
+
+
+def match_rule(style: dict, city: str, district: str) -> dict:
+    for rule in style["rules"]:
+        cities = rule.get("cities") or []
+        if cities and city not in cities:
+            continue
+        if any(
+            district == value or value in district
+            for value in rule.get("neighborhood_any", [])
+        ):
+            return rule
+    return style["default"]
+
+
+LEGACY = "--legacy" in sys.argv
+DEMOTED_TOTAL = [0]
+DEMOTED_SOURCES = Counter()
+
+RESIDENTIAL_DISTRICTS = {
+    "Ballard",
+    "Fremont",
+    "Wallingford",
+    "Georgetown",
+    "Capitol Hill",
+    "Queen Anne",
+    "West Seattle",
+    "First Hill",
+    "Pioneer Square",
+    "Pike Place",
+    "Seattle general",
+    "Eastside",
+}
+
+
+CORE_DISTRICTS = {"Downtown", "First Hill", "SODO", "Bellevue CBD"}
+
+
+def governor(record: dict, rule: dict) -> dict:
+    residential = record["category"].lower() == CATEGORY_RESIDENTIAL
+    floor_height = 3.0 if residential else 4.0
+    floor_count = max(1, round(record["height"] / floor_height))
+    demoted = False
+    core = rule.get("_district") in CORE_DISTRICTS
+    if residential and not LEGACY:
+        area = max(record.get("area", 1.0), 1.0)
+        weak = record["source"] in ("area_heuristic", "msml_estimate")
+        plausible = record["height"] <= 4.0 + 3.2 * area**0.5
+        if weak or (not core and not plausible):
+            floor_count = 1
+            demoted = True
+    if residential and not core:
+        floor_count = min(floor_count, 2)
+    if not LEGACY and rule.get("_district") in RESIDENTIAL_DISTRICTS:
+        area = max(record.get("area", 1.0), 1.0)
+        floor_count = min(floor_count, max(1, int(area // 12)), 4)
+    if LEGACY:
+        if rule.get("height_bias") == "low":
+            floor_count = min(floor_count, 6)
+    elif rule.get("_district") in RESIDENTIAL_DISTRICTS:
+        # Iteration 71 interim caps from this census: low 6 / mid 8 floors in
+        # residential districts; the catch-all and the cores stay uncapped.
+        if rule.get("height_bias") == "low":
+            floor_count = min(floor_count, 6)
+        elif rule.get("height_bias") == "mid":
+            floor_count = min(floor_count, 8)
+    return {
+        "residential": residential,
+        "floor_height": floor_height,
+        "floor_count": floor_count,
+        "applied": floor_count * floor_height,
+        "demoted": demoted,
+    }
+
+
+def main() -> None:
+    data = PACK.read_bytes()
+    nodes = parse_nodes(data)
+    districts = json.loads(DISTRICTS.read_text())["assignments"]
+    style = json.loads(STYLE.read_text())
+    by_name = {node["name"]: node for node in nodes}
+
+    rows = []
+    for node in nodes:
+        if node["level"] != 2 or node["buildings"] == 0:
+            continue
+        district = districts.get(node["name"], "Seattle")
+        parent = nodes[node["parent"]] if 0 <= node["parent"] < len(nodes) else None
+        city_name = parent["name"] if parent and parent["level"] == 1 else "Seattle"
+        rule = dict(match_rule(style, city_name, district))
+        rule["_district"] = district
+        buildings = parse_buildings(data, node)
+        counts = Counter()
+        sources = Counter()
+        families = Counter()
+        over = []
+        max_recorded = 0.0
+        max_applied = 0.0
+        max_res_over = 0.0
+        demoted = 0
+        for building in buildings:
+            gov = governor(building, rule)
+            counts["records"] += 1
+            if gov["residential"]:
+                counts["residential"] += 1
+            sources[building["source"]] += 1
+            if gov["demoted"]:
+                demoted += 1
+                DEMOTED_TOTAL[0] += 1
+                DEMOTED_SOURCES[building["source"]] += 1
+            families[rule.get("family", "unknown")] += 1
+            max_recorded = max(max_recorded, building["height"])
+            max_applied = max(max_applied, gov["applied"])
+            excess = building["height"] - gov["applied"]
+            if excess > 0.05:
+                counts["over_cap"] += 1
+                if gov["residential"]:
+                    counts["over_cap_residential"] += 1
+                    max_res_over = max(max_res_over, excess)
+                over.append(
+                    {
+                        "id": building["id"],
+                        "height": round(building["height"], 2),
+                        "applied": round(gov["applied"], 2),
+                        "category": building["category"],
+                        "source": building["source"],
+                        "family": rule.get("family", "unknown"),
+                        "district": district,
+                    }
+                )
+        if not over and counts["records"] == 0:
+            continue
+        rows.append(
+            {
+                "neighborhood": node["name"],
+                "district": district,
+                "records": counts["records"],
+                "residential": counts["residential"],
+                "over_cap": counts["over_cap"],
+                "over_cap_residential": counts["over_cap_residential"],
+                "max_recorded": round(max_recorded, 2),
+                "max_applied": round(max_applied, 2),
+                "max_residential_excess": round(max_res_over, 2),
+                "families": dict(families),
+                "demoted": demoted,
+                "sources": dict(sources),
+                "worst": sorted(over, key=lambda item: -item["height"])[:3],
+            }
+        )
+
+    rows.sort(key=lambda row: (-row["over_cap"], row["neighborhood"]))
+    totals = Counter()
+    for row in rows:
+        totals["neighborhoods"] += 1
+        totals["records"] += row["records"]
+        totals["residential"] += row["residential"]
+        totals["over_cap"] += row["over_cap"]
+        totals["over_cap_residential"] += row["over_cap_residential"]
+    sources = Counter()
+    for row in rows:
+        sources.update(row["sources"])
+    families = Counter()
+    for row in rows:
+        families.update(row["families"])
+
+    print(
+        f"CENSUS neighborhoods={totals['neighborhoods']} records={totals['records']} "
+        f"residential={totals['residential']} over_cap={totals['over_cap']} "
+        f"over_cap_residential={totals['over_cap_residential']}"
+    )
+    print(f"CENSUS sources {dict(sources)}")
+    print(f"CENSUS families {dict(families)}")
+    print(
+        f"DEMOTION total={DEMOTED_TOTAL[0]} by_source={dict(DEMOTED_SOURCES)}"
+    )
+    print()
+    print(
+        f"{'neighborhood':24} {'district':16} {'rec':>5} {'res':>5} {'over':>5} "
+        f"{'over_res':>8} {'max_rec':>8} {'max_gov':>8} {'excess':>7}  sources"
+    )
+    print()
+    print("DEMOTION BY DISTRICT (residential records demoted to single-story)")
+    demo = Counter()
+    for row in rows:
+        demo[row["district"]] += row.get("demoted", 0)
+    for district, count in demo.most_common(16):
+        if count:
+            print(f"  {district:18} {count:7}")
+    print()
+    for row in rows[:30]:
+        print(
+            f"{row['neighborhood']:24} {row['district']:16} {row['records']:5} "
+            f"{row['residential']:5} {row['over_cap']:5} {row['over_cap_residential']:8} "
+            f"{row['max_recorded']:8.1f} {row['max_applied']:8.1f} "
+            f"{row['max_residential_excess']:7.1f}  {row['sources']}"
+        )
+
+    district_rows = defaultdict(
+        lambda: {
+            "records": 0,
+            "residential": 0,
+            "residential_over": 0,
+            "commercial_over_12m": 0,
+            "max_recorded": 0.0,
+            "max_applied": 0.0,
+            "families": Counter(),
+            "sources": Counter(),
+        }
+    )
+    for row in rows:
+        target = district_rows[row["district"]]
+        target["records"] += row["records"]
+        target["residential"] += row["residential"]
+        target["residential_over"] += row["over_cap_residential"]
+        target["max_recorded"] = max(target["max_recorded"], row["max_recorded"])
+        target["max_applied"] = max(target["max_applied"], row["max_applied"])
+        target["families"].update(row["families"])
+        target["sources"].update(row["sources"])
+        for worst in row["worst"]:
+            if worst["category"] != "residential" and worst["applied"] >= 12.0:
+                target["commercial_over_12m"] += 1
+    print()
+    print("BY DISTRICT (worst three commercial records per neighborhood counted)")
+    print(
+        f"{'district':18} {'rec':>7} {'res':>7} {'res_over':>9} {'com>12m':>8} "
+        f"{'max_rec':>8} {'max_gov':>8}  families"
+    )
+    for name, target in sorted(district_rows.items(), key=lambda item: -item[1]["residential_over"]):
+        print(
+            f"{name:18} {target['records']:7} {target['residential']:7} "
+            f"{target['residential_over']:9} {target['commercial_over_12m']:8} "
+            f"{target['max_recorded']:8.1f} {target['max_applied']:8.1f}  {dict(target['families'])}"
+        )
+
+    focus = {"Ballard", "Wallingford", "Fremont", "Capitol Hill", "Queen Anne", "West Seattle", "First Hill", "Pike Place", "Pioneer Square", "Downtown"}
+    print()
+    print("FOCUS (residential-sighting districts)")
+    for row in rows:
+        if row["district"] not in focus:
+            continue
+        if row["over_cap"] == 0:
+            continue
+        print(
+            f"  {row['neighborhood']:22} {row['district']:14} over={row['over_cap']:4} "
+            f"(res {row['over_cap_residential']:3}) max_recorded={row['max_recorded']:6.1f} "
+            f"applied={row['max_applied']:5.1f} families={row['families']} worst={row['worst']}"
+        )
+
+    survivors = []
+    for row in rows:
+        if row["district"] in RESIDENTIAL_DISTRICTS:
+            for worst in row["worst"]:
+                if worst["applied"] > 12.0:
+                    survivors.append((row["district"], row["neighborhood"], worst))
+    print()
+    print(f"SLENDERNESS SURVIVORS (>4 storeys in residential districts): {len(survivors)}")
+    for district, neighborhood, worst in survivors[:10]:
+        print(f"  {district:16} {neighborhood:20} b{worst['id']} applied={worst['applied']:.0f} source={worst['source']}")
+
+    if "--json" in sys.argv:
+        target = Path(sys.argv[sys.argv.index("--json") + 1])
+        target.write_text(json.dumps({"totals": dict(totals), "rows": rows}, indent=2))
+        print(f"\nwrote {target}")
+
+
+if __name__ == "__main__":
+    main()

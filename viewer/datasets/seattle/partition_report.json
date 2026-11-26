@@ -1,0 +1,56 @@
+{
+  "generated_utc": "2026-11-21T15:50:10Z",
+  "levels": {
+    "counties": 2,
+    "cities": 3,
+    "neighborhoods": 1096,
+    "buildings": 330330,
+    "streets": 29833
+  },
+  "county_counts": {
+    "King": 243909,
+    "Pierce": 86421
+  },
+  "city_counts": {
+    "Seattle": 187053,
+    "Bellevue": 56856,
+    "Tacoma": 86421
+  },
+  "provenance_methods": {
+    "provenance": 302443,
+    "provenance_outside_polygon": 27887
+  },
+  "names": {
+    "counties": {
+      "King": [
+        "Bellevue",
+        "Seattle"
+      ],
+      "Pierce": [
+        "Tacoma"
+      ]
+    },
+    "sample_paths": [
+      "King -> Bellevue -> Bellevue CBD 01",
+      "King -> Bellevue -> Bellevue CBD 02",
+      "King -> Bellevue -> Bellevue CBD 03",
+      "King -> Bellevue -> Bellevue CBD 04",
+      "King -> Bellevue -> Bellevue CBD 05",
+      "King -> Bellevue -> Bellevue CBD 06",
+      "King -> Bellevue -> Bellevue CBD 07",
+      "King -> Bellevue -> Bellevue CBD 08"
+    ]
+  },
+  "containment_max_overflow_m": 0.0,
+  "binary_bytes": 25264283,
+  "json_bytes": 146622761,
+  "single_partition_bytes": 31420,
+  "single_partition_json_bytes": 188154,
+  "partition_size_histogram": {
+    "250-750": 703,
+    "<250": 393
+  },
+  "mean_partition": 301.4,
+  "max_partition": 749,
+  "min_partition": 1
+}
