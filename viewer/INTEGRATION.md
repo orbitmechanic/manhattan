@@ -2788,3 +2788,22 @@ umbrella latch). Night close-up: the drum ring and the restaurant band glow brig
 pose against the model's near-field shading, not a flight-profile cost.
 
 183 tests green, clippy clean, boot clean. CodeGraph refreshed: 25 projects, 569 files, 0 failures.
+
+## Iteration 105 — generated goes to web (seattle-web2)
+
+**Native gate first (passed):** 183 tests, clippy clean, `--seattle` boots, and `PHOTO FORMAT Bc7RgbaUnormSrgb
+1024x1024 mips=11` — the photographic BC7 path is byte-identical. The KTX2 stack now sits behind a **default
+`photo-textures` cargo feature**; web builds use `--no-default-features`.
+
+**The wasm crate now BUILDS.** With the feature gate in place the web target compiles past the C++
+basis-universal-sys blocker: `cargo build --release --target wasm32-unknown-unknown --no-default-features`
+finished in **17 m 53 s** producing a **180 MB** unoptimised `manhattan_viewer.wasm` (before wasm-bindgen and
+`wasm-opt -Oz`; Manhattan's shipped binary is 38 MB, so the strip/opt ladder is expected to land in the same
+range). Two warnings only.
+
+**The remaining blocker is runtime asset I/O, not the build:** `src/geology.rs` and `src/citypack.rs` read the DEM,
+mask, reports and city pack with `std::fs`, and `datasets/` is 2.0 GB. The browser has no filesystem, so those reads
+must become HTTP fetches with a loading screen and a streamed, much smaller pack. Filed as **`seattle-web3`**; no
+dock tile was added, because a tile pointing at a page that cannot boot is worse than none.
+
+`scripts/build_web.sh` commits the full pipeline for the next round.

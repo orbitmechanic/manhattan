@@ -437,7 +437,10 @@ fn setup_facades(
     // the generated atlases remain the default/fallback for the A/B sheet.
     // LIVE-BY-DEFAULT: photographic materials are the shipped skin. The
     // generated atlases remain as an opt-out for A/B and regression insurance.
-    let photo = std::env::var_os("TEXTURES_GENERATED").is_none();
+    // wasm ships the generated atlas path: the photographic KTX2 decoder is
+    // native-only (C++), and the generated art is pure Rust and tiny.
+    let photo =
+        cfg!(not(target_arch = "wasm32")) && std::env::var_os("TEXTURES_GENERATED").is_none();
     let photo_brick =
         photo.then(|| repeat_load(&asset_server, "textures/photographic/brick_wall.ktx2"));
     let photo_siding =
@@ -466,7 +469,9 @@ fn setup_facades(
         }
     }
     skins.texture_bytes = bytes;
-    let mode = if std::env::var_os("TEXTURES_GENERATED").is_some() {
+    let mode = if !cfg!(feature = "photo-textures") {
+        "generated (this build has no KTX2 decoder)"
+    } else if std::env::var_os("TEXTURES_GENERATED").is_some() {
         "generated"
     } else {
         "photographic"
@@ -868,7 +873,7 @@ fn install_photo_roof(
     assets: Option<Res<destructibles_bevy::assets::WorldAssets>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    if std::env::var_os("TEXTURES_GENERATED").is_some() {
+    if !cfg!(feature = "photo-textures") || std::env::var_os("TEXTURES_GENERATED").is_some() {
         return;
     }
     let Some(assets) = assets else {
