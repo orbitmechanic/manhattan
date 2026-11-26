@@ -2841,3 +2841,27 @@ not offering the WebGL2 configuration Bevy needs. This machine has no other brow
 bundle boots on a real GPU is **unverified**. Per the "complete or not at all" rule, no dock tile or Pages deploy
 was made; `web/dist` stays a local artifact. Filed as **`seattle-web3-browser`**: verify in a real browser, and if the
 adapter gap is real, pin `WgpuSettings { backends: WebGl2, .. }` and the `webgl2` feature explicitly.
+
+## Iteration 108 — restore my universe (seattle-nativefix1)
+
+**Native was down, and the fix is a cfg gate plus a boot print.** `RenderPlugin`'s WebGL2 pin is now **wasm-only**
+(`#[cfg(target_arch = "wasm32")]`); native takes Bevy's default wgpu selection. The round's "inert on Vulkan" claim
+in web4 was **wrong** — an explicit backend pin overrides adapter preference on native too — and it is corrected here
+by name. Boot now prints:
+
+```
+RENDER BACKEND: Vulkan adapter="AMD Radeon Vega 8 Graphics (RADV RAVEN)"
+```
+
+**A second native regression surfaced while validating:** `CityPack::open_pack` returned an in-memory pack with an
+empty `path`, and chunk reads resolve through that path — so **no buildings streamed at all** (the first restored
+screenshot showed `buildings 0`, and the gauntlet died on "no streamed building chunk underfoot"). Native now opens
+the pack from disk again; the wasm path keeps the embedded bytes. After the fix: `S3 BOOT: first streamed chunk in
+1884 ms (0 shells, 113 proxies)`, and the frame shows the city with 47 buildings in view.
+
+**Gate upgraded (test-ordering law, rendering):** the native gate is now **a real boot to a rendered frame**
+(`RENDER BACKEND` + streamed buildings in the capture), not compile+tests+BC7 print. Tests and the BC7 proof were
+both green while the game could not run.
+
+**Table (after the fix):** 15 m/s 69.7/450 (boot stall), 30 m/s 40.8/58.7, 100 m/s 41.6/60.8, **650 m/s 46.3/70.0**
+— in band. 183 tests green, clippy clean, PHOTO FORMAT still `Bc7RgbaUnormSrgb`.

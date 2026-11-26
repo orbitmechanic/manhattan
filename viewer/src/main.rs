@@ -392,6 +392,18 @@ fn parse_args() -> Args {
     args
 }
 
+/// Print the active render backend and adapter at boot on every target, so a
+/// backend question is answered by the console rather than by inference.
+fn log_render_backend(info: Option<Res<bevy::render::renderer::RenderAdapterInfo>>) {
+    match info {
+        Some(info) => info!(
+            "RENDER BACKEND: {:?} adapter=\"{}\"",
+            info.backend, info.name
+        ),
+        None => warn!("RENDER BACKEND: adapter info unavailable"),
+    }
+}
+
 fn main() {
     #[cfg(target_arch = "wasm32")]
     console_error_panic_hook::set_once();
@@ -443,20 +455,25 @@ fn main() {
 
     let mut app = App::new();
     let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "warn".to_string());
+    // Backend pinning is a WEB-ONLY concern: a browser can only offer WebGL2,
+    // while native must keep wgpu's default (Vulkan) selection. Pinning GL
+    // unconditionally made the native binary fail with "Unable to find a GPU".
+    #[allow(unused_mut)]
+    let mut plugins = DefaultPlugins;
+    #[cfg(target_arch = "wasm32")]
+    {
+        plugins = plugins.set(bevy::render::RenderPlugin {
+            render_creation: bevy::render::settings::RenderCreation::Automatic(Box::new(
+                bevy::render::settings::WgpuSettings {
+                    backends: Some(bevy::render::settings::Backends::GL),
+                    ..default()
+                },
+            )),
+            ..default()
+        });
+    }
     app.add_plugins(
-        DefaultPlugins
-            .set(bevy::render::RenderPlugin {
-                render_creation: bevy::render::settings::RenderCreation::Automatic(Box::new(
-                    bevy::render::settings::WgpuSettings {
-                        // WebGL2 is the only backend a browser can guarantee;
-                        // pinning it removes the adapter-selection panic seen in
-                        // headless SwiftShader before the player's first click.
-                        backends: Some(bevy::render::settings::Backends::GL),
-                        ..default()
-                    },
-                )),
-                ..default()
-            })
+        plugins
             .set(bevy::log::LogPlugin {
                 filter: log_filter,
                 ..default()
@@ -488,7 +505,7 @@ fn main() {
     .add_plugins(destructibles_bevy::destructibles_plugin_for_manhattan())
     .add_plugins(MaterialPlugin::<CityMaterial>::default())
     .add_plugins(InstrumentPlugin)
-    .add_systems(Startup, setup_tuning)
+    .add_systems(Startup, (setup_tuning, log_render_backend))
     .add_systems(Update, tuning_keys)
     .add_plugins(NightAmbientPlugin)
     .add_systems(Startup, manhattan_viewer::pilot::spawn_pilot)

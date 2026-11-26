@@ -203,7 +203,16 @@ impl CityPack {
     /// Repository-relative pack through the asset layer (fs on native, embedded
     /// bytes on web).
     pub fn open_pack() -> std::io::Result<Self> {
-        Self::from_bytes(crate::webassets::bytes(PACK_PATH))
+        // Native keeps the on-disk pack: chunk reads resolve through `self.path`,
+        // so an in-memory pack with no path cannot stream the city.
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Self::open(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(PACK_PATH))
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Self::from_bytes(crate::webassets::bytes(PACK_PATH))
+        }
     }
 
     fn parse<R: std::io::Read + std::io::Seek>(
