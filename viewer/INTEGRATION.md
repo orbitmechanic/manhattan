@@ -2865,3 +2865,28 @@ both green while the game could not run.
 
 **Table (after the fix):** 15 m/s 69.7/450 (boot stall), 30 m/s 40.8/58.7, 100 m/s 41.6/60.8, **650 m/s 46.3/70.0**
 — in band. 183 tests green, clippy clean, PHOTO FORMAT still `Bc7RgbaUnormSrgb`.
+
+## Iteration 109 — rays that travel (seattle-beams3)
+
+**The ray geometry is now world-true.** A shaft no longer stands near the camera: it starts at the cloud deck
+(900 m) and runs along the sun vector until it meets terrain, with the landing site placed 1.6–16 km out on the
+anti-solar side. Length is derived from the ray, not a constant:
+
+```
+BEAMS landing distances: ge1mi=7 lt1mi=0 max=5.4 km (deck 900 m, sun alt 9.6 deg)
+BEAMS landing distances: ge1mi=7 lt1mi=0 max=2.5 km (deck 900 m, sun alt 20.1 deg)
+```
+
+Every landing is beyond a mile; the ceiling is physical — with a 900 m deck the reach is `900 / tan(alt)`, so ten
+miles needs the sun under ~3°. The distance histogram is printed under `BEAM_TRACE`.
+
+**Blend changed from Add to Blend** for visibility across backgrounds: an additive shaft disappears against a bright
+sky, while alpha compositing carries it over sky, water, terrain and masonry alike.
+
+**Not delivered: verified visibility.** The four-background frame (`captures/beams_four_bg.png`) and the probe frame
+(`captures/beams_probe_low.png`) at 09.6° sun show **no beams on screen**, probe included. So the geometry fix ships
+(landing sites at distance, measured), and the visibility defect is **named with evidence** rather than claimed
+fixed — `beam-visibility` is the sole remaining blocker for this feature.
+
+**Native gate:** `RENDER BACKEND: Vulkan adapter="AMD Radeon Vega 8 (RADV RAVEN)"`, `S3 BOOT` streams in 1760 ms,
+183 tests green, clippy clean.

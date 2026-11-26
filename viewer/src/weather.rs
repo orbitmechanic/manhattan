@@ -857,7 +857,6 @@ pub fn update_weather_visuals(
 const SHAFT_COUNT: usize = 7;
 const SHAFT_LOW_SUN_MIN: f32 = 2.0;
 const SHAFT_LOW_SUN_MAX: f32 = 40.0;
-const SHAFT_LENGTH: f32 = 1_400.0;
 
 #[derive(Asset, AsBindGroup, Debug, Clone, TypePath)]
 pub struct BeamMaterial {
@@ -875,7 +874,10 @@ impl Material for BeamMaterial {
     }
 
     fn alpha_mode(&self) -> AlphaMode {
-        AlphaMode::Add
+        // Blend, not Add: an additive shaft vanishes against a bright sky.
+        // Blending composites the beam over sky, water, terrain and buildings
+        // alike, which is the visibility the player requires.
+        AlphaMode::Blend
     }
 
     fn enable_prepass() -> bool {
@@ -1043,38 +1045,55 @@ pub fn update_light_shafts(
 
     let active = strength > 0.05;
     let cam = camera.translation;
+    // A crepuscular ray is WORLD geometry: it starts at the cloud deck and runs
+    // ALONG the sun vector until it meets terrain — with a low sun that meeting
+    // point is kilometres away on the horizon side, never at the camera's feet.
+    let deck_height = 900.0_f32;
+    let down = -light_dir.normalize_or_zero();
+    let sin_alt = (-down.y).max(0.06);
+    let mut landings = Vec::new();
     for (shaft, mut transform, mut visibility) in &mut shafts {
         let hole = field.holes[shaft.index % field.holes.len()];
         if !active {
             *visibility = Visibility::Hidden;
             continue;
         }
-        // Drift with the deck: the hole's azimuth creeps on the wind, so a
-        // moving cloud drags its beam across the city.
         let drift = time.elapsed_secs() * 0.01 + weather.wind.x * 0.6;
-        let radius = if probe { 500.0 } else { hole.radius };
-        // Holes live ahead of the player: a beam behind the eye is weather
-        // nobody sees. The seeded azimuth is mapped into ±55 deg of heading.
-        let forward = camera.rotation * Vec3::NEG_Z;
-        let heading = f32::atan2(forward.x, forward.z);
-        let spread = (hole.azimuth / std::f32::consts::TAU - 0.5) * 1.9 + drift * 0.04;
-        let bearing = if probe { heading } else { heading + spread };
-        let base_x = cam.x + bearing.sin() * radius;
-        let base_z = cam.z + bearing.cos() * radius;
-        let ground = geology
-            .as_ref()
-            .map(|state| {
+        // Landing site: seeded per hole, 2–16 km from the camera, biased to the
+        // anti-solar half so the shaft rakes toward the viewer from the sun.
+        let heading =
+            f32::atan2(-light_dir.x, -light_dir.z) + (hole.azimuth - std::f32::consts::PI) * 0.6;
+        let want = if probe {
+            2_400.0
+        } else {
+            2_000.0 + hole.radius * 22.0 + drift * 40.0
+        };
+        let want = want.clamp(1_600.0, 16_000.0);
+        // The ray can only fall as far as the deck allows: L·sin(alt) = deck.
+        let max_reach = deck_height / sin_alt.tan().max(0.02);
+        let distance = want.min(max_reach).max(1_600.0);
+        let landing = Vec3::new(
+            cam.x + heading.sin() * distance,
+            0.0,
+            cam.z + heading.cos() * distance,
+        );
+        let landing = match geology.as_ref() {
+            Some(state) => Vec3::new(
+                landing.x,
                 state
                     .dem
-                    .height(base_x - crate::citypack::STREAM_WORLD_OFFSET, base_z)
-            })
-            .unwrap_or(0.0);
-        transform.translation = Vec3::new(base_x, ground, base_z);
-        // World-space orientation: local +Y onto the light vector, so the beam
-        // leaves the ground toward the sun and rakes to the horizon.
-        transform.rotation = Quat::from_rotation_arc(Vec3::Y, light_dir.normalize_or_zero());
-        let width = if probe { 90.0 } else { hole.width };
-        transform.scale = Vec3::new(width, SHAFT_LENGTH, width);
+                    .height(landing.x - crate::citypack::STREAM_WORLD_OFFSET, landing.z),
+                landing.z,
+            ),
+            None => landing,
+        };
+        let length = (deck_height / sin_alt).min(distance / sin_alt.cos().max(0.1));
+        let start = landing + Vec3::Y * (length * sin_alt);
+        let along = (start - landing).normalize_or_zero();
+        transform.translation = (start + landing) * 0.5;
+        transform.rotation = Quat::from_rotation_arc(Vec3::Y, along);
+        let width = if probe { 220.0 } else { hole.width * 1.8 };
+        transform.scale = Vec3::new(width, length.max(50.0), width);
         *visibility = Visibility::Inherited;
         if let Some(mut material) = materials.get_mut(&shaft.material) {
             let level = if probe {
@@ -1083,8 +1102,20 @@ pub fn update_light_shafts(
                 strength * hole.brightness
             };
             material.data = Vec4::new(time.elapsed_secs(), level.clamp(0.0, 1.0), 1.0, 0.0);
-            material.tint = Vec4::new(tint.x, tint.y, tint.z, 0.9);
+            material.tint = Vec4::new(tint.x, tint.y, tint.z, 0.38);
         }
+        landings.push(distance);
+    }
+    if std::env::var_os("BEAM_TRACE").is_some() && !landings.is_empty() {
+        let near = landings.iter().filter(|d| **d < 1_609.0).count();
+        let far = landings.iter().filter(|d| **d >= 1_609.0).count();
+        let max = landings.iter().cloned().fold(0.0_f32, f32::max);
+        info!(
+            "BEAMS landing distances: ge1mi={far} lt1mi={near} max={:.1} km (deck {:.0} m, sun alt {:.1} deg)",
+            max / 1000.0,
+            deck_height,
+            sun_alt
+        );
     }
 }
 
