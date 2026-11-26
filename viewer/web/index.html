@@ -19,7 +19,7 @@
       <p class="sub">An overcast Seattle with rain, umbrellas, street lamps, the city-glow dome and the CAD Space Needle. Stylized surfaces on web; photographic on native.</p>
       <div class="bar"><span></span></div>
       <p class="status">Loading the city (geometry and terrain embedded in the build)…</p>
-      <p class="note">About 60 MB on first load. Walking-pace demo — the native build is for full-speed flight. Desktop with mouse and keyboard recommended.</p>
+      <p class="note">First load: ~16 MB compressed wasm (51 MB raw) + ~14 MB compressed city pack; textures and sounds stream after the first frame. Walking-pace demo — the native build is for full-speed flight. Desktop with mouse and keyboard recommended.</p>
       <a class="back" href="https://orbitmechanic.github.io/">← Gallifrey Station</a>
     </div>
   </div>
@@ -59,13 +59,52 @@
 
     const canvas = document.getElementById('seattle-canvas');
     const loading = document.getElementById('loading');
+    const status = loading.querySelector('.status');
+    const bar = loading.querySelector('.bar span');
+
+    // The city pack is FETCHED, not embedded: the wasm carries no map data.
+    // Everything is in memory before init() runs, so the boot stays atomic.
+    const ASSETS = [
+      'assets/datasets/seattle.citypack',
+      'assets/datasets/seattle_trees.bin',
+      'assets/terrain/seattle_dem_30m.bin',
+      'assets/terrain/seattle_water_mask.bin',
+      'assets/terrain/seattle_water.bin',
+      'datasets/seattle/s2_report.json',
+      'assets/styles/seattle_pack.json',
+      'assets/styles/seattle_districts.json',
+      'assets/styles/seattle_governance.json',
+      'assets/horizon/seattle_profiles.bin',
+    ];
+
+    async function preload() {
+      window.__seattleAssets = {};
+      let done = 0;
+      let total = 0;
+      const sizes = await Promise.all(ASSETS.map(async (path) => {
+        const head = await fetch(path, { method: 'HEAD' });
+        return Number(head.headers.get('content-length') || 0);
+      }));
+      total = sizes.reduce((a, b) => a + b, 0) || 1;
+      for (let i = 0; i < ASSETS.length; i++) {
+        const response = await fetch(ASSETS[i]);
+        if (!response.ok) throw new Error(`pack fetch failed: ${ASSETS[i]} (${response.status})`);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        window.__seattleAssets[ASSETS[i]] = bytes;
+        done += bytes.length;
+        const pct = Math.min(100, Math.round((done / total) * 100));
+        if (bar) bar.style.width = pct + '%';
+        status.textContent = `Loading the city — ${(done / 1048576).toFixed(1)} of ${(total / 1048576).toFixed(1)} MB`;
+      }
+      status.textContent = 'Starting the city…';
+    }
 
     function focusCanvas() {
       canvas.focus({ preventScroll: true });
       requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }));
     }
 
-    init().then(() => {
+    preload().then(() => init()).then(() => {
       focusCanvas();
       const observer = new MutationObserver(() => {
         if (loading.classList.contains('hidden')) {

@@ -246,7 +246,7 @@ pub struct Geology {
     pub box_mesh_warm: Handle<Mesh>,
     pub targets: Vec<(u32, Vec3, f32)>,
     pub loaded_buildings: usize,
-    start_instant: std::time::Instant,
+    start_instant: crate::clock_compat::Instant,
     first_chunk_reported: bool,
     pub terrain_material: Handle<StandardMaterial>,
     pub water_material: Handle<StandardMaterial>,
@@ -315,7 +315,7 @@ fn setup_geology(
     if !s2_enabled() {
         return;
     }
-    let started = std::time::Instant::now();
+    let started = crate::clock_compat::Instant::now();
     let report: S2Report =
         serde_json::from_str(&crate::webassets::string(REPORT_PATH)).expect("s2 report json");
     let dem_bytes = crate::webassets::bytes(DEM_PATH);
@@ -1191,7 +1191,7 @@ fn geology_stream(
             unloads += 1;
         }
     }
-    let started = std::time::Instant::now();
+    let started = crate::clock_compat::Instant::now();
     let mut loads = 0;
     for (key, _) in &wanted {
         if state.terrain.contains_key(key) {
@@ -1246,7 +1246,7 @@ fn geology_stream(
             state.road_unloads += 1;
         }
     }
-    let road_started = std::time::Instant::now();
+    let road_started = crate::clock_compat::Instant::now();
     let mut road_loads = 0;
     for index in wanted_roads {
         if state.roads.contains_key(&index) {
@@ -2377,7 +2377,7 @@ fn s3_damage(world: &mut World) {
         began,
         destructibles_bevy::building::detail_level(world, target.0)
     );
-    let started = std::time::Instant::now();
+    let started = crate::clock_compat::Instant::now();
     for _ in 0..20 {
         destructibles_bevy::impact::apply_impact(
             world,
@@ -3931,7 +3931,7 @@ fn s3_buildings(world: &mut World) {
             }
         };
         let _ = chunk;
-        let spawn_started = std::time::Instant::now();
+        let spawn_started = crate::clock_compat::Instant::now();
         let spec_count = specs.len();
         let mut order = (0..specs.len()).collect::<Vec<_>>();
         order.sort_by(|left, right| {

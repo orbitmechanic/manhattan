@@ -8,7 +8,6 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
 use std::path::PathBuf;
-use std::time::Instant;
 
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
@@ -803,7 +802,7 @@ fn update_zone(
     if std::env::var_os("MANHATTAN_PILOT").is_some() {
         return;
     }
-    let started = Instant::now();
+    let started = crate::clock_compat::Instant::now();
     if !neighborhood.live.is_empty() {
         neighborhood.behind_max = 0.0;
     }
@@ -1051,7 +1050,7 @@ fn detail_tick(world: &mut World) {
     }
     let catch_up = !world.resource::<SimClock>().playing;
     let detail_budget = if catch_up || jit.is_some() { 8.0 } else { 4.0 };
-    let started = Instant::now();
+    let started = crate::clock_compat::Instant::now();
     let mut tier1 = 0usize;
     let mut tier2 = 0usize;
     for (id, _meta, distance, _along, _detail) in items {
@@ -2262,7 +2261,7 @@ fn jit_swap(world: &mut World, id: usize) -> bool {
         }
     };
     let origin = Vec3::new(meta.centroid[0], 0.0, meta.centroid[1]);
-    let started = Instant::now();
+    let started = crate::clock_compat::Instant::now();
     let Some(handle) = swap_in_lod(
         world,
         NEIGHBORHOOD_ID_BASE + id as u32,
@@ -2333,7 +2332,7 @@ fn process_swaps(world: &mut World) {
     if std::env::var_os("MANHATTAN_PILOT").is_some() {
         return;
     }
-    let started = Instant::now();
+    let started = crate::clock_compat::Instant::now();
     // A frozen game clock is extra budget: background processing keeps
     // running and is allowed to catch up twice as fast.
     let catch_up = !world.resource::<SimClock>().playing;
@@ -2371,7 +2370,7 @@ fn process_swaps(world: &mut World) {
             }
             let live = world.resource_mut::<Neighborhood>().live.remove(&id);
             if let Some(live) = live {
-                let swap_started = Instant::now();
+                let swap_started = crate::clock_compat::Instant::now();
                 let _ = swap_out(world, live.handle);
                 let ms = swap_started.elapsed().as_secs_f32() * 1000.0;
                 frame_swap_ms += ms;
@@ -2418,7 +2417,7 @@ fn process_swaps(world: &mut World) {
             }
         };
         let origin = Vec3::new(meta.centroid[0], 0.0, meta.centroid[1]);
-        let swap_started = Instant::now();
+        let swap_started = crate::clock_compat::Instant::now();
         let handle = swap_in_lod(
             world,
             NEIGHBORHOOD_ID_BASE + id as u32,

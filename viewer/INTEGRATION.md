@@ -2913,3 +2913,28 @@ GitHub Pages **already serves gzip** for the wasm (`content-encoding: gzip`, 35 
 **Disclosure line updated on the live page** to the measured numbers ("~36 MB compressed wasm (88.7 MB raw, city pack embedded) plus ~34 MB of textures, models and sounds").
 
 Native gate untouched: 183 tests, clippy clean, Vulkan backend print, BC7 proof.
+
+## Iteration 112 — the fetched city (seattle-webdiet2)
+
+**The city pack left the binary.** On web, `webassets` now reads from `window.__seattleAssets`, a map the page fills
+BEFORE `init()` runs: ten files (citypack 25 MB, trees, DEM, water mask/water, report, styles, districts, governance,
+horizon) fetched with a progress bar (`bytes of total MB`), then the wasm starts. Boot stays atomic — nothing renders
+until the pack is in memory — and the browser caches the pack independently of the binary.
+
+**Also found and fixed: `Instant::now()` panics on wasm32.** The first boot of this round died in
+`std::sys/time/unsupported.rs` — the reason the Seattle page had only ever reached its loading card. All 22 call
+sites now go through `clock_compat`, which re-exports `web_time::Instant` on wasm and `std::time::Instant` natively.
+
+**Diet ladder (Seattle dock):**
+
+| stage | wasm raw | wasm gzip | pack gzip | first load |
+|---|---:|---:|---:|---:|
+| webdiet1 (pack embedded) | 88.7 MB | 35.8 MB | — | ~61 MB |
+| **webdiet2 (pack fetched)** | **51 MB** | **15.6 MB** | **14.4 MB** | **~30 MB** |
+
+Verified live with headers: `seattle_bg.wasm` → `content-encoding: gzip, content-length: 15 606 409`;
+`assets/datasets/seattle.citypack` → `application/octet-stream`, gzip, `14 448 564`. Local serve log shows the ten
+HEAD probes, the ten GETs (all 200), then the wasm, then shaders/textures/sounds. Disclosure line updated live:
+"First load: ~16 MB compressed wasm (51 MB raw) + ~14 MB compressed city pack…".
+
+**Native gate unchanged:** Vulkan backend print, BC7 `Bc7RgbaUnormSrgb`, 183 tests, clippy clean.

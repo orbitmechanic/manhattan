@@ -569,7 +569,7 @@ fn spawn_records(world: &mut World, node: usize, records: &[TreeRecord]) {
         .copied()
         .map(|transform| transform.translation)
         .unwrap_or(Vec3::ZERO);
-    let started = std::time::Instant::now();
+    let started = crate::clock_compat::Instant::now();
     let mut entities = Vec::with_capacity(records.len());
     for (record, y) in records.iter().zip(dem_height) {
         let world_x = record.x + STREAM_WORLD_OFFSET;

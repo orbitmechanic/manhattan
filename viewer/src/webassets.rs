@@ -26,39 +26,18 @@ pub fn string(relative: &str) -> String {
 
 #[cfg(target_arch = "wasm32")]
 fn embedded(relative: &str) -> Vec<u8> {
-    // The web pack: downtown demo footprint. Every byte here is downloaded
-    // before the first frame, so the list is the budget.
-    match relative {
-        "assets/datasets/seattle.citypack" => {
-            include_bytes!("../assets/datasets/seattle.citypack").to_vec()
-        }
-        "assets/datasets/seattle_trees.bin" => {
-            include_bytes!("../assets/datasets/seattle_trees.bin").to_vec()
-        }
-        "assets/terrain/seattle_dem_30m.bin" => {
-            include_bytes!("../assets/terrain/seattle_dem_30m.bin").to_vec()
-        }
-        "assets/terrain/seattle_water_mask.bin" => {
-            include_bytes!("../assets/terrain/seattle_water_mask.bin").to_vec()
-        }
-        "assets/terrain/seattle_water.bin" => {
-            include_bytes!("../assets/terrain/seattle_water.bin").to_vec()
-        }
-        "datasets/seattle/s2_report.json" => {
-            include_bytes!("../datasets/seattle/s2_report.json").to_vec()
-        }
-        "assets/styles/seattle_pack.json" => {
-            include_bytes!("../assets/styles/seattle_pack.json").to_vec()
-        }
-        "assets/styles/seattle_districts.json" => {
-            include_bytes!("../assets/styles/seattle_districts.json").to_vec()
-        }
-        "assets/styles/seattle_governance.json" => {
-            include_bytes!("../assets/styles/seattle_governance.json").to_vec()
-        }
-        "assets/horizon/seattle_profiles.bin" => {
-            include_bytes!("../assets/horizon/seattle_profiles.bin").to_vec()
-        }
-        other => panic!("asset not in the web pack: {other}"),
-    }
+    // The web page fetches every pack file with progress BEFORE it calls init(),
+    // and parks the bytes on `window.__seattleAssets`. The binary therefore
+    // carries no pack data: the browser caches the pack separately from the
+    // wasm, and Pages gzips both.
+    use wasm_bindgen::JsCast;
+    let window = web_sys::window().expect("window");
+    let assets = js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("__seattleAssets"))
+        .unwrap_or(wasm_bindgen::JsValue::UNDEFINED);
+    let entry = js_sys::Reflect::get(&assets, &wasm_bindgen::JsValue::from_str(relative))
+        .unwrap_or(wasm_bindgen::JsValue::UNDEFINED);
+    let array = entry
+        .dyn_into::<js_sys::Uint8Array>()
+        .unwrap_or_else(|_| panic!("web asset not preloaded: {relative}"));
+    array.to_vec()
 }

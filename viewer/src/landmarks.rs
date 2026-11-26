@@ -1537,7 +1537,7 @@ fn landmark_gate(world: &mut World) {
                 .iter()
                 .count();
             assert_eq!(graphs, 0, "Shell Doctrine violation at landmark load");
-            let tier_started = std::time::Instant::now();
+            let tier_started = crate::clock_compat::Instant::now();
             for (id, _origin, _height, _phase, _signature) in &components {
                 destructibles_bevy::building::begin_detail_upgrade(
                     world,
@@ -1889,7 +1889,7 @@ fn landmark_cycle(world: &mut World) {
         }
     };
     if stage == 0 {
-        let started = std::time::Instant::now();
+        let started = crate::clock_compat::Instant::now();
         for (id, _, _, _, _) in &components {
             destructibles_bevy::building::begin_detail_upgrade(
                 world,

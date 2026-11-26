@@ -9,6 +9,7 @@ pub mod city_rhythm;
 pub mod city_tuning;
 pub mod citypack;
 pub mod clock;
+pub mod clock_compat;
 pub mod collision;
 pub mod detail;
 pub mod details;

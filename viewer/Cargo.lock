@@ -4375,6 +4375,7 @@ dependencies = [
  "toml 0.8.23",
  "wasm-bindgen",
  "web-sys",
+ "web-time",
 ]
 
 [[package]]

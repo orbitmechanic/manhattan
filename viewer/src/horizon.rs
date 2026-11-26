@@ -239,7 +239,7 @@ fn horizon_update(
         || (moved > UPDATE_DISPLACEMENT_M && elapsed - state.last_update > 0.12)
         || elapsed - state.last_update > UPDATE_INTERVAL_S
     {
-        let started = std::time::Instant::now();
+        let started = crate::clock_compat::Instant::now();
         state.targets = band_lines(&state.profiles, position.y);
         state.update_ms = started.elapsed().as_secs_f32() * 1000.0;
         state.last_update = elapsed;

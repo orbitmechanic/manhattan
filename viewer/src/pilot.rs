@@ -164,7 +164,7 @@ pub fn spawn_pilot(world: &mut World) {
             unlit: false,
             ..default()
         });
-    let started = std::time::Instant::now();
+    let started = crate::clock_compat::Instant::now();
     let mut spawned = 0usize;
     for record in &bundle.records {
         if let Some(size) = record.fallback_box {
@@ -519,7 +519,7 @@ pub fn pilot_damage(world: &mut World) {
                 id as u32,
                 destructibles_bevy::building::DetailTier::Structural,
             );
-            let started = std::time::Instant::now();
+            let started = crate::clock_compat::Instant::now();
             for _ in 0..80 {
                 let level = destructibles_bevy::building::advance_detail(world, id as u32, 50.0);
                 if level >= destructibles_bevy::building::DetailTier::Structural {
@@ -551,7 +551,7 @@ pub fn pilot_damage(world: &mut World) {
                     mass_kg: 20.0,
                     explosive_yield_kg_tnt: 0.0,
                 };
-                let started = std::time::Instant::now();
+                let started = crate::clock_compat::Instant::now();
                 apply_impact(world, id as u32, impact);
                 info!(
                     "PILOT DAMAGE: bullet b{id} admitted in {:.1} ms journal={:.2}",

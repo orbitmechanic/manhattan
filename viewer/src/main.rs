@@ -459,7 +459,7 @@ fn main() {
     // while native must keep wgpu's default (Vulkan) selection. Pinning GL
     // unconditionally made the native binary fail with "Unable to find a GPU".
     #[allow(unused_mut)]
-    let mut plugins = DefaultPlugins;
+    let mut plugins = DefaultPlugins.build();
     #[cfg(target_arch = "wasm32")]
     {
         plugins = plugins.set(bevy::render::RenderPlugin {

@@ -199,7 +199,7 @@ impl ProxyGrid {
         if self.stamp == stamp {
             return;
         }
-        let started = std::time::Instant::now();
+        let started = crate::clock_compat::Instant::now();
         self.stamp = stamp;
         self.cells.clear();
         self.boxes = source.len();
@@ -347,7 +347,7 @@ fn camera_interior_ban(world: &mut World) {
     if hit.is_none() {
         // PROXY SOLIDITY: the box world is solid too. Per-building AABBs from
         // the per-chunk collider lists; cost measured and printed.
-        let start = std::time::Instant::now();
+        let start = crate::clock_compat::Instant::now();
         let mut resolved = None;
         let mut boxes = 0usize;
         let stamp = world

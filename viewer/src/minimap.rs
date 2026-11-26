@@ -1125,7 +1125,7 @@ fn render_seattle_layer(
     journal: Option<&DamageJournal>,
     target: Option<u32>,
 ) {
-    let started = std::time::Instant::now();
+    let started = crate::clock_compat::Instant::now();
     for y in 0..MAP_TEX as i32 {
         for x in 0..MAP_TEX as i32 {
             put(data, x, y, [22, 27, 33, 255]);

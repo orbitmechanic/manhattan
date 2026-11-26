@@ -10,7 +10,6 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
-use std::time::Instant;
 
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
@@ -809,7 +808,7 @@ fn stream_partitions(
             unloads += 1;
         }
     }
-    let started = Instant::now();
+    let started = crate::clock_compat::Instant::now();
     let mut loads = 0;
     for index in wanted {
         if state.loaded.contains_key(&index) {
