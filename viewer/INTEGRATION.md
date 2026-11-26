@@ -2938,3 +2938,22 @@ HEAD probes, the ten GETs (all 200), then the wasm, then shaders/textures/sounds
 "First load: ~16 MB compressed wasm (51 MB raw) + ~14 MB compressed city pack…".
 
 **Native gate unchanged:** Vulkan backend print, BC7 `Bc7RgbaUnormSrgb`, 183 tests, clippy clean.
+
+## Iteration 113 — publish delta (seattle-webpublish1)
+
+**Delta table (live host, 30 URLs the page references): every one 200.** The published tree at `main` carries all
+118 blobs, including `assets/datasets/seattle.citypack`, `assets/terrain/*.bin`, `datasets/seattle/s2_report.json`,
+the shaders, the five material texture families and the sounds; `gh api .../pages` reports **built**.
+
+So the player's 404 sweep was **not** a publish delta at the time of this audit: it was the window between the
+webdiet2 push and the Pages build completing (the pack paths were new in that commit, so the CDN served 404s until
+the new tree was live). That is still a deployment defect in the *experience* if not in the bytes — the card said
+nothing useful.
+
+**Fix shipped: the loading card narrates its own failure.** `fail()` now writes the file and HTTP status onto the
+card ("Failed: missing asset (404) — assets/…/x.bin") and marks the card errored; the preload HEAD/GET checks call
+it, and a rejected `init()` chain reports "the city did not start". No more console archaeology.
+
+**Evidence (live):** `page 200`, `pack 200`, delta table all 200, card error narration present in the served HTML.
+
+Native gate unchanged (Vulkan backend, BC7 proof, 183 tests, clippy clean).

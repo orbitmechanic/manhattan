@@ -77,18 +77,33 @@
       'assets/horizon/seattle_profiles.bin',
     ];
 
+    function fail(what, detail) {
+      // Narrate the failure on the card: the player must never have to read
+      // raw console archaeology to learn which file the host is missing.
+      status.textContent = `Failed: ${what}${detail ? ' — ' + detail : ''}`;
+      loading.classList.add('error');
+      console.error('[seattle] ' + what, detail || '');
+    }
+
     async function preload() {
       window.__seattleAssets = {};
       let done = 0;
       let total = 0;
       const sizes = await Promise.all(ASSETS.map(async (path) => {
         const head = await fetch(path, { method: 'HEAD' });
+        if (!head.ok) {
+          fail(`missing asset (${head.status})`, path);
+          throw new Error(`${path} ${head.status}`);
+        }
         return Number(head.headers.get('content-length') || 0);
       }));
       total = sizes.reduce((a, b) => a + b, 0) || 1;
       for (let i = 0; i < ASSETS.length; i++) {
         const response = await fetch(ASSETS[i]);
-        if (!response.ok) throw new Error(`pack fetch failed: ${ASSETS[i]} (${response.status})`);
+        if (!response.ok) {
+          fail(`missing asset (${response.status})`, ASSETS[i]);
+          throw new Error(`${ASSETS[i]} ${response.status}`);
+        }
         const bytes = new Uint8Array(await response.arrayBuffer());
         window.__seattleAssets[ASSETS[i]] = bytes;
         done += bytes.length;
@@ -104,7 +119,9 @@
       requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }));
     }
 
-    preload().then(() => init()).then(() => {
+    preload().then(() => init()).catch((error) => {
+      if (!loading.classList.contains('error')) fail('the city did not start', String(error));
+    }).then(() => {
       focusCanvas();
       const observer = new MutationObserver(() => {
         if (loading.classList.contains('hidden')) {
