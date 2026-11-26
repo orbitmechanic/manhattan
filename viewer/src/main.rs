@@ -445,6 +445,18 @@ fn main() {
     let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "warn".to_string());
     app.add_plugins(
         DefaultPlugins
+            .set(bevy::render::RenderPlugin {
+                render_creation: bevy::render::settings::RenderCreation::Automatic(Box::new(
+                    bevy::render::settings::WgpuSettings {
+                        // WebGL2 is the only backend a browser can guarantee;
+                        // pinning it removes the adapter-selection panic seen in
+                        // headless SwiftShader before the player's first click.
+                        backends: Some(bevy::render::settings::Backends::GL),
+                        ..default()
+                    },
+                )),
+                ..default()
+            })
             .set(bevy::log::LogPlugin {
                 filter: log_filter,
                 ..default()
@@ -458,8 +470,15 @@ fn main() {
                 primary_window: Some(Window {
                     title: "Manhattan — day/night fly-through".to_string(),
                     resolution: (1440u32, 900u32).into(),
-                    canvas: Some("#manhattan-canvas".into()),
-                    fit_canvas_to_parent: false,
+                    canvas: Some(
+                        if cfg!(target_arch = "wasm32") {
+                            "#seattle-canvas"
+                        } else {
+                            "#manhattan-canvas"
+                        }
+                        .into(),
+                    ),
+                    fit_canvas_to_parent: cfg!(target_arch = "wasm32"),
                     prevent_default_event_handling: true,
                     ..default()
                 }),

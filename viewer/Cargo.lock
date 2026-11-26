@@ -4365,6 +4365,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_brp_extras",
+ "console_error_panic_hook",
  "destructibles-bevy",
  "destructibles-core",
  "image",

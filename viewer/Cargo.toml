@@ -22,6 +22,8 @@ default = ["photo-textures"]
 # Native photographic path: KTX2/UASTC (C++ basis-universal-sys) -> BC7.
 # The web build runs --no-default-features and uses the generated atlas path.
 photo-textures = ["bevy/ktx2", "bevy/zstd_rust", "bevy/basis-universal"]
+# Explicit WebGL2 backend for the browser build.
+webgl2 = ["bevy/webgl2"]
 dev-brp = ["dep:bevy_brp_extras", "bevy/bevy_remote", "bevy/png"]
 
 [profile.dev]
