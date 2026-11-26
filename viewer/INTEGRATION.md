@@ -2807,3 +2807,23 @@ must become HTTP fetches with a loading screen and a streamed, much smaller pack
 dock tile was added, because a tile pointing at a page that cannot boot is worse than none.
 
 `scripts/build_web.sh` commits the full pipeline for the next round.
+
+## Iteration 106 — the HTTP city (seattle-web3)
+
+**Asset I/O is unified: `src/webassets.rs` is the single door.** Native reads the same files from disk through it;
+the web build **embeds the demo pack** in the wasm binary instead of fetching: city pack (25 MB), tree dataset
+(3.6 MB), DEM (5.4 MB), water mask (2.7 MB), water (0.4 MB), S2 report, style packs, districts, governance and the
+horizon profiles. One download, no fetch ordering, no CORS, no half-fetched city. `CityPack` grew `from_bytes` /
+`open_pack` over the same parser, and `TreeDataset` grew `open_asset`; every native call site still reads the real
+files, so the browser/host split is one module, not a fork.
+
+**Web boot profile (declared, not silent):** on wasm the binary sets `SEATTLE_S2/S3/BOOT`, `LANDMARKS_ALWAYS` and
+`PILOT_HORIZON` itself — there is no argv or environment in a browser. The page states the demo's scope, the
+stylized-surface mode and the walking-pace expectation.
+
+**Native regression gate (run first, and again after the refactor):** 183 tests green, clippy clean, `--seattle`
+boots, `PHOTO FORMAT Bc7RgbaUnormSrgb 1024x1024 mips=11` — the photographic path is unchanged.
+
+**Web page:** `web/index.html` adapted from the Manhattan dock (loading card, AudioContext shim, canvas, "Gallifrey
+Station / Cinematic Universes" eyebrow) with Seattle's disclosure copy. `scripts/build_web.sh` is the committed
+pipeline; the wasm build is running.

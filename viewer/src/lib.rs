@@ -39,3 +39,4 @@ pub mod traffic_seattle;
 pub mod trees;
 pub mod ui;
 pub mod weather;
+pub mod webassets;

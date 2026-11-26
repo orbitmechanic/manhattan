@@ -3,28 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Manhattan — full-detail day/night city</title>
-  <meta name="description" content="Fly through a full-detail Manhattan city model with real sun and moon lighting, human-scale floors, twilight waves, fog and depth of field.">
+  <title>Seattle — overcast city with the Space Needle</title>
+  <meta name="description" content="Fly through Seattle: overcast light, rain, street lamps, a glowing night dome and the CAD Space Needle. A walking-pace web demo of the native viewer.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Manhattan — full-detail day/night city">
-  <meta property="og:description" content="A full-detail, real-time Manhattan diorama built with Rust and Bevy.">
+  <meta property="og:title" content="Seattle — overcast city with the Space Needle">
+  <meta property="og:description" content="A real-time Seattle diorama built with Rust and Bevy.">
   <meta name="theme-color" content="#05070b">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="loading" class="loading">
     <div class="loader-card">
-      <p class="eyebrow">Gallifrey Station / Spatial Computing</p>
-      <h1>Manhattan</h1>
-      <p class="sub">A full-detail, real-time city with human-scale floors, a living twilight wave, fog and depth of field.</p>
+      <p class="eyebrow">Gallifrey Station / Cinematic Universes</p>
+      <h1>Seattle</h1>
+      <p class="sub">An overcast Seattle with rain, umbrellas, street lamps, the city-glow dome and the CAD Space Needle. Stylized surfaces on web; photographic on native.</p>
       <div class="bar"><span></span></div>
-      <p class="status">Loading the full city geometry…</p>
-      <p class="note">First load is about 95 MB. Desktop with mouse and keyboard recommended.</p>
+      <p class="status">Loading the city (geometry and terrain embedded in the build)…</p>
+      <p class="note">About 60 MB on first load. Walking-pace demo — the native build is for full-speed flight. Desktop with mouse and keyboard recommended.</p>
       <a class="back" href="https://orbitmechanic.github.io/">← Gallifrey Station</a>
     </div>
   </div>
 
-  <canvas id="manhattan-canvas" width="1440" height="900" tabindex="0" aria-label="Manhattan 3D city viewer"></canvas>
+  <canvas id="seattle-canvas" width="1440" height="900" tabindex="0" aria-label="Seattle 3D city viewer"></canvas>
 
   <script>
   (() => {
@@ -55,9 +55,9 @@
   </script>
 
   <script type="module">
-    import init from './manhattan.js';
+    import init from './seattle.js';
 
-    const canvas = document.getElementById('manhattan-canvas');
+    const canvas = document.getElementById('seattle-canvas');
     const loading = document.getElementById('loading');
 
     function focusCanvas() {

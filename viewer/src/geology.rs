@@ -302,6 +302,7 @@ pub struct S2Hud;
 #[derive(Component)]
 pub struct S2Text;
 
+#[allow(dead_code)]
 fn asset(relative: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join(relative)
 }
@@ -316,10 +317,9 @@ fn setup_geology(
     }
     let started = std::time::Instant::now();
     let report: S2Report =
-        serde_json::from_str(&std::fs::read_to_string(asset(REPORT_PATH)).expect("s2 report"))
-            .expect("s2 report json");
-    let heights = std::fs::read(asset(DEM_PATH))
-        .expect("dem")
+        serde_json::from_str(&crate::webassets::string(REPORT_PATH)).expect("s2 report json");
+    let dem_bytes = crate::webassets::bytes(DEM_PATH);
+    let heights = dem_bytes
         .chunks(2)
         .filter(|pair| pair.len() == 2)
         .map(|pair| i16::from_le_bytes([pair[0], pair[1]]))
@@ -331,26 +331,24 @@ fn setup_geology(
         origin: report.grid.origin_world,
         heights,
     };
-    let mask = std::fs::read(asset(MASK_PATH)).expect("mask");
-    let water_bytes = std::fs::read(asset(WATER_PATH)).expect("water");
+    let mask = crate::webassets::bytes(MASK_PATH);
+    let water_bytes = crate::webassets::bytes(WATER_PATH);
     let water_mesh = parse_water(&water_bytes);
-    let style: StylePack = serde_json::from_str(
-        &std::fs::read_to_string(asset("assets/styles/seattle_pack.json")).expect("style pack"),
-    )
-    .expect("style pack json");
+    let style: StylePack =
+        serde_json::from_str(&crate::webassets::string("assets/styles/seattle_pack.json"))
+            .expect("style pack json");
     #[derive(Deserialize)]
     struct DistrictFile {
         assignments: HashMap<String, String>,
     }
-    let districts: HashMap<String, String> =
-        std::fs::read_to_string(asset("assets/styles/seattle_districts.json"))
-            .ok()
-            .and_then(|text| serde_json::from_str::<DistrictFile>(&text).ok())
-            .map(|file| file.assignments)
-            .unwrap_or_default();
-    let pack =
-        CityPack::open(Path::new(env!("CARGO_MANIFEST_DIR")).join(crate::citypack::PACK_PATH))
-            .expect("citypack for streets");
+    let districts: HashMap<String, String> = Ok::<String, std::io::Error>(
+        crate::webassets::string("assets/styles/seattle_districts.json"),
+    )
+    .ok()
+    .and_then(|text| serde_json::from_str::<DistrictFile>(&text).ok())
+    .map(|file| file.assignments)
+    .unwrap_or_default();
+    let pack = CityPack::open_pack().expect("citypack for streets");
     let terrain_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.18, 0.26, 0.16),
         perceptual_roughness: 0.96,
@@ -4233,7 +4231,7 @@ mod tests {
             origin: report.grid.origin_world,
             heights,
         };
-        let mask = std::fs::read(asset(MASK_PATH)).expect("mask");
+        let mask = crate::webassets::bytes(MASK_PATH);
         (dem, mask)
     }
 

@@ -115,6 +115,7 @@ pub fn capture_enabled() -> bool {
     std::env::var_os("HORIZON_CAPTURE").is_some()
 }
 
+#[allow(dead_code)]
 fn asset_path(relative: &str) -> PathBuf {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(relative)
 }
@@ -127,7 +128,7 @@ fn setup_horizon(
     if !horizon_enabled() {
         return;
     }
-    let profiles = match std::fs::read(asset_path(PROFILES_PATH)) {
+    let profiles = match Ok::<Vec<u8>, std::io::Error>(crate::webassets::bytes(PROFILES_PATH)) {
         Ok(bytes) => bytes
             .chunks(2)
             .filter(|pair| pair.len() == 2)

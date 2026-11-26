@@ -192,7 +192,24 @@ impl<'a> Cursor<'a> {
 impl CityPack {
     pub fn open(path: impl AsRef<Path>) -> std::io::Result<Self> {
         let path = path.as_ref().to_path_buf();
-        let mut file = File::open(&path)?;
+        Self::parse(File::open(&path)?, path)
+    }
+
+    /// The web build embeds the pack; this is the same parser over memory.
+    pub fn from_bytes(data: Vec<u8>) -> std::io::Result<Self> {
+        Self::parse(std::io::Cursor::new(data), std::path::PathBuf::new())
+    }
+
+    /// Repository-relative pack through the asset layer (fs on native, embedded
+    /// bytes on web).
+    pub fn open_pack() -> std::io::Result<Self> {
+        Self::from_bytes(crate::webassets::bytes(PACK_PATH))
+    }
+
+    fn parse<R: std::io::Read + std::io::Seek>(
+        mut file: R,
+        path: std::path::PathBuf,
+    ) -> std::io::Result<Self> {
         let mut header = [0u8; 26];
         file.read_exact(&mut header)?;
         if &header[0..4] != b"CDPK" {
@@ -606,11 +623,10 @@ fn setup_stream(mut commands: Commands, mut materials: ResMut<Assets<StandardMat
     if !stream_enabled() {
         return;
     }
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(PACK_PATH);
-    let pack = match CityPack::open(&path) {
+    let pack = match CityPack::open_pack() {
         Ok(pack) => pack,
         Err(error) => {
-            error!("STREAM: cannot open {}: {error}", path.display());
+            error!("STREAM: cannot open the pack: {error}");
             return;
         }
     };

@@ -61,8 +61,16 @@ pub struct TreeDataset {
 }
 
 impl TreeDataset {
+    /// Repository-relative tree dataset through the asset layer.
+    pub fn open_asset(relative: &str) -> std::io::Result<Self> {
+        Self::from_bytes(crate::webassets::bytes(relative))
+    }
+
     pub fn open(path: &std::path::Path) -> std::io::Result<Self> {
-        let bytes = std::fs::read(path)?;
+        Self::from_bytes(std::fs::read(path)?)
+    }
+
+    fn from_bytes(bytes: Vec<u8>) -> std::io::Result<Self> {
         if bytes.len() < 18 || &bytes[0..4] != b"TRES" {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
