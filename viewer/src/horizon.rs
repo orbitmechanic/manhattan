@@ -106,7 +106,8 @@ impl Plugin for HorizonPlugin {
 }
 
 pub fn horizon_enabled() -> bool {
-    std::env::var_os("PILOT_HORIZON").is_some()
+    cfg!(target_arch = "wasm32")
+        || std::env::var_os("PILOT_HORIZON").is_some()
         || std::env::var_os("SEATTLE_STREAM").is_some()
         || std::env::var_os("SEATTLE_HORIZON").is_some()
 }

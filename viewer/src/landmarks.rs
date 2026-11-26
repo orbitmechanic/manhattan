@@ -2127,7 +2127,9 @@ fn spawn_market_signs(world: &mut World, landmark: &LandmarkDef) {
 }
 
 fn landmarks_always(world: &mut World) {
-    if std::env::var_os("LANDMARKS_ALWAYS").is_none() || !s2_enabled() {
+    if !(cfg!(target_arch = "wasm32") || std::env::var_os("LANDMARKS_ALWAYS").is_some())
+        || !s2_enabled()
+    {
         return;
     }
     if std::env::var_os("LANDMARK_GATE").is_some() || std::env::var_os("LANDMARK_CYCLE").is_some() {

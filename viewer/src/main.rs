@@ -393,16 +393,11 @@ fn parse_args() -> Args {
 }
 
 fn main() {
-    // The browser has no argv and no environment: the web build IS the Seattle
-    // demo, so the profile is set here once (disclosed on the page).
     #[cfg(target_arch = "wasm32")]
-    unsafe {
-        std::env::set_var("SEATTLE_S2", "1");
-        std::env::set_var("SEATTLE_S3", "1");
-        std::env::set_var("SEATTLE_BOOT", "1");
-        std::env::set_var("LANDMARKS_ALWAYS", "1");
-        std::env::set_var("PILOT_HORIZON", "1");
-    }
+    console_error_panic_hook::set_once();
+    // The browser has no argv and no environment (and std::env::set_var panics
+    // there): the Seattle profile is expressed in the mode gates themselves as
+    // `cfg!(target_arch = "wasm32")`, so the same binary boots the demo.
     #[allow(unused_mut)]
     let mut args = parse_args();
     if args.pilot {

@@ -192,7 +192,7 @@ fn murk_update(
 }
 
 pub fn s2_enabled() -> bool {
-    std::env::var_os("SEATTLE_S2").is_some()
+    cfg!(target_arch = "wasm32") || std::env::var_os("SEATTLE_S2").is_some()
 }
 
 #[derive(Clone)]
@@ -3067,7 +3067,7 @@ fn seattle_boot_camera(
     geology: Option<Res<Geology>>,
     mut clock: ResMut<SimClock>,
 ) {
-    let boot = std::env::var_os("SEATTLE_BOOT").is_some();
+    let boot = cfg!(target_arch = "wasm32") || std::env::var_os("SEATTLE_BOOT").is_some();
     let traffic_hour = std::env::var("TRAFFIC_HOUR")
         .ok()
         .and_then(|value| value.parse::<f64>().ok());
@@ -3266,7 +3266,7 @@ fn s3_list_targets(world: &mut World) {
 }
 
 pub fn s3_enabled() -> bool {
-    std::env::var_os("SEATTLE_S3").is_some()
+    cfg!(target_arch = "wasm32") || std::env::var_os("SEATTLE_S3").is_some()
 }
 
 fn rule_for<'a>(

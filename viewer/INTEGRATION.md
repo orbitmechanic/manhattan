@@ -2827,3 +2827,17 @@ boots, `PHOTO FORMAT Bc7RgbaUnormSrgb 1024x1024 mips=11` — the photographic pa
 **Web page:** `web/index.html` adapted from the Manhattan dock (loading card, AudioContext shim, canvas, "Gallifrey
 Station / Cinematic Universes" eyebrow) with Seattle's disclosure copy. `scripts/build_web.sh` is the committed
 pipeline; the wasm build is running.
+
+**Web boot status (honest):** `web/dist` (85 MB wasm after `wasm-opt -Oz`, plus glue and assets) serves and the
+page renders its loading card, but the wasm app panics in headless Chromium before the first frame:
+
+```
+panicked at bevy_winit-0.20.1/src/winit_windows.rs:284
+panicked at bevy_render-0.20.1/src/renderer/mod.rs:308
+```
+
+The first is a window-creation panic, the second an adapter/renderer failure — consistent with headless SwiftShader
+not offering the WebGL2 configuration Bevy needs. This machine has no other browser to test against, so whether the
+bundle boots on a real GPU is **unverified**. Per the "complete or not at all" rule, no dock tile or Pages deploy
+was made; `web/dist` stays a local artifact. Filed as **`seattle-web3-browser`**: verify in a real browser, and if the
+adapter gap is real, pin `WgpuSettings { backends: WebGl2, .. }` and the `webgl2` feature explicitly.
