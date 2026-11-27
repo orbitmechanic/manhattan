@@ -26,6 +26,11 @@ photo-textures = ["bevy/ktx2", "bevy/zstd_rust", "bevy/basis-universal"]
 webgl2 = ["bevy/webgl2"]
 dev-brp = ["dep:bevy_brp_extras", "bevy/bevy_remote", "bevy/png"]
 
+[profile.wasm-sym]
+inherits = "wasm-release"
+debug = 1
+strip = "none"
+
 [profile.dev]
 opt-level = 1
 debug = 0

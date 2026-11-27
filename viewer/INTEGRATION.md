@@ -2981,3 +2981,36 @@ rebuilt binary, and the class-2 evidence predates this build.
 assembled from the code paths and the console classes, not from a captured request log), trees-on-web visual proof.
 
 Native gate: Vulkan backend print, BC7 proof, 183 tests, clippy clean.
+
+## Iteration 117 — Seattle's turn at the machine (seattle-websym2)
+
+**Seattle symbolized with the proven machinery** (`wasm-sym` profile, debug=1, strip=none; wasm-bindgen names
+preserved; headless boot with `console_error_panic_hook`):
+
+```
+panicked at std/src/sys/time/unsupported.rs:13  "time not implemented on this platform"
+  ← <std::time::Instant>::now            (wasm-function[264628]:0x272578c)
+  ← … panic_fmt ← rust_begin_unwind ← panic_handler ← panic_with_hook ← hook
+```
+
+The innermost named frame is `std::time::Instant::now`; **the calling application frame is not in the console
+window** (Chrome truncates the printed stack at the hook frames). A custom panic hook now captures a full
+`std::backtrace` and logs it on wasm, so the next run names the caller — that is the remaining step, stated rather
+than guessed.
+
+**Two real defects fixed on the way:**
+- **Roadway chunk 404 storm**: the chunk atlas was still requested on wasm (only the two big GLBs were gated). The
+  web manifest is now empty, so nothing 404s or retries.
+- **Favicon**: an SVG needle silhouette ships on both docks (200 verified).
+
+**Gate shipped and cloned** (`scripts/web_gate.sh`): scans the wasm for std-time symbols and `.ktx2` references and
+fails the build. Runs clean on both decks (51 MB / 50 MB).
+
+**Hash-verified deploy (Seattle):**
+
+```
+built  b5f059e6e5d5f32845108bcadf5536f252d4f94304b4f68f501dedd19aa808b9
+served b5f059e6e5d5f32845108bcadf5536f252d4f94304b4f68f501dedd19aa808b9
+```
+
+Native gate untouched: Vulkan backend print, BC7 proof, 183 tests, clippy clean.

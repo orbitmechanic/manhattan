@@ -404,7 +404,21 @@ fn log_render_backend(info: Option<Res<bevy::render::renderer::RenderAdapterInfo
     }
 }
 
+/// On wasm, print the full backtrace (names come from the wasm-sym build) so a
+/// panic names its callers instead of a single truncated frame.
+fn install_web_panic_hook() {
+    #[cfg(target_arch = "wasm32")]
+    {
+        std::panic::set_hook(Box::new(|info| {
+            let backtrace = std::backtrace::Backtrace::force_capture();
+            console_error_panic_hook::hook(info);
+            web_sys::console::log_1(&format!("{backtrace}").into());
+        }));
+    }
+}
+
 fn main() {
+    install_web_panic_hook();
     #[cfg(target_arch = "wasm32")]
     console_error_panic_hook::set_once();
     // The browser has no argv and no environment (and std::env::set_var panics
@@ -926,6 +940,11 @@ fn spawn_scene(
             asset_server.load(GltfAssetLabel::Scene(0).from_asset(*path)),
         ));
     }
+    // Roadway chunk GLBs are a native asset atlas; the web demo draws its roads
+    // from the city pack. Requesting them on wasm is a 404 storm.
+    #[cfg(target_arch = "wasm32")]
+    let manifest = RoadwayManifest { chunks: Vec::new() };
+    #[cfg(not(target_arch = "wasm32"))]
     let manifest: RoadwayManifest =
         serde_json::from_str(ROADWAY_MANIFEST).expect("roadway_manifest.json is invalid");
     for chunk in manifest.chunks {
